@@ -149,6 +149,7 @@ export class SubDerived extends Derived {
 	f.GoToMarker(t, "marker")
 	f.VerifyBaselineTypeHierarchy(t)
 }
+
 func TestTypeHierarchyAbstract(t *testing.T) {
 	t.Parallel()
 
