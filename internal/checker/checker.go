@@ -7173,6 +7173,10 @@ func (c *Checker) getQuickTypeOfExpression(node *ast.Node) *Type {
 func (c *Checker) getReturnTypeOfSingleNonGenericSignature(funcType *Type, kind SignatureKind) *Type {
 	signature := c.getSingleSignature(funcType, kind, true /*allowMembers*/)
 	if signature != nil && len(signature.typeParameters) == 0 {
+		// Don't use the quick path for identity signatures; they need flow analysis
+		if signature.flags&SignatureFlagsIdentity != 0 {
+			return nil
+		}
 		return c.getReturnTypeOfSignature(signature)
 	}
 	return nil
@@ -8107,6 +8111,13 @@ func (c *Checker) checkCallExpression(node *ast.Node, checkMode CheckMode) *Type
 		return c.resolveExternalModuleTypeByLiteral(node.Arguments()[0])
 	}
 	returnType := c.getReturnTypeOfSignature(signature)
+	// Apply flow narrowing for identity function calls
+	if ast.IsCallExpression(node) && signature.flags&SignatureFlagsIdentity != 0 && len(node.AsCallExpression().Arguments.Nodes) == 0 {
+		flowType := c.getFlowTypeOfReference(node, returnType)
+		if flowType != returnType {
+			returnType = flowType
+		}
+	}
 	// Treat any call to the global 'Symbol' function that is part of a const variable or readonly property
 	// as a fresh unique symbol literal type.
 	if returnType.flags&TypeFlagsESSymbolLike != 0 && c.isSymbolOrSymbolForCall(node) {
@@ -19250,6 +19261,9 @@ func (c *Checker) getSignatureFromDeclaration(declaration *ast.Node) *Signature 
 	if ast.IsConstructorTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsAbstract) || ast.IsConstructorDeclaration(declaration) && ast.HasSyntacticModifier(declaration.Parent, ast.ModifierFlagsAbstract) {
 		flags |= SignatureFlagsAbstract
 	}
+	if ast.IsFunctionTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsIdentity) {
+		flags |= SignatureFlagsIdentity
+	}
 	links.resolvedSignature = c.newSignature(flags, declaration, typeParameters, thisParameter, parameters, nil /*resolvedReturnType*/, nil /*resolvedTypePredicate*/, minArgumentCount)
 	return links.resolvedSignature
 }
@@ -29453,7 +29467,7 @@ func (c *Checker) newSetterFunctionType(t *Type) *Type {
 
 // Creates a synthetic `Signature` corresponding to a call signature.
 func (c *Checker) newCallSignature(typeParameters []*Type, thisParameter *ast.Symbol, parameters []*ast.Symbol, returnType *Type) *Signature {
-	decl := c.factory.NewFunctionTypeNode(nil, nil, c.factory.NewKeywordTypeNode(ast.KindAnyKeyword))
+	decl := c.factory.NewFunctionTypeNode(nil, nil, nil, c.factory.NewKeywordTypeNode(ast.KindAnyKeyword))
 	return c.newSignature(SignatureFlagsNone, decl, typeParameters, thisParameter, parameters, returnType, nil, len(parameters))
 }
 

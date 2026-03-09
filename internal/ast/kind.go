@@ -181,6 +181,7 @@ const (
 	KindBigIntKeyword
 	KindOverrideKeyword
 	KindOfKeyword
+	KindIdentityKeyword
 	KindDeferKeyword // LastKeyword and LastToken and LastContextualKeyword
 	// Parse tree nodes
 	// Names

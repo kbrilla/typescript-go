@@ -1886,6 +1886,7 @@ func (p *Printer) emitReturnType(node *ast.TypeNode) {
 
 func (p *Printer) emitFunctionType(node *ast.FunctionTypeNode) {
 	state := p.enterNode(node.AsNode())
+	p.emitModifierList(node.AsNode(), node.Modifiers(), false /*allowDecorators*/)
 	indented := p.shouldEmitIndented(node.AsNode())
 	p.increaseIndentIf(indented)
 	p.pushNameGenerationScope(node.AsNode())

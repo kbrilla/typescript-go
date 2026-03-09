@@ -3699,7 +3699,8 @@ func (p *Parser) isStartOfFunctionTypeOrConstructorType() bool {
 	return p.token == ast.KindLessThanToken ||
 		p.token == ast.KindOpenParenToken && p.lookAhead((*Parser).nextIsUnambiguouslyStartOfFunctionType) ||
 		p.token == ast.KindNewKeyword ||
-		p.token == ast.KindAbstractKeyword && p.lookAhead((*Parser).nextTokenIsNewKeyword)
+		p.token == ast.KindAbstractKeyword && p.lookAhead((*Parser).nextTokenIsNewKeyword) ||
+		p.token == ast.KindIdentityKeyword && p.lookAhead((*Parser).nextTokenIsOpenParenOrLessThanForIdentity)
 }
 
 func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
@@ -3707,7 +3708,7 @@ func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 	jsdoc := p.jsdocScannerInfo()
 	modifiers := p.parseModifiersForConstructorType()
 	isConstructorType := p.parseOptional(ast.KindNewKeyword)
-	debug.Assert(modifiers == nil || isConstructorType, "Per isStartOfFunctionOrConstructorType, a function type cannot have modifiers.")
+	debug.Assert(modifiers == nil || isConstructorType || modifiers.ModifierFlags&ast.ModifierFlagsIdentity != 0, "Per isStartOfFunctionOrConstructorType, a function type cannot have modifiers unless it is a constructor type or has identity modifier.")
 	typeParameters := p.parseTypeParameters()
 	parameters := p.parseParameters(ParseFlagsType)
 	returnType := p.parseReturnType(ast.KindEqualsGreaterThanToken, false /*isType*/)
@@ -3715,7 +3716,7 @@ func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 	if isConstructorType {
 		result = p.factory.NewConstructorTypeNode(modifiers, typeParameters, parameters, returnType)
 	} else {
-		result = p.factory.NewFunctionTypeNode(typeParameters, parameters, returnType)
+		result = p.factory.NewFunctionTypeNode(modifiers, typeParameters, parameters, returnType)
 	}
 	p.finishNode(result, pos)
 	p.withJSDoc(result, jsdoc)
@@ -3723,7 +3724,7 @@ func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 }
 
 func (p *Parser) parseModifiersForConstructorType() *ast.ModifierList {
-	if p.token == ast.KindAbstractKeyword {
+	if p.token == ast.KindAbstractKeyword || p.token == ast.KindIdentityKeyword {
 		pos := p.nodePos()
 		modifier := p.factory.NewModifier(p.token)
 		p.nextToken()
@@ -3735,6 +3736,23 @@ func (p *Parser) parseModifiersForConstructorType() *ast.ModifierList {
 
 func (p *Parser) nextTokenIsNewKeyword() bool {
 	return p.nextToken() == ast.KindNewKeyword
+}
+
+// nextTokenIsOpenParenOrLessThanForIdentity checks if 'identity' is followed by '(' or '<' in a
+// way that unambiguously starts a function type (not a type reference like identity<T>).
+// For 'identity (' — clearly a function type.
+// For 'identity <' — ambiguous with type reference identity<T>, so we scan past the type
+// parameters and check if followed by '(' using nextIsUnambiguouslyStartOfFunctionType.
+func (p *Parser) nextTokenIsOpenParenOrLessThanForIdentity() bool {
+	next := p.nextToken()
+	if next == ast.KindOpenParenToken {
+		return true
+	}
+	if next == ast.KindLessThanToken {
+		// Check if this is 'identity<T>(' by scanning past type parameters
+		return p.nextIsUnambiguouslyStartOfFunctionType()
+	}
+	return false
 }
 
 func (p *Parser) nextIsUnambiguouslyStartOfFunctionType() bool {

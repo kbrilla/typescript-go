@@ -2079,7 +2079,7 @@ func TestParenthesizeUnionType1(t *testing.T) {
 						[]*ast.Node{
 							factory.NewTypeReferenceNode(factory.NewIdentifier("a"), nil /*typeArguments*/),
 							// will be parenthesized on emit:
-							factory.NewFunctionTypeNode(
+							factory.NewFunctionTypeNode(nil, 
 								nil, /*typeParameters*/
 								factory.NewNodeList(
 									[]*ast.Node{},
@@ -2293,7 +2293,7 @@ func TestParenthesizeConditionalType1(t *testing.T) {
 				nil,                        /*typeParameters*/
 				factory.NewConditionalTypeNode(
 					// will be parenthesized on emit:
-					factory.NewFunctionTypeNode(
+					factory.NewFunctionTypeNode(nil, 
 						nil, /*typeParameters*/
 						factory.NewNodeList(
 							[]*ast.Node{},
@@ -2354,7 +2354,7 @@ func TestParenthesizeConditionalType3(t *testing.T) {
 				nil,                        /*typeParameters*/
 				factory.NewConditionalTypeNode(
 					factory.NewTypeReferenceNode(factory.NewIdentifier("a"), nil /*typeArguments*/),
-					factory.NewFunctionTypeNode(
+					factory.NewFunctionTypeNode(nil, 
 						nil, /*typeParameters*/
 						factory.NewNodeList(
 							[]*ast.Node{},
@@ -2391,7 +2391,7 @@ func TestParenthesizeConditionalType4(t *testing.T) {
 			nil,                        /*typeParameters*/
 			factory.NewConditionalTypeNode(
 				factory.NewTypeReferenceNode(factory.NewIdentifier("a"), nil /*typeArguments*/),
-				factory.NewFunctionTypeNode(
+				factory.NewFunctionTypeNode(nil, 
 					nil, /*typeParameters*/
 					factory.NewNodeList(
 						[]*ast.Node{},

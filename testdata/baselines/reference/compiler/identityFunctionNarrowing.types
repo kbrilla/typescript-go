@@ -1,0 +1,66 @@
+//// [tests/cases/compiler/identityFunctionNarrowing.ts] ////
+
+=== identityFunctionNarrowing.ts ===
+// Basic identity function narrowing
+declare const value: identity () => string | undefined;
+>value : () => string | undefined
+
+if (value() !== undefined) {
+>value() !== undefined : boolean
+>value() : string | undefined
+>value : () => string | undefined
+>undefined : undefined
+
+    const x: string = value(); // Should narrow to string
+>x : string
+>value() : string
+>value : () => string | undefined
+}
+
+// Truthiness narrowing  
+declare const flag: identity () => string | undefined;
+>flag : () => string | undefined
+
+if (flag()) {
+>flag() : string | undefined
+>flag : () => string | undefined
+
+    const s: string = flag(); // Should narrow to string (truthy)
+>s : string
+>flag() : string
+>flag : () => string | undefined
+}
+
+// typeof narrowing
+declare const mixed: identity () => string | number;
+>mixed : () => string | number
+
+if (typeof mixed() === "string") {
+>typeof mixed() === "string" : boolean
+>typeof mixed() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>mixed() : string | number
+>mixed : () => string | number
+>"string" : "string"
+
+    const s: string = mixed(); // Should narrow to string
+>s : string
+>mixed() : string
+>mixed : () => string | number
+}
+
+// Non-identity function should NOT narrow
+declare const nonIdentity: () => string | undefined;
+>nonIdentity : () => string | undefined
+
+if (nonIdentity() !== undefined) {
+>nonIdentity() !== undefined : boolean
+>nonIdentity() : string | undefined
+>nonIdentity : () => string | undefined
+>undefined : undefined
+
+    const x: string | undefined = nonIdentity(); // Should NOT narrow - stays string | undefined
+>x : string | undefined
+>nonIdentity() : string | undefined
+>nonIdentity : () => string | undefined
+}
+

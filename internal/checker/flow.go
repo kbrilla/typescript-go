@@ -388,6 +388,9 @@ func (c *Checker) narrowType(f *FlowState, t *Type, expr *ast.Node, assumeTrue b
 	case ast.KindThisKeyword, ast.KindSuperKeyword, ast.KindPropertyAccessExpression, ast.KindElementAccessExpression:
 		return c.narrowTypeByTruthiness(f, t, expr, assumeTrue)
 	case ast.KindCallExpression:
+		if c.isMatchingReference(f.reference, expr) {
+			return c.getAdjustedTypeWithFacts(t, core.IfElse(assumeTrue, TypeFactsTruthy, TypeFactsFalsy))
+		}
 		return c.narrowTypeByCallExpression(f, t, expr, assumeTrue)
 	case ast.KindParenthesizedExpression, ast.KindNonNullExpression, ast.KindSatisfiesExpression:
 		return c.narrowType(f, t, expr.Expression(), assumeTrue)
@@ -1612,6 +1615,10 @@ func (c *Checker) isMatchingReference(source *ast.Node, target *ast.Node) bool {
 		}
 	case ast.KindBinaryExpression:
 		return ast.IsBinaryExpression(source) && source.AsBinaryExpression().OperatorToken.Kind == ast.KindCommaToken && c.isMatchingReference(source.AsBinaryExpression().Right, target)
+	case ast.KindCallExpression:
+		if ast.IsCallExpression(target) && len(source.AsCallExpression().Arguments.Nodes) == 0 && len(target.AsCallExpression().Arguments.Nodes) == 0 {
+			return c.isMatchingReference(source.Expression(), target.Expression())
+		}
 	}
 	return false
 }
@@ -1688,6 +1695,15 @@ func (c *Checker) writeFlowCacheKey(b *keyBuilder, node *ast.Node, declaredType 
 		b.writeByte('#')
 		b.writeType(declaredType)
 		return true
+	case ast.KindCallExpression:
+		call := node.AsCallExpression()
+		if len(call.Arguments.Nodes) == 0 {
+			if !c.writeFlowCacheKey(b, call.Expression, declaredType, initialType, flowContainer) {
+				return false
+			}
+			b.writeString("()")
+			return true
+		}
 	}
 	return false
 }

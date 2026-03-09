@@ -2379,6 +2379,10 @@ func (b *Binder) bindCallExpressionFlow(node *ast.Node) {
 			}
 		}
 	}
+	// Set flow node for zero-argument call expressions to enable identity function narrowing
+	if call.Arguments != nil && len(call.Arguments.Nodes) == 0 {
+		setFlowNode(node, b.currentFlow)
+	}
 	if ast.IsPropertyAccessExpression(call.Expression) {
 		access := call.Expression.AsPropertyAccessExpression()
 		if ast.IsIdentifier(access.Name()) && isNarrowableOperand(access.Expression) && ast.IsPushOrUnshiftIdentifier(access.Name()) {
@@ -2554,6 +2558,9 @@ func isNarrowingExpression(expr *ast.Node) bool {
 	case ast.KindPropertyAccessExpression, ast.KindElementAccessExpression:
 		return containsNarrowableReference(expr)
 	case ast.KindCallExpression:
+		if len(expr.AsCallExpression().Arguments.Nodes) == 0 && isNarrowableReference(expr) {
+			return true
+		}
 		return hasNarrowableArgument(expr)
 	case ast.KindParenthesizedExpression, ast.KindNonNullExpression, ast.KindTypeOfExpression:
 		return isNarrowingExpression(expr.Expression())
@@ -2592,6 +2599,9 @@ func isNarrowableReference(node *ast.Node) bool {
 		expr := node.AsBinaryExpression()
 		return expr.OperatorToken.Kind == ast.KindCommaToken && isNarrowableReference(expr.Right) ||
 			ast.IsAssignmentOperator(expr.OperatorToken.Kind) && ast.IsLeftHandSideExpression(expr.Left)
+	case ast.KindCallExpression:
+		call := node.AsCallExpression()
+		return len(call.Arguments.Nodes) == 0 && isNarrowableReference(call.Expression)
 	}
 	return false
 }

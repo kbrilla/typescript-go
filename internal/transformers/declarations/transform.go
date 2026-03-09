@@ -671,6 +671,7 @@ func (tx *DeclarationTransformer) transformConstructorTypeNode(input *ast.Constr
 func (tx *DeclarationTransformer) transformFunctionTypeNode(input *ast.FunctionTypeNode) *ast.Node {
 	return tx.Factory().UpdateFunctionTypeNode(
 		input,
+		tx.Visitor().VisitModifiers(input.Modifiers()),
 		tx.Visitor().VisitNodes(input.TypeParameters),
 		tx.updateParamList(input.AsNode(), input.Parameters),
 		tx.Visitor().Visit(input.Type),

@@ -1,0 +1,53 @@
+//// [tests/cases/compiler/identityFunctionNarrowing.ts] ////
+
+=== identityFunctionNarrowing.ts ===
+// Basic identity function narrowing
+declare const value: identity () => string | undefined;
+>value : Symbol(value, Decl(identityFunctionNarrowing.ts, 1, 13))
+
+if (value() !== undefined) {
+>value : Symbol(value, Decl(identityFunctionNarrowing.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    const x: string = value(); // Should narrow to string
+>x : Symbol(x, Decl(identityFunctionNarrowing.ts, 4, 9))
+>value : Symbol(value, Decl(identityFunctionNarrowing.ts, 1, 13))
+}
+
+// Truthiness narrowing  
+declare const flag: identity () => string | undefined;
+>flag : Symbol(flag, Decl(identityFunctionNarrowing.ts, 8, 13))
+
+if (flag()) {
+>flag : Symbol(flag, Decl(identityFunctionNarrowing.ts, 8, 13))
+
+    const s: string = flag(); // Should narrow to string (truthy)
+>s : Symbol(s, Decl(identityFunctionNarrowing.ts, 10, 9))
+>flag : Symbol(flag, Decl(identityFunctionNarrowing.ts, 8, 13))
+}
+
+// typeof narrowing
+declare const mixed: identity () => string | number;
+>mixed : Symbol(mixed, Decl(identityFunctionNarrowing.ts, 14, 13))
+
+if (typeof mixed() === "string") {
+>mixed : Symbol(mixed, Decl(identityFunctionNarrowing.ts, 14, 13))
+
+    const s: string = mixed(); // Should narrow to string
+>s : Symbol(s, Decl(identityFunctionNarrowing.ts, 16, 9))
+>mixed : Symbol(mixed, Decl(identityFunctionNarrowing.ts, 14, 13))
+}
+
+// Non-identity function should NOT narrow
+declare const nonIdentity: () => string | undefined;
+>nonIdentity : Symbol(nonIdentity, Decl(identityFunctionNarrowing.ts, 20, 13))
+
+if (nonIdentity() !== undefined) {
+>nonIdentity : Symbol(nonIdentity, Decl(identityFunctionNarrowing.ts, 20, 13))
+>undefined : Symbol(undefined)
+
+    const x: string | undefined = nonIdentity(); // Should NOT narrow - stays string | undefined
+>x : Symbol(x, Decl(identityFunctionNarrowing.ts, 22, 9))
+>nonIdentity : Symbol(nonIdentity, Decl(identityFunctionNarrowing.ts, 20, 13))
+}
+

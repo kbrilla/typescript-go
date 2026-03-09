@@ -70,6 +70,7 @@ var textToKeyword = map[string]ast.Kind{
 	"implements":  ast.KindImplementsKeyword,
 	"import":      ast.KindImportKeyword,
 	"in":          ast.KindInKeyword,
+	"identity":    ast.KindIdentityKeyword,
 	"infer":       ast.KindInferKeyword,
 	"instanceof":  ast.KindInstanceOfKeyword,
 	"interface":   ast.KindInterfaceKeyword,

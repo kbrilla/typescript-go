@@ -542,6 +542,14 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_must_precede_1_modifier, "in", "out")
 				}
 				flags |= inOutFlag
+			case ast.KindIdentityKeyword:
+				if flags&ast.ModifierFlagsIdentity != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "identity")
+				}
+				if node.Kind != ast.KindFunctionType {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_cannot_appear_on_a_type_member, "identity")
+				}
+				flags |= ast.ModifierFlagsIdentity
 			}
 		}
 	}
@@ -630,6 +638,8 @@ func (c *Checker) findFirstIllegalModifier(node *ast.Node) *ast.Node {
 		case ast.KindClassDeclaration,
 			ast.KindConstructorType:
 			return c.findFirstModifierExcept(node, ast.KindAbstractKeyword)
+		case ast.KindFunctionType:
+			return c.findFirstModifierExcept(node, ast.KindIdentityKeyword)
 		case ast.KindClassExpression,
 			ast.KindInterfaceDeclaration,
 			ast.KindTypeAliasDeclaration:

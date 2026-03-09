@@ -1792,7 +1792,7 @@ func (b *NodeBuilderImpl) signatureToSignatureDeclarationHelper(signature *Signa
 		if returnTypeNode == nil {
 			returnTypeNode = b.f.NewTypeReferenceNode(b.f.NewIdentifier(""), nil)
 		}
-		node = b.f.NewFunctionTypeNode(typeParamList, paramList, returnTypeNode)
+		node = b.f.NewFunctionTypeNode(modifierList, typeParamList, paramList, returnTypeNode)
 	case kind == ast.KindConstructorType:
 		if returnTypeNode == nil {
 			returnTypeNode = b.f.NewTypeReferenceNode(b.f.NewIdentifier(""), nil)
