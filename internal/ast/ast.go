@@ -8780,27 +8780,28 @@ type FunctionTypeNode struct {
 	FunctionOrConstructorTypeNodeBase
 }
 
-func (f *NodeFactory) NewFunctionTypeNode(typeParameters *NodeList, parameters *NodeList, returnType *TypeNode) *Node {
+func (f *NodeFactory) NewFunctionTypeNode(modifiers *ModifierList, typeParameters *NodeList, parameters *NodeList, returnType *TypeNode) *Node {
 	data := f.functionTypeNodePool.New()
+	data.modifiers = modifiers
 	data.TypeParameters = typeParameters
 	data.Parameters = parameters
 	data.Type = returnType
 	return f.newNode(KindFunctionType, data)
 }
 
-func (f *NodeFactory) UpdateFunctionTypeNode(node *FunctionTypeNode, typeParameters *TypeParameterList, parameters *ParameterList, returnType *TypeNode) *Node {
-	if typeParameters != node.TypeParameters || parameters != node.Parameters || returnType != node.Type {
-		return updateNode(f.NewFunctionTypeNode(typeParameters, parameters, returnType), node.AsNode(), f.hooks)
+func (f *NodeFactory) UpdateFunctionTypeNode(node *FunctionTypeNode, modifiers *ModifierList, typeParameters *TypeParameterList, parameters *ParameterList, returnType *TypeNode) *Node {
+	if modifiers != node.modifiers || typeParameters != node.TypeParameters || parameters != node.Parameters || returnType != node.Type {
+		return updateNode(f.NewFunctionTypeNode(modifiers, typeParameters, parameters, returnType), node.AsNode(), f.hooks)
 	}
 	return node.AsNode()
 }
 
 func (node *FunctionTypeNode) VisitEachChild(v *NodeVisitor) *Node {
-	return v.Factory.UpdateFunctionTypeNode(node, v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
+	return v.Factory.UpdateFunctionTypeNode(node, v.visitModifiers(node.Modifiers()), v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
 }
 
 func (node *FunctionTypeNode) Clone(f NodeFactoryCoercible) *Node {
-	return cloneNode(f.AsNodeFactory().NewFunctionTypeNode(node.TypeParameters, node.Parameters, node.Type), node.AsNode(), f.AsNodeFactory().hooks)
+	return cloneNode(f.AsNodeFactory().NewFunctionTypeNode(node.Modifiers(), node.TypeParameters, node.Parameters, node.Type), node.AsNode(), f.AsNodeFactory().hooks)
 }
 
 func IsFunctionTypeNode(node *Node) bool {

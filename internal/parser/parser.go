@@ -3699,15 +3699,16 @@ func (p *Parser) isStartOfFunctionTypeOrConstructorType() bool {
 	return p.token == ast.KindLessThanToken ||
 		p.token == ast.KindOpenParenToken && p.lookAhead((*Parser).nextIsUnambiguouslyStartOfFunctionType) ||
 		p.token == ast.KindNewKeyword ||
-		p.token == ast.KindAbstractKeyword && p.lookAhead((*Parser).nextTokenIsNewKeyword)
+		p.token == ast.KindAbstractKeyword && p.lookAhead((*Parser).nextTokenIsNewKeyword) ||
+		p.token == ast.KindIdentityKeyword && p.lookAhead((*Parser).nextTokenIsOpenParenOrLessThan)
 }
 
 func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 	pos := p.nodePos()
 	jsdoc := p.jsdocScannerInfo()
-	modifiers := p.parseModifiersForConstructorType()
+	modifiers := p.parseModifiersForFunctionOrConstructorType()
 	isConstructorType := p.parseOptional(ast.KindNewKeyword)
-	debug.Assert(modifiers == nil || isConstructorType, "Per isStartOfFunctionOrConstructorType, a function type cannot have modifiers.")
+	debug.Assert(modifiers == nil || isConstructorType || p.hasIdentityModifier(modifiers), "Per isStartOfFunctionOrConstructorType, a function type can only have the identity modifier.")
 	typeParameters := p.parseTypeParameters()
 	parameters := p.parseParameters(ParseFlagsType)
 	returnType := p.parseReturnType(ast.KindEqualsGreaterThanToken, false /*isType*/)
@@ -3715,14 +3716,21 @@ func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 	if isConstructorType {
 		result = p.factory.NewConstructorTypeNode(modifiers, typeParameters, parameters, returnType)
 	} else {
-		result = p.factory.NewFunctionTypeNode(typeParameters, parameters, returnType)
+		result = p.factory.NewFunctionTypeNode(modifiers, typeParameters, parameters, returnType)
 	}
 	p.finishNode(result, pos)
 	p.withJSDoc(result, jsdoc)
 	return result
 }
 
-func (p *Parser) parseModifiersForConstructorType() *ast.ModifierList {
+func (p *Parser) parseModifiersForFunctionOrConstructorType() *ast.ModifierList {
+	if p.token == ast.KindIdentityKeyword {
+		pos := p.nodePos()
+		modifier := p.factory.NewModifier(p.token)
+		p.nextToken()
+		p.finishNode(modifier, pos)
+		return p.newModifierList(modifier.Loc, p.nodeSlicePool.NewSlice1(modifier))
+	}
 	if p.token == ast.KindAbstractKeyword {
 		pos := p.nodePos()
 		modifier := p.factory.NewModifier(p.token)
@@ -3731,6 +3739,13 @@ func (p *Parser) parseModifiersForConstructorType() *ast.ModifierList {
 		return p.newModifierList(modifier.Loc, p.nodeSlicePool.NewSlice1(modifier))
 	}
 	return nil
+}
+
+func (p *Parser) hasIdentityModifier(modifiers *ast.ModifierList) bool {
+	if modifiers == nil {
+		return false
+	}
+	return modifiers.ModifierFlags&ast.ModifierFlagsIdentity != 0
 }
 
 func (p *Parser) nextTokenIsNewKeyword() bool {

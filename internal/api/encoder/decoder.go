@@ -889,7 +889,7 @@ func (d *astDecoder) createChildrenNode(kind ast.Kind, data uint32, childIndices
 		typeParams := d.nodeListAt(it.nextIf(mask, 0))
 		params := d.nodeListAt(it.nextIf(mask, 1))
 		retType := d.nodeAt(it.nextIf(mask, 2))
-		return d.factory.NewFunctionTypeNode(typeParams, params, retType), nil
+		return d.factory.NewFunctionTypeNode(nil, typeParams, params, retType), nil
 
 	case ast.KindConstructorType:
 		it := newChildIter(childIndices)

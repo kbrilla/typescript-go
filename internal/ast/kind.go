@@ -154,6 +154,7 @@ const (
 	KindConstructorKeyword
 	KindDeclareKeyword
 	KindGetKeyword
+	KindIdentityKeyword
 	KindImmediateKeyword
 	KindInferKeyword
 	KindIntrinsicKeyword
