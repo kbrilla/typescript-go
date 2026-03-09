@@ -515,6 +515,18 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				}
 				flags |= ast.ModifierFlagsAsync
 				lastAsync = modifier
+			case ast.KindIdentityKeyword:
+				if flags&ast.ModifierFlagsIdentity != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "identity")
+				}
+				if node.Kind != ast.KindFunctionType {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_identity_modifier_can_only_appear_on_a_function_type_with_no_parameters)
+				}
+				// Check that the function type has no parameters
+				if len(node.Parameters()) > 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_identity_modifier_can_only_appear_on_a_function_type_with_no_parameters)
+				}
+				flags |= ast.ModifierFlagsIdentity
 			case ast.KindInKeyword,
 				ast.KindOutKeyword:
 				var inOutFlag ast.ModifierFlags
@@ -630,6 +642,8 @@ func (c *Checker) findFirstIllegalModifier(node *ast.Node) *ast.Node {
 		case ast.KindClassDeclaration,
 			ast.KindConstructorType:
 			return c.findFirstModifierExcept(node, ast.KindAbstractKeyword)
+		case ast.KindFunctionType:
+			return c.findFirstModifierExcept(node, ast.KindIdentityKeyword)
 		case ast.KindClassExpression,
 			ast.KindInterfaceDeclaration,
 			ast.KindTypeAliasDeclaration:

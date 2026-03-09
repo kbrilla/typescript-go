@@ -8107,6 +8107,15 @@ func (c *Checker) checkCallExpression(node *ast.Node, checkMode CheckMode) *Type
 		return c.resolveExternalModuleTypeByLiteral(node.Arguments()[0])
 	}
 	returnType := c.getReturnTypeOfSignature(signature)
+	// For identity function calls (stable return value), use flow analysis to narrow the return type.
+	// Identity functions guarantee that parameterless calls return a stable value, so we can track
+	// the call expression as a reference through the control flow graph for type narrowing.
+	if signature.flags&SignatureFlagsIdentity != 0 && ast.IsCallExpression(node) && len(node.Arguments()) == 0 {
+		flowType := c.getFlowTypeOfReference(node, returnType)
+		if flowType != returnType {
+			return flowType
+		}
+	}
 	// Treat any call to the global 'Symbol' function that is part of a const variable or readonly property
 	// as a fresh unique symbol literal type.
 	if returnType.flags&TypeFlagsESSymbolLike != 0 && c.isSymbolOrSymbolForCall(node) {
@@ -19249,6 +19258,9 @@ func (c *Checker) getSignatureFromDeclaration(declaration *ast.Node) *Signature 
 	}
 	if ast.IsConstructorTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsAbstract) || ast.IsConstructorDeclaration(declaration) && ast.HasSyntacticModifier(declaration.Parent, ast.ModifierFlagsAbstract) {
 		flags |= SignatureFlagsAbstract
+	}
+	if ast.IsFunctionTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsIdentity) {
+		flags |= SignatureFlagsIdentity
 	}
 	links.resolvedSignature = c.newSignature(flags, declaration, typeParameters, thisParameter, parameters, nil /*resolvedReturnType*/, nil /*resolvedTypePredicate*/, minArgumentCount)
 	return links.resolvedSignature

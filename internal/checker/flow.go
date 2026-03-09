@@ -1612,6 +1612,12 @@ func (c *Checker) isMatchingReference(source *ast.Node, target *ast.Node) bool {
 		}
 	case ast.KindBinaryExpression:
 		return ast.IsBinaryExpression(source) && source.AsBinaryExpression().OperatorToken.Kind == ast.KindCommaToken && c.isMatchingReference(source.AsBinaryExpression().Right, target)
+	case ast.KindCallExpression:
+		// Identity function calls: two parameterless calls to the same identity function are matching references.
+		// This enables type narrowing across repeated calls to identity (stable) functions.
+		if ast.IsCallExpression(target) && len(source.Arguments()) == 0 && len(target.Arguments()) == 0 {
+			return c.isMatchingReference(source.Expression(), target.Expression())
+		}
 	}
 	return false
 }
@@ -1688,6 +1694,15 @@ func (c *Checker) writeFlowCacheKey(b *keyBuilder, node *ast.Node, declaredType 
 		b.writeByte('#')
 		b.writeType(declaredType)
 		return true
+	case ast.KindCallExpression:
+		// For identity function calls, generate a cache key based on the callee expression
+		if len(node.Arguments()) == 0 {
+			if !c.writeFlowCacheKey(b, node.Expression(), declaredType, initialType, flowContainer) {
+				return false
+			}
+			b.writeString("()")
+			return true
+		}
 	}
 	return false
 }
@@ -1812,7 +1827,7 @@ func (c *Checker) isConstantReference(node *ast.Node) bool {
 }
 
 func (c *Checker) containsMatchingReference(source *ast.Node, target *ast.Node) bool {
-	for ast.IsAccessExpression(source) {
+	for ast.IsAccessExpression(source) || ast.IsCallExpression(source) {
 		source = source.Expression()
 		if c.isMatchingReference(source, target) {
 			return true

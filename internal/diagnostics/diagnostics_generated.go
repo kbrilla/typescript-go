@@ -4288,6 +4288,10 @@ var Set_the_number_of_projects_to_build_concurrently = &Message{code: 100009, ca
 
 var Deduplicate_packages_with_the_same_name_and_version = &Message{code: 100011, category: CategoryMessage, key: "Deduplicate_packages_with_the_same_name_and_version_100011", text: "Deduplicate packages with the same name and version."}
 
+var X_identity_modifier_can_only_appear_on_a_function_type_with_no_parameters = &Message{code: 100012, category: CategoryError, key: "identity_modifier_can_only_appear_on_a_function_type_with_no_parameters_100012", text: "'identity' modifier can only appear on a function type with no parameters."}
+
+var X_identity_modifier_cannot_be_used_with_0_modifier = &Message{code: 100013, category: CategoryError, key: "identity_modifier_cannot_be_used_with_0_modifier_100013", text: "'identity' modifier cannot be used with '{0}' modifier."}
+
 func keyToMessage(key Key) *Message {
 	switch key {
 	case "Unterminated_string_literal_1002":
@@ -8576,6 +8580,10 @@ func keyToMessage(key Key) *Message {
 		return Set_the_number_of_projects_to_build_concurrently
 	case "Deduplicate_packages_with_the_same_name_and_version_100011":
 		return Deduplicate_packages_with_the_same_name_and_version
+	case "identity_modifier_can_only_appear_on_a_function_type_with_no_parameters_100012":
+		return X_identity_modifier_can_only_appear_on_a_function_type_with_no_parameters
+	case "identity_modifier_cannot_be_used_with_0_modifier_100013":
+		return X_identity_modifier_cannot_be_used_with_0_modifier
 	default:
 		return nil
 	}

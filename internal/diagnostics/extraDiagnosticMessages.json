@@ -86,5 +86,13 @@
     "Deduplicate packages with the same name and version.": {
         "category": "Message",
         "code": 100011
+    },
+    "'identity' modifier can only appear on a function type with no parameters.": {
+        "category": "Error",
+        "code": 100012
+    },
+    "'identity' modifier cannot be used with '{0}' modifier.": {
+        "category": "Error",
+        "code": 100013
     }
 }
