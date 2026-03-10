@@ -294,7 +294,7 @@ func (c *Checker) isAliasEscapeAssignmentForCallReference(reference *ast.Node, a
 		return false
 	}
 
-	callee := c.getReferenceCandidate(reference.Expression())
+	callee := c.getNormalizedReferenceCandidate(reference.Expression())
 	switch {
 	case ast.IsVariableDeclaration(assignment):
 		initializer := assignment.Initializer()
@@ -303,7 +303,7 @@ func (c *Checker) isAliasEscapeAssignmentForCallReference(reference *ast.Node, a
 		}
 
 		// A direct local const alias is not itself an uncertainty boundary.
-		if c.isMatchingReference(callee, c.getReferenceCandidate(initializer)) {
+		if c.isMatchingReference(callee, c.getNormalizedReferenceCandidate(initializer)) {
 			symbol := c.getSymbolOfDeclaration(assignment)
 			if symbol != nil && symbol != c.unknownSymbol && c.isConstantVariable(symbol) {
 				return false
@@ -320,7 +320,7 @@ func (c *Checker) isAliasEscapeAssignmentForCallReference(reference *ast.Node, a
 }
 
 func (c *Checker) isAliasEscapeInitializerForCallReference(callee *ast.Node, initializer *ast.Node) bool {
-	if c.isMatchingReference(callee, c.getReferenceCandidate(initializer)) {
+	if c.isMatchingReference(callee, c.getNormalizedReferenceCandidate(initializer)) {
 		return true
 	}
 
@@ -330,7 +330,7 @@ func (c *Checker) isAliasEscapeInitializerForCallReference(callee *ast.Node, ini
 		}
 
 		for _, argument := range initializer.Arguments() {
-			if c.isMatchingReference(callee, c.getReferenceCandidate(argument)) {
+			if c.isMatchingReference(callee, c.getNormalizedReferenceCandidate(argument)) {
 				return true
 			}
 		}
@@ -345,7 +345,7 @@ func (c *Checker) isInlineTrivialPassthroughCallForCallReference(callee *ast.Nod
 	}
 
 	argument := initializer.Arguments()[0]
-	if !c.isMatchingReference(callee, c.getReferenceCandidate(argument)) {
+	if !c.isMatchingReference(callee, c.getNormalizedReferenceCandidate(argument)) {
 		return false
 	}
 
@@ -454,10 +454,10 @@ func (c *Checker) isTrivialPassthroughFunctionLike(fn *ast.Node) bool {
 		}
 
 		retExpr := statements[0].AsReturnStatement().Expression
-		return retExpr != nil && c.isMatchingReference(parameterName, c.getReferenceCandidate(ast.SkipParentheses(retExpr)))
+		return retExpr != nil && c.isMatchingReference(parameterName, c.getNormalizedReferenceCandidate(retExpr))
 	}
 
-	return c.isMatchingReference(parameterName, c.getReferenceCandidate(ast.SkipParentheses(body)))
+	return c.isMatchingReference(parameterName, c.getNormalizedReferenceCandidate(body))
 }
 
 func (c *Checker) isAwaitAssignmentBoundaryForCallReference(reference *ast.Node, assignment *ast.Node) bool {
@@ -579,7 +579,7 @@ func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *
 		return false
 	}
 
-	if !c.isMatchingReference(c.getReferenceCandidate(readAccess.Expression()), c.getReferenceCandidate(setAccess.Expression())) {
+	if !c.isMatchingReference(c.getNormalizedReferenceCandidate(readAccess.Expression()), c.getNormalizedReferenceCandidate(setAccess.Expression())) {
 		return false
 	}
 
@@ -833,7 +833,7 @@ func (c *Checker) narrowTypeByCallExpression(f *FlowState, t *Type, callExpressi
 	}
 	if c.containsMissingType(t) && ast.IsAccessExpression(f.reference) && ast.IsPropertyAccessExpression(callExpression.Expression()) {
 		callAccess := callExpression.Expression()
-		if c.isMatchingReference(f.reference.Expression(), c.getReferenceCandidate(callAccess.Expression())) && ast.IsIdentifier(callAccess.Name()) && callAccess.Name().Text() == "hasOwnProperty" && len(callExpression.Arguments()) == 1 {
+		if c.isMatchingReference(f.reference.Expression(), c.getNormalizedReferenceCandidate(callAccess.Expression())) && ast.IsIdentifier(callAccess.Name()) && callAccess.Name().Text() == "hasOwnProperty" && len(callExpression.Arguments()) == 1 {
 			argument := callExpression.Arguments()[0]
 			if accessedName, ok := c.getAccessedPropertyName(f.reference); ok && ast.IsStringLiteralLike(argument) && accessedName == argument.Text() {
 				return c.getTypeWithFacts(t, core.IfElse(assumeTrue, TypeFactsNEUndefined, TypeFactsEQUndefined))
@@ -849,8 +849,8 @@ func (c *Checker) narrowTypeByBinaryExpression(f *FlowState, t *Type, expr *ast.
 		return c.narrowTypeByTruthiness(f, c.narrowType(f, t, expr.Right, assumeTrue), expr.Left, assumeTrue)
 	case ast.KindEqualsEqualsToken, ast.KindExclamationEqualsToken, ast.KindEqualsEqualsEqualsToken, ast.KindExclamationEqualsEqualsToken:
 		operator := expr.OperatorToken.Kind
-		left := c.getReferenceCandidate(expr.Left)
-		right := c.getReferenceCandidate(expr.Right)
+		left := c.getNormalizedReferenceCandidate(expr.Left)
+		right := c.getNormalizedReferenceCandidate(expr.Right)
 		if left.Kind == ast.KindTypeOfExpression && ast.IsStringLiteralLike(right) {
 			return c.narrowTypeByTypeof(f, t, left.AsTypeOfExpression(), operator, right, assumeTrue)
 		}
@@ -896,7 +896,7 @@ func (c *Checker) narrowTypeByBinaryExpression(f *FlowState, t *Type, expr *ast.
 		if ast.IsPrivateIdentifier(expr.Left) {
 			return c.narrowTypeByPrivateIdentifierInInExpression(f, t, expr, assumeTrue)
 		}
-		target := c.getReferenceCandidate(expr.Right)
+		target := c.getNormalizedReferenceCandidate(expr.Right)
 		if c.containsMissingType(t) && ast.IsAccessExpression(f.reference) && c.isMatchingReference(f.reference.Expression(), target) {
 			leftType := c.getTypeOfExpression(expr.Left)
 			if isTypeUsableAsPropertyName(leftType) {
@@ -1766,7 +1766,7 @@ func (c *Checker) getTypeAtFlowArrayMutation(f *FlowState, flow *ast.FlowNode) F
 		} else {
 			expr = node.AsBinaryExpression().Left.Expression()
 		}
-		if c.isMatchingReference(f.reference, c.getReferenceCandidate(expr)) {
+		if c.isMatchingReference(f.reference, c.getNormalizedReferenceCandidate(expr)) {
 			flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
 			if flowType.t.objectFlags&ObjectFlagsEvolvingArray != 0 {
 				evolvedType := flowType.t
@@ -2247,6 +2247,10 @@ func (c *Checker) getReferenceCandidate(node *ast.Node) *ast.Node {
 		}
 	}
 	return node
+}
+
+func (c *Checker) getNormalizedReferenceCandidate(node *ast.Node) *ast.Node {
+	return c.getReferenceCandidate(ast.SkipParentheses(node))
 }
 
 func (c *Checker) getReferenceRoot(node *ast.Node) *ast.Node {
