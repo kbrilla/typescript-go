@@ -33,10 +33,12 @@ Divergence points (current code):
   - Getter path has no identity-specific call-boundary diagnostic/invalidation branch.
   - Identity path has dedicated `getTypeAtFlowCall` logic for non-matching call/await boundaries, preserve carveouts, and diagnostics (`TS100014`/`TS100015`) in `internal/checker/flow.go`.
 
-Simplification opportunities:
-- Extract a shared "stable read endpoint" abstraction so getter and identity use one boundary-invalidation policy function.
-- Consolidate preserve carveouts behind a single helper used by both reference kinds (instead of identity-specific checks in `getTypeAtFlowCall`).
-- Keep separate syntax/signature plumbing, but converge reference matching and invalidation decisions in checker flow.
+Simplification landed (low risk, semantics-preserving):
+- Extracted shared call-boundary precondition helpers in `internal/checker/flow.go`:
+  - `isNoArgCallExpression(node)`
+  - `isNonMatchingCallBoundary(reference, boundary)`
+- Identity boundary checks and preserve-carveout guards now reuse the same normalized precondition path instead of repeating inline checks.
+- Behavior is intentionally unchanged; this is a normalization step that reduces duplication before deeper getter/identity convergence work.
 
 ## Flow Graphs
 
@@ -68,7 +70,9 @@ flowchart LR
     S1[bindCondition -> FlowCondition]
     S2[getTypeAtFlowCondition]
     S3[narrowTypeByTruthiness]
+    S4[Shared call-boundary preconditions in flow.go]
     S1 --> S2 --> S3
+    S3 --> S4
   end
 
   subgraph GetterOnly[Getter-specific]
@@ -83,7 +87,7 @@ flowchart LR
     I2[checkCallExpression identity hook]
     I3[getTypeAtFlowCall identity invalidation + diagnostics]
     I1 --> I2 --> S1
-    S3 --> I3
+    S4 --> I3
   end
 ```
 

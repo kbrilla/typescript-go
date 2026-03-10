@@ -509,7 +509,7 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 		}
 	}
 
-	if ast.IsCallExpression(f.reference) && !c.isMatchingReference(f.reference, flow.Node) {
+	if c.isNonMatchingCallBoundary(f.reference, flow.Node) {
 		if c.shouldPreserveReadSetCallNarrowing(f.reference, flow.Node) ||
 			c.shouldPreserveNoopCallbackCallNarrowing(f.reference, flow.Node) ||
 			c.shouldPreservePromiseResolveAwaitCallNarrowing(f.reference, flow.Node) ||
@@ -526,6 +526,14 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 	return FlowType{}
 }
 
+func isNoArgCallExpression(node *ast.Node) bool {
+	return ast.IsCallExpression(node) && len(node.Arguments()) == 0
+}
+
+func (c *Checker) isNonMatchingCallBoundary(reference *ast.Node, boundary *ast.Node) bool {
+	return ast.IsCallExpression(reference) && !c.isMatchingReference(reference, boundary)
+}
+
 func (c *Checker) reportIdentityBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node) {
 	if boundary == nil || c.reportedIdentityBoundaryDiagnostics.Has(boundary) || !c.isIdentityCallReference(reference) {
 		return
@@ -540,19 +548,11 @@ func (c *Checker) reportIdentityBoundaryInvalidationDiagnostic(reference *ast.No
 }
 
 func (c *Checker) isUnknownCallBoundaryForIdentityReference(reference *ast.Node, boundary *ast.Node) bool {
-	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 || !ast.IsCallExpression(boundary) {
-		return false
-	}
-
-	if c.isMatchingReference(reference, boundary) {
-		return false
-	}
-
-	return len(boundary.Arguments()) == 0
+	return isNoArgCallExpression(reference) && isNoArgCallExpression(boundary) && !c.isMatchingReference(reference, boundary)
 }
 
 func (c *Checker) isIdentityCallReference(reference *ast.Node) bool {
-	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 {
+	if !isNoArgCallExpression(reference) {
 		return false
 	}
 
@@ -561,7 +561,7 @@ func (c *Checker) isIdentityCallReference(reference *ast.Node) bool {
 }
 
 func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *ast.Node) bool {
-	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 || !ast.IsCallExpression(call) {
+	if !isNoArgCallExpression(reference) || !ast.IsCallExpression(call) {
 		return false
 	}
 
@@ -588,7 +588,7 @@ func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *
 }
 
 func (c *Checker) shouldPreserveNoopCallbackCallNarrowing(reference *ast.Node, call *ast.Node) bool {
-	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 || !ast.IsCallExpression(call) {
+	if !isNoArgCallExpression(reference) || !ast.IsCallExpression(call) {
 		return false
 	}
 
@@ -623,7 +623,7 @@ func (c *Checker) shouldPreserveNoopCallbackCallNarrowing(reference *ast.Node, c
 }
 
 func (c *Checker) shouldPreservePromiseResolveAwaitCallNarrowing(reference *ast.Node, boundary *ast.Node) bool {
-	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 || !ast.IsAwaitExpression(boundary) {
+	if !isNoArgCallExpression(reference) || !ast.IsAwaitExpression(boundary) {
 		return false
 	}
 
@@ -650,7 +650,7 @@ func (c *Checker) shouldPreservePromiseResolveAwaitCallNarrowing(reference *ast.
 }
 
 func (c *Checker) shouldPreserveAmbientNoArgAwaitCallNarrowing(reference *ast.Node, boundary *ast.Node) bool {
-	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 || !ast.IsAwaitExpression(boundary) {
+	if !isNoArgCallExpression(reference) || !ast.IsAwaitExpression(boundary) {
 		return false
 	}
 
