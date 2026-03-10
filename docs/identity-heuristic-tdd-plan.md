@@ -237,7 +237,8 @@ Current status:
 - [x] Step 8: Parity and regression sweep (local parity suite)
   - Added dedicated local parity test coverage in `identityModifierParity.ts` for repeated-read success, callback boundary invalidation, await boundary invalidation, write-call analog invalidation, and one-liner ternary shape.
   - Added discriminated-union identity parity coverage for kind-guard narrowing and post-unknown-call invalidation.
-  - Remaining: expand parity matrix breadth and add submodule parity mapping.
+  - Added comprehensive getter-to-identity parity visibility sweep in `identityModifierGetterParitySweep.ts` with categorized sections (repeated reads, branch merges, callback/await, write invalidation, aliasing, ternary, nested access).
+  - Remaining: expand parity mapping against additional submodule scenarios.
 - [ ] Step 9: Performance guardrails/perf checks
 
 ### Next Focus (Immediate)

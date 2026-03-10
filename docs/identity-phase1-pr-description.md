@@ -8,6 +8,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - `docs/identity-modifier-spec.md`
 - `docs/identity-heuristic-tdd-plan.md`
 - `testdata/tests/cases/compiler/identityModifierParity.ts`
+- `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`
 
 ## Implemented So Far
 - Parser and binder support for `identity` function-type modifier usage in declaration type positions.
@@ -38,6 +39,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - [x] Implemented uncertainty boundaries invalidate prior narrowing for covered shapes (unknown call, callback forms, alias escape, `await`).
 - [x] Parser disambiguation for `identity<...>` type references.
 - [x] Dedicated local parity suite exists and is green (`identityModifierParity.ts`).
+- [x] Getter-to-identity parity visibility sweep is green (`identityModifierGetterParitySweep.ts`).
 - [x] Tier 1 parity slice coverage for property assignment and callable hybrid setter-style writes in local tests.
 - [x] Tier 2 narrow precision for trivial local passthrough helper shapes.
 
@@ -51,20 +53,29 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 ## Getter vs Identity Parity Matrix
 | Behavior category | Getter | Identity | Parity |
 | --- | --- | --- | --- |
-| Guarded repeated read reuse | Implemented | Implemented | Full |
-| Unknown-call boundary invalidation | Implemented | Implemented | Full |
-| Callback boundary invalidation (covered forms) | Implemented | Implemented | Full (covered forms) |
-| Await boundary invalidation (statement + assignment forms) | Implemented | Implemented | Full |
-| Alias-escape invalidation (initializer + reassignment + indirect passthrough) | Implemented | Implemented | Full |
-| Discriminated-union kind narrowing reuse | Implemented | Implemented | Full |
-| Property/callable setter-style invalidation slice | Implemented | Implemented | Full (covered slice) |
-| One-liner ternary repeated-read shape | Implemented | Implemented | Full |
+| Basic repeated reads after guard | Implemented | Implemented | Full |
+| Branch merge reset after guard split | Implemented | Implemented | Full |
+| Callback boundary invalidation | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
+| Await boundary invalidation | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
+| Write invalidation after setter/write call | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
+| Aliasing / escape handling | Object alias keeps getter narrowing in sweep scenario | Function alias invalidates | Gap |
+| Conditional/ternary repeated-read shape | Implemented | Implemented | Full |
+| Nested discriminant read reuse | Implemented | Implemented | Full |
+| Nested unknown-call boundary after discriminant guard | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
 | Tier 2 forwarding precision (non-trivial helpers) | N/A | Partial | Gap |
 | Heuristic-limit diagnostics | N/A | Not implemented | Gap |
 
 Parity score summary:
-- `8/10` categories are fully matched for the scoped Phase 1 matrix above.
-- Remaining gaps are concentrated in Tier 2 broader forwarding precision and diagnostics coverage.
+- `4/9` getter-comparable CFA categories are fully matched in the new sweep (`P1`, `P2`, `P7`, `P8` read-reuse branch).
+- `5/9` getter-comparable categories show visible mismatches in the sweep (`P3`, `P4`, `P5`, `P6`, `P8` unknown-call boundary).
+- Additional Phase 1 gaps remain unchanged: Tier 2 broader forwarding precision and heuristic-limit diagnostics.
+
+Newly visible gaps from getter-to-identity sweep:
+- Callback boundary: getter scenario stays narrowed while identity invalidates.
+- Await boundary: getter scenario stays narrowed while identity invalidates.
+- Write invalidation parity slice: getter scenario stays narrowed while identity invalidates.
+- Aliasing: object aliasing for getter stays narrowed while identity function aliasing invalidates.
+- Nested unknown-call boundary: getter scenario stays narrowed while identity invalidates.
 
 ## Boundary Coverage Matrix
 | Boundary | Example shape | Status | Test source |
@@ -92,16 +103,16 @@ Parity score summary:
 ## Parity Coverage Matrix (New Local Slice)
 | Parity pattern | Example shape | Status | Test source |
 | --- | --- | --- | --- |
-| Stable repeated read | `if (read() !== undefined) { read(); }` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
-| Discriminant-kind parity | `if (shape().kind === "circle") { shape().radius }` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
-| Discriminant unknown-call boundary | `if (shape().kind === "circle") { unknownShapeMutate(); shape().radius }` | Implemented (error after boundary) | `testdata/tests/cases/compiler/identityModifierParity.ts` |
-| Callback invalidation | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
-| Await invalidation | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
-| Write-call analog invalidation | `store.set(...)` then `store.read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
-| Property setter assignment invalidation | `model.value = ...` then `model.value` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
-| Callable hybrid setter-style invalidation | `hybrid("next")` then `hybrid()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
-| Callable hybrid undefined-write invalidation | `hybrid(undefined)` then `hybrid()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
-| One-liner ternary | `read() !== undefined ? read() : "fallback"` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| Basic repeated read parity | getter `model.value` vs identity `read()` | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Branch merge parity | post-merge `string` assignment | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Callback boundary parity | `invoke(() => {})` then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Await boundary parity | `await delay()` then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Write invalidation parity | setter/write call then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Aliasing parity | alias/escape then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Conditional/ternary parity | guarded ternary read fallback | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Nested discriminant reuse parity | kind guard then nested field read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Nested unknown-call boundary parity | kind guard + unknown call + nested read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Existing hybrid/write-call slices | callable hybrid + setter-call analog | Additional visibility | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 
 ## Examples and Parity
 
