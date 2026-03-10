@@ -9,6 +9,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - `docs/identity-heuristic-tdd-plan.md`
 - `testdata/tests/cases/compiler/identityModifierParity.ts`
 - `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`
+- `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts`
 - `testdata/tests/cases/compiler/identityModifierHeuristicDiagnostics.ts`
 
 ## Implemented So Far
@@ -36,6 +37,13 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - Mutable/reassigned local helpers remain conservative by design (`let localMaybeId = <T>(x: T) => x; localMaybeId = pass;`).
 - Mutable/reassigned helper alias chains remain conservative by design (`let maybeAlias = localId; maybeAlias = pass;`).
 - Non-trivial local function helper bodies remain conservative by design (`function localFnWrap<T>(x: T) { return () => x; }`).
+- Added broad getter-to-identity parity visibility corpus ported from submodule getter/CFA sources with section labels and source references:
+  - `_submodules/TypeScript/tests/cases/compiler/narrowingOfQualifiedNames.ts`
+  - `_submodules/TypeScript/tests/cases/compiler/narrowingOfDottedNames.ts`
+  - `_submodules/TypeScript/tests/cases/compiler/getterControlFlowStrictNull.ts`
+  - `_submodules/TypeScript/tests/cases/conformance/expressions/typeGuards/typeGuardsInProperties.ts`
+  - `_submodules/TypeScript/tests/cases/conformance/expressions/typeGuards/typeGuardsInClassAccessors.ts`
+- The broad corpus is visibility-first: parity mismatches are intentionally retained and baseline-accepted to expose remaining gaps.
 
 ## Phase 1 Checklist
 
@@ -46,6 +54,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - [x] Parser disambiguation for `identity<...>` type references.
 - [x] Dedicated local parity suite exists and is green (`identityModifierParity.ts`).
 - [x] Getter-to-identity parity visibility sweep is green (`identityModifierGetterParitySweep.ts`).
+- [x] Broad getter-to-identity parity corpus landed with source-tagged sections and intentional mismatch visibility (`identityModifierGetterCorpus.ts`).
 - [x] Tier 1 parity slice coverage for property assignment and callable hybrid setter-style writes in local tests.
 - [x] Narrow write parity slice: same-receiver `read()` then `set(non-nullish)` now preserves narrowing (`P5` in getter parity sweep).
 - [x] Tier 2 narrow precision for trivial local passthrough helper shapes.
@@ -119,6 +128,13 @@ Remaining visible gaps from getter-to-identity sweep:
 | Nested discriminant reuse parity | kind guard then nested field read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Nested unknown-call boundary parity | kind guard + unknown call + nested read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Existing hybrid/write-call slices | callable hybrid + setter-call analog | Additional visibility | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| Broad getter corpus (submodule-derived) | qualified names, dotted names, strict-null getter flow, type-guard member patterns | Visibility-first, includes intentional mismatches | `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts` |
+
+## Broad Getter Corpus Status
+- New corpus file: `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts`
+- Corpus intent: maximize parity visibility, not immediate all-green parity.
+- Failing identity-side parity cases are expected and intentionally baseline-accepted.
+- This corpus is now part of local parity evidence and should be used to track gap closure slices in subsequent PRs.
 
 ## Examples and Parity
 

@@ -1,0 +1,1092 @@
+//// [tests/cases/compiler/identityModifierGetterCorpus.ts] ////
+
+=== identityModifierGetterCorpus.ts ===
+// Broad getter -> identity parity corpus.
+// Visibility-focused: intentional parity gaps are kept to track divergence.
+
+declare function invoke(cb: () => void): void;
+>invoke : Symbol(invoke, Decl(identityModifierGetterCorpus.ts, 0, 0))
+>cb : Symbol(cb, Decl(identityModifierGetterCorpus.ts, 3, 24))
+
+declare function unknownMutate(): void;
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterCorpus.ts, 3, 46))
+
+declare function pass<T>(x: T): T;
+>pass : Symbol(pass, Decl(identityModifierGetterCorpus.ts, 4, 39))
+>T : Symbol(T, Decl(identityModifierGetterCorpus.ts, 5, 22))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 5, 25))
+>T : Symbol(T, Decl(identityModifierGetterCorpus.ts, 5, 22))
+>T : Symbol(T, Decl(identityModifierGetterCorpus.ts, 5, 22))
+
+declare function delay(): Promise<void>;
+>delay : Symbol(delay, Decl(identityModifierGetterCorpus.ts, 5, 34))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --))
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfQualifiedNames.ts
+// -----------------------------------------------------------------------------
+
+// Case QN1: basic qualified-name guard and repeated read in block.
+declare const getterQN1: {
+>getterQN1 : Symbol(getterQN1, Decl(identityModifierGetterCorpus.ts, 13, 13))
+
+    get foo(): { aaa: string; bbb: string } | undefined;
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+>aaa : Symbol(aaa, Decl(identityModifierGetterCorpus.ts, 14, 16))
+>bbb : Symbol(bbb, Decl(identityModifierGetterCorpus.ts, 14, 29))
+
+};
+
+declare const identityQN1: {
+>identityQN1 : Symbol(identityQN1, Decl(identityModifierGetterCorpus.ts, 17, 13))
+
+    foo: identity () => { aaa: string; bbb: string } | undefined;
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+>aaa : Symbol(aaa, Decl(identityModifierGetterCorpus.ts, 18, 25))
+>bbb : Symbol(bbb, Decl(identityModifierGetterCorpus.ts, 18, 38))
+
+};
+
+if (getterQN1.foo) {
+>getterQN1.foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+>getterQN1 : Symbol(getterQN1, Decl(identityModifierGetterCorpus.ts, 13, 13))
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+
+    const qn1GetterA: string = getterQN1.foo.aaa; // getter baseline: OK
+>qn1GetterA : Symbol(qn1GetterA, Decl(identityModifierGetterCorpus.ts, 22, 9))
+>getterQN1.foo.aaa : Symbol(aaa, Decl(identityModifierGetterCorpus.ts, 14, 16))
+>getterQN1.foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+>getterQN1 : Symbol(getterQN1, Decl(identityModifierGetterCorpus.ts, 13, 13))
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+>aaa : Symbol(aaa, Decl(identityModifierGetterCorpus.ts, 14, 16))
+
+    const qn1GetterB: string = getterQN1.foo.bbb; // getter baseline: OK
+>qn1GetterB : Symbol(qn1GetterB, Decl(identityModifierGetterCorpus.ts, 23, 9))
+>getterQN1.foo.bbb : Symbol(bbb, Decl(identityModifierGetterCorpus.ts, 14, 29))
+>getterQN1.foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+>getterQN1 : Symbol(getterQN1, Decl(identityModifierGetterCorpus.ts, 13, 13))
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+>bbb : Symbol(bbb, Decl(identityModifierGetterCorpus.ts, 14, 29))
+
+    qn1GetterA;
+>qn1GetterA : Symbol(qn1GetterA, Decl(identityModifierGetterCorpus.ts, 22, 9))
+
+    qn1GetterB;
+>qn1GetterB : Symbol(qn1GetterB, Decl(identityModifierGetterCorpus.ts, 23, 9))
+}
+
+if (identityQN1.foo()) {
+>identityQN1.foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+>identityQN1 : Symbol(identityQN1, Decl(identityModifierGetterCorpus.ts, 17, 13))
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+
+    const qn1IdentityA: string = identityQN1.foo().aaa; // identity parity target: OK
+>qn1IdentityA : Symbol(qn1IdentityA, Decl(identityModifierGetterCorpus.ts, 29, 9))
+>identityQN1.foo().aaa : Symbol(aaa, Decl(identityModifierGetterCorpus.ts, 18, 25))
+>identityQN1.foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+>identityQN1 : Symbol(identityQN1, Decl(identityModifierGetterCorpus.ts, 17, 13))
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+>aaa : Symbol(aaa, Decl(identityModifierGetterCorpus.ts, 18, 25))
+
+    const qn1IdentityB: string = identityQN1.foo().bbb; // identity parity target: OK
+>qn1IdentityB : Symbol(qn1IdentityB, Decl(identityModifierGetterCorpus.ts, 30, 9))
+>identityQN1.foo().bbb : Symbol(bbb, Decl(identityModifierGetterCorpus.ts, 18, 38))
+>identityQN1.foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+>identityQN1 : Symbol(identityQN1, Decl(identityModifierGetterCorpus.ts, 17, 13))
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+>bbb : Symbol(bbb, Decl(identityModifierGetterCorpus.ts, 18, 38))
+
+    qn1IdentityA;
+>qn1IdentityA : Symbol(qn1IdentityA, Decl(identityModifierGetterCorpus.ts, 29, 9))
+
+    qn1IdentityB;
+>qn1IdentityB : Symbol(qn1IdentityB, Decl(identityModifierGetterCorpus.ts, 30, 9))
+}
+
+// Case QN2: loop retention after guard.
+if (getterQN1.foo) {
+>getterQN1.foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+>getterQN1 : Symbol(getterQN1, Decl(identityModifierGetterCorpus.ts, 13, 13))
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+
+    for (const _ of [1, 2, 3]) {
+>_ : Symbol(_, Decl(identityModifierGetterCorpus.ts, 37, 14))
+
+        const qn2Getter: string = getterQN1.foo.aaa; // getter baseline: OK
+>qn2Getter : Symbol(qn2Getter, Decl(identityModifierGetterCorpus.ts, 38, 13))
+>getterQN1.foo.aaa : Symbol(aaa, Decl(identityModifierGetterCorpus.ts, 14, 16))
+>getterQN1.foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+>getterQN1 : Symbol(getterQN1, Decl(identityModifierGetterCorpus.ts, 13, 13))
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 13, 26))
+>aaa : Symbol(aaa, Decl(identityModifierGetterCorpus.ts, 14, 16))
+
+        qn2Getter;
+>qn2Getter : Symbol(qn2Getter, Decl(identityModifierGetterCorpus.ts, 38, 13))
+    }
+}
+
+if (identityQN1.foo()) {
+>identityQN1.foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+>identityQN1 : Symbol(identityQN1, Decl(identityModifierGetterCorpus.ts, 17, 13))
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+
+    for (const _ of [1, 2, 3]) {
+>_ : Symbol(_, Decl(identityModifierGetterCorpus.ts, 44, 14))
+
+        const qn2Identity: string = identityQN1.foo().aaa; // identity parity target: OK
+>qn2Identity : Symbol(qn2Identity, Decl(identityModifierGetterCorpus.ts, 45, 13))
+>identityQN1.foo().aaa : Symbol(aaa, Decl(identityModifierGetterCorpus.ts, 18, 25))
+>identityQN1.foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+>identityQN1 : Symbol(identityQN1, Decl(identityModifierGetterCorpus.ts, 17, 13))
+>foo : Symbol(foo, Decl(identityModifierGetterCorpus.ts, 17, 28))
+>aaa : Symbol(aaa, Decl(identityModifierGetterCorpus.ts, 18, 25))
+
+        qn2Identity;
+>qn2Identity : Symbol(qn2Identity, Decl(identityModifierGetterCorpus.ts, 45, 13))
+    }
+}
+
+interface DeepOptionalGetter {
+>DeepOptionalGetter : Symbol(DeepOptionalGetter, Decl(identityModifierGetterCorpus.ts, 48, 1))
+
+    a?: {
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+
+        b?: {
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+
+            c?: string;
+>c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+
+        };
+    };
+}
+
+declare const getterQN2: {
+>getterQN2 : Symbol(getterQN2, Decl(identityModifierGetterCorpus.ts, 58, 13))
+
+    get value(): DeepOptionalGetter;
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>DeepOptionalGetter : Symbol(DeepOptionalGetter, Decl(identityModifierGetterCorpus.ts, 48, 1))
+
+};
+
+declare const identityQN2: {
+>identityQN2 : Symbol(identityQN2, Decl(identityModifierGetterCorpus.ts, 62, 13))
+
+    value: identity () => DeepOptionalGetter;
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>DeepOptionalGetter : Symbol(DeepOptionalGetter, Decl(identityModifierGetterCorpus.ts, 48, 1))
+
+};
+
+// Case QN3: deep qualified-name chain with nested guards.
+if (getterQN2.value.a) {
+>getterQN2.value.a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>getterQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>getterQN2 : Symbol(getterQN2, Decl(identityModifierGetterCorpus.ts, 58, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+
+    if (getterQN2.value.a.b) {
+>getterQN2.value.a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>getterQN2.value.a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>getterQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>getterQN2 : Symbol(getterQN2, Decl(identityModifierGetterCorpus.ts, 58, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+
+        if (getterQN2.value.a.b.c) {
+>getterQN2.value.a.b.c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+>getterQN2.value.a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>getterQN2.value.a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>getterQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>getterQN2 : Symbol(getterQN2, Decl(identityModifierGetterCorpus.ts, 58, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+
+            const qn3Getter: string = getterQN2.value.a.b.c; // getter baseline: OK
+>qn3Getter : Symbol(qn3Getter, Decl(identityModifierGetterCorpus.ts, 70, 17))
+>getterQN2.value.a.b.c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+>getterQN2.value.a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>getterQN2.value.a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>getterQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>getterQN2 : Symbol(getterQN2, Decl(identityModifierGetterCorpus.ts, 58, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+
+            qn3Getter;
+>qn3Getter : Symbol(qn3Getter, Decl(identityModifierGetterCorpus.ts, 70, 17))
+        }
+    }
+}
+
+if (identityQN2.value().a) {
+>identityQN2.value().a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>identityQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>identityQN2 : Symbol(identityQN2, Decl(identityModifierGetterCorpus.ts, 62, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+
+    if (identityQN2.value().a.b) {
+>identityQN2.value().a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>identityQN2.value().a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>identityQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>identityQN2 : Symbol(identityQN2, Decl(identityModifierGetterCorpus.ts, 62, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+
+        if (identityQN2.value().a.b.c) {
+>identityQN2.value().a.b.c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+>identityQN2.value().a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>identityQN2.value().a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>identityQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>identityQN2 : Symbol(identityQN2, Decl(identityModifierGetterCorpus.ts, 62, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+
+            const qn3Identity: string = identityQN2.value().a.b.c; // identity parity target: OK
+>qn3Identity : Symbol(qn3Identity, Decl(identityModifierGetterCorpus.ts, 79, 17))
+>identityQN2.value().a.b.c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+>identityQN2.value().a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>identityQN2.value().a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>identityQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>identityQN2 : Symbol(identityQN2, Decl(identityModifierGetterCorpus.ts, 62, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+
+            qn3Identity;
+>qn3Identity : Symbol(qn3Identity, Decl(identityModifierGetterCorpus.ts, 79, 17))
+        }
+    }
+}
+
+// Repro family: generic discriminant narrowing (from #48289 section).
+type Fish = { type: "fish"; hasFins: true };
+>Fish : Symbol(Fish, Decl(identityModifierGetterCorpus.ts, 83, 1))
+>type : Symbol(type, Decl(identityModifierGetterCorpus.ts, 86, 13))
+>hasFins : Symbol(hasFins, Decl(identityModifierGetterCorpus.ts, 86, 27))
+
+type Dog = { type: "dog"; saysWoof: true };
+>Dog : Symbol(Dog, Decl(identityModifierGetterCorpus.ts, 86, 44))
+>type : Symbol(type, Decl(identityModifierGetterCorpus.ts, 87, 12))
+>saysWoof : Symbol(saysWoof, Decl(identityModifierGetterCorpus.ts, 87, 25))
+
+type Pet = Fish | Dog;
+>Pet : Symbol(Pet, Decl(identityModifierGetterCorpus.ts, 87, 43))
+>Fish : Symbol(Fish, Decl(identityModifierGetterCorpus.ts, 83, 1))
+>Dog : Symbol(Dog, Decl(identityModifierGetterCorpus.ts, 86, 44))
+
+// Case QN4: discriminant narrowing over generic parameter via getter.
+function qn4Getter<PetType extends Pet>(pet: { get value(): PetType }) {
+>qn4Getter : Symbol(qn4Getter, Decl(identityModifierGetterCorpus.ts, 88, 22))
+>PetType : Symbol(PetType, Decl(identityModifierGetterCorpus.ts, 91, 19))
+>Pet : Symbol(Pet, Decl(identityModifierGetterCorpus.ts, 87, 43))
+>pet : Symbol(pet, Decl(identityModifierGetterCorpus.ts, 91, 40))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 91, 46))
+>PetType : Symbol(PetType, Decl(identityModifierGetterCorpus.ts, 91, 19))
+
+    if (pet.value.type === "dog") {
+>pet.value.type : Symbol(type, Decl(identityModifierGetterCorpus.ts, 87, 12), Decl(identityModifierGetterCorpus.ts, 86, 13))
+>pet.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 91, 46))
+>pet : Symbol(pet, Decl(identityModifierGetterCorpus.ts, 91, 40))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 91, 46))
+>type : Symbol(type, Decl(identityModifierGetterCorpus.ts, 87, 12), Decl(identityModifierGetterCorpus.ts, 86, 13))
+
+        const qn4a: true = pet.value.saysWoof; // getter baseline: OK
+>qn4a : Symbol(qn4a, Decl(identityModifierGetterCorpus.ts, 93, 13))
+>pet.value.saysWoof : Symbol(saysWoof, Decl(identityModifierGetterCorpus.ts, 87, 25))
+>pet.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 91, 46))
+>pet : Symbol(pet, Decl(identityModifierGetterCorpus.ts, 91, 40))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 91, 46))
+>saysWoof : Symbol(saysWoof, Decl(identityModifierGetterCorpus.ts, 87, 25))
+
+        qn4a;
+>qn4a : Symbol(qn4a, Decl(identityModifierGetterCorpus.ts, 93, 13))
+    }
+}
+
+// Case QN5: discriminant narrowing over generic parameter via identity endpoint.
+function qn5Identity<PetType extends Pet>(pet: { value: identity () => PetType }) {
+>qn5Identity : Symbol(qn5Identity, Decl(identityModifierGetterCorpus.ts, 96, 1))
+>PetType : Symbol(PetType, Decl(identityModifierGetterCorpus.ts, 99, 21))
+>Pet : Symbol(Pet, Decl(identityModifierGetterCorpus.ts, 87, 43))
+>pet : Symbol(pet, Decl(identityModifierGetterCorpus.ts, 99, 42))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 99, 48))
+>PetType : Symbol(PetType, Decl(identityModifierGetterCorpus.ts, 99, 21))
+
+    if (pet.value().type === "dog") {
+>pet.value().type : Symbol(type, Decl(identityModifierGetterCorpus.ts, 87, 12), Decl(identityModifierGetterCorpus.ts, 86, 13))
+>pet.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 99, 48))
+>pet : Symbol(pet, Decl(identityModifierGetterCorpus.ts, 99, 42))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 99, 48))
+>type : Symbol(type, Decl(identityModifierGetterCorpus.ts, 87, 12), Decl(identityModifierGetterCorpus.ts, 86, 13))
+
+        const qn5a: true = pet.value().saysWoof; // identity parity target: OK
+>qn5a : Symbol(qn5a, Decl(identityModifierGetterCorpus.ts, 101, 13))
+>pet.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 99, 48))
+>pet : Symbol(pet, Decl(identityModifierGetterCorpus.ts, 99, 42))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 99, 48))
+
+        qn5a;
+>qn5a : Symbol(qn5a, Decl(identityModifierGetterCorpus.ts, 101, 13))
+    }
+}
+
+// Case QN6: unknown-call boundary after discriminant guard.
+if (getterQN2.value.a && getterQN2.value.a.b && getterQN2.value.a.b.c) {
+>getterQN2.value.a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>getterQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>getterQN2 : Symbol(getterQN2, Decl(identityModifierGetterCorpus.ts, 58, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>getterQN2.value.a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>getterQN2.value.a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>getterQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>getterQN2 : Symbol(getterQN2, Decl(identityModifierGetterCorpus.ts, 58, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>getterQN2.value.a.b.c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+>getterQN2.value.a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>getterQN2.value.a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>getterQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>getterQN2 : Symbol(getterQN2, Decl(identityModifierGetterCorpus.ts, 58, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+
+    unknownMutate();
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterCorpus.ts, 3, 46))
+
+    const qn6Getter: string = getterQN2.value.a.b.c; // getter sweep often remains narrowed
+>qn6Getter : Symbol(qn6Getter, Decl(identityModifierGetterCorpus.ts, 109, 9))
+>getterQN2.value.a.b.c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+>getterQN2.value.a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>getterQN2.value.a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>getterQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>getterQN2 : Symbol(getterQN2, Decl(identityModifierGetterCorpus.ts, 58, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 58, 26))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+
+    qn6Getter;
+>qn6Getter : Symbol(qn6Getter, Decl(identityModifierGetterCorpus.ts, 109, 9))
+}
+
+if (identityQN2.value().a && identityQN2.value().a.b && identityQN2.value().a.b.c) {
+>identityQN2.value().a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>identityQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>identityQN2 : Symbol(identityQN2, Decl(identityModifierGetterCorpus.ts, 62, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>identityQN2.value().a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>identityQN2.value().a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>identityQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>identityQN2 : Symbol(identityQN2, Decl(identityModifierGetterCorpus.ts, 62, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>identityQN2.value().a.b.c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+>identityQN2.value().a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>identityQN2.value().a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>identityQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>identityQN2 : Symbol(identityQN2, Decl(identityModifierGetterCorpus.ts, 62, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+
+    unknownMutate();
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterCorpus.ts, 3, 46))
+
+    const qn6Identity: string = identityQN2.value().a.b.c; // intentional gap visibility candidate
+>qn6Identity : Symbol(qn6Identity, Decl(identityModifierGetterCorpus.ts, 115, 9))
+>identityQN2.value().a.b.c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+>identityQN2.value().a.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>identityQN2.value().a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>identityQN2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>identityQN2 : Symbol(identityQN2, Decl(identityModifierGetterCorpus.ts, 62, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 62, 28))
+>a : Symbol(DeepOptionalGetter.a, Decl(identityModifierGetterCorpus.ts, 50, 30))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 51, 9))
+>c : Symbol(c, Decl(identityModifierGetterCorpus.ts, 52, 13))
+
+    qn6Identity;
+>qn6Identity : Symbol(qn6Identity, Decl(identityModifierGetterCorpus.ts, 115, 9))
+}
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfDottedNames.ts
+// -----------------------------------------------------------------------------
+
+class DotA {
+>DotA : Symbol(DotA, Decl(identityModifierGetterCorpus.ts, 117, 1))
+
+    prop!: { a: string };
+>prop : Symbol(DotA.prop, Decl(identityModifierGetterCorpus.ts, 123, 12))
+>a : Symbol(a, Decl(identityModifierGetterCorpus.ts, 124, 12))
+}
+
+class DotB {
+>DotB : Symbol(DotB, Decl(identityModifierGetterCorpus.ts, 125, 1))
+
+    prop!: { b: string };
+>prop : Symbol(DotB.prop, Decl(identityModifierGetterCorpus.ts, 127, 12))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 128, 12))
+}
+
+function isDotA(x: unknown): x is DotA {
+>isDotA : Symbol(isDotA, Decl(identityModifierGetterCorpus.ts, 129, 1))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 131, 16))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 131, 16))
+>DotA : Symbol(DotA, Decl(identityModifierGetterCorpus.ts, 117, 1))
+
+    return x instanceof DotA;
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 131, 16))
+>DotA : Symbol(DotA, Decl(identityModifierGetterCorpus.ts, 117, 1))
+}
+
+function isDotB(x: unknown): x is DotB {
+>isDotB : Symbol(isDotB, Decl(identityModifierGetterCorpus.ts, 133, 1))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 135, 16))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 135, 16))
+>DotB : Symbol(DotB, Decl(identityModifierGetterCorpus.ts, 125, 1))
+
+    return x instanceof DotB;
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 135, 16))
+>DotB : Symbol(DotB, Decl(identityModifierGetterCorpus.ts, 125, 1))
+}
+
+class DotAIdentity {
+>DotAIdentity : Symbol(DotAIdentity, Decl(identityModifierGetterCorpus.ts, 137, 1))
+
+    prop!: identity () => { a: string };
+>prop : Symbol(DotAIdentity.prop, Decl(identityModifierGetterCorpus.ts, 139, 20))
+>a : Symbol(a, Decl(identityModifierGetterCorpus.ts, 140, 27))
+}
+
+class DotBIdentity {
+>DotBIdentity : Symbol(DotBIdentity, Decl(identityModifierGetterCorpus.ts, 141, 1))
+
+    prop!: identity () => { b: string };
+>prop : Symbol(DotBIdentity.prop, Decl(identityModifierGetterCorpus.ts, 143, 20))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 144, 27))
+}
+
+function isDotAIdentity(x: unknown): x is DotAIdentity {
+>isDotAIdentity : Symbol(isDotAIdentity, Decl(identityModifierGetterCorpus.ts, 145, 1))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 147, 24))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 147, 24))
+>DotAIdentity : Symbol(DotAIdentity, Decl(identityModifierGetterCorpus.ts, 137, 1))
+
+    return x instanceof DotAIdentity;
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 147, 24))
+>DotAIdentity : Symbol(DotAIdentity, Decl(identityModifierGetterCorpus.ts, 137, 1))
+}
+
+function isDotBIdentity(x: unknown): x is DotBIdentity {
+>isDotBIdentity : Symbol(isDotBIdentity, Decl(identityModifierGetterCorpus.ts, 149, 1))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 151, 24))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 151, 24))
+>DotBIdentity : Symbol(DotBIdentity, Decl(identityModifierGetterCorpus.ts, 141, 1))
+
+    return x instanceof DotBIdentity;
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 151, 24))
+>DotBIdentity : Symbol(DotBIdentity, Decl(identityModifierGetterCorpus.ts, 141, 1))
+}
+
+// Case DN1: dotted member narrowing in loop with instanceof.
+function dn1Getter(x: DotA | DotB) {
+>dn1Getter : Symbol(dn1Getter, Decl(identityModifierGetterCorpus.ts, 153, 1))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 156, 19))
+>DotA : Symbol(DotA, Decl(identityModifierGetterCorpus.ts, 117, 1))
+>DotB : Symbol(DotB, Decl(identityModifierGetterCorpus.ts, 125, 1))
+
+    while (true) {
+        if (x instanceof DotA) {
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 156, 19))
+>DotA : Symbol(DotA, Decl(identityModifierGetterCorpus.ts, 117, 1))
+
+            const dn1a: string = x.prop.a; // getter/property baseline: OK
+>dn1a : Symbol(dn1a, Decl(identityModifierGetterCorpus.ts, 159, 17))
+>x.prop.a : Symbol(a, Decl(identityModifierGetterCorpus.ts, 124, 12))
+>x.prop : Symbol(DotA.prop, Decl(identityModifierGetterCorpus.ts, 123, 12))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 156, 19))
+>prop : Symbol(DotA.prop, Decl(identityModifierGetterCorpus.ts, 123, 12))
+>a : Symbol(a, Decl(identityModifierGetterCorpus.ts, 124, 12))
+
+            dn1a;
+>dn1a : Symbol(dn1a, Decl(identityModifierGetterCorpus.ts, 159, 17))
+
+        } else if (x instanceof DotB) {
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 156, 19))
+>DotB : Symbol(DotB, Decl(identityModifierGetterCorpus.ts, 125, 1))
+
+            const dn1b: string = x.prop.b; // getter/property baseline: OK
+>dn1b : Symbol(dn1b, Decl(identityModifierGetterCorpus.ts, 162, 17))
+>x.prop.b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 128, 12))
+>x.prop : Symbol(DotB.prop, Decl(identityModifierGetterCorpus.ts, 127, 12))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 156, 19))
+>prop : Symbol(DotB.prop, Decl(identityModifierGetterCorpus.ts, 127, 12))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 128, 12))
+
+            dn1b;
+>dn1b : Symbol(dn1b, Decl(identityModifierGetterCorpus.ts, 162, 17))
+        }
+        break;
+    }
+}
+
+// Case DN2: identity callable-property variant with user-defined predicates.
+function dn2Identity(x: DotAIdentity | DotBIdentity) {
+>dn2Identity : Symbol(dn2Identity, Decl(identityModifierGetterCorpus.ts, 167, 1))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 170, 21))
+>DotAIdentity : Symbol(DotAIdentity, Decl(identityModifierGetterCorpus.ts, 137, 1))
+>DotBIdentity : Symbol(DotBIdentity, Decl(identityModifierGetterCorpus.ts, 141, 1))
+
+    while (true) {
+        if (isDotAIdentity(x)) {
+>isDotAIdentity : Symbol(isDotAIdentity, Decl(identityModifierGetterCorpus.ts, 145, 1))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 170, 21))
+
+            const dn2a: string = x.prop().a; // identity parity target: OK
+>dn2a : Symbol(dn2a, Decl(identityModifierGetterCorpus.ts, 173, 17))
+>x.prop().a : Symbol(a, Decl(identityModifierGetterCorpus.ts, 140, 27))
+>x.prop : Symbol(DotAIdentity.prop, Decl(identityModifierGetterCorpus.ts, 139, 20))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 170, 21))
+>prop : Symbol(DotAIdentity.prop, Decl(identityModifierGetterCorpus.ts, 139, 20))
+>a : Symbol(a, Decl(identityModifierGetterCorpus.ts, 140, 27))
+
+            dn2a;
+>dn2a : Symbol(dn2a, Decl(identityModifierGetterCorpus.ts, 173, 17))
+
+        } else if (isDotBIdentity(x)) {
+>isDotBIdentity : Symbol(isDotBIdentity, Decl(identityModifierGetterCorpus.ts, 149, 1))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 170, 21))
+
+            const dn2b: string = x.prop().b; // identity parity target: OK
+>dn2b : Symbol(dn2b, Decl(identityModifierGetterCorpus.ts, 176, 17))
+>x.prop().b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 144, 27))
+>x.prop : Symbol(DotBIdentity.prop, Decl(identityModifierGetterCorpus.ts, 143, 20))
+>x : Symbol(x, Decl(identityModifierGetterCorpus.ts, 170, 21))
+>prop : Symbol(DotBIdentity.prop, Decl(identityModifierGetterCorpus.ts, 143, 20))
+>b : Symbol(b, Decl(identityModifierGetterCorpus.ts, 144, 27))
+
+            dn2b;
+>dn2b : Symbol(dn2b, Decl(identityModifierGetterCorpus.ts, 176, 17))
+        }
+        break;
+    }
+}
+
+class AInfo {
+>AInfo : Symbol(AInfo, Decl(identityModifierGetterCorpus.ts, 181, 1))
+
+    a_count: number = 1;
+>a_count : Symbol(AInfo.a_count, Decl(identityModifierGetterCorpus.ts, 183, 13))
+}
+
+class BInfo {
+>BInfo : Symbol(BInfo, Decl(identityModifierGetterCorpus.ts, 185, 1))
+
+    b_count: number = 1;
+>b_count : Symbol(BInfo.b_count, Decl(identityModifierGetterCorpus.ts, 187, 13))
+}
+
+class DotBase {
+>DotBase : Symbol(DotBase, Decl(identityModifierGetterCorpus.ts, 189, 1))
+
+    id: number = 0;
+>id : Symbol(DotBase.id, Decl(identityModifierGetterCorpus.ts, 191, 15))
+}
+
+class DotA2 extends DotBase {
+>DotA2 : Symbol(DotA2, Decl(identityModifierGetterCorpus.ts, 193, 1))
+>DotBase : Symbol(DotBase, Decl(identityModifierGetterCorpus.ts, 189, 1))
+
+    info!: AInfo;
+>info : Symbol(DotA2.info, Decl(identityModifierGetterCorpus.ts, 195, 29))
+>AInfo : Symbol(AInfo, Decl(identityModifierGetterCorpus.ts, 181, 1))
+}
+
+class DotB2 extends DotBase {
+>DotB2 : Symbol(DotB2, Decl(identityModifierGetterCorpus.ts, 197, 1))
+>DotBase : Symbol(DotBase, Decl(identityModifierGetterCorpus.ts, 189, 1))
+
+    info!: BInfo;
+>info : Symbol(DotB2.info, Decl(identityModifierGetterCorpus.ts, 199, 29))
+>BInfo : Symbol(BInfo, Decl(identityModifierGetterCorpus.ts, 185, 1))
+}
+
+class DotA2Identity extends DotBase {
+>DotA2Identity : Symbol(DotA2Identity, Decl(identityModifierGetterCorpus.ts, 201, 1))
+>DotBase : Symbol(DotBase, Decl(identityModifierGetterCorpus.ts, 189, 1))
+
+    info!: identity () => AInfo;
+>info : Symbol(DotA2Identity.info, Decl(identityModifierGetterCorpus.ts, 203, 37))
+>AInfo : Symbol(AInfo, Decl(identityModifierGetterCorpus.ts, 181, 1))
+}
+
+class DotB2Identity extends DotBase {
+>DotB2Identity : Symbol(DotB2Identity, Decl(identityModifierGetterCorpus.ts, 205, 1))
+>DotBase : Symbol(DotBase, Decl(identityModifierGetterCorpus.ts, 189, 1))
+
+    info!: identity () => BInfo;
+>info : Symbol(DotB2Identity.info, Decl(identityModifierGetterCorpus.ts, 207, 37))
+>BInfo : Symbol(BInfo, Decl(identityModifierGetterCorpus.ts, 185, 1))
+}
+
+// Case DN3: dotted-name access after class narrowing in loop.
+let dn3Target: DotBase | null = null as DotBase | null;
+>dn3Target : Symbol(dn3Target, Decl(identityModifierGetterCorpus.ts, 212, 3))
+>DotBase : Symbol(DotBase, Decl(identityModifierGetterCorpus.ts, 189, 1))
+>DotBase : Symbol(DotBase, Decl(identityModifierGetterCorpus.ts, 189, 1))
+
+while (dn3Target) {
+>dn3Target : Symbol(dn3Target, Decl(identityModifierGetterCorpus.ts, 212, 3))
+
+    if (dn3Target instanceof DotA2) {
+>dn3Target : Symbol(dn3Target, Decl(identityModifierGetterCorpus.ts, 212, 3))
+>DotA2 : Symbol(DotA2, Decl(identityModifierGetterCorpus.ts, 193, 1))
+
+        dn3Target.info.a_count = 3; // getter/property baseline: OK
+>dn3Target.info.a_count : Symbol(AInfo.a_count, Decl(identityModifierGetterCorpus.ts, 183, 13))
+>dn3Target.info : Symbol(DotA2.info, Decl(identityModifierGetterCorpus.ts, 195, 29))
+>dn3Target : Symbol(dn3Target, Decl(identityModifierGetterCorpus.ts, 212, 3))
+>info : Symbol(DotA2.info, Decl(identityModifierGetterCorpus.ts, 195, 29))
+>a_count : Symbol(AInfo.a_count, Decl(identityModifierGetterCorpus.ts, 183, 13))
+
+    } else if (dn3Target instanceof DotB2) {
+>dn3Target : Symbol(dn3Target, Decl(identityModifierGetterCorpus.ts, 212, 3))
+>DotB2 : Symbol(DotB2, Decl(identityModifierGetterCorpus.ts, 197, 1))
+
+        const dn3b: BInfo = dn3Target.info; // getter/property baseline: OK
+>dn3b : Symbol(dn3b, Decl(identityModifierGetterCorpus.ts, 217, 13))
+>BInfo : Symbol(BInfo, Decl(identityModifierGetterCorpus.ts, 185, 1))
+>dn3Target.info : Symbol(DotB2.info, Decl(identityModifierGetterCorpus.ts, 199, 29))
+>dn3Target : Symbol(dn3Target, Decl(identityModifierGetterCorpus.ts, 212, 3))
+>info : Symbol(DotB2.info, Decl(identityModifierGetterCorpus.ts, 199, 29))
+
+        dn3b;
+>dn3b : Symbol(dn3b, Decl(identityModifierGetterCorpus.ts, 217, 13))
+    }
+    break;
+}
+
+// Case DN4: identity callable-property analog.
+let dn4Target: DotA2Identity | DotB2Identity | null = null as DotA2Identity | DotB2Identity | null;
+>dn4Target : Symbol(dn4Target, Decl(identityModifierGetterCorpus.ts, 224, 3))
+>DotA2Identity : Symbol(DotA2Identity, Decl(identityModifierGetterCorpus.ts, 201, 1))
+>DotB2Identity : Symbol(DotB2Identity, Decl(identityModifierGetterCorpus.ts, 205, 1))
+>DotA2Identity : Symbol(DotA2Identity, Decl(identityModifierGetterCorpus.ts, 201, 1))
+>DotB2Identity : Symbol(DotB2Identity, Decl(identityModifierGetterCorpus.ts, 205, 1))
+
+while (dn4Target) {
+>dn4Target : Symbol(dn4Target, Decl(identityModifierGetterCorpus.ts, 224, 3))
+
+    if (dn4Target instanceof DotA2Identity) {
+>dn4Target : Symbol(dn4Target, Decl(identityModifierGetterCorpus.ts, 224, 3))
+>DotA2Identity : Symbol(DotA2Identity, Decl(identityModifierGetterCorpus.ts, 201, 1))
+
+        dn4Target.info().a_count = 3; // identity parity target: OK
+>dn4Target.info().a_count : Symbol(AInfo.a_count, Decl(identityModifierGetterCorpus.ts, 183, 13))
+>dn4Target.info : Symbol(DotA2Identity.info, Decl(identityModifierGetterCorpus.ts, 203, 37))
+>dn4Target : Symbol(dn4Target, Decl(identityModifierGetterCorpus.ts, 224, 3))
+>info : Symbol(DotA2Identity.info, Decl(identityModifierGetterCorpus.ts, 203, 37))
+>a_count : Symbol(AInfo.a_count, Decl(identityModifierGetterCorpus.ts, 183, 13))
+
+    } else if (dn4Target instanceof DotB2Identity) {
+>dn4Target : Symbol(dn4Target, Decl(identityModifierGetterCorpus.ts, 224, 3))
+>DotB2Identity : Symbol(DotB2Identity, Decl(identityModifierGetterCorpus.ts, 205, 1))
+
+        const dn4b: BInfo = dn4Target.info(); // identity parity target: OK
+>dn4b : Symbol(dn4b, Decl(identityModifierGetterCorpus.ts, 229, 13))
+>BInfo : Symbol(BInfo, Decl(identityModifierGetterCorpus.ts, 185, 1))
+>dn4Target.info : Symbol(DotB2Identity.info, Decl(identityModifierGetterCorpus.ts, 207, 37))
+>dn4Target : Symbol(dn4Target, Decl(identityModifierGetterCorpus.ts, 224, 3))
+>info : Symbol(DotB2Identity.info, Decl(identityModifierGetterCorpus.ts, 207, 37))
+
+        dn4b;
+>dn4b : Symbol(dn4b, Decl(identityModifierGetterCorpus.ts, 229, 13))
+    }
+    break;
+}
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/compiler/getterControlFlowStrictNull.ts
+// -----------------------------------------------------------------------------
+
+declare const getterNullish: {
+>getterNullish : Symbol(getterNullish, Decl(identityModifierGetterCorpus.ts, 239, 13))
+
+    get value(): string | null;
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+
+};
+
+declare const identityNullish: identity () => string | null;
+>identityNullish : Symbol(identityNullish, Decl(identityModifierGetterCorpus.ts, 243, 13))
+
+// Case GC1: truthiness guard repeated reads.
+if (getterNullish.value) {
+>getterNullish.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+>getterNullish : Symbol(getterNullish, Decl(identityModifierGetterCorpus.ts, 239, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+
+    const gc1Getter: number = getterNullish.value.length; // getter baseline: OK
+>gc1Getter : Symbol(gc1Getter, Decl(identityModifierGetterCorpus.ts, 247, 9))
+>getterNullish.value.length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>getterNullish.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+>getterNullish : Symbol(getterNullish, Decl(identityModifierGetterCorpus.ts, 239, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+    gc1Getter;
+>gc1Getter : Symbol(gc1Getter, Decl(identityModifierGetterCorpus.ts, 247, 9))
+}
+
+if (identityNullish()) {
+>identityNullish : Symbol(identityNullish, Decl(identityModifierGetterCorpus.ts, 243, 13))
+
+    const gc1Identity: number = identityNullish().length; // identity parity target: OK
+>gc1Identity : Symbol(gc1Identity, Decl(identityModifierGetterCorpus.ts, 252, 9))
+>identityNullish().length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>identityNullish : Symbol(identityNullish, Decl(identityModifierGetterCorpus.ts, 243, 13))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+    gc1Identity;
+>gc1Identity : Symbol(gc1Identity, Decl(identityModifierGetterCorpus.ts, 252, 9))
+}
+
+// Case GC2: callback boundary.
+if (getterNullish.value) {
+>getterNullish.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+>getterNullish : Symbol(getterNullish, Decl(identityModifierGetterCorpus.ts, 239, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+
+    invoke(() => {});
+>invoke : Symbol(invoke, Decl(identityModifierGetterCorpus.ts, 0, 0))
+
+    const gc2Getter: number = getterNullish.value.length; // getter sweep often remains narrowed
+>gc2Getter : Symbol(gc2Getter, Decl(identityModifierGetterCorpus.ts, 259, 9))
+>getterNullish.value.length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>getterNullish.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+>getterNullish : Symbol(getterNullish, Decl(identityModifierGetterCorpus.ts, 239, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+    gc2Getter;
+>gc2Getter : Symbol(gc2Getter, Decl(identityModifierGetterCorpus.ts, 259, 9))
+}
+
+if (identityNullish()) {
+>identityNullish : Symbol(identityNullish, Decl(identityModifierGetterCorpus.ts, 243, 13))
+
+    invoke(() => {});
+>invoke : Symbol(invoke, Decl(identityModifierGetterCorpus.ts, 0, 0))
+
+    const gc2Identity: number = identityNullish().length; // intentional gap visibility candidate
+>gc2Identity : Symbol(gc2Identity, Decl(identityModifierGetterCorpus.ts, 265, 9))
+>identityNullish().length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>identityNullish : Symbol(identityNullish, Decl(identityModifierGetterCorpus.ts, 243, 13))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+    gc2Identity;
+>gc2Identity : Symbol(gc2Identity, Decl(identityModifierGetterCorpus.ts, 265, 9))
+}
+
+// Case GC3: await boundary.
+async function gc3Getter() {
+>gc3Getter : Symbol(gc3Getter, Decl(identityModifierGetterCorpus.ts, 267, 1))
+
+    if (getterNullish.value) {
+>getterNullish.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+>getterNullish : Symbol(getterNullish, Decl(identityModifierGetterCorpus.ts, 239, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+
+        await delay();
+>delay : Symbol(delay, Decl(identityModifierGetterCorpus.ts, 5, 34))
+
+        const gc3a: number = getterNullish.value.length; // getter sweep often remains narrowed
+>gc3a : Symbol(gc3a, Decl(identityModifierGetterCorpus.ts, 273, 13))
+>getterNullish.value.length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>getterNullish.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+>getterNullish : Symbol(getterNullish, Decl(identityModifierGetterCorpus.ts, 239, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 239, 30))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+        gc3a;
+>gc3a : Symbol(gc3a, Decl(identityModifierGetterCorpus.ts, 273, 13))
+    }
+}
+
+async function gc3Identity() {
+>gc3Identity : Symbol(gc3Identity, Decl(identityModifierGetterCorpus.ts, 276, 1))
+
+    if (identityNullish()) {
+>identityNullish : Symbol(identityNullish, Decl(identityModifierGetterCorpus.ts, 243, 13))
+
+        await delay();
+>delay : Symbol(delay, Decl(identityModifierGetterCorpus.ts, 5, 34))
+
+        const gc3b: number = identityNullish().length; // intentional gap visibility candidate
+>gc3b : Symbol(gc3b, Decl(identityModifierGetterCorpus.ts, 281, 13))
+>identityNullish().length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>identityNullish : Symbol(identityNullish, Decl(identityModifierGetterCorpus.ts, 243, 13))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+        gc3b;
+>gc3b : Symbol(gc3b, Decl(identityModifierGetterCorpus.ts, 281, 13))
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/conformance/expressions/typeGuards/
+//   - typeGuardsInProperties.ts
+//   - typeGuardsInClassAccessors.ts
+// -----------------------------------------------------------------------------
+
+// Case TG1: guard on member does not permanently narrow property/member type.
+declare const getterTG1: {
+>getterTG1 : Symbol(getterTG1, Decl(identityModifierGetterCorpus.ts, 293, 13))
+
+    get value(): string | number;
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 293, 26))
+
+};
+
+declare const identityTG1: {
+>identityTG1 : Symbol(identityTG1, Decl(identityModifierGetterCorpus.ts, 297, 13))
+
+    value: identity () => string | number;
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 297, 28))
+
+};
+
+const tg1Getter: string | number = typeof getterTG1.value === "string" && getterTG1.value;
+>tg1Getter : Symbol(tg1Getter, Decl(identityModifierGetterCorpus.ts, 301, 5))
+>getterTG1.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 293, 26))
+>getterTG1 : Symbol(getterTG1, Decl(identityModifierGetterCorpus.ts, 293, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 293, 26))
+>getterTG1.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 293, 26))
+>getterTG1 : Symbol(getterTG1, Decl(identityModifierGetterCorpus.ts, 293, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 293, 26))
+
+tg1Getter;
+>tg1Getter : Symbol(tg1Getter, Decl(identityModifierGetterCorpus.ts, 301, 5))
+
+const tg1Identity: string | number = typeof identityTG1.value() === "string" && identityTG1.value();
+>tg1Identity : Symbol(tg1Identity, Decl(identityModifierGetterCorpus.ts, 304, 5))
+>identityTG1.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 297, 28))
+>identityTG1 : Symbol(identityTG1, Decl(identityModifierGetterCorpus.ts, 297, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 297, 28))
+>identityTG1.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 297, 28))
+>identityTG1 : Symbol(identityTG1, Decl(identityModifierGetterCorpus.ts, 297, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 297, 28))
+
+tg1Identity;
+>tg1Identity : Symbol(tg1Identity, Decl(identityModifierGetterCorpus.ts, 304, 5))
+
+// Case TG2: local temporary pattern (control case expected to work for both).
+const tg2GetterValue = getterTG1.value;
+>tg2GetterValue : Symbol(tg2GetterValue, Decl(identityModifierGetterCorpus.ts, 308, 5))
+>getterTG1.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 293, 26))
+>getterTG1 : Symbol(getterTG1, Decl(identityModifierGetterCorpus.ts, 293, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 293, 26))
+
+if (typeof tg2GetterValue === "string") {
+>tg2GetterValue : Symbol(tg2GetterValue, Decl(identityModifierGetterCorpus.ts, 308, 5))
+
+    const tg2Getter: string = tg2GetterValue; // control: OK
+>tg2Getter : Symbol(tg2Getter, Decl(identityModifierGetterCorpus.ts, 310, 9))
+>tg2GetterValue : Symbol(tg2GetterValue, Decl(identityModifierGetterCorpus.ts, 308, 5))
+
+    tg2Getter;
+>tg2Getter : Symbol(tg2Getter, Decl(identityModifierGetterCorpus.ts, 310, 9))
+}
+
+const tg2IdentityValue = identityTG1.value();
+>tg2IdentityValue : Symbol(tg2IdentityValue, Decl(identityModifierGetterCorpus.ts, 314, 5))
+>identityTG1.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 297, 28))
+>identityTG1 : Symbol(identityTG1, Decl(identityModifierGetterCorpus.ts, 297, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 297, 28))
+
+if (typeof tg2IdentityValue === "string") {
+>tg2IdentityValue : Symbol(tg2IdentityValue, Decl(identityModifierGetterCorpus.ts, 314, 5))
+
+    const tg2Identity: string = tg2IdentityValue; // control: OK
+>tg2Identity : Symbol(tg2Identity, Decl(identityModifierGetterCorpus.ts, 316, 9))
+>tg2IdentityValue : Symbol(tg2IdentityValue, Decl(identityModifierGetterCorpus.ts, 314, 5))
+
+    tg2Identity;
+>tg2Identity : Symbol(tg2Identity, Decl(identityModifierGetterCorpus.ts, 316, 9))
+}
+
+// -----------------------------------------------------------------------------
+// Additional broad parity visibility slices
+// -----------------------------------------------------------------------------
+
+// Case X1: alias escape via passthrough helper.
+declare const identityX1: identity () => string | undefined;
+>identityX1 : Symbol(identityX1, Decl(identityModifierGetterCorpus.ts, 325, 13))
+
+if (identityX1() !== undefined) {
+>identityX1 : Symbol(identityX1, Decl(identityModifierGetterCorpus.ts, 325, 13))
+>undefined : Symbol(undefined)
+
+    const escaped = pass(identityX1);
+>escaped : Symbol(escaped, Decl(identityModifierGetterCorpus.ts, 328, 9))
+>pass : Symbol(pass, Decl(identityModifierGetterCorpus.ts, 4, 39))
+>identityX1 : Symbol(identityX1, Decl(identityModifierGetterCorpus.ts, 325, 13))
+
+    escaped;
+>escaped : Symbol(escaped, Decl(identityModifierGetterCorpus.ts, 328, 9))
+
+    const x1: string = identityX1(); // intentional gap visibility candidate
+>x1 : Symbol(x1, Decl(identityModifierGetterCorpus.ts, 330, 9))
+>identityX1 : Symbol(identityX1, Decl(identityModifierGetterCorpus.ts, 325, 13))
+
+    x1;
+>x1 : Symbol(x1, Decl(identityModifierGetterCorpus.ts, 330, 9))
+}
+
+// Case X2: conditional expression repeated reads.
+declare const getterX2: {
+>getterX2 : Symbol(getterX2, Decl(identityModifierGetterCorpus.ts, 335, 13))
+
+    get value(): string | undefined;
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 335, 25))
+
+};
+
+declare const identityX2: identity () => string | undefined;
+>identityX2 : Symbol(identityX2, Decl(identityModifierGetterCorpus.ts, 339, 13))
+
+const x2Getter: string = getterX2.value !== undefined ? getterX2.value : "fallback"; // getter baseline: OK
+>x2Getter : Symbol(x2Getter, Decl(identityModifierGetterCorpus.ts, 341, 5))
+>getterX2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 335, 25))
+>getterX2 : Symbol(getterX2, Decl(identityModifierGetterCorpus.ts, 335, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 335, 25))
+>undefined : Symbol(undefined)
+>getterX2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 335, 25))
+>getterX2 : Symbol(getterX2, Decl(identityModifierGetterCorpus.ts, 335, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 335, 25))
+
+x2Getter;
+>x2Getter : Symbol(x2Getter, Decl(identityModifierGetterCorpus.ts, 341, 5))
+
+const x2Identity: string = identityX2() !== undefined ? identityX2() : "fallback"; // identity parity target: OK
+>x2Identity : Symbol(x2Identity, Decl(identityModifierGetterCorpus.ts, 344, 5))
+>identityX2 : Symbol(identityX2, Decl(identityModifierGetterCorpus.ts, 339, 13))
+>undefined : Symbol(undefined)
+>identityX2 : Symbol(identityX2, Decl(identityModifierGetterCorpus.ts, 339, 13))
+
+x2Identity;
+>x2Identity : Symbol(x2Identity, Decl(identityModifierGetterCorpus.ts, 344, 5))
+
+// Case X3: nested discriminant with unknown boundary.
+type Shape = { kind: "circle"; radius: number } | { kind: "square"; size: number };
+>Shape : Symbol(Shape, Decl(identityModifierGetterCorpus.ts, 345, 11))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14))
+>radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 51))
+>size : Symbol(size, Decl(identityModifierGetterCorpus.ts, 348, 67))
+
+declare const getterX3: {
+>getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 350, 13))
+
+    get value(): Shape;
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
+>Shape : Symbol(Shape, Decl(identityModifierGetterCorpus.ts, 345, 11))
+
+};
+
+declare const identityX3: identity () => Shape;
+>identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 354, 13))
+>Shape : Symbol(Shape, Decl(identityModifierGetterCorpus.ts, 345, 11))
+
+if (getterX3.value.kind === "circle") {
+>getterX3.value.kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+>getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
+>getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 350, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+
+    const x3GetterA: number = getterX3.value.radius; // getter baseline: OK
+>x3GetterA : Symbol(x3GetterA, Decl(identityModifierGetterCorpus.ts, 357, 9))
+>getterX3.value.radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
+>getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
+>getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 350, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
+>radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
+
+    x3GetterA;
+>x3GetterA : Symbol(x3GetterA, Decl(identityModifierGetterCorpus.ts, 357, 9))
+}
+
+if (identityX3().kind === "circle") {
+>identityX3().kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+>identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 354, 13))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+
+    const x3IdentityA: number = identityX3().radius; // identity parity target: OK
+>x3IdentityA : Symbol(x3IdentityA, Decl(identityModifierGetterCorpus.ts, 362, 9))
+>identityX3().radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
+>identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 354, 13))
+>radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
+
+    x3IdentityA;
+>x3IdentityA : Symbol(x3IdentityA, Decl(identityModifierGetterCorpus.ts, 362, 9))
+}
+
+if (getterX3.value.kind === "circle") {
+>getterX3.value.kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+>getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
+>getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 350, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+
+    unknownMutate();
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterCorpus.ts, 3, 46))
+
+    const x3GetterB: number = getterX3.value.radius; // getter sweep often remains narrowed
+>x3GetterB : Symbol(x3GetterB, Decl(identityModifierGetterCorpus.ts, 368, 9))
+>getterX3.value.radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
+>getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
+>getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 350, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
+>radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
+
+    x3GetterB;
+>x3GetterB : Symbol(x3GetterB, Decl(identityModifierGetterCorpus.ts, 368, 9))
+}
+
+if (identityX3().kind === "circle") {
+>identityX3().kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+>identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 354, 13))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+
+    unknownMutate();
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterCorpus.ts, 3, 46))
+
+    const x3IdentityB: number = identityX3().radius; // intentional gap visibility candidate
+>x3IdentityB : Symbol(x3IdentityB, Decl(identityModifierGetterCorpus.ts, 374, 9))
+>identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 354, 13))
+
+    x3IdentityB;
+>x3IdentityB : Symbol(x3IdentityB, Decl(identityModifierGetterCorpus.ts, 374, 9))
+}
+
