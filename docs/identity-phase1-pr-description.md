@@ -17,7 +17,7 @@ This PR intentionally excludes explicit `mutator`/`links` contract behavior (Pha
   - Identity call expressions participate in narrowing and repeated reads reuse narrowing in covered local-flow cases.
 - FR4 (uncertainty boundaries, partial):
   - Unknown call boundary invalidation (narrow slice).
-  - Callback invocation boundary invalidation (narrow slice).
+  - Callback invocation boundary invalidation for both statement-form and assignment-form callback calls (narrow slice).
   - Await suspension boundary invalidation for both statement-form `await` and assignment-form `const x = await ...` (latest slice).
   - Assignment-based alias-escape invalidation (narrow slice), including variable initializer and binary reassignment forms.
 - Diagnostics slice (partial FR9 groundwork):
@@ -45,6 +45,15 @@ This PR intentionally excludes explicit `mutator`/`links` contract behavior (Pha
 - `testdata/tests/cases/compiler/identityModifierNarrowing.ts`
 - `testdata/tests/cases/compiler/identityModifierDiagnostics.ts`
 - `testdata/tests/cases/compiler/identityModifierBoundaries.ts`
+
+### Boundary Examples (Latest)
+```ts
+if (read() !== undefined) {
+  const result = invoke(() => {});
+  result;
+  const afterAssignedCallbackCall: string = read(); // should error
+}
+```
 
 ## Key Implementation Files
 - `internal/parser/parser.go`

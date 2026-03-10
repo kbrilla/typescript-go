@@ -25,6 +25,14 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
+    const result = invoke(() => {
+        // assignment-form callback boundary
+    });
+    result;
+    const afterAssignedCallbackCall: string = read(); // should error
+}
+
+if (read() !== undefined) {
     const escapedRead = read;
     const afterAliasEscape: string = read(); // should error
     escapedRead;

@@ -223,7 +223,7 @@ Current status:
   - Remaining: add explicit write-invalidation tests and verify all Tier 1 write forms.
 - [ ] Step 5: Tier 2 guarded invalidation
 - [~] Step 6: Uncertainty boundaries
-  - Covered in local tests: unknown direct call, callback invocation boundary, await suspension boundary, and assignment-based alias-escape.
+  - Covered in local tests: unknown direct call, callback invocation boundary (statement + assignment-form), await suspension boundary, and assignment-based alias-escape.
   - Remaining: broader alias-escape matrix/parity coverage (non-trivial escapes and additional forms).
 - [ ] Step 7: Diagnostics for heuristic limits
 - [ ] Step 8: Parity and regression sweep
@@ -303,6 +303,17 @@ Current status:
 - Red phase confirmed mismatch with targeted run:
   - `go test -run='TestLocal/identityModifierBoundaries\.ts' ./internal/testrunner`
 - Green phase binder change (`internal/binder/binder.go`): `bindVariableDeclarationFlow` now emits a flow-call boundary when a declaration initializer is an `AwaitExpression`.
+- Checker behavior remained unchanged in this slice and reused existing conservative call-boundary invalidation in `getTypeAtFlowCall` (`internal/checker/flow.go`).
+- Accepted only relevant boundary baselines:
+  - `testdata/baselines/reference/compiler/identityModifierBoundaries.errors.txt`
+  - `testdata/baselines/reference/compiler/identityModifierBoundaries.symbols`
+  - `testdata/baselines/reference/compiler/identityModifierBoundaries.types`
+
+### Latest Increment (Boundaries - Callback Assignment-Form Slice)
+- Extended `testdata/tests/cases/compiler/identityModifierBoundaries.ts` with `const result = invoke(() => {})` and a post-call read assertion.
+- Red phase confirmed mismatch with targeted run:
+  - `go test -run='TestLocal/identityModifierBoundaries\.ts' ./internal/testrunner`
+- Green phase binder change (`internal/binder/binder.go`): `bindVariableDeclarationFlow` now emits a flow-call boundary for declaration initializers that are callback-argument call expressions.
 - Checker behavior remained unchanged in this slice and reused existing conservative call-boundary invalidation in `getTypeAtFlowCall` (`internal/checker/flow.go`).
 - Accepted only relevant boundary baselines:
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.errors.txt`

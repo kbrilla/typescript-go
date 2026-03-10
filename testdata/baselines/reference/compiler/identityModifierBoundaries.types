@@ -67,6 +67,29 @@ if (read() !== undefined) {
 >read : () => string | undefined
 >undefined : undefined
 
+    const result = invoke(() => {
+>result : void
+>invoke(() => {        // assignment-form callback boundary    }) : void
+>invoke : (cb: () => void) => void
+>() => {        // assignment-form callback boundary    } : () => void
+
+        // assignment-form callback boundary
+    });
+    result;
+>result : void
+
+    const afterAssignedCallbackCall: string = read(); // should error
+>afterAssignedCallbackCall : string
+>read() : string | undefined
+>read : () => string | undefined
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
     const escapedRead = read;
 >escapedRead : () => string | undefined
 >read : () => string | undefined

@@ -2265,8 +2265,24 @@ func (b *Binder) bindConditionalExpressionFlow(node *ast.Node) {
 
 func (b *Binder) bindVariableDeclarationFlow(node *ast.Node) {
 	b.bindEachChild(node)
+	b.maybeBindInitializerFlowIfCallbackCall(node)
 	if node.Initializer() != nil || ast.IsForInOrOfStatement(node.Parent.Parent) {
 		b.bindInitializedVariableFlow(node)
+	}
+}
+
+func (b *Binder) maybeBindInitializerFlowIfCallbackCall(node *ast.Node) {
+	initializer := node.Initializer()
+	if initializer == nil || !ast.IsCallExpression(initializer) {
+		return
+	}
+
+	for _, argument := range initializer.Arguments() {
+		argument = ast.SkipParentheses(argument)
+		if ast.IsFunctionExpression(argument) || ast.IsArrowFunction(argument) {
+			b.currentFlow = b.createFlowCall(b.currentFlow, initializer)
+			return
+		}
 	}
 }
 
