@@ -1,0 +1,103 @@
+//// [tests/cases/compiler/identityModifierHeuristicDiagnostics.ts] ////
+
+=== identityModifierHeuristicDiagnostics.ts ===
+declare const read: identity () => string | undefined;
+>read : () => string | undefined
+
+declare function unknownMutate(): void;
+>unknownMutate : () => void
+
+declare function invoke(cb: () => void): void;
+>invoke : (cb: () => void) => void
+>cb : () => void
+
+declare function delay(): Promise<void>;
+>delay : () => Promise<void>
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const afterUnknown: string = read(); // should error + heuristic-limit diagnostic
+>afterUnknown : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterUnknown;
+>afterUnknown : string
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invoke(() => {
+>invoke(() => {        // callback uncertainty boundary    }) : void
+>invoke : (cb: () => void) => void
+>() => {        // callback uncertainty boundary    } : () => void
+
+        // callback uncertainty boundary
+    });
+    const afterCallback: string = read(); // should error + heuristic-limit diagnostic
+>afterCallback : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterCallback;
+>afterCallback : string
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const escaped = read;
+>escaped : () => string | undefined
+>read : () => string | undefined
+
+    escaped;
+>escaped : () => string | undefined
+
+    const afterAliasEscape: string = read(); // should error + heuristic-limit diagnostic
+>afterAliasEscape : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterAliasEscape;
+>afterAliasEscape : string
+}
+
+async function testAwaitBoundary() {
+>testAwaitBoundary : () => Promise<void>
+
+    if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+        await delay();
+>await delay() : void
+>delay() : Promise<void>
+>delay : () => Promise<void>
+
+        const afterAwait: string = read(); // should error + heuristic-limit diagnostic
+>afterAwait : string
+>read() : string | undefined
+>read : () => string | undefined
+
+        afterAwait;
+>afterAwait : string
+    }
+}
+

@@ -1,0 +1,71 @@
+identityModifierHeuristicDiagnostics.ts(7,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierHeuristicDiagnostics.ts(8,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierHeuristicDiagnostics.ts(13,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierHeuristicDiagnostics.ts(16,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierHeuristicDiagnostics.ts(21,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierHeuristicDiagnostics.ts(23,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierHeuristicDiagnostics.ts(29,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierHeuristicDiagnostics.ts(30,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+
+==== identityModifierHeuristicDiagnostics.ts (8 errors) ====
+    declare const read: identity () => string | undefined;
+    declare function unknownMutate(): void;
+    declare function invoke(cb: () => void): void;
+    declare function delay(): Promise<void>;
+    
+    if (read() !== undefined) {
+        unknownMutate();
+        ~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterUnknown: string = read(); // should error + heuristic-limit diagnostic
+              ~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterUnknown;
+    }
+    
+    if (read() !== undefined) {
+        invoke(() => {
+        ~~~~~~~~~~~~~~
+            // callback uncertainty boundary
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        });
+    ~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterCallback: string = read(); // should error + heuristic-limit diagnostic
+              ~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterCallback;
+    }
+    
+    if (read() !== undefined) {
+        const escaped = read;
+              ~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        escaped;
+        const afterAliasEscape: string = read(); // should error + heuristic-limit diagnostic
+              ~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterAliasEscape;
+    }
+    
+    async function testAwaitBoundary() {
+        if (read() !== undefined) {
+            await delay();
+            ~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+            const afterAwait: string = read(); // should error + heuristic-limit diagnostic
+                  ~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+            afterAwait;
+        }
+    }
+    

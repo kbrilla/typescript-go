@@ -259,6 +259,7 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 		if !c.isReachableFlowNode(flow) {
 			return FlowType{t: c.unreachableNeverType}
 		}
+		c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, node)
 		return FlowType{t: f.declaredType}
 	}
 
@@ -268,6 +269,7 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
 		if flowType.t != f.declaredType {
+			c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, node)
 			return c.newFlowType(f.declaredType, flowType.incomplete)
 		}
 	}
@@ -485,11 +487,30 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
 		if flowType.t != f.declaredType {
+			c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, flow.Node)
 			return c.newFlowType(f.declaredType, flowType.incomplete)
 		}
 	}
 
 	return FlowType{}
+}
+
+func (c *Checker) reportIdentityBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node) {
+	if boundary == nil || c.reportedIdentityBoundaryDiagnostics.Has(boundary) || !c.isIdentityCallReference(reference) {
+		return
+	}
+
+	c.reportedIdentityBoundaryDiagnostics.Add(boundary)
+	c.diagnostics.Add(createDiagnosticForNode(boundary, diagnostics.Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local))
+}
+
+func (c *Checker) isIdentityCallReference(reference *ast.Node) bool {
+	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 {
+		return false
+	}
+
+	signature := c.getResolvedSignature(reference, nil /*candidatesOutArray*/, CheckModeTypeOnly)
+	return signature != nil && signature != c.resolvingSignature && signature.flags&SignatureFlagsIdentity != 0
 }
 
 func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *ast.Node) bool {

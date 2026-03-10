@@ -1,5 +1,7 @@
+identityModifierParity.ts(34,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierParity.ts(37,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
+identityModifierParity.ts(46,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierParity.ts(47,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 identityModifierParity.ts(72,5): error TS2554: Expected 1 arguments, but got 0.
@@ -8,11 +10,12 @@ identityModifierParity.ts(74,40): error TS2554: Expected 1 arguments, but got 0.
 identityModifierParity.ts(79,5): error TS2554: Expected 1 arguments, but got 0.
 identityModifierParity.ts(81,11): error TS2322: Type 'void' is not assignable to type 'string'.
 identityModifierParity.ts(81,47): error TS2554: Expected 1 arguments, but got 0.
+identityModifierParity.ts(101,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exist on type 'Shape'.
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierParity.ts (9 errors) ====
+==== identityModifierParity.ts (12 errors) ====
     // Parity baseline: property getter/setter repeated read narrowing.
     declare const propertyModel: {
         get value(): string | undefined;
@@ -47,8 +50,12 @@ identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exis
     
     if (identityRead() !== undefined) {
         invoke(() => {
+        ~~~~~~~~~~~~~~
             // callback boundary
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         });
+    ~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterCallback: string = identityRead(); // should error
               ~~~~~~~~~~~~~
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
@@ -62,6 +69,8 @@ identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exis
     async function testAwaitParity() {
         if (identityRead() !== undefined) {
             await delay();
+            ~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
             const afterAwait: string = identityRead(); // should error
                   ~~~~~~~~~~
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
@@ -136,6 +145,8 @@ identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exis
     
     if (shape().kind === "circle") {
         unknownShapeMutate();
+        ~~~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterUnknownShapeCall: number = shape().radius; // should error
                                                       ~~~~~~
 !!! error TS2339: Property 'radius' does not exist on type 'Shape'.

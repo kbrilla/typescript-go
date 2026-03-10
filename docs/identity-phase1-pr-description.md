@@ -9,12 +9,15 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - `docs/identity-heuristic-tdd-plan.md`
 - `testdata/tests/cases/compiler/identityModifierParity.ts`
 - `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`
+- `testdata/tests/cases/compiler/identityModifierHeuristicDiagnostics.ts`
 
 ## Implemented So Far
 - Parser and binder support for `identity` function-type modifier usage in declaration type positions.
 - Parser lookahead fix so `identity<...>` type references are not misparsed as identity function-type starts.
 - Repeated-read narrowing for covered local-flow identity call patterns.
 - Conservative invalidation for currently implemented uncertainty boundaries.
+- Heuristic-limit diagnostic guidance for conservative uncertainty-boundary drops in identity call narrowing.
+  - Diagnostic text: `Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.`
 - Conditional-expression callback initializer boundary invalidation (`const x = cond ? invoke(() => {}) : invoke(() => {})`).
 - Tier 1 write-form parity expansion in local parity tests (property assignment and callable hybrid setter-style calls).
 - Tier 2 starter test coverage for candidate forwarding/passthrough shapes with current conservative expectations in `testdata/tests/cases/compiler/identityModifierTier2.ts`.
@@ -48,7 +51,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - [ ] Broaden nested/indirect callback boundary parity beyond currently covered forms (conditional initializer form now covered).
 - [ ] Expand Tier 1 write-form matrix breadth beyond current local parity slices.
 - [ ] Extend Tier 2 guarded precision beyond trivial syntactic passthrough forms while preserving soundness.
-- [ ] Add diagnostics for heuristic-limit/low-confidence cases (Step 7 in plan).
+- [x] Add heuristic-limit diagnostics for uncertainty-boundary conservative invalidation (Step 7 narrow slice).
 - [ ] Expand parity mapping against submodule scenarios where practical.
 
 ## Getter vs Identity Parity Matrix
@@ -64,12 +67,12 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Nested discriminant read reuse | Implemented | Implemented | Full |
 | Nested unknown-call boundary after discriminant guard | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
 | Tier 2 forwarding precision (non-trivial helpers) | N/A | Partial | Gap |
-| Heuristic-limit diagnostics | N/A | Not implemented | Gap |
+| Heuristic-limit diagnostics | N/A | Implemented for uncertainty-boundary conservative invalidation | Partial |
 
 Parity score summary:
 - `5/9` getter-comparable CFA categories are fully matched in the sweep (`P1`, `P2`, `P5`, `P7`, `P8` read-reuse branch).
 - `4/9` getter-comparable categories show visible mismatches in the sweep (`P3`, `P4`, `P6`, `P8` unknown-call boundary).
-- Additional Phase 1 gaps remain unchanged: Tier 2 broader forwarding precision and heuristic-limit diagnostics.
+- Additional Phase 1 gaps remain: Tier 2 broader forwarding precision and diagnostics for lower-confidence non-boundary Tier 2 cases.
 
 Newly visible gaps from getter-to-identity sweep:
 - Callback boundary: getter scenario stays narrowed while identity invalidates.

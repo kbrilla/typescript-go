@@ -4292,6 +4292,8 @@ var X_identity_modifier_can_only_appear_on_a_function_type_with_no_parameters = 
 
 var X_identity_modifier_cannot_be_used_with_0_modifier = &Message{code: 100013, category: CategoryError, key: "identity_modifier_cannot_be_used_with_0_modifier_100013", text: "'identity' modifier cannot be used with '{0}' modifier."}
 
+var Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local = &Message{code: 100014, category: CategoryError, key: "Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_tem_100014", text: "Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local."}
+
 func keyToMessage(key Key) *Message {
 	switch key {
 	case "Unterminated_string_literal_1002":
@@ -8584,6 +8586,8 @@ func keyToMessage(key Key) *Message {
 		return X_identity_modifier_can_only_appear_on_a_function_type_with_no_parameters
 	case "identity_modifier_cannot_be_used_with_0_modifier_100013":
 		return X_identity_modifier_cannot_be_used_with_0_modifier
+	case "Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_tem_100014":
+		return Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local
 	default:
 		return nil
 	}

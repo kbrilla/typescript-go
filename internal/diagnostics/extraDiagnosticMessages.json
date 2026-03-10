@@ -94,5 +94,9 @@
     "'identity' modifier cannot be used with '{0}' modifier.": {
         "category": "Error",
         "code": 100013
+    },
+    "Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.": {
+        "category": "Error",
+        "code": 100014
     }
 }

@@ -1,0 +1,87 @@
+//// [tests/cases/compiler/identityModifierHeuristicDiagnostics.ts] ////
+
+=== identityModifierHeuristicDiagnostics.ts ===
+declare const read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
+
+declare function unknownMutate(): void;
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierHeuristicDiagnostics.ts, 0, 54))
+
+declare function invoke(cb: () => void): void;
+>invoke : Symbol(invoke, Decl(identityModifierHeuristicDiagnostics.ts, 1, 39))
+>cb : Symbol(cb, Decl(identityModifierHeuristicDiagnostics.ts, 2, 24))
+
+declare function delay(): Promise<void>;
+>delay : Symbol(delay, Decl(identityModifierHeuristicDiagnostics.ts, 2, 46))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    unknownMutate();
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierHeuristicDiagnostics.ts, 0, 54))
+
+    const afterUnknown: string = read(); // should error + heuristic-limit diagnostic
+>afterUnknown : Symbol(afterUnknown, Decl(identityModifierHeuristicDiagnostics.ts, 7, 9))
+>read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
+
+    afterUnknown;
+>afterUnknown : Symbol(afterUnknown, Decl(identityModifierHeuristicDiagnostics.ts, 7, 9))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    invoke(() => {
+>invoke : Symbol(invoke, Decl(identityModifierHeuristicDiagnostics.ts, 1, 39))
+
+        // callback uncertainty boundary
+    });
+    const afterCallback: string = read(); // should error + heuristic-limit diagnostic
+>afterCallback : Symbol(afterCallback, Decl(identityModifierHeuristicDiagnostics.ts, 15, 9))
+>read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
+
+    afterCallback;
+>afterCallback : Symbol(afterCallback, Decl(identityModifierHeuristicDiagnostics.ts, 15, 9))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    const escaped = read;
+>escaped : Symbol(escaped, Decl(identityModifierHeuristicDiagnostics.ts, 20, 9))
+>read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
+
+    escaped;
+>escaped : Symbol(escaped, Decl(identityModifierHeuristicDiagnostics.ts, 20, 9))
+
+    const afterAliasEscape: string = read(); // should error + heuristic-limit diagnostic
+>afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierHeuristicDiagnostics.ts, 22, 9))
+>read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
+
+    afterAliasEscape;
+>afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierHeuristicDiagnostics.ts, 22, 9))
+}
+
+async function testAwaitBoundary() {
+>testAwaitBoundary : Symbol(testAwaitBoundary, Decl(identityModifierHeuristicDiagnostics.ts, 24, 1))
+
+    if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+        await delay();
+>delay : Symbol(delay, Decl(identityModifierHeuristicDiagnostics.ts, 2, 46))
+
+        const afterAwait: string = read(); // should error + heuristic-limit diagnostic
+>afterAwait : Symbol(afterAwait, Decl(identityModifierHeuristicDiagnostics.ts, 29, 13))
+>read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
+
+        afterAwait;
+>afterAwait : Symbol(afterAwait, Decl(identityModifierHeuristicDiagnostics.ts, 29, 13))
+    }
+}
+

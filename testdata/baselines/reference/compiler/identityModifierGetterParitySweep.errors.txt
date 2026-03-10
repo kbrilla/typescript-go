@@ -2,19 +2,24 @@ identityModifierGetterParitySweep.ts(40,7): error TS2322: Type 'string | undefin
   Type 'undefined' is not assignable to type 'string'.
 identityModifierGetterParitySweep.ts(48,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
+identityModifierGetterParitySweep.ts(62,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierGetterParitySweep.ts(63,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
+identityModifierGetterParitySweep.ts(79,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierGetterParitySweep.ts(80,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
+identityModifierGetterParitySweep.ts(118,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierGetterParitySweep.ts(120,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
+identityModifierGetterParitySweep.ts(125,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierGetterParitySweep.ts(127,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
+identityModifierGetterParitySweep.ts(173,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierGetterParitySweep.ts(174,59): error TS2339: Property 'radius' does not exist on type 'Shape'.
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierGetterParitySweep.ts (7 errors) ====
+==== identityModifierGetterParitySweep.ts (12 errors) ====
     // Getter-to-identity parity sweep.
     // Categories: repeated reads, branch merges, callback/await boundaries,
     // write invalidation, aliasing, conditional/ternary, nested access.
@@ -83,6 +88,8 @@ identityModifierGetterParitySweep.ts(174,59): error TS2339: Property 'radius' do
     
     if (identityBasic() !== undefined) {
         invoke(() => {});
+        ~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const identityAfterCallback: string = identityBasic(); // identity observed: error (conservative boundary)
               ~~~~~~~~~~~~~~~~~~~~~
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
@@ -103,6 +110,8 @@ identityModifierGetterParitySweep.ts(174,59): error TS2339: Property 'radius' do
     
         if (identityBasic() !== undefined) {
             await delay();
+            ~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
             const identityAfterAwait: string = identityBasic(); // identity observed: error (conservative boundary)
                   ~~~~~~~~~~~~~~~~~~
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
@@ -145,6 +154,8 @@ identityModifierGetterParitySweep.ts(174,59): error TS2339: Property 'radius' do
     
     if (identityBasic() !== undefined) {
         const identityAlias = identityBasic;
+              ~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         identityAlias;
         const identityAfterAlias: string = identityBasic(); // identity observed: error (alias escape)
               ~~~~~~~~~~~~~~~~~~
@@ -155,6 +166,8 @@ identityModifierGetterParitySweep.ts(174,59): error TS2339: Property 'radius' do
     
     if (identityBasic() !== undefined) {
         const identityIndirectAlias = pass(identityBasic);
+              ~~~~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         identityIndirectAlias;
         const identityAfterIndirectAlias: string = identityBasic(); // identity observed: error (indirect alias escape)
               ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -206,6 +219,8 @@ identityModifierGetterParitySweep.ts(174,59): error TS2339: Property 'radius' do
     
     if (identityNested().kind === "circle") {
         unknownMutate();
+        ~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const identityAfterUnknown: number = identityNested().radius; // identity observed: error
                                                               ~~~~~~
 !!! error TS2339: Property 'radius' does not exist on type 'Shape'.

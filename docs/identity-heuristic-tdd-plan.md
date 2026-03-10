@@ -234,7 +234,9 @@ Current status:
 - [x] Step 6: Uncertainty boundaries (covered slices)
   - Covered in local tests: unknown direct call, callback invocation boundary (statement + assignment-form), await suspension boundary, assignment-based alias-escape, and indirect alias escape via helper passthrough.
   - Remaining: broader boundary parity coverage (more nested callback/escape forms and additional write-shape interactions).
-- [ ] Step 7: Diagnostics for heuristic limits
+- [x] Step 7: Diagnostics for heuristic limits (narrow boundary slice)
+  - Added boundary guidance diagnostic emitted when identity narrowing is conservatively dropped at uncertainty boundaries.
+  - Covered by `identityModifierHeuristicDiagnostics.ts` for unknown call, callback, await, and alias-escape shapes.
 - [x] Step 8: Parity and regression sweep (local parity suite)
   - Added dedicated local parity test coverage in `identityModifierParity.ts` for repeated-read success, callback boundary invalidation, await boundary invalidation, write-call analog invalidation, and one-liner ternary shape.
   - Added discriminated-union identity parity coverage for kind-guard narrowing and post-unknown-call invalidation.
@@ -245,7 +247,7 @@ Current status:
 
 ### Next Focus (Immediate)
 1. Expand Tier 2 guarded precision beyond trivial local passthrough forms while preserving soundness.
-2. Add diagnostics for heuristic-limit and low-confidence cases (Step 7).
+2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
 3. Continue parity-gap reductions from the sweep (`P3`, `P4`, `P6`, nested unknown-call in `P8`) in narrow red/green slices.
 
 ### Latest Increment

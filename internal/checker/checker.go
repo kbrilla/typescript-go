@@ -878,6 +878,7 @@ type Checker struct {
 	ambientModules                              []*ast.Symbol
 	withinUnreachableCode                       bool
 	reportedUnreachableNodes                    collections.Set[*ast.Node]
+	reportedIdentityBoundaryDiagnostics         collections.Set[*ast.Node]
 	nonExistentProperties                       collections.Set[NonExistentPropertyKey]
 
 	mu sync.Mutex
