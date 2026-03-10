@@ -243,8 +243,8 @@ Current status:
   - Added comprehensive getter-to-identity parity visibility sweep in `identityModifierGetterParitySweep.ts` with categorized sections (repeated reads, branch merges, callback/await, write invalidation, aliasing, ternary, nested access).
   - Added broad submodule-derived getter-to-identity parity corpus in `identityModifierGetterCorpus.ts` with source-traceable section labels and intentional mismatch visibility baselines.
   - Current getter-comparable parity score in the sweep is `7/9` matched categories, with `2/9` conservative mismatches.
-  - Latest corpus mismatch closures: `QN5` (generic discriminant over `PetType extends Pet`) and `X1` (alias escape via ambient passthrough helper).
-  - Broad corpus mismatch count moved `4 -> 2` cases and corpus error count moved `9 -> 6`.
+  - Latest corpus mismatch closures: `QN5` (generic discriminant over `PetType extends Pet`), `X1` (alias escape via ambient passthrough helper), and `GC3` (strict-null await boundary).
+  - Broad corpus mismatch count moved `4 -> 1` cases and corpus error count moved `9 -> 4`.
   - Getter parity sweep score is unchanged in this slice (`7/9`).
   - Remaining: expand parity mapping against additional submodule scenarios.
 - [ ] Step 9: Performance guardrails/perf checks
@@ -263,6 +263,7 @@ Current status:
   - expression-statement await form,
   - exact awaited expression shape `Promise.resolve()` with zero arguments.
 - Conservatism retained for broader await boundaries (`await delay()`, `const x = await delay()`) covered in `identityModifierBoundaries.ts`.
+- Conservatism retained for broader await boundaries outside the narrow preserve shapes, including await-assignment forms (`const x = await delay()`) covered in `identityModifierBoundaries.ts`.
 - Red->green evidence:
   - red: `go test -run='TestLocal/identityModifierGetterParitySweep\.ts' ./internal/testrunner`
   - green: baseline acceptance + targeted identity suite re-run.

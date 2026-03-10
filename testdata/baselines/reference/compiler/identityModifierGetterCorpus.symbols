@@ -844,7 +844,7 @@ async function gc3Identity() {
         await delay();
 >delay : Symbol(delay, Decl(identityModifierGetterCorpus.ts, 5, 34))
 
-        const gc3b: number = identityNullish().length; // intentional gap visibility candidate
+        const gc3b: number = identityNullish().length; // identity parity target: OK
 >gc3b : Symbol(gc3b, Decl(identityModifierGetterCorpus.ts, 281, 13))
 >identityNullish().length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
 >identityNullish : Symbol(identityNullish, Decl(identityModifierGetterCorpus.ts, 243, 13))

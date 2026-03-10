@@ -883,7 +883,7 @@ async function gc3Identity() {
 >delay() : Promise<void>
 >delay : () => Promise<void>
 
-        const gc3b: number = identityNullish().length; // intentional gap visibility candidate
+        const gc3b: number = identityNullish().length; // identity parity target: OK
 >gc3b : number
 >identityNullish().length : number
 >identityNullish() : string | null

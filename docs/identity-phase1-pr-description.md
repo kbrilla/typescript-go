@@ -73,7 +73,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Basic repeated reads after guard | Implemented | Implemented | Full |
 | Branch merge reset after guard split | Implemented | Implemented | Full |
 | Callback no-op expression-statement boundary (`invoke(() => {})`) | Remains narrowed in sweep scenario | Preserved for narrow no-op callback statement shape | Full |
-| Await boundary invalidation | Remains narrowed in sweep scenario | Preserved for narrow expression-statement `await Promise.resolve()` shape; broader awaits remain conservative | Full |
+| Await boundary invalidation | Remains narrowed in sweep scenario | Preserved for narrow expression-statement `await Promise.resolve()` and ambient no-arg `await delay()` nullish-read shapes; broader awaits remain conservative | Full |
 | Write invalidation after setter/write call (`set(non-nullish)` sweep slice) | Remains narrowed in sweep scenario | Matches for narrow same-receiver `read`/`set` shape | Full |
 | Aliasing / escape handling | Object alias keeps getter narrowing in sweep scenario | Function alias invalidates | Gap |
 | Conditional/ternary repeated-read shape | Implemented | Implemented | Full |
@@ -121,7 +121,7 @@ Remaining visible gaps from getter-to-identity sweep:
 | Basic repeated read parity | getter `model.value` vs identity `read()` | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Branch merge parity | post-merge `string` assignment | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Callback no-op statement parity | `invoke(() => {})` then read | Matched (narrow shape) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
-| Await boundary parity (narrow safe shape) | `await Promise.resolve()` then read | Matched (narrow shape) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Await boundary parity (narrow safe shapes) | `await Promise.resolve()` then read; ambient no-arg `await delay()` with nullish identity read | Matched (narrow shapes) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`, `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts` |
 | Write invalidation parity (`set(non-nullish)` slice) | setter/write call then read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Aliasing parity | alias/escape then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Conditional/ternary parity | guarded ternary read fallback | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
@@ -133,13 +133,14 @@ Remaining visible gaps from getter-to-identity sweep:
 ## Broad Getter Corpus Status
 - New corpus file: `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts`
 - Corpus intent: maximize parity visibility, not immediate all-green parity.
-- Failing identity-side parity cases are expected and intentionally baseline-accepted.
+- Remaining identity-side parity gaps are intentionally baseline-accepted where conservative invalidation still differs from getter behavior.
 - This corpus is now part of local parity evidence and should be used to track gap closure slices in subsequent PRs.
 - Closed mismatch `QN5` (generic discriminant narrowing over `PetType extends Pet`) by enabling identity-call flow to use narrowable return types.
 - Closed mismatch `X1` (alias escape via ambient passthrough helper `pass`) with a narrow Tier 2 guarded precision extension in alias-escape analysis.
+- Closed mismatch `GC3` (strict-null await boundary from getter control-flow corpus) with a narrow await preserve rule for ambient no-arg `Promise<void>` calls on nullish identity reads.
 - Corpus mismatch movement in this slice:
-  - mismatch cases: `3 -> 2` (`GC3`, `X1`, `X3` -> `GC3`, `X3`)
-  - corpus error count: `8 -> 6`
+  - mismatch cases: `2 -> 1` (`GC3`, `X3` -> `X3`)
+  - corpus error count: `6 -> 4`
   - getter parity sweep score movement: no change (`7/9`, `2` remaining sweep gaps)
 
 ## Examples and Parity
@@ -243,6 +244,16 @@ async function identityAwaitBoundary() {
   if (read() !== undefined) {
     await Promise.resolve();
     const s: string = read(); // OK in this narrow shape
+    s;
+  }
+}
+
+declare const nullishRead: identity () => string | null;
+declare function delay(): Promise<void>;
+async function identityAwaitAmbientDelayBoundary() {
+  if (nullishRead()) {
+    await delay();
+    const s: string = nullishRead(); // OK in this narrow corpus shape
     s;
   }
 }
@@ -524,7 +535,7 @@ if (model.user !== null) {
 - Broader nested/indirect callback boundary forms.
 - Additional Tier 1 write-form invalidation expansion beyond currently covered property/method/callable-hybrid local shapes.
 - Tier 2 guarded precision behavior itself (today's Tier 2 starter scenarios intentionally keep conservative invalidation expectations).
-- Remaining broad getter corpus mismatches: `GC3`, `X3`.
+- Remaining broad getter corpus mismatches: `X3`.
 
 ## Phase 2 Out of Scope
 - Explicit `mutator`/`links` fallback resolution.

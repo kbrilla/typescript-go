@@ -500,7 +500,8 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 	if ast.IsCallExpression(f.reference) && !c.isMatchingReference(f.reference, flow.Node) {
 		if c.shouldPreserveReadSetCallNarrowing(f.reference, flow.Node) ||
 			c.shouldPreserveNoopCallbackCallNarrowing(f.reference, flow.Node) ||
-			c.shouldPreservePromiseResolveAwaitCallNarrowing(f.reference, flow.Node) {
+			c.shouldPreservePromiseResolveAwaitCallNarrowing(f.reference, flow.Node) ||
+			c.shouldPreserveAmbientNoArgAwaitCallNarrowing(f.reference, flow.Node) {
 			return FlowType{}
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
@@ -618,6 +619,44 @@ func (c *Checker) shouldPreservePromiseResolveAwaitCallNarrowing(reference *ast.
 
 	promiseRef := ast.SkipParentheses(callee.Expression())
 	return ast.IsIdentifier(promiseRef) && promiseRef.Text() == "Promise"
+}
+
+func (c *Checker) shouldPreserveAmbientNoArgAwaitCallNarrowing(reference *ast.Node, boundary *ast.Node) bool {
+	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 || !ast.IsAwaitExpression(boundary) {
+		return false
+	}
+
+	readSignature := c.getResolvedSignature(reference, nil /*candidatesOutArray*/, CheckModeTypeOnly)
+	if readSignature == nil || readSignature == c.resolvingSignature {
+		return false
+	}
+
+	readReturnType := c.getReturnTypeOfSignature(readSignature)
+	if !c.maybeTypeOfKind(readReturnType, TypeFlagsNull) || c.maybeTypeOfKind(readReturnType, TypeFlagsUndefined) {
+		return false
+	}
+
+	if boundary.Parent == nil || !ast.IsExpressionStatement(boundary.Parent) {
+		return false
+	}
+
+	awaitedExpr := ast.SkipParentheses(boundary.AsAwaitExpression().Expression)
+	if !ast.IsCallExpression(awaitedExpr) || len(awaitedExpr.Arguments()) != 0 {
+		return false
+	}
+
+	signature := c.getResolvedSignature(awaitedExpr, nil /*candidatesOutArray*/, CheckModeNormal)
+	if signature == nil || signature == c.resolvingSignature || len(signature.parameters) != 0 || signatureHasRestParameter(signature) {
+		return false
+	}
+
+	declaration := signature.declaration
+	if declaration == nil || !ast.IsFunctionDeclaration(declaration) || declaration.Body() != nil {
+		return false
+	}
+
+	awaitedType := c.getAwaitedType(c.getReturnTypeOfSignature(signature))
+	return awaitedType != nil && awaitedType.flags&TypeFlagsVoid != 0
 }
 
 func (c *Checker) narrowTypeByTypePredicate(f *FlowState, t *Type, predicate *TypePredicate, callExpression *ast.Node, assumeTrue bool) *Type {

@@ -1,5 +1,3 @@
-identityModifierGetterCorpus.ts(281,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierGetterCorpus.ts(282,30): error TS2531: Object is possibly 'null'.
 identityModifierGetterCorpus.ts(302,7): error TS2322: Type 'string | false' is not assignable to type 'string | number'.
   Type 'boolean' is not assignable to type 'string | number'.
 identityModifierGetterCorpus.ts(305,7): error TS2322: Type 'string | false' is not assignable to type 'string | number'.
@@ -9,7 +7,7 @@ identityModifierGetterCorpus.ts(377,46): error TS2339: Property 'radius' does no
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierGetterCorpus.ts (6 errors) ====
+==== identityModifierGetterCorpus.ts (4 errors) ====
     // Broad getter -> identity parity corpus.
     // Visibility-focused: intentional parity gaps are kept to track divergence.
     
@@ -291,11 +289,7 @@ identityModifierGetterCorpus.ts(377,46): error TS2339: Property 'radius' does no
     async function gc3Identity() {
         if (identityNullish()) {
             await delay();
-            ~~~~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-            const gc3b: number = identityNullish().length; // intentional gap visibility candidate
-                                 ~~~~~~~~~~~~~~~~~
-!!! error TS2531: Object is possibly 'null'.
+            const gc3b: number = identityNullish().length; // identity parity target: OK
             gc3b;
         }
     }

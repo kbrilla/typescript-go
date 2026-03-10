@@ -283,7 +283,7 @@ async function gc3Getter() {
 async function gc3Identity() {
     if (identityNullish()) {
         await delay();
-        const gc3b: number = identityNullish().length; // intentional gap visibility candidate
+        const gc3b: number = identityNullish().length; // identity parity target: OK
         gc3b;
     }
 }
