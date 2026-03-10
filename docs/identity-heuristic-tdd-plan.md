@@ -9,7 +9,21 @@ Phase 1 focuses only on:
 
 Constrained-overload scope decision:
 - Constrained-overload post-call narrowing from explicit contracts is not a Phase 1 implementation target.
-- Phase 1 carries readiness planning only (guardrails and test inventory) so the Phase 2 slice can land narrowly and safely.
+- Phase 1 carries readiness planning only (guardrails and test inventory) so the final-phase explicit-contract slice can land narrowly and safely.
+
+## Reordered Phase Sequence (Impact Before Contracts)
+| Phase | Primary goals | Impact | Implementation complexity | Dependency on explicit contracts (yes/no) |
+| --- | --- | --- | --- | --- |
+| 1 | Identity read reuse + Tier 1 write invalidation + uncertainty-boundary baseline | High | Medium | No |
+| 2 | Getter/setter parity and write-form parity expansion | High | Medium | No |
+| 3 | Tier 2 guarded precision expansion and heuristic diagnostics hardening | Medium-High | High | No |
+| 4 | Stabilization: broad regression sweep and perf guardrails | Medium | Medium | No |
+| 5 (Final) | Explicit `mutator`/`links`, ambiguity diagnostics, constrained-overload post-call narrowing | High (targeted hard cases) | High | Yes |
+
+Ordering rationale:
+- Lead with write and parity behavior that delivers immediate user impact and does not require contracts.
+- Expand guarded precision only after parity baselines are stable.
+- Reserve explicit contracts for the final phase due to cross-cutting parser/binder/checker complexity.
 
 ## Goals
 - Achieve parity with property getter/setter CFA in common local-flow scenarios.
@@ -43,12 +57,9 @@ Constrained-overload scope decision:
 ## Step 1: Baseline Failure Capture (Red)
 Add minimal failing tests in `testdata/tests/cases/compiler/`:
 - repeated `identity` reads should narrow after guard
-- narrowing should invalidate after heuristic-detected writes
-- narrowing should invalidate across uncertainty boundaries:
-  - unknown calls
-  - callbacks
-  - `await`
-  - alias escape
+- write-related invalidation and write-preserve parity slices
+- getter/setter parity targets for common local-flow shapes
+- uncertainty-boundary invalidation (`unknown calls`, callbacks, `await`, alias escape)
 
 Run:
 ```sh
@@ -76,34 +87,22 @@ Test additions:
 
 Expected result:
 - narrowing reuse tests pass
-- invalidation boundary tests may still fail
 
-## Step 4: Tier 1 Heuristic Invalidation (Green)
-Implement high-confidence invalidation rules:
+## Step 4: Write Behavior First (Tier 1) + Early Getter/Setter Parity (Green)
+Implement high-confidence write invalidation and write-preserve parity slices early:
 - direct receiver writes
 - obvious same-symbol write operations
+- same-receiver guarded read/write parity slices
 
 Test additions:
-- prior narrowing dropped after Tier 1 write
+- prior narrowing dropped after Tier 1 writes
+- write-preserve parity checks where getter/setter behavior is already stable
 - unrelated writes do not over-invalidate
 
 Expected result:
-- Tier 1 invalidation tests pass with deterministic behavior
+- Tier 1 write behavior and early parity slices pass with deterministic behavior
 
-## Step 5: Tier 2 Guarded Invalidation (Green)
-Implement medium-confidence inference only when stability guards hold.
-
-Examples to support:
-- local alias-preserving forwarding with provable receiver identity
-
-Examples to reject (fallback conservative):
-- unstable aliasing
-- receiver identity not provable
-
-Expected result:
-- Tier 2 positive and negative tests pass
-
-## Step 6: Uncertainty Boundaries (Green)
+## Step 5: Uncertainty Boundaries (Green)
 Enforce invalidation at soundness boundaries:
 - unknown call targets
 - callbacks/closures
@@ -113,17 +112,8 @@ Enforce invalidation at soundness boundaries:
 Expected result:
 - no stale narrowing facts survive these boundaries
 
-## Step 7: Diagnostics for Heuristic Limits (Green)
-Add diagnostics for low-confidence or unsupported inference cases.
-Diagnostics should:
-- explain why precision was not preserved
-- suggest temporary/manual patterns until Phase 2 explicit contracts exist
-
-Expected result:
-- diagnostic baselines are stable and actionable
-
-## Step 8: Parity and Regression Sweep
-Add parity-focused tests mirroring property getter/setter CFA scenarios.
+## Step 6: Getter/Setter Parity Sweep Expansion
+Add and expand parity-focused tests mirroring property getter/setter CFA scenarios.
 
 Documentation guardrail:
 - Maintain the getter-vs-identity flow graphs in `docs/identity-phase1-pr-description.md` as binder/checker flow logic changes.
@@ -137,9 +127,31 @@ npx hereby test
 ```
 Expected result:
 - parity in common scenarios
-- no broad regressions in impacted suites
+- known conservative deltas are explicit and tracked
 
-## Step 9: Performance Guardrails
+## Step 7: Tier 2 Guarded Invalidation and Precision (Green)
+Implement medium-confidence inference only when stability guards hold.
+
+Examples to support:
+- local alias-preserving forwarding with provable receiver identity
+
+Examples to reject (fallback conservative):
+- unstable aliasing
+- receiver identity not provable
+
+Expected result:
+- Tier 2 positive and negative tests pass
+
+## Step 8: Diagnostics for Heuristic Limits (Green)
+Add diagnostics for low-confidence or unsupported inference cases.
+Diagnostics should:
+- explain why precision was not preserved
+- suggest temporary/manual patterns until final-phase explicit contracts exist
+
+Expected result:
+- diagnostic baselines are stable and actionable
+
+## Step 9: Performance Guardrails + Broad Regression Sweep
 During implementation and refactors:
 - keep heuristic checks local and bounded
 - avoid global graph traversal in hot checker paths
@@ -177,13 +189,13 @@ Benchmark evidence note:
 - Tier 1 and guarded Tier 2 invalidation are test-backed.
 - uncertainty boundaries invalidate correctly.
 - diagnostics for heuristic limits are in place.
-- remaining hard cases are documented for Phase 2 (`mutator`/`links`).
+- remaining hard cases are documented for the final explicit-contract phase (`mutator`/`links`).
 
 ## Phase 1 Readiness Additions (Doc/Test Planning Only)
 
 ### R1: Constrained-Overload Readiness Pack
 Why this is not Phase 1 behavior:
-- It depends on explicit `mutator`/`links` contracts, which are deferred to Phase 2.
+- It depends on explicit `mutator`/`links` contracts, which are deferred to the final phase.
 - Enabling post-call narrowing without explicit link resolution risks unsound endpoint selection.
 
 Strict guardrails:
@@ -191,7 +203,7 @@ Strict guardrails:
 - Do not inspect callback bodies.
 - Do not narrow multiple endpoints unless explicit links resolve to a unique set.
 
-Minimal first implementation slice (Phase 2 Stage 5 target):
+Minimal first implementation slice (final-phase target):
 - one identity endpoint
 - one explicit mutator linked to that endpoint
 - one constrained overload (`<U extends T>`) selected at call site
@@ -222,20 +234,20 @@ npx hereby format
 - Value-type invalidation relaxation ideas are Phase 2/3 candidates only and must ship behind strict shape guardrails with conservative defaults.
 - `Phase X` labels in the PR description denote exploratory post-Phase-3 ideas and are intentionally non-committal until converted into concrete TDD slices.
 
-## Phase 2 (Prepared, Deferred): Explicit `mutator`/`links`
+## Final Phase (Prepared, Deferred): Explicit `mutator`/`links`
 
-### Why Phase 2 Exists
-Phase 2 is enabled only after Phase 1 evidence shows recurring precision gaps that heuristics cannot safely resolve.
+### Why The Final Phase Exists
+This phase is enabled only after Phase 1-4 evidence shows recurring precision gaps that heuristics cannot safely resolve.
 
-### Phase 2 Entry Criteria
-Begin Phase 2 only when one or more are true:
+### Final-Phase Entry Criteria
+Begin the final phase only when one or more are true:
 - repeated low-confidence heuristic diagnostics appear in real-world code patterns
 - parity gaps remain in important multi-endpoint write scenarios
 - conservative fallback causes unacceptable developer friction
 
-### Phase 2 TDD Slices
+### Final-Phase TDD Slices
 
-#### Slice 2.1: Syntax and Binding (Red -> Green)
+#### Slice F.1: Syntax and Binding (Red -> Green)
 Red tests:
 - parse and bind `mutator` declarations
 - parse and bind `links` endpoint lists
@@ -245,7 +257,7 @@ Green implementation:
 - parser support for `mutator`/`links`
 - binder symbol metadata for mutator-to-endpoint link sets
 
-#### Slice 2.2: Checker Fallback Resolution (Red -> Green)
+#### Slice F.2: Checker Fallback Resolution (Red -> Green)
 Red tests:
 - heuristic low-confidence call resolves via explicit `links`
 - multi-endpoint mutator call selectively invalidates linked endpoints
@@ -254,7 +266,7 @@ Green implementation:
 - fallback path: heuristics -> explicit metadata
 - deterministic endpoint invalidation from declared links
 
-#### Slice 2.3: Ambiguity Diagnostics (Red -> Green)
+#### Slice F.3: Ambiguity Diagnostics (Red -> Green)
 Red tests:
 - unresolved multi-endpoint impact emits actionable diagnostic
 - malformed/incomplete link declarations emit declaration diagnostics
@@ -263,7 +275,7 @@ Green implementation:
 - checker diagnostics for unresolved impact
 - parser/binder diagnostics for metadata shape errors
 
-#### Slice 2.4: Constrained Overload Integration (Red -> Green)
+#### Slice F.4: Constrained Overload Integration (Red -> Green)
 Red tests:
 - explicit mutator metadata + constrained overload post-call narrowing
 - no callback-body analysis required
@@ -271,12 +283,12 @@ Red tests:
 Green implementation:
 - ensure post-call narrowing sequence remains deterministic after fallback resolution
 
-### Phase 2 Regression and Perf Gates
+### Final-Phase Regression and Perf Gates
 - Re-run Phase 1 parity suites to prevent regressions.
 - Add explicit-contract parity tests for multi-endpoint cases.
 - Verify fallback lookup does not add hot-path regressions.
 
-### Phase 2 Exit Criteria
+### Final-Phase Exit Criteria
 - explicit contracts close remaining precision gaps identified after Phase 1
 - diagnostics are stable and actionable
 - no soundness regressions at uncertainty boundaries
@@ -304,18 +316,11 @@ Current status:
   - Closed the P5 getter-vs-identity write parity slice for same-receiver `read()` then `set(non-nullish)` shape.
   - Added Tier 1 write-form expansion slice for matching endpoint property/element compound and unary writes, plus safe bracket mutator parity (`identityModifierTier1Writes.ts`).
   - Remaining: broaden write-form coverage to additional operators/shapes beyond the current narrow local matrix.
-- [ ] Step 5: Tier 2 guarded invalidation (broad)
-  - Added starter local test coverage for candidate Tier 2 forwarding/passthrough patterns with current conservative expectations.
-  - Added narrow positive precision slices for trivial local passthrough helper forms, including expression-statement passthrough calls with strict local helper guards.
-  - Remaining: implement guarded precision preservation for broader local consumer/passthrough forms when receiver identity and non-mutating forwarding can be proven.
-- [x] Step 6: Uncertainty boundaries (covered slices)
+- [x] Step 5: Uncertainty boundaries (covered slices)
   - Covered in local tests: unknown direct call; callback invocation boundaries (statement, declaration-initializer assignment, assignment-expression assignment, conditional initializer, indirect callback argument); await suspension boundary; assignment-based alias-escape; and indirect alias escape via helper passthrough.
   - Added strict callback alias parity test slice: `const cb = () => {}; invoke(cb);` is currently conservative in baselines; mutable or non-empty callback aliases are also conservative.
   - Remaining: broader boundary parity coverage (deeper nested/indirect callback alias chains and additional write-shape interactions).
-- [x] Step 7: Diagnostics for heuristic limits (narrow boundary slice)
-  - Added boundary guidance diagnostic emitted when identity narrowing is conservatively dropped at uncertainty boundaries.
-  - Covered by `identityModifierHeuristicDiagnostics.ts` for unknown call, callback, await, and alias-escape shapes.
-- [x] Step 8: Parity and regression sweep (local parity suite)
+- [x] Step 6: Getter/setter parity sweep expansion
   - Added dedicated local parity test coverage in `identityModifierParity.ts` for repeated-read success, callback boundary invalidation, await boundary invalidation, write-call analog invalidation, and one-liner ternary shape.
   - Added discriminated-union identity parity coverage for kind-guard narrowing and post-unknown-call invalidation.
   - Added comprehensive getter-to-identity parity visibility sweep in `identityModifierGetterParitySweep.ts` with categorized sections (repeated reads, branch merges, callback/await, write invalidation, aliasing, ternary, nested access).
@@ -327,12 +332,19 @@ Current status:
   - Added missing getter-origin parity expansion matrix in `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts`.
   - Added `6` missing scenarios (`M1`..`M6`) with source-tagged sections; accepted baseline outcome is `5` matched and `1` mismatched (`M6` unknown-call boundary contrast remains conservative for identity).
   - Remaining: expand parity mapping against additional submodule scenarios.
-- [x] Step 9: Performance guardrails/perf checks (micro-bench baseline)
+- [ ] Step 7: Tier 2 guarded invalidation and precision (broad)
+  - Added starter local test coverage for candidate Tier 2 forwarding/passthrough patterns with current conservative expectations.
+  - Added narrow positive precision slices for trivial local passthrough helper forms, including expression-statement passthrough calls with strict local helper guards.
+  - Remaining: implement guarded precision preservation for broader local consumer/passthrough forms when receiver identity and non-mutating forwarding can be proven.
+- [x] Step 8: Diagnostics for heuristic limits (narrow boundary slice)
+  - Added boundary guidance diagnostic emitted when identity narrowing is conservatively dropped at uncertainty boundaries.
+  - Covered by `identityModifierHeuristicDiagnostics.ts` for unknown call, callback, await, and alias-escape shapes.
+- [x] Step 9: Performance guardrails + broad regression sweep (micro-bench baseline)
   - Added deterministic checker micro-bench coverage for repeated reads and uncertainty boundaries in `internal/checker/identity_bench_test.go`.
   - Remaining: broaden perf corpus only after additional Phase 1 behavior slices land.
 - [ ] R1: Constrained-overload readiness pack (docs + explicit test inventory only)
-  - Decision captured: constrained post-call narrowing with explicit contracts remains Phase 2 behavior.
-  - Remaining: add targeted red-test scaffolding and entry criteria notes for Phase 2 Stage 5.
+  - Decision captured: constrained post-call narrowing with explicit contracts remains final-phase behavior.
+  - Remaining: add targeted red-test scaffolding and entry criteria notes for the final-phase slice.
 - [ ] R2: Small high-value hardening slices
   - Remaining: diagnostics wording stability baselines and Tier 2 negative-controls expansion.
 

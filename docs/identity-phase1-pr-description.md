@@ -2,11 +2,32 @@
 
 ## Scope
 This PR covers Phase 1 only: `identity` support and heuristic uncertainty-boundary invalidation slices.
-It does not include Phase 2 explicit contracts (`mutator`/`links`).
+It does not include the final phase explicit contracts (`mutator`/`links`).
 
 Decision for constrained-overload post-call narrowing:
 - Not part of Phase 1 runtime behavior.
-- Treated as Phase 2 behavior because it depends on explicit contract resolution (`mutator`/`links`) and unambiguous endpoint linkage.
+- Treated as final-phase behavior because it depends on explicit contract resolution (`mutator`/`links`) and unambiguous endpoint linkage.
+
+## Reordered Phase Roadmap (Impact First)
+Ordering principle:
+- Ship highest-impact behavior that does not require explicit contracts first.
+- Pull write behavior and getter/setter parity forward.
+- Keep explicit `mutator`/`links` as the final phase.
+
+| Phase | Primary goals | Impact | Implementation complexity | Dependency on explicit contracts (yes/no) |
+| --- | --- | --- | --- | --- |
+| 1 | Identity read reuse, Tier 1 write invalidation core, uncertainty-boundary baseline | High | Medium | No |
+| 2 | Getter/setter parity sweep and write-form parity expansion | High | Medium | No |
+| 3 | Tier 2 guarded precision expansion and heuristic diagnostics hardening | Medium-High | High | No |
+| 4 | Stabilization: regression sweep, perf guardrails, conservative-gap documentation | Medium | Medium | No |
+| 5 (Final) | Explicit `mutator`/`links`, ambiguity diagnostics, constrained-overload post-call narrowing | High (targeted hard cases) | High | Yes |
+
+### Impact vs Effort Rationale
+- Phase 1 first: core narrowing plus write/boundary invalidation removes the biggest day-to-day friction with bounded checker changes.
+- Phase 2 early: parity-first write scenarios provide visible user impact and fast validation against getter/setter behavior.
+- Phase 3 after parity core: Tier 2 improvements are valuable but trickier; they should build on proven conservative defaults.
+- Phase 4 before contracts: lock in refactor stability and performance before adding metadata-driven complexity.
+- Phase 5 last: explicit contracts solve remaining ambiguous/multi-endpoint cases, but they require parser/binder/checker coordination and have the highest integration risk.
 
 ## References
 - `docs/identity-modifier-spec.md`
@@ -785,7 +806,7 @@ if (model.user !== null) {
 - Additional Tier 1 write-form invalidation expansion beyond currently covered property/method/callable-hybrid local shapes.
 - Tier 2 guarded precision behavior itself (today's Tier 2 starter scenarios intentionally keep conservative invalidation expectations).
 
-## Constrained-Overload Scope Decision (Phase 1 vs Phase 2)
+## Constrained-Overload Scope Decision (Phase 1 vs Final Phase)
 Why this does not belong in Phase 1 behavior:
 - The effect is defined in terms of explicit contract metadata and endpoint links.
 - Without explicit link resolution, post-call narrowing can pick the wrong endpoint set and regress soundness/parity.
@@ -795,7 +816,7 @@ Strict guardrails (effective now):
 - No callback-body analysis to infer post-call endpoint type.
 - No multi-endpoint post-call narrowing unless explicit links are unique.
 
-Minimal first implementation slice (Phase 2 Stage 5 target):
+Minimal first implementation slice (Final Phase target):
 - single identity endpoint + single explicit mutator link
 - one constrained overload (`<U extends T>`) selected by overload resolution
 - apply post-call narrowing only for the linked endpoint on that selected overload
@@ -806,7 +827,7 @@ Explicit tests to add with that slice:
 - Negative: ambiguous/unresolved links, no narrowing and ambiguity diagnostic.
 - Safety: callback body changes do not affect narrowing result.
 
-## Phase 2 Out of Scope
+## Final Phase Out of Scope (For This PR)
 - Explicit `mutator`/`links` fallback resolution.
 - Ambiguity diagnostics for unresolved multi-endpoint impact.
 - Constrained-overload post-call narrowing from explicit contracts.
@@ -815,15 +836,15 @@ Explicit tests to add with that slice:
 - Add diagnostics wording stability baselines for uncertainty-boundary guidance (`TS100014`, `TS100015`).
 - Expand Tier 2 negative-controls matrix for mutable helper alias chains and property-based helper references (explicitly conservative expectations).
 
-## Next Phases: Narrowing Expansion Roadmap
+## Next Phases: Narrowing Expansion Roadmap (Reordered)
 
 ### Directional future examples (planned, not implemented yet)
 
-### `Phase 2` examples
+### `Final Phase` examples
 These are directional targets only. They are not implemented in this PR.
 
 ```ts
-// Planned Phase 2 target: explicit mutator/links drives selective invalidation.
+// Planned Final Phase target: explicit mutator/links drives selective invalidation.
 interface Store {
   identity user(): { name: string } | undefined;
   identity settings(): { theme: string } | undefined;
@@ -843,7 +864,7 @@ if (store.user() !== undefined) {
 ```
 
 ```ts
-// Planned Phase 2 target: constrained-overload post-call narrowing with explicit links.
+// Planned Final Phase target: constrained-overload post-call narrowing with explicit links.
 interface WritableSignal<T> {
   identity (): T;
   mutator update<U extends T>(fn: (value: T) => U) links this;
@@ -856,11 +877,11 @@ const narrowed: string = sig(); // planned OK when constrained overload + unique
 narrowed;
 ```
 
-### `Phase 3` examples
+### `Phase 2` examples
 These are directional targets only. They are not implemented in this PR.
 
 ```ts
-// Planned Phase 3 target: strict const no-op callback alias preserve.
+// Planned Phase 2 target: strict const no-op callback alias preserve.
 declare const read: identity () => string | undefined;
 declare function invoke(cb: () => void): void;
 
@@ -873,7 +894,7 @@ if (read() !== undefined) {
 ```
 
 ```ts
-// Planned Phase 3 target: guarded dynamic element-write precision.
+// Planned Phase 2 target: guarded dynamic element-write precision.
 declare const model: {
   read: identity () => string | undefined;
   value: string | undefined;
@@ -912,20 +933,25 @@ if (tag() === "a" || tag() === "b") {
 }
 ```
 
-### Phase 2 candidates
+### Final Phase candidates
 | Feature | Guardrails | Risk | Short implementation note | Parity impact |
 | --- | --- | --- | --- | --- |
 | Explicit `mutator`/`links` fallback resolution | Require unambiguous endpoint set; no callback-body inspection; conservative fallback on unresolved links | Medium | Reuse existing Tier 1/2 pipeline, then add explicit-link resolver as deterministic fallback stage | Closes multi-endpoint getter/setter invalidation mismatches |
 | Ambiguity diagnostics for multi-endpoint impact | Emit only when multiple identity endpoints exist and impact is unresolved; dedupe per boundary node | Low | Add checker diagnostic emission after fallback resolution failure | Improves parity explainability where getter path appears more predictable |
 | Constrained-overload post-call narrowing (`U extends T`) with explicit links | Apply only when selected overload is constrained and link target is unique | Medium | Hook post-call narrowing after overload selection and explicit-link resolution | Can exceed getter/setter parity in safe linked cases |
+
+### Phase 2 candidates
+| Feature | Guardrails | Risk | Short implementation note | Parity impact |
+| --- | --- | --- | --- | --- |
 | Tier 2 guarded forwarding expansion (2-hop local helper chains) | Local symbol only; const-only alias chains; depth cap; no mutable/reassigned helpers | Medium | Extend current trivial passthrough matcher with bounded alias-chain support | Reduces conservative identity-only drops in helper-heavy code |
+| Dynamic element-write invalidation precision (`obj[key]`) | Literal-like key proofs only at first; conservative on unknown key identity | High | Add key-equivalence checks in write invalidation for endpoint mapping | Closes remaining getter/setter dynamic-write gaps |
+| Value-aware boundary relaxations for primitives | Strict purity gate; ambient no-arg/no-op forms first; opt-out on any write-capable alias evidence | Medium | Introduce boundary-kind + return-type gate before invalidation | Reduces false invalidation for getter-equivalent primitive reads |
 
 ### Phase 3 candidates
 | Feature | Guardrails | Risk | Short implementation note | Parity impact |
 | --- | --- | --- | --- | --- |
-| Dynamic element-write invalidation precision (`obj[key]`) | Literal-like key proofs only at first; conservative on unknown key identity | High | Add key-equivalence checks in write invalidation for endpoint mapping | Closes remaining getter/setter dynamic-write gaps |
 | Cross-file helper summary cache for safe passthrough | Summary must be declaration-only and side-effect free; cache invalidates on program update | High | Add lightweight helper summaries in checker cache, queried from Tier 2 path | Broadens parity in real codebases with shared helpers |
-| Value-aware boundary relaxations for primitives | Strict purity gate; ambient no-arg/no-op forms first; opt-out on any write-capable alias evidence | Medium | Introduce boundary-kind + return-type gate before invalidation | Reduces false invalidation for getter-equivalent primitive reads |
+| Expanded callback-alias parity family | Local const/no-param/empty-body/non-reassigned proofs only; conservative fallback elsewhere | Medium | Generalize current callback shape matcher with strict alias proofs and negative controls | Closes open callback parity gaps without broad relaxation |
 
 ## Deeper Narrowing Candidates
 | Candidate | Phase | Guardrails | Risk | Short implementation note | Parity impact |

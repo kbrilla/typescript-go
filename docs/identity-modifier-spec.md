@@ -114,7 +114,7 @@ Normative behavior:
 - FR3: Invalidate previous narrowing on resolved mutator impacts.
 - FR4: Invalidate on uncertainty boundaries (unknown calls, callbacks, alias uncertainty, async boundaries).
 - FR5: Keep mutator callback bodies opaque.
-- FR6: Support signature-driven post-call narrowing for constrained mutator overloads (Phase 2 implementation target).
+- FR6: Support signature-driven post-call narrowing for constrained mutator overloads (final-phase implementation target).
 - FR7: Diagnose ambiguous multi-endpoint impact instead of silent precision downgrade.
 - FR8: Implement tiered heuristic mutator-impact inference with explicit confidence boundaries.
 - FR9: Provide diagnostics guiding authors to explicit contracts when heuristics are insufficient.
@@ -161,7 +161,7 @@ If overload resolution selects constrained `U`, post-call endpoint type may narr
 No callback-body inspection is required; effect is signature-driven.
 
 Phase boundary:
-- This effect requires explicit contract resolution (`mutator`/`links`) and is therefore a Phase 2 behavior slice.
+- This effect requires explicit contract resolution (`mutator`/`links`) and is therefore a final-phase behavior slice.
 - Phase 1 can only add readiness artifacts for this effect (tests/checklists/spec detail), not runtime checker behavior.
 
 Contract-dependency boundary:
@@ -272,29 +272,35 @@ Performance guardrails:
 | Getter/setter equivalence scenarios | Parity with property CFA | Submodule parity tests |
 | Heuristic low-confidence call | Diagnostic recommending explicit metadata | Local compiler baseline |
 
-## 14. Rollout Plan
-- Stage 1: Parse + bind metadata; no behavior changes.
-- Stage 2: Identity read reuse + Tier 1 invalidation.
-- Stage 3: Tier 2 guarded inference + diagnostics.
-- Stage 4: Explicit `mutator`/`links` fallback resolution + ambiguity diagnostics.
-- Stage 5: Constrained-overload post-call narrowing.
-- Stage 6: Parity sweep and perf validation on submodule suites.
+## 14. Rollout Plan (Impact Before Contracts)
+| Phase | Primary goals | Impact | Implementation complexity | Dependency on explicit contracts (yes/no) |
+| --- | --- | --- | --- | --- |
+| 1 | Identity read reuse, uncertainty-boundary conservatism, Tier 1 write invalidation core | High | Medium | No |
+| 2 | Getter/setter parity sweep and write-form parity expansion | High | Medium | No |
+| 3 | Tier 2 guarded inference expansion plus diagnostics hardening | Medium-High | High | No |
+| 4 | Stabilization: full regression sweep and perf guardrails | Medium | Medium | No |
+| 5 (Final) | Explicit `mutator`/`links` fallback, ambiguity diagnostics, constrained-overload post-call narrowing | High (targeted hard cases) | High | Yes |
 
-Phase 1 addition (planning only):
-- Stage 1.5: Constrained-overload readiness pack (docs + targeted red-test inventory only; no parser/checker behavior changes).
-  - Guardrails:
-    - No `mutator`/`links` semantic activation in checker.
-    - No constrained post-call narrowing unless Stage 4 explicit links resolution is present.
-    - No callback-body inspection.
-  - Minimal first implementation slice (for Stage 5):
-    - Single-endpoint explicit contract only.
-    - Single mutator with one constrained generic overload (for example `update<U extends T>`).
-    - Apply post-call narrowing only when that constrained overload is selected and link resolution is unambiguous.
-  - Explicit tests to add before Stage 5 implementation:
-    - Positive: constrained overload selected, endpoint narrows to `U`.
-    - Negative: unconstrained overload selected, no post-call narrowing.
-    - Negative: unresolved or ambiguous links, no post-call narrowing plus ambiguity diagnostic.
-    - Safety: callback body does not influence narrowing result.
+Ordered rationale:
+- Phase 1 first captures largest practical value without new declaration contracts.
+- Phase 2 is pulled early to maximize write behavior and getter/setter parity impact.
+- Phase 3 follows once conservative defaults and parity baselines are stable.
+- Phase 4 reduces integration/perf risk before contract-dependent behavior.
+- Phase 5 is last because explicit contracts require the broadest parser/binder/checker coordination.
+
+Final-phase readiness guardrails:
+- No `mutator`/`links` semantic activation in earlier phases.
+- No constrained post-call narrowing before explicit-link resolution exists.
+- No callback-body inspection.
+- First final-phase slice should remain narrow:
+  - Single-endpoint explicit contract.
+  - Single mutator with one constrained generic overload (for example `update<U extends T>`).
+  - Post-call narrowing only when constrained overload is selected and link resolution is unambiguous.
+- Required final-phase tests before broadening:
+  - Positive: constrained overload selected, endpoint narrows to `U`.
+  - Negative: unconstrained overload selected, no post-call narrowing.
+  - Negative: unresolved or ambiguous links, no post-call narrowing plus ambiguity diagnostic.
+  - Safety: callback body does not influence narrowing result.
 
 ## 15. Risks
 - Heuristic false positives/negatives if tier boundaries are underspecified.
@@ -338,8 +344,10 @@ Roadmap source of truth:
 - The forward candidate list and parity matrices are maintained in `docs/identity-phase1-pr-description.md`.
 
 Phase mapping:
-- Phase 2 targets: explicit `mutator`/`links` fallback, ambiguity diagnostics, constrained-overload post-call narrowing, and narrow Tier 2 guarded expansion.
-- Phase 3 targets: broader dynamic-write precision, deeper callback/alias relaxations, and larger-scope helper-summary precision.
+- Phase 2 targets: write behavior and getter/setter parity expansion, plus bounded Tier 2 guarded improvements.
+- Phase 3 targets: broader guarded precision (callback/alias/write families) and diagnostics hardening.
+- Phase 4 targets: stabilization, regression closure, and perf evidence.
+- Phase 5 (final) targets: explicit `mutator`/`links` fallback, ambiguity diagnostics, and constrained-overload post-call narrowing.
 
 Guardrail alignment:
 - Value-type invalidation relaxations must stay shape-guarded and conservative by default.
