@@ -4,15 +4,12 @@ identityModifierHeuristicDiagnostics.ts(8,11): error TS2322: Type 'string | unde
 identityModifierHeuristicDiagnostics.ts(13,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierHeuristicDiagnostics.ts(17,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierHeuristicDiagnostics.ts(22,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierHeuristicDiagnostics.ts(24,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
 identityModifierHeuristicDiagnostics.ts(30,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierHeuristicDiagnostics.ts(31,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierHeuristicDiagnostics.ts (8 errors) ====
+==== identityModifierHeuristicDiagnostics.ts (6 errors) ====
     declare const read: identity () => string | undefined;
     declare function unknownMutate(): void;
     declare function invoke(cb: () => void): void;
@@ -48,13 +45,8 @@ identityModifierHeuristicDiagnostics.ts(31,15): error TS2322: Type 'string | und
     
     if (read() !== undefined) {
         const escaped = read;
-              ~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         escaped;
-        const afterAliasEscape: string = read(); // should error + heuristic-limit diagnostic
-              ~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
         afterAliasEscape;
     }
     

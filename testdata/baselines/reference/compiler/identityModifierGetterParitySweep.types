@@ -369,7 +369,7 @@ if (identityBasic() !== undefined) {
     identityAlias;
 >identityAlias : () => string | undefined
 
-    const identityAfterAlias: string = identityBasic(); // identity observed: error (alias escape)
+    const identityAfterAlias: string = identityBasic(); // identity parity target: OK for direct const alias
 >identityAfterAlias : string
 >identityBasic() : string | undefined
 >identityBasic : () => string | undefined

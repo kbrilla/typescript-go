@@ -60,7 +60,7 @@ if (read() !== undefined) {
 
 if (read() !== undefined) {
     const escapedRead = read;
-    const afterAliasEscape: string = read(); // should error
+    const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
     escapedRead;
 }
 

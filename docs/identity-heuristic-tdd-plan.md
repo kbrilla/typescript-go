@@ -252,10 +252,10 @@ Current status:
   - Added discriminated-union identity parity coverage for kind-guard narrowing and post-unknown-call invalidation.
   - Added comprehensive getter-to-identity parity visibility sweep in `identityModifierGetterParitySweep.ts` with categorized sections (repeated reads, branch merges, callback/await, write invalidation, aliasing, ternary, nested access).
   - Added broad submodule-derived getter-to-identity parity corpus in `identityModifierGetterCorpus.ts` with source-traceable section labels and intentional mismatch visibility baselines.
-  - Current getter-comparable parity score in the sweep is `7/9` matched categories, with `2/9` conservative mismatches.
+  - Current getter-comparable parity score in the sweep is `8/9` matched categories, with `1/9` conservative mismatch.
   - Latest corpus mismatch closures: `QN5` (generic discriminant over `PetType extends Pet`), `X1` (alias escape via ambient passthrough helper), and `GC3` (strict-null await boundary).
   - Broad corpus mismatch count moved `4 -> 1` cases and corpus error count moved `9 -> 4`.
-  - Getter parity sweep score is unchanged in this slice (`7/9`).
+  - Getter parity sweep score has now moved to `8/9` after the narrow direct const alias parity closure (`P6`).
   - Remaining: expand parity mapping against additional submodule scenarios.
 - [x] Step 9: Performance guardrails/perf checks (micro-bench baseline)
   - Added deterministic checker micro-bench coverage for repeated reads and uncertainty boundaries in `internal/checker/identity_bench_test.go`.
@@ -264,7 +264,20 @@ Current status:
 ### Next Focus (Immediate)
 1. Expand Tier 2 guarded precision beyond trivial local passthrough forms while preserving soundness.
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
-3. Continue parity-gap reductions from the sweep (`P6`, nested unknown-call in `P8`) in narrow red/green slices.
+3. Continue parity-gap reductions from the sweep (nested unknown-call in `P8`) in narrow red/green slices.
+
+### Latest Increment (Parity Gap Closure - P6)
+- Closed `P6` in `identityModifierGetterParitySweep.ts` for the narrow direct alias shape:
+  - `if (identityBasic() !== undefined) { const identityAlias = identityBasic; const s: string = identityBasic(); }` is now parity-matched.
+- Checker change (`internal/checker/flow.go`): narrowed alias-escape invalidation to keep direct `const` alias declarations of identity call endpoints non-invalidating by themselves.
+- Conservatism retained for broader escape shapes:
+  - indirect helper forwarding escapes that are not proven trivial,
+  - reassignment escapes,
+  - unknown-call and nested unknown-call boundaries (including open `P8`/`X3`).
+- Updated boundary expectations for the direct const alias shape in `identityModifierBoundaries.ts`.
+- Red->green evidence:
+  - red: `go test -run='TestLocal/identityModifierGetterParitySweep\.ts' ./internal/testrunner`
+  - green: baseline acceptance + focused identity suite rerun (`identityModifierGetterParitySweep`, `identityModifierBoundaries`, `identityModifierParity`, `identityModifierTier2`, `identityModifierGetterCorpus`).
 
 ### Latest Increment (Parity Gap Closure - P4)
 - Closed `P4` in `identityModifierGetterParitySweep.ts` for a narrow await-safe statement shape:

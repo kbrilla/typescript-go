@@ -34,6 +34,9 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - Narrow await-boundary parity preservation slice:
   - `if (read() !== undefined) { await Promise.resolve(); const s: string = read(); }` preserves narrowing.
   - Broader await boundaries remain conservative (`await delay()`, `const x = await delay()`).
+- Narrow aliasing parity preservation slice:
+  - `if (read() !== undefined) { const alias = read; const s: string = read(); }` now preserves narrowing.
+  - Indirect and reassigned alias escapes remain conservative.
 - Mutable/reassigned local helpers remain conservative by design (`let localMaybeId = <T>(x: T) => x; localMaybeId = pass;`).
 - Mutable/reassigned helper alias chains remain conservative by design (`let maybeAlias = localId; maybeAlias = pass;`).
 - Non-trivial local function helper bodies remain conservative by design (`function localFnWrap<T>(x: T) { return () => x; }`).
@@ -75,7 +78,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Callback no-op expression-statement boundary (`invoke(() => {})`) | Remains narrowed in sweep scenario | Preserved for narrow no-op callback statement shape | Full |
 | Await boundary invalidation | Remains narrowed in sweep scenario | Preserved for narrow expression-statement `await Promise.resolve()` and ambient no-arg `await delay()` nullish-read shapes; broader awaits remain conservative | Full |
 | Write invalidation after setter/write call (`set(non-nullish)` sweep slice) | Remains narrowed in sweep scenario | Matches for narrow same-receiver `read`/`set` shape | Full |
-| Aliasing / escape handling | Object alias keeps getter narrowing in sweep scenario | Function alias invalidates | Gap |
+| Aliasing / escape handling | Object alias keeps getter narrowing in sweep scenario | Direct const alias now preserves narrowing; indirect/reassigned escapes remain conservative | Full (narrow slice) |
 | Conditional/ternary repeated-read shape | Implemented | Implemented | Full |
 | Nested discriminant read reuse | Implemented | Implemented | Full |
 | Nested unknown-call boundary after discriminant guard | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
@@ -83,12 +86,11 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Heuristic-limit diagnostics | N/A | Implemented for uncertainty-boundary conservative invalidation | Partial |
 
 Parity score summary:
-- `7/9` getter-comparable CFA categories are fully matched in the sweep (`P1`, `P2`, `P3`, `P4`, `P5`, `P7`, `P8` read-reuse branch).
-- `2/9` getter-comparable categories show visible mismatches in the sweep (`P6`, `P8` unknown-call boundary).
+- `8/9` getter-comparable CFA categories are fully matched in the sweep (`P1`, `P2`, `P3`, `P4`, `P5`, `P6`, `P7`, `P8` read-reuse branch).
+- `1/9` getter-comparable categories show visible mismatches in the sweep (`P8` unknown-call boundary).
 - Additional Phase 1 gaps remain: Tier 2 broader forwarding precision and diagnostics for lower-confidence non-boundary Tier 2 cases.
 
 Remaining visible gaps from getter-to-identity sweep:
-- Aliasing: object aliasing for getter stays narrowed while identity function aliasing invalidates.
 - Nested unknown-call boundary: getter scenario stays narrowed while identity invalidates.
 
 ## Boundary Coverage Matrix
@@ -123,7 +125,7 @@ Remaining visible gaps from getter-to-identity sweep:
 | Callback no-op statement parity | `invoke(() => {})` then read | Matched (narrow shape) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Await boundary parity (narrow safe shapes) | `await Promise.resolve()` then read; ambient no-arg `await delay()` with nullish identity read | Matched (narrow shapes) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`, `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts` |
 | Write invalidation parity (`set(non-nullish)` slice) | setter/write call then read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
-| Aliasing parity | alias/escape then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Aliasing parity | alias/escape then read | Matched for direct const alias; indirect/reassigned escapes intentionally conservative | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Conditional/ternary parity | guarded ternary read fallback | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Nested discriminant reuse parity | kind guard then nested field read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Nested unknown-call boundary parity | kind guard + unknown call + nested read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
@@ -141,7 +143,7 @@ Remaining visible gaps from getter-to-identity sweep:
 - Corpus mismatch movement in this slice:
   - mismatch cases: `2 -> 1` (`GC3`, `X3` -> `X3`)
   - corpus error count: `6 -> 4`
-  - getter parity sweep score movement: no change (`7/9`, `2` remaining sweep gaps)
+  - getter parity sweep score movement: `7/9 -> 8/9` (`2 -> 1` remaining sweep gaps)
 - Final X3 safety assessment (this update):
   - attempted to define a minimal unknown-call preserve carveout for `X3`
   - rejected as not safely provable without broadening unsound behavior at uncertainty boundaries

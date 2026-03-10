@@ -298,7 +298,19 @@ func (c *Checker) isAliasEscapeAssignmentForCallReference(reference *ast.Node, a
 	switch {
 	case ast.IsVariableDeclaration(assignment):
 		initializer := assignment.Initializer()
-		return initializer != nil && c.isAliasEscapeInitializerForCallReference(callee, initializer)
+		if initializer == nil {
+			return false
+		}
+
+		// A direct local const alias is not itself an uncertainty boundary.
+		if c.isMatchingReference(callee, c.getReferenceCandidate(initializer)) {
+			symbol := c.getSymbolOfDeclaration(assignment)
+			if symbol != nil && symbol != c.unknownSymbol && c.isConstantVariable(symbol) {
+				return false
+			}
+		}
+
+		return c.isAliasEscapeInitializerForCallReference(callee, initializer)
 	case ast.IsBinaryExpression(assignment):
 		binary := assignment.AsBinaryExpression()
 		return ast.IsAssignmentOperator(binary.OperatorToken.Kind) && c.isAliasEscapeInitializerForCallReference(callee, binary.Right)

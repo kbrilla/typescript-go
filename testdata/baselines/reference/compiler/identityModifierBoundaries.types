@@ -187,7 +187,7 @@ if (read() !== undefined) {
 >escapedRead : () => string | undefined
 >read : () => string | undefined
 
-    const afterAliasEscape: string = read(); // should error
+    const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
 >afterAliasEscape : string
 >read() : string | undefined
 >read : () => string | undefined

@@ -326,7 +326,7 @@ if (identityBasic() !== undefined) {
     identityAlias;
 >identityAlias : Symbol(identityAlias, Decl(identityModifierGetterParitySweep.ts, 129, 9))
 
-    const identityAfterAlias: string = identityBasic(); // identity observed: error (alias escape)
+    const identityAfterAlias: string = identityBasic(); // identity parity target: OK for direct const alias
 >identityAfterAlias : Symbol(identityAfterAlias, Decl(identityModifierGetterParitySweep.ts, 131, 9))
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 

@@ -24,7 +24,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
     const escaped = read;
     escaped;
-    const afterAliasEscape: string = read(); // should error + heuristic-limit diagnostic
+    const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
     afterAliasEscape;
 }
 

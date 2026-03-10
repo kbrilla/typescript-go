@@ -152,7 +152,7 @@ if (read() !== undefined) {
 >escapedRead : Symbol(escapedRead, Decl(identityModifierBoundaries.ts, 58, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
-    const afterAliasEscape: string = read(); // should error
+    const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
 >afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierBoundaries.ts, 59, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 

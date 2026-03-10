@@ -132,7 +132,7 @@ if (getterBasic.value !== undefined) {
 if (identityBasic() !== undefined) {
     const identityAlias = identityBasic;
     identityAlias;
-    const identityAfterAlias: string = identityBasic(); // identity observed: error (alias escape)
+    const identityAfterAlias: string = identityBasic(); // identity parity target: OK for direct const alias
     identityAfterAlias;
 }
 
