@@ -323,19 +323,19 @@ Remaining Tier 1 write-form gaps:
 - deeper parity mapping to additional submodule getter/write scenarios
 
 ## Getter vs Identity Parity Matrix
-| Behavior category | Getter | Identity | Parity |
-| --- | --- | --- | --- |
-| Basic repeated reads after guard | Implemented | Implemented | Full |
-| Branch merge reset after guard split | Implemented | Implemented | Full |
-| Callback no-op expression-statement boundary (`invoke(() => {})`) | Remains narrowed in sweep scenario | Preserved for narrow no-op callback statement shape | Full |
-| Await boundary invalidation | Remains narrowed in sweep scenario | Preserved for narrow expression-statement `await Promise.resolve()` and ambient no-arg `await delay()` nullish-read shapes; broader awaits remain conservative | Full |
-| Write invalidation after setter/write call (`set(non-nullish)` sweep slice) | Remains narrowed in sweep scenario | Matches for narrow same-receiver `read`/`set` shape | Full |
-| Aliasing / escape handling | Object alias keeps getter narrowing in sweep scenario | Direct const alias now preserves narrowing; indirect/reassigned escapes remain conservative | Full (narrow slice) |
-| Conditional/ternary repeated-read shape | Implemented | Implemented | Full |
-| Nested discriminant read reuse | Implemented | Implemented | Full |
-| Nested unknown-call boundary after discriminant guard | Remains narrowed in sweep scenario | Preserved for guarded ambient no-arg `void` unknown-call shape | Full (guarded) |
-| Tier 2 forwarding precision (non-trivial helpers) | N/A | Partial | Gap |
-| Heuristic-limit diagnostics | N/A | Implemented for uncertainty-boundary conservative invalidation | Partial |
+| Behavior category | Getter | Identity | Parity | Divergence (if not full) | Exact example |
+| --- | --- | --- | --- | --- | --- |
+| Basic repeated reads after guard | Implemented | Implemented | Full | None in current sweep-covered shape | `if (read() !== undefined) { const s: string = read(); }` |
+| Branch merge reset after guard split | Implemented | Implemented | Full | None in current sweep-covered shape | `const s: string = cond ? read() : "fallback";` |
+| Callback no-op expression-statement boundary (`invoke(() => {})`) | Remains narrowed in sweep scenario | Preserved for narrow no-op callback statement shape | Full | None in this exact statement-form no-op shape | `if (read() !== undefined) { invoke(() => {}); const s: string = read(); }` |
+| Await boundary invalidation | Remains narrowed in sweep scenario | Preserved for narrow expression-statement `await Promise.resolve()` and ambient no-arg `await delay()` nullish-read shapes; broader awaits remain conservative | Full | None in the explicitly guarded await shapes tracked in sweep/corpus | `if (read() !== undefined) { await Promise.resolve(); const s: string = read(); }` |
+| Write invalidation after setter/write call (`set(non-nullish)` sweep slice) | Remains narrowed in sweep scenario | Matches for narrow same-receiver `read`/`set` shape | Full | None in current same-receiver non-nullish write slice | `if (store.read() !== undefined) { store.set("next"); const s: string = store.read(); }` |
+| Aliasing / escape handling | Object alias keeps getter narrowing in sweep scenario | Direct const alias now preserves narrowing; indirect/reassigned escapes remain conservative | Full (narrow slice) | None for direct const alias preserve slice | `if (read() !== undefined) { const escaped = read; const s: string = read(); }` |
+| Conditional/ternary repeated-read shape | Implemented | Implemented | Full | None in current sweep-covered ternary shape | `const s: string = read() !== undefined ? read() : "fallback";` |
+| Nested discriminant read reuse | Implemented | Implemented | Full | None in current sweep-covered discriminant-reuse shape | `if (shape().kind === "circle") { const r: number = shape().radius; }` |
+| Nested unknown-call boundary after discriminant guard | Remains narrowed in sweep scenario | Preserved for guarded ambient no-arg `void` unknown-call shape | Full (guarded) | None in strict guarded unknown-call preserve slice | `if (shape().kind === "circle") { unknownShapeMutate(); const r: number = shape().radius; }` |
+| Tier 2 forwarding precision (non-trivial helpers) | N/A | Partial | Gap | Identity remains conservative for non-trivial or mutable forwarding; narrowing is dropped and assignment errors remain. This is visible in `identityModifierTier2.ts` for `localFnWrap`, mutable helper reassignment, and mutable alias-chain reassignment shapes. | `if (read() !== undefined) { function localFnWrap<T>(x: T) { return () => x; } localFnWrap(read); const s: string = read(); }` |
+| Heuristic-limit diagnostics | N/A | Implemented for uncertainty-boundary conservative invalidation | Partial | Diagnostics currently cover uncertainty-boundary drops (`TS100014`, `TS100015`) but not a broader non-boundary Tier 2 low-confidence diagnostic family. In affected shapes, narrowing is dropped and paired with assignment errors. | `if (read() !== undefined) { unknownMutate(); const s: string = read(); } // TS100015 + TS2322` |
 
 Parity score summary:
 - `9/9` getter-comparable CFA categories are matched in the sweep for currently implemented guarded shapes.
