@@ -241,14 +241,28 @@ Current status:
   - Added dedicated local parity test coverage in `identityModifierParity.ts` for repeated-read success, callback boundary invalidation, await boundary invalidation, write-call analog invalidation, and one-liner ternary shape.
   - Added discriminated-union identity parity coverage for kind-guard narrowing and post-unknown-call invalidation.
   - Added comprehensive getter-to-identity parity visibility sweep in `identityModifierGetterParitySweep.ts` with categorized sections (repeated reads, branch merges, callback/await, write invalidation, aliasing, ternary, nested access).
-  - Current getter-comparable parity score in the sweep is `5/9` matched categories, with `4/9` conservative mismatches.
+  - Current getter-comparable parity score in the sweep is `6/9` matched categories, with `3/9` conservative mismatches.
   - Remaining: expand parity mapping against additional submodule scenarios.
 - [ ] Step 9: Performance guardrails/perf checks
 
 ### Next Focus (Immediate)
 1. Expand Tier 2 guarded precision beyond trivial local passthrough forms while preserving soundness.
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
-3. Continue parity-gap reductions from the sweep (`P3`, `P4`, `P6`, nested unknown-call in `P8`) in narrow red/green slices.
+3. Continue parity-gap reductions from the sweep (`P4`, `P6`, nested unknown-call in `P8`) in narrow red/green slices.
+
+### Latest Increment (Parity Gap Closure - P3)
+- Closed `P3` in `identityModifierGetterParitySweep.ts` for the narrow no-op callback statement shape:
+  - `if (identityBasic() !== undefined) { invoke(() => {}); const s: string = identityBasic(); }` is now parity-matched.
+- Checker change (`internal/checker/flow.go`): added a narrowly scoped preserve rule in flow-call invalidation for:
+  - identity call references,
+  - non-matching call boundary in expression-statement position,
+  - exactly one callback argument,
+  - callback function has zero parameters and an empty block body.
+- Conservatism retained for non-no-op callback bodies and assignment/initializer callback boundary forms.
+- Updated callback-boundary local tests to use non-empty callback bodies where conservative invalidation is still expected:
+  - `identityModifierBoundaries.ts`
+  - `identityModifierParity.ts`
+  - `identityModifierHeuristicDiagnostics.ts`
 
 ### Latest Increment
 - Advanced boundary invalidation experiment was prototyped and tested, but reverted due broad submodule baseline regressions.

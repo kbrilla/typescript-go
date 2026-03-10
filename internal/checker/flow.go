@@ -482,7 +482,7 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 	}
 
 	if ast.IsCallExpression(f.reference) && !c.isMatchingReference(f.reference, flow.Node) {
-		if c.shouldPreserveReadSetCallNarrowing(f.reference, flow.Node) {
+		if c.shouldPreserveReadSetCallNarrowing(f.reference, flow.Node) || c.shouldPreserveNoopCallbackCallNarrowing(f.reference, flow.Node) {
 			return FlowType{}
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
@@ -538,6 +538,41 @@ func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *
 
 	argType := c.getTypeOfExpression(call.Arguments()[0])
 	return argType.flags&(TypeFlagsUndefined|TypeFlagsNull) == 0
+}
+
+func (c *Checker) shouldPreserveNoopCallbackCallNarrowing(reference *ast.Node, call *ast.Node) bool {
+	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 || !ast.IsCallExpression(call) {
+		return false
+	}
+
+	if call.Parent == nil || !ast.IsExpressionStatement(call.Parent) {
+		return false
+	}
+
+	if len(call.Arguments()) != 1 {
+		return false
+	}
+
+	callback := ast.SkipParentheses(call.Arguments()[0])
+	if ast.IsArrowFunction(callback) {
+		if len(callback.Parameters()) != 0 {
+			return false
+		}
+
+		body := callback.Body()
+		return ast.IsBlock(body) && len(body.Statements()) == 0
+	}
+
+	if ast.IsFunctionExpression(callback) {
+		if len(callback.Parameters()) != 0 {
+			return false
+		}
+
+		body := callback.Body()
+		return body != nil && len(body.Statements()) == 0
+	}
+
+	return false
 }
 
 func (c *Checker) narrowTypeByTypePredicate(f *FlowState, t *Type, predicate *TypePredicate, callExpression *ast.Node, assumeTrue bool) *Type {

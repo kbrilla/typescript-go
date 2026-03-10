@@ -53,11 +53,17 @@ if (read() !== undefined) {
 >undefined : undefined
 
     invoke(() => {
->invoke(() => {        // unknown callback boundary    }) : void
+>invoke(() => {        const callbackWrite = 1;        callbackWrite;    }) : void
 >invoke : (cb: () => void) => void
->() => {        // unknown callback boundary    } : () => void
+>() => {        const callbackWrite = 1;        callbackWrite;    } : () => void
 
-        // unknown callback boundary
+        const callbackWrite = 1;
+>callbackWrite : 1
+>1 : 1
+
+        callbackWrite;
+>callbackWrite : 1
+
     });
     const afterCallbackCall: string = read(); // should error
 >afterCallbackCall : string
@@ -73,11 +79,17 @@ if (read() !== undefined) {
 
     const result = invoke(() => {
 >result : void
->invoke(() => {        // assignment-form callback boundary    }) : void
+>invoke(() => {        const callbackWrite = 1;        callbackWrite;    }) : void
 >invoke : (cb: () => void) => void
->() => {        // assignment-form callback boundary    } : () => void
+>() => {        const callbackWrite = 1;        callbackWrite;    } : () => void
 
-        // assignment-form callback boundary
+        const callbackWrite = 1;
+>callbackWrite : 1
+>1 : 1
+
+        callbackWrite;
+>callbackWrite : 1
+
     });
     result;
 >result : void
@@ -96,13 +108,19 @@ if (read() !== undefined) {
 
     const indirectCallbackResult = invoke(pass(() => {
 >indirectCallbackResult : void
->invoke(pass(() => {        // indirect helper-passed callback boundary    })) : void
+>invoke(pass(() => {        const callbackWrite = 1;        callbackWrite;    })) : void
 >invoke : (cb: () => void) => void
->pass(() => {        // indirect helper-passed callback boundary    }) : () => void
+>pass(() => {        const callbackWrite = 1;        callbackWrite;    }) : () => void
 >pass : <T>(x: T) => T
->() => {        // indirect helper-passed callback boundary    } : () => void
+>() => {        const callbackWrite = 1;        callbackWrite;    } : () => void
 
-        // indirect helper-passed callback boundary
+        const callbackWrite = 1;
+>callbackWrite : 1
+>1 : 1
+
+        callbackWrite;
+>callbackWrite : 1
+
     }));
     indirectCallbackResult;
 >indirectCallbackResult : void
@@ -121,22 +139,34 @@ if (read() !== undefined) {
 
     const conditionalCallbackResult = true
 >conditionalCallbackResult : void
->true        ? invoke(() => {            // conditional true branch callback boundary        })        : invoke(() => {            // conditional false branch callback boundary        }) : void
+>true        ? invoke(() => {            const callbackWrite = 1;            callbackWrite;        })        : invoke(() => {            const callbackWrite = 1;            callbackWrite;        }) : void
 >true : true
 
         ? invoke(() => {
->invoke(() => {            // conditional true branch callback boundary        }) : void
+>invoke(() => {            const callbackWrite = 1;            callbackWrite;        }) : void
 >invoke : (cb: () => void) => void
->() => {            // conditional true branch callback boundary        } : () => void
+>() => {            const callbackWrite = 1;            callbackWrite;        } : () => void
 
-            // conditional true branch callback boundary
+            const callbackWrite = 1;
+>callbackWrite : 1
+>1 : 1
+
+            callbackWrite;
+>callbackWrite : 1
+
         })
         : invoke(() => {
->invoke(() => {            // conditional false branch callback boundary        }) : void
+>invoke(() => {            const callbackWrite = 1;            callbackWrite;        }) : void
 >invoke : (cb: () => void) => void
->() => {            // conditional false branch callback boundary        } : () => void
+>() => {            const callbackWrite = 1;            callbackWrite;        } : () => void
 
-            // conditional false branch callback boundary
+            const callbackWrite = 1;
+>callbackWrite : 1
+>1 : 1
+
+            callbackWrite;
+>callbackWrite : 1
+
         });
     conditionalCallbackResult;
 >conditionalCallbackResult : void

@@ -59,7 +59,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | --- | --- | --- | --- |
 | Basic repeated reads after guard | Implemented | Implemented | Full |
 | Branch merge reset after guard split | Implemented | Implemented | Full |
-| Callback boundary invalidation | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
+| Callback no-op expression-statement boundary (`invoke(() => {})`) | Remains narrowed in sweep scenario | Preserved for narrow no-op callback statement shape | Full |
 | Await boundary invalidation | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
 | Write invalidation after setter/write call (`set(non-nullish)` sweep slice) | Remains narrowed in sweep scenario | Matches for narrow same-receiver `read`/`set` shape | Full |
 | Aliasing / escape handling | Object alias keeps getter narrowing in sweep scenario | Function alias invalidates | Gap |
@@ -70,12 +70,11 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Heuristic-limit diagnostics | N/A | Implemented for uncertainty-boundary conservative invalidation | Partial |
 
 Parity score summary:
-- `5/9` getter-comparable CFA categories are fully matched in the sweep (`P1`, `P2`, `P5`, `P7`, `P8` read-reuse branch).
-- `4/9` getter-comparable categories show visible mismatches in the sweep (`P3`, `P4`, `P6`, `P8` unknown-call boundary).
+- `6/9` getter-comparable CFA categories are fully matched in the sweep (`P1`, `P2`, `P3`, `P5`, `P7`, `P8` read-reuse branch).
+- `3/9` getter-comparable categories show visible mismatches in the sweep (`P4`, `P6`, `P8` unknown-call boundary).
 - Additional Phase 1 gaps remain: Tier 2 broader forwarding precision and diagnostics for lower-confidence non-boundary Tier 2 cases.
 
 Newly visible gaps from getter-to-identity sweep:
-- Callback boundary: getter scenario stays narrowed while identity invalidates.
 - Await boundary: getter scenario stays narrowed while identity invalidates.
 - Aliasing: object aliasing for getter stays narrowed while identity function aliasing invalidates.
 - Nested unknown-call boundary: getter scenario stays narrowed while identity invalidates.
@@ -108,7 +107,7 @@ Newly visible gaps from getter-to-identity sweep:
 | --- | --- | --- | --- |
 | Basic repeated read parity | getter `model.value` vs identity `read()` | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Branch merge parity | post-merge `string` assignment | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
-| Callback boundary parity | `invoke(() => {})` then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Callback no-op statement parity | `invoke(() => {})` then read | Matched (narrow shape) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Await boundary parity | `await delay()` then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Write invalidation parity (`set(non-nullish)` slice) | setter/write call then read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Aliasing parity | alias/escape then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
@@ -155,7 +154,7 @@ if (read() !== undefined) {
 }
 ```
 
-### Parity 2: callback boundary divergence (getter/setter vs identity)
+### Parity 2: callback no-op parity (getter/setter vs identity)
 Getter/setter style:
 ```ts
 declare const model: {
@@ -166,7 +165,7 @@ declare function invoke(cb: () => void): void;
 
 if (model.value !== undefined) {
   invoke(() => {});
-  const s: string = model.value; // getter sweep observation: still OK
+  const s: string = model.value; // getter sweep observation: OK
   s;
 }
 ```
@@ -178,6 +177,18 @@ declare function invoke(cb: () => void): void;
 
 if (read() !== undefined) {
   invoke(() => {});
+  const s: string = read(); // OK in this narrow no-op statement shape
+  s;
+}
+```
+
+Non-no-op callback bodies remain conservative in current Phase 1:
+```ts
+declare const read: identity () => string | undefined;
+declare function invoke(cb: () => void): void;
+
+if (read() !== undefined) {
+  invoke(() => { const callbackWrite = 1; callbackWrite; });
   const s: string = read(); // error
   s;
 }
@@ -288,14 +299,14 @@ if (model.value !== undefined) {
 ```
 
 ### TS #60948: callback boundary invalidation (`setTimeout` / `invoke`)
-Status: implemented in this PR (for covered callback call shapes)
+Status: partially implemented in this PR
 
 ```ts
 declare const value: identity () => string | undefined;
 declare function invoke(cb: () => void): void;
 
 if (value() !== undefined) {
-  invoke(() => {});
+  invoke(() => { const callbackWrite = 1; callbackWrite; });
   const s: string = value(); // error after boundary
   s;
 }

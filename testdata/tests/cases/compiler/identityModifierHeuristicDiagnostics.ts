@@ -14,7 +14,8 @@ if (read() !== undefined) {
 
 if (read() !== undefined) {
     invoke(() => {
-        // callback uncertainty boundary
+        const callbackWrite = 1;
+        callbackWrite;
     });
     const afterCallback: string = read(); // should error + heuristic-limit diagnostic
     afterCallback;

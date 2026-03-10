@@ -1,17 +1,17 @@
 identityModifierParity.ts(34,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierParity.ts(37,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierParity.ts(38,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierParity.ts(46,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierParity.ts(47,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierParity.ts(47,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierParity.ts(48,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierParity.ts(72,5): error TS2554: Expected 1 arguments, but got 0.
-identityModifierParity.ts(74,11): error TS2322: Type 'void' is not assignable to type 'string'.
-identityModifierParity.ts(74,40): error TS2554: Expected 1 arguments, but got 0.
-identityModifierParity.ts(79,5): error TS2554: Expected 1 arguments, but got 0.
-identityModifierParity.ts(81,11): error TS2322: Type 'void' is not assignable to type 'string'.
-identityModifierParity.ts(81,47): error TS2554: Expected 1 arguments, but got 0.
-identityModifierParity.ts(101,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exist on type 'Shape'.
+identityModifierParity.ts(73,5): error TS2554: Expected 1 arguments, but got 0.
+identityModifierParity.ts(75,11): error TS2322: Type 'void' is not assignable to type 'string'.
+identityModifierParity.ts(75,40): error TS2554: Expected 1 arguments, but got 0.
+identityModifierParity.ts(80,5): error TS2554: Expected 1 arguments, but got 0.
+identityModifierParity.ts(82,11): error TS2322: Type 'void' is not assignable to type 'string'.
+identityModifierParity.ts(82,47): error TS2554: Expected 1 arguments, but got 0.
+identityModifierParity.ts(102,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierParity.ts(103,51): error TS2339: Property 'radius' does not exist on type 'Shape'.
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
@@ -51,8 +51,10 @@ identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exis
     if (identityRead() !== undefined) {
         invoke(() => {
         ~~~~~~~~~~~~~~
-            // callback boundary
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            const callbackWrite = 1;
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            callbackWrite;
+    ~~~~~~~~~~~~~~~~~~~~~~
         });
     ~~~~~~
 !!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
@@ -102,14 +104,14 @@ identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exis
     if (hybrid() !== undefined) {
         ~~~~~~
 !!! error TS2554: Expected 1 arguments, but got 0.
-!!! related TS6210 identityModifierParity.ts:67:6: An argument for 'v' was not provided.
+!!! related TS6210 identityModifierParity.ts:68:6: An argument for 'v' was not provided.
         hybrid("next");
         const afterHybridSetCall: string = hybrid(); // should error
               ~~~~~~~~~~~~~~~~~~
 !!! error TS2322: Type 'void' is not assignable to type 'string'.
                                            ~~~~~~
 !!! error TS2554: Expected 1 arguments, but got 0.
-!!! related TS6210 identityModifierParity.ts:67:6: An argument for 'v' was not provided.
+!!! related TS6210 identityModifierParity.ts:68:6: An argument for 'v' was not provided.
         afterHybridSetCall;
     }
     
@@ -117,14 +119,14 @@ identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exis
     if (hybrid() !== undefined) {
         ~~~~~~
 !!! error TS2554: Expected 1 arguments, but got 0.
-!!! related TS6210 identityModifierParity.ts:67:6: An argument for 'v' was not provided.
+!!! related TS6210 identityModifierParity.ts:68:6: An argument for 'v' was not provided.
         hybrid(undefined);
         const afterHybridUndefinedWrite: string = hybrid(); // should error
               ~~~~~~~~~~~~~~~~~~~~~~~~~
 !!! error TS2322: Type 'void' is not assignable to type 'string'.
                                                   ~~~~~~
 !!! error TS2554: Expected 1 arguments, but got 0.
-!!! related TS6210 identityModifierParity.ts:67:6: An argument for 'v' was not provided.
+!!! related TS6210 identityModifierParity.ts:68:6: An argument for 'v' was not provided.
         afterHybridUndefinedWrite;
     }
     

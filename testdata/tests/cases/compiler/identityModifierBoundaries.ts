@@ -20,14 +20,16 @@ if (read() !== undefined) {
 
 if (read() !== undefined) {
     invoke(() => {
-        // unknown callback boundary
+        const callbackWrite = 1;
+        callbackWrite;
     });
     const afterCallbackCall: string = read(); // should error
 }
 
 if (read() !== undefined) {
     const result = invoke(() => {
-        // assignment-form callback boundary
+        const callbackWrite = 1;
+        callbackWrite;
     });
     result;
     const afterAssignedCallbackCall: string = read(); // should error
@@ -35,7 +37,8 @@ if (read() !== undefined) {
 
 if (read() !== undefined) {
     const indirectCallbackResult = invoke(pass(() => {
-        // indirect helper-passed callback boundary
+        const callbackWrite = 1;
+        callbackWrite;
     }));
     indirectCallbackResult;
     const afterIndirectCallbackCall: string = read(); // should error
@@ -44,10 +47,12 @@ if (read() !== undefined) {
 if (read() !== undefined) {
     const conditionalCallbackResult = true
         ? invoke(() => {
-            // conditional true branch callback boundary
+            const callbackWrite = 1;
+            callbackWrite;
         })
         : invoke(() => {
-            // conditional false branch callback boundary
+            const callbackWrite = 1;
+            callbackWrite;
         });
     conditionalCallbackResult;
     const afterConditionalCallbackCall: string = read(); // should error

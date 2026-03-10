@@ -35,7 +35,8 @@ declare function invoke(cb: () => void): void;
 
 if (identityRead() !== undefined) {
     invoke(() => {
-        // callback boundary
+        const callbackWrite = 1;
+        callbackWrite;
     });
     const afterCallback: string = identityRead(); // should error
     afterCallback;

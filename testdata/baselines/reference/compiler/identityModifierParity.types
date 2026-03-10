@@ -101,11 +101,17 @@ if (identityRead() !== undefined) {
 >undefined : undefined
 
     invoke(() => {
->invoke(() => {        // callback boundary    }) : void
+>invoke(() => {        const callbackWrite = 1;        callbackWrite;    }) : void
 >invoke : (cb: () => void) => void
->() => {        // callback boundary    } : () => void
+>() => {        const callbackWrite = 1;        callbackWrite;    } : () => void
 
-        // callback boundary
+        const callbackWrite = 1;
+>callbackWrite : 1
+>1 : 1
+
+        callbackWrite;
+>callbackWrite : 1
+
     });
     const afterCallback: string = identityRead(); // should error
 >afterCallback : string

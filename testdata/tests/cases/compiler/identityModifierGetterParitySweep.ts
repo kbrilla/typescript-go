@@ -67,6 +67,12 @@ if (identityBasic() !== undefined) {
     identityAfterCallback;
 }
 
+if (identityBasic() !== undefined) {
+    invoke(() => {});
+    const identityAfterNoopCallback: string = identityBasic(); // parity target: OK for narrow no-op callback shape
+    identityAfterNoopCallback;
+}
+
 // -----------------------------------------------------------------------------
 // [P4] Await boundary invalidation
 // -----------------------------------------------------------------------------

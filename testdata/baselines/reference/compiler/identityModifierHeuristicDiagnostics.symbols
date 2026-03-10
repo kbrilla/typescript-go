@@ -37,14 +37,19 @@ if (read() !== undefined) {
     invoke(() => {
 >invoke : Symbol(invoke, Decl(identityModifierHeuristicDiagnostics.ts, 1, 39))
 
-        // callback uncertainty boundary
+        const callbackWrite = 1;
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierHeuristicDiagnostics.ts, 13, 13))
+
+        callbackWrite;
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierHeuristicDiagnostics.ts, 13, 13))
+
     });
     const afterCallback: string = read(); // should error + heuristic-limit diagnostic
->afterCallback : Symbol(afterCallback, Decl(identityModifierHeuristicDiagnostics.ts, 15, 9))
+>afterCallback : Symbol(afterCallback, Decl(identityModifierHeuristicDiagnostics.ts, 16, 9))
 >read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
 
     afterCallback;
->afterCallback : Symbol(afterCallback, Decl(identityModifierHeuristicDiagnostics.ts, 15, 9))
+>afterCallback : Symbol(afterCallback, Decl(identityModifierHeuristicDiagnostics.ts, 16, 9))
 }
 
 if (read() !== undefined) {
@@ -52,22 +57,22 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const escaped = read;
->escaped : Symbol(escaped, Decl(identityModifierHeuristicDiagnostics.ts, 20, 9))
+>escaped : Symbol(escaped, Decl(identityModifierHeuristicDiagnostics.ts, 21, 9))
 >read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
 
     escaped;
->escaped : Symbol(escaped, Decl(identityModifierHeuristicDiagnostics.ts, 20, 9))
+>escaped : Symbol(escaped, Decl(identityModifierHeuristicDiagnostics.ts, 21, 9))
 
     const afterAliasEscape: string = read(); // should error + heuristic-limit diagnostic
->afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierHeuristicDiagnostics.ts, 22, 9))
+>afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierHeuristicDiagnostics.ts, 23, 9))
 >read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
 
     afterAliasEscape;
->afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierHeuristicDiagnostics.ts, 22, 9))
+>afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierHeuristicDiagnostics.ts, 23, 9))
 }
 
 async function testAwaitBoundary() {
->testAwaitBoundary : Symbol(testAwaitBoundary, Decl(identityModifierHeuristicDiagnostics.ts, 24, 1))
+>testAwaitBoundary : Symbol(testAwaitBoundary, Decl(identityModifierHeuristicDiagnostics.ts, 25, 1))
 
     if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
@@ -77,11 +82,11 @@ async function testAwaitBoundary() {
 >delay : Symbol(delay, Decl(identityModifierHeuristicDiagnostics.ts, 2, 46))
 
         const afterAwait: string = read(); // should error + heuristic-limit diagnostic
->afterAwait : Symbol(afterAwait, Decl(identityModifierHeuristicDiagnostics.ts, 29, 13))
+>afterAwait : Symbol(afterAwait, Decl(identityModifierHeuristicDiagnostics.ts, 30, 13))
 >read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
 
         afterAwait;
->afterAwait : Symbol(afterAwait, Decl(identityModifierHeuristicDiagnostics.ts, 29, 13))
+>afterAwait : Symbol(afterAwait, Decl(identityModifierHeuristicDiagnostics.ts, 30, 13))
     }
 }
 

@@ -89,168 +89,173 @@ if (identityRead() !== undefined) {
     invoke(() => {
 >invoke : Symbol(invoke, Decl(identityModifierParity.ts, 27, 14))
 
-        // callback boundary
+        const callbackWrite = 1;
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierParity.ts, 34, 13))
+
+        callbackWrite;
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierParity.ts, 34, 13))
+
     });
     const afterCallback: string = identityRead(); // should error
->afterCallback : Symbol(afterCallback, Decl(identityModifierParity.ts, 36, 9))
+>afterCallback : Symbol(afterCallback, Decl(identityModifierParity.ts, 37, 9))
 >identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 18, 13))
 
     afterCallback;
->afterCallback : Symbol(afterCallback, Decl(identityModifierParity.ts, 36, 9))
+>afterCallback : Symbol(afterCallback, Decl(identityModifierParity.ts, 37, 9))
 }
 
 // Await boundary parity: prior narrowing should invalidate.
 declare function delay(): Promise<void>;
->delay : Symbol(delay, Decl(identityModifierParity.ts, 38, 1))
+>delay : Symbol(delay, Decl(identityModifierParity.ts, 39, 1))
 >Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
 
 async function testAwaitParity() {
->testAwaitParity : Symbol(testAwaitParity, Decl(identityModifierParity.ts, 41, 40))
+>testAwaitParity : Symbol(testAwaitParity, Decl(identityModifierParity.ts, 42, 40))
 
     if (identityRead() !== undefined) {
 >identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 18, 13))
 >undefined : Symbol(undefined)
 
         await delay();
->delay : Symbol(delay, Decl(identityModifierParity.ts, 38, 1))
+>delay : Symbol(delay, Decl(identityModifierParity.ts, 39, 1))
 
         const afterAwait: string = identityRead(); // should error
->afterAwait : Symbol(afterAwait, Decl(identityModifierParity.ts, 46, 13))
+>afterAwait : Symbol(afterAwait, Decl(identityModifierParity.ts, 47, 13))
 >identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 18, 13))
 
         afterAwait;
->afterAwait : Symbol(afterAwait, Decl(identityModifierParity.ts, 46, 13))
+>afterAwait : Symbol(afterAwait, Decl(identityModifierParity.ts, 47, 13))
     }
 }
 
 // Setter/write-call analog shape: object identity getter + mutating method call.
 declare const store: {
->store : Symbol(store, Decl(identityModifierParity.ts, 52, 13))
+>store : Symbol(store, Decl(identityModifierParity.ts, 53, 13))
 
     read: identity () => string | undefined;
->read : Symbol(read, Decl(identityModifierParity.ts, 52, 22))
+>read : Symbol(read, Decl(identityModifierParity.ts, 53, 22))
 
     set(v: string | undefined): void;
->set : Symbol(set, Decl(identityModifierParity.ts, 53, 44))
->v : Symbol(v, Decl(identityModifierParity.ts, 54, 8))
+>set : Symbol(set, Decl(identityModifierParity.ts, 54, 44))
+>v : Symbol(v, Decl(identityModifierParity.ts, 55, 8))
 
 };
 
 if (store.read() !== undefined) {
->store.read : Symbol(read, Decl(identityModifierParity.ts, 52, 22))
->store : Symbol(store, Decl(identityModifierParity.ts, 52, 13))
->read : Symbol(read, Decl(identityModifierParity.ts, 52, 22))
+>store.read : Symbol(read, Decl(identityModifierParity.ts, 53, 22))
+>store : Symbol(store, Decl(identityModifierParity.ts, 53, 13))
+>read : Symbol(read, Decl(identityModifierParity.ts, 53, 22))
 >undefined : Symbol(undefined)
 
     store.set("next");
->store.set : Symbol(set, Decl(identityModifierParity.ts, 53, 44))
->store : Symbol(store, Decl(identityModifierParity.ts, 52, 13))
->set : Symbol(set, Decl(identityModifierParity.ts, 53, 44))
+>store.set : Symbol(set, Decl(identityModifierParity.ts, 54, 44))
+>store : Symbol(store, Decl(identityModifierParity.ts, 53, 13))
+>set : Symbol(set, Decl(identityModifierParity.ts, 54, 44))
 
     const afterSetCall: string = store.read(); // should be OK
->afterSetCall : Symbol(afterSetCall, Decl(identityModifierParity.ts, 59, 9))
->store.read : Symbol(read, Decl(identityModifierParity.ts, 52, 22))
->store : Symbol(store, Decl(identityModifierParity.ts, 52, 13))
->read : Symbol(read, Decl(identityModifierParity.ts, 52, 22))
+>afterSetCall : Symbol(afterSetCall, Decl(identityModifierParity.ts, 60, 9))
+>store.read : Symbol(read, Decl(identityModifierParity.ts, 53, 22))
+>store : Symbol(store, Decl(identityModifierParity.ts, 53, 13))
+>read : Symbol(read, Decl(identityModifierParity.ts, 53, 22))
 
     afterSetCall;
->afterSetCall : Symbol(afterSetCall, Decl(identityModifierParity.ts, 59, 9))
+>afterSetCall : Symbol(afterSetCall, Decl(identityModifierParity.ts, 60, 9))
 }
 
 // Callable hybrid parity: same callable symbol used as getter and setter-style write.
 interface HybridSignal {
->HybridSignal : Symbol(HybridSignal, Decl(identityModifierParity.ts, 61, 1))
+>HybridSignal : Symbol(HybridSignal, Decl(identityModifierParity.ts, 62, 1))
 
     identity (): string | undefined;
->identity : Symbol(HybridSignal.identity, Decl(identityModifierParity.ts, 64, 24))
+>identity : Symbol(HybridSignal.identity, Decl(identityModifierParity.ts, 65, 24))
 
     (v: string | undefined): void;
->v : Symbol(v, Decl(identityModifierParity.ts, 66, 5))
+>v : Symbol(v, Decl(identityModifierParity.ts, 67, 5))
 }
 
 declare const hybrid: HybridSignal;
->hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 69, 13))
->HybridSignal : Symbol(HybridSignal, Decl(identityModifierParity.ts, 61, 1))
+>hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 70, 13))
+>HybridSignal : Symbol(HybridSignal, Decl(identityModifierParity.ts, 62, 1))
 
 if (hybrid() !== undefined) {
->hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 69, 13))
+>hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 70, 13))
 >undefined : Symbol(undefined)
 
     hybrid("next");
->hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 69, 13))
+>hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 70, 13))
 
     const afterHybridSetCall: string = hybrid(); // should error
->afterHybridSetCall : Symbol(afterHybridSetCall, Decl(identityModifierParity.ts, 73, 9))
->hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 69, 13))
+>afterHybridSetCall : Symbol(afterHybridSetCall, Decl(identityModifierParity.ts, 74, 9))
+>hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 70, 13))
 
     afterHybridSetCall;
->afterHybridSetCall : Symbol(afterHybridSetCall, Decl(identityModifierParity.ts, 73, 9))
+>afterHybridSetCall : Symbol(afterHybridSetCall, Decl(identityModifierParity.ts, 74, 9))
 }
 
 // Callable hybrid direct undefined write should also invalidate prior narrowing.
 if (hybrid() !== undefined) {
->hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 69, 13))
+>hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 70, 13))
 >undefined : Symbol(undefined)
 
     hybrid(undefined);
->hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 69, 13))
+>hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 70, 13))
 >undefined : Symbol(undefined)
 
     const afterHybridUndefinedWrite: string = hybrid(); // should error
->afterHybridUndefinedWrite : Symbol(afterHybridUndefinedWrite, Decl(identityModifierParity.ts, 80, 9))
->hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 69, 13))
+>afterHybridUndefinedWrite : Symbol(afterHybridUndefinedWrite, Decl(identityModifierParity.ts, 81, 9))
+>hybrid : Symbol(hybrid, Decl(identityModifierParity.ts, 70, 13))
 
     afterHybridUndefinedWrite;
->afterHybridUndefinedWrite : Symbol(afterHybridUndefinedWrite, Decl(identityModifierParity.ts, 80, 9))
+>afterHybridUndefinedWrite : Symbol(afterHybridUndefinedWrite, Decl(identityModifierParity.ts, 81, 9))
 }
 
 // Discriminated-union parity: repeated identity reads should narrow by kind.
 type Shape =
->Shape : Symbol(Shape, Decl(identityModifierParity.ts, 82, 1))
+>Shape : Symbol(Shape, Decl(identityModifierParity.ts, 83, 1))
 
     | { kind: "circle"; radius: number }
->kind : Symbol(kind, Decl(identityModifierParity.ts, 86, 7))
->radius : Symbol(radius, Decl(identityModifierParity.ts, 86, 23))
+>kind : Symbol(kind, Decl(identityModifierParity.ts, 87, 7))
+>radius : Symbol(radius, Decl(identityModifierParity.ts, 87, 23))
 
     | { kind: "square"; size: number };
->kind : Symbol(kind, Decl(identityModifierParity.ts, 87, 7))
->size : Symbol(size, Decl(identityModifierParity.ts, 87, 23))
+>kind : Symbol(kind, Decl(identityModifierParity.ts, 88, 7))
+>size : Symbol(size, Decl(identityModifierParity.ts, 88, 23))
 
 declare const shape: identity () => Shape;
->shape : Symbol(shape, Decl(identityModifierParity.ts, 89, 13))
->Shape : Symbol(Shape, Decl(identityModifierParity.ts, 82, 1))
+>shape : Symbol(shape, Decl(identityModifierParity.ts, 90, 13))
+>Shape : Symbol(Shape, Decl(identityModifierParity.ts, 83, 1))
 
 if (shape().kind === "circle") {
->shape().kind : Symbol(kind, Decl(identityModifierParity.ts, 86, 7), Decl(identityModifierParity.ts, 87, 7))
->shape : Symbol(shape, Decl(identityModifierParity.ts, 89, 13))
->kind : Symbol(kind, Decl(identityModifierParity.ts, 86, 7), Decl(identityModifierParity.ts, 87, 7))
+>shape().kind : Symbol(kind, Decl(identityModifierParity.ts, 87, 7), Decl(identityModifierParity.ts, 88, 7))
+>shape : Symbol(shape, Decl(identityModifierParity.ts, 90, 13))
+>kind : Symbol(kind, Decl(identityModifierParity.ts, 87, 7), Decl(identityModifierParity.ts, 88, 7))
 
     const circleRadius: number = shape().radius; // OK
->circleRadius : Symbol(circleRadius, Decl(identityModifierParity.ts, 92, 9))
->shape().radius : Symbol(radius, Decl(identityModifierParity.ts, 86, 23))
->shape : Symbol(shape, Decl(identityModifierParity.ts, 89, 13))
->radius : Symbol(radius, Decl(identityModifierParity.ts, 86, 23))
+>circleRadius : Symbol(circleRadius, Decl(identityModifierParity.ts, 93, 9))
+>shape().radius : Symbol(radius, Decl(identityModifierParity.ts, 87, 23))
+>shape : Symbol(shape, Decl(identityModifierParity.ts, 90, 13))
+>radius : Symbol(radius, Decl(identityModifierParity.ts, 87, 23))
 
     circleRadius;
->circleRadius : Symbol(circleRadius, Decl(identityModifierParity.ts, 92, 9))
+>circleRadius : Symbol(circleRadius, Decl(identityModifierParity.ts, 93, 9))
 }
 
 // Discriminated-union boundary parity: unknown call invalidates prior narrowing.
 declare function unknownShapeMutate(): void;
->unknownShapeMutate : Symbol(unknownShapeMutate, Decl(identityModifierParity.ts, 94, 1))
+>unknownShapeMutate : Symbol(unknownShapeMutate, Decl(identityModifierParity.ts, 95, 1))
 
 if (shape().kind === "circle") {
->shape().kind : Symbol(kind, Decl(identityModifierParity.ts, 86, 7), Decl(identityModifierParity.ts, 87, 7))
->shape : Symbol(shape, Decl(identityModifierParity.ts, 89, 13))
->kind : Symbol(kind, Decl(identityModifierParity.ts, 86, 7), Decl(identityModifierParity.ts, 87, 7))
+>shape().kind : Symbol(kind, Decl(identityModifierParity.ts, 87, 7), Decl(identityModifierParity.ts, 88, 7))
+>shape : Symbol(shape, Decl(identityModifierParity.ts, 90, 13))
+>kind : Symbol(kind, Decl(identityModifierParity.ts, 87, 7), Decl(identityModifierParity.ts, 88, 7))
 
     unknownShapeMutate();
->unknownShapeMutate : Symbol(unknownShapeMutate, Decl(identityModifierParity.ts, 94, 1))
+>unknownShapeMutate : Symbol(unknownShapeMutate, Decl(identityModifierParity.ts, 95, 1))
 
     const afterUnknownShapeCall: number = shape().radius; // should error
->afterUnknownShapeCall : Symbol(afterUnknownShapeCall, Decl(identityModifierParity.ts, 101, 9))
->shape : Symbol(shape, Decl(identityModifierParity.ts, 89, 13))
+>afterUnknownShapeCall : Symbol(afterUnknownShapeCall, Decl(identityModifierParity.ts, 102, 9))
+>shape : Symbol(shape, Decl(identityModifierParity.ts, 90, 13))
 
     afterUnknownShapeCall;
->afterUnknownShapeCall : Symbol(afterUnknownShapeCall, Decl(identityModifierParity.ts, 101, 9))
+>afterUnknownShapeCall : Symbol(afterUnknownShapeCall, Decl(identityModifierParity.ts, 102, 9))
 }
