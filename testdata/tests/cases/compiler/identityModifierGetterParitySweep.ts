@@ -89,6 +89,12 @@ async function parityAwaitBoundaries() {
         const identityAfterAwait: string = identityBasic(); // identity observed: error (conservative boundary)
         identityAfterAwait;
     }
+
+    if (identityBasic() !== undefined) {
+        await Promise.resolve();
+        const identityAfterSafeAwait: string = identityBasic(); // parity target: OK for narrow safe await shape
+        identityAfterSafeAwait;
+    }
 }
 
 // -----------------------------------------------------------------------------

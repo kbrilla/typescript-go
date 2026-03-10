@@ -30,6 +30,9 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - Narrow Tier 2 precision slice for local function declaration passthrough identifiers:
   - `function localFnId<T>(x: T) { return x; } const forwarded = localFnId(read);` preserves prior narrowing.
   - Non-inline helper passthrough remains conservative (`pass(read)`, `useReader(pass(read))`).
+- Narrow await-boundary parity preservation slice:
+  - `if (read() !== undefined) { await Promise.resolve(); const s: string = read(); }` preserves narrowing.
+  - Broader await boundaries remain conservative (`await delay()`, `const x = await delay()`).
 - Mutable/reassigned local helpers remain conservative by design (`let localMaybeId = <T>(x: T) => x; localMaybeId = pass;`).
 - Mutable/reassigned helper alias chains remain conservative by design (`let maybeAlias = localId; maybeAlias = pass;`).
 - Non-trivial local function helper bodies remain conservative by design (`function localFnWrap<T>(x: T) { return () => x; }`).
@@ -46,6 +49,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - [x] Tier 1 parity slice coverage for property assignment and callable hybrid setter-style writes in local tests.
 - [x] Narrow write parity slice: same-receiver `read()` then `set(non-nullish)` now preserves narrowing (`P5` in getter parity sweep).
 - [x] Tier 2 narrow precision for trivial local passthrough helper shapes.
+- [x] Narrow await parity slice: expression-statement `await Promise.resolve()` now preserves narrowing (`P4` in getter parity sweep).
 
 ### Left for Phase 1
 - [ ] Broaden nested/indirect callback boundary parity beyond currently covered forms (conditional initializer form now covered).
@@ -60,7 +64,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Basic repeated reads after guard | Implemented | Implemented | Full |
 | Branch merge reset after guard split | Implemented | Implemented | Full |
 | Callback no-op expression-statement boundary (`invoke(() => {})`) | Remains narrowed in sweep scenario | Preserved for narrow no-op callback statement shape | Full |
-| Await boundary invalidation | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
+| Await boundary invalidation | Remains narrowed in sweep scenario | Preserved for narrow expression-statement `await Promise.resolve()` shape; broader awaits remain conservative | Full |
 | Write invalidation after setter/write call (`set(non-nullish)` sweep slice) | Remains narrowed in sweep scenario | Matches for narrow same-receiver `read`/`set` shape | Full |
 | Aliasing / escape handling | Object alias keeps getter narrowing in sweep scenario | Function alias invalidates | Gap |
 | Conditional/ternary repeated-read shape | Implemented | Implemented | Full |
@@ -70,12 +74,11 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Heuristic-limit diagnostics | N/A | Implemented for uncertainty-boundary conservative invalidation | Partial |
 
 Parity score summary:
-- `6/9` getter-comparable CFA categories are fully matched in the sweep (`P1`, `P2`, `P3`, `P5`, `P7`, `P8` read-reuse branch).
-- `3/9` getter-comparable categories show visible mismatches in the sweep (`P4`, `P6`, `P8` unknown-call boundary).
+- `7/9` getter-comparable CFA categories are fully matched in the sweep (`P1`, `P2`, `P3`, `P4`, `P5`, `P7`, `P8` read-reuse branch).
+- `2/9` getter-comparable categories show visible mismatches in the sweep (`P6`, `P8` unknown-call boundary).
 - Additional Phase 1 gaps remain: Tier 2 broader forwarding precision and diagnostics for lower-confidence non-boundary Tier 2 cases.
 
-Newly visible gaps from getter-to-identity sweep:
-- Await boundary: getter scenario stays narrowed while identity invalidates.
+Remaining visible gaps from getter-to-identity sweep:
 - Aliasing: object aliasing for getter stays narrowed while identity function aliasing invalidates.
 - Nested unknown-call boundary: getter scenario stays narrowed while identity invalidates.
 
@@ -92,6 +95,7 @@ Newly visible gaps from getter-to-identity sweep:
 | Alias reassignment | `alias = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await statement | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await assignment | `const x = await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Await safe preserve (narrow) | `await Promise.resolve();` then `read()` in expression-statement form | Implemented | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Tier 2 starter (alias-preserving forwarding) | `const forwarded = pass(read);` then `read()` | Starter coverage (current conservative) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 | Tier 2 starter (helper passthrough) | `useReader(pass(read));` then `read()` | Starter coverage (current conservative) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 | Tier 2 narrow precision (inline passthrough lambda) | `const fwd = ((x) => x)(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
@@ -108,7 +112,7 @@ Newly visible gaps from getter-to-identity sweep:
 | Basic repeated read parity | getter `model.value` vs identity `read()` | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Branch merge parity | post-merge `string` assignment | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Callback no-op statement parity | `invoke(() => {})` then read | Matched (narrow shape) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
-| Await boundary parity | `await delay()` then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Await boundary parity (narrow safe shape) | `await Promise.resolve()` then read | Matched (narrow shape) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Write invalidation parity (`set(non-nullish)` slice) | setter/write call then read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Aliasing parity | alias/escape then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Conditional/ternary parity | guarded ternary read fallback | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
@@ -194,19 +198,17 @@ if (read() !== undefined) {
 }
 ```
 
-### Parity 3: await boundary divergence (getter/setter vs identity)
+### Parity 3: await boundary narrow parity (getter/setter vs identity)
 Getter/setter style:
 ```ts
 declare const model: {
   get value(): string | undefined;
   set value(v: string | undefined);
 };
-declare function delay(): Promise<void>;
-
 async function getterAwaitBoundary() {
   if (model.value !== undefined) {
-    await delay();
-    const s: string = model.value; // getter sweep observation: still OK
+    await Promise.resolve();
+    const s: string = model.value; // getter sweep observation: OK
     s;
   }
 }
@@ -215,9 +217,21 @@ async function getterAwaitBoundary() {
 Identity style:
 ```ts
 declare const read: identity () => string | undefined;
+async function identityAwaitBoundary() {
+  if (read() !== undefined) {
+    await Promise.resolve();
+    const s: string = read(); // OK in this narrow shape
+    s;
+  }
+}
+```
+
+Broader await forms remain conservative in current Phase 1:
+```ts
+declare const read: identity () => string | undefined;
 declare function delay(): Promise<void>;
 
-async function identityAwaitBoundary() {
+async function identityAwaitConservative() {
   if (read() !== undefined) {
     await delay();
     const s: string = read(); // error

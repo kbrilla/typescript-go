@@ -238,6 +238,28 @@ async function parityAwaitBoundaries() {
         identityAfterAwait;
 >identityAfterAwait : string
     }
+
+    if (identityBasic() !== undefined) {
+>identityBasic() !== undefined : boolean
+>identityBasic() : string | undefined
+>identityBasic : () => string | undefined
+>undefined : undefined
+
+        await Promise.resolve();
+>await Promise.resolve() : void
+>Promise.resolve() : Promise<void>
+>Promise.resolve : { (): Promise<void>; <T>(value: T): Promise<Awaited<T>>; <T>(value: T | PromiseLike<T>): Promise<Awaited<T>>; }
+>Promise : PromiseConstructor
+>resolve : { (): Promise<void>; <T>(value: T): Promise<Awaited<T>>; <T>(value: T | PromiseLike<T>): Promise<Awaited<T>>; }
+
+        const identityAfterSafeAwait: string = identityBasic(); // parity target: OK for narrow safe await shape
+>identityAfterSafeAwait : string
+>identityBasic() : string | undefined
+>identityBasic : () => string | undefined
+
+        identityAfterSafeAwait;
+>identityAfterSafeAwait : string
+    }
 }
 
 // -----------------------------------------------------------------------------

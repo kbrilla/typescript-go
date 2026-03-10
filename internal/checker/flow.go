@@ -482,7 +482,9 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 	}
 
 	if ast.IsCallExpression(f.reference) && !c.isMatchingReference(f.reference, flow.Node) {
-		if c.shouldPreserveReadSetCallNarrowing(f.reference, flow.Node) || c.shouldPreserveNoopCallbackCallNarrowing(f.reference, flow.Node) {
+		if c.shouldPreserveReadSetCallNarrowing(f.reference, flow.Node) ||
+			c.shouldPreserveNoopCallbackCallNarrowing(f.reference, flow.Node) ||
+			c.shouldPreservePromiseResolveAwaitCallNarrowing(f.reference, flow.Node) {
 			return FlowType{}
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
@@ -573,6 +575,33 @@ func (c *Checker) shouldPreserveNoopCallbackCallNarrowing(reference *ast.Node, c
 	}
 
 	return false
+}
+
+func (c *Checker) shouldPreservePromiseResolveAwaitCallNarrowing(reference *ast.Node, boundary *ast.Node) bool {
+	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 || !ast.IsAwaitExpression(boundary) {
+		return false
+	}
+
+	if boundary.Parent == nil || !ast.IsExpressionStatement(boundary.Parent) {
+		return false
+	}
+
+	awaitedExpr := ast.SkipParentheses(boundary.AsAwaitExpression().Expression)
+	if !ast.IsCallExpression(awaitedExpr) || len(awaitedExpr.Arguments()) != 0 {
+		return false
+	}
+
+	callee := ast.SkipParentheses(awaitedExpr.Expression())
+	if !ast.IsPropertyAccessExpression(callee) {
+		return false
+	}
+
+	if callee.Name().Text() != "resolve" {
+		return false
+	}
+
+	promiseRef := ast.SkipParentheses(callee.Expression())
+	return ast.IsIdentifier(promiseRef) && promiseRef.Text() == "Promise"
 }
 
 func (c *Checker) narrowTypeByTypePredicate(f *FlowState, t *Type, predicate *TypePredicate, callExpression *ast.Node, assumeTrue bool) *Type {

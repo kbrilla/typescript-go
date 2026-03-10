@@ -241,14 +241,27 @@ Current status:
   - Added dedicated local parity test coverage in `identityModifierParity.ts` for repeated-read success, callback boundary invalidation, await boundary invalidation, write-call analog invalidation, and one-liner ternary shape.
   - Added discriminated-union identity parity coverage for kind-guard narrowing and post-unknown-call invalidation.
   - Added comprehensive getter-to-identity parity visibility sweep in `identityModifierGetterParitySweep.ts` with categorized sections (repeated reads, branch merges, callback/await, write invalidation, aliasing, ternary, nested access).
-  - Current getter-comparable parity score in the sweep is `6/9` matched categories, with `3/9` conservative mismatches.
+  - Current getter-comparable parity score in the sweep is `7/9` matched categories, with `2/9` conservative mismatches.
   - Remaining: expand parity mapping against additional submodule scenarios.
 - [ ] Step 9: Performance guardrails/perf checks
 
 ### Next Focus (Immediate)
 1. Expand Tier 2 guarded precision beyond trivial local passthrough forms while preserving soundness.
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
-3. Continue parity-gap reductions from the sweep (`P4`, `P6`, nested unknown-call in `P8`) in narrow red/green slices.
+3. Continue parity-gap reductions from the sweep (`P6`, nested unknown-call in `P8`) in narrow red/green slices.
+
+### Latest Increment (Parity Gap Closure - P4)
+- Closed `P4` in `identityModifierGetterParitySweep.ts` for a narrow await-safe statement shape:
+  - `if (identityBasic() !== undefined) { await Promise.resolve(); const s: string = identityBasic(); }` is now parity-matched.
+- Checker change (`internal/checker/flow.go`): added a narrowly scoped preserve rule in flow-call invalidation for:
+  - identity call references,
+  - non-matching await boundary,
+  - expression-statement await form,
+  - exact awaited expression shape `Promise.resolve()` with zero arguments.
+- Conservatism retained for broader await boundaries (`await delay()`, `const x = await delay()`) covered in `identityModifierBoundaries.ts`.
+- Red->green evidence:
+  - red: `go test -run='TestLocal/identityModifierGetterParitySweep\.ts' ./internal/testrunner`
+  - green: baseline acceptance + targeted identity suite re-run.
 
 ### Latest Increment (Parity Gap Closure - P3)
 - Closed `P3` in `identityModifierGetterParitySweep.ts` for the narrow no-op callback statement shape:
