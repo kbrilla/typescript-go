@@ -1,82 +1,109 @@
-# PR Description Draft: Identity CFA Phase 1
+# Identity CFA Phase 1
 
-## Summary
-Implements Phase 1 of `identity`-based callable CFA in small TDD slices, aligned to:
+## Scope
+This PR covers Phase 1 only: `identity` support and heuristic uncertainty-boundary invalidation slices.
+It does not include Phase 2 explicit contracts (`mutator`/`links`).
+
+## References
 - `docs/identity-modifier-spec.md`
 - `docs/identity-heuristic-tdd-plan.md`
 
-This PR intentionally excludes explicit `mutator`/`links` contract behavior (Phase 2).
+## Implemented So Far
+- Parser and binder support for `identity` function-type modifier usage in declaration type positions.
+- Parser lookahead fix so `identity<...>` type references are not misparsed as identity function-type starts.
+- Repeated-read narrowing for covered local-flow identity call patterns.
+- Conservative invalidation for currently implemented uncertainty boundaries.
 
-## Spec Alignment
+## Boundary Coverage Matrix
+| Boundary | Example shape | Status | Test source |
+| --- | --- | --- | --- |
+| Unknown call | `unknownMutate();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Callback statement | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Callback assignment form | `const r = invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Alias initializer | `const escaped = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Alias reassignment | `alias = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Await statement | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Await assignment | `const x = await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 
-### Done
-- FR1 (`identity` declaration parsing/binding):
-  - Parser support for identity function-type modifier forms in declaration type contexts.
-  - Binder/AST plumbing for call-expression flow participation.
-- FR2 (repeated read reuse):
-  - Identity call expressions participate in narrowing and repeated reads reuse narrowing in covered local-flow cases.
-- FR4 (uncertainty boundaries, partial):
-  - Unknown call boundary invalidation (narrow slice).
-  - Callback invocation boundary invalidation for both statement-form and assignment-form callback calls (narrow slice).
-  - Await suspension boundary invalidation for both statement-form `await` and assignment-form `const x = await ...` (latest slice).
-  - Assignment-based alias-escape invalidation (narrow slice), including variable initializer and binary reassignment forms.
-- Diagnostics slice (partial FR9 groundwork):
-  - Stable grammar/placement diagnostics for identity modifier misuse.
-- Parser stability fix:
-  - Disambiguated `identity<...>` type references from identity function-type starts to avoid submodule regression.
-
-### In Progress
-- FR4 uncertainty matrix completion:
-  - Broader alias-escape parity matrix (non-trivial escapes/indirect forms) and wider callback parity coverage still pending.
-- Step 4 Tier 1 invalidation hardening:
-  - Additional explicit write-form invalidation tests pending.
-
-### Not Started (Phase 1/2 split)
-- FR3 full mutator-impact invalidation coverage.
-- FR5 callback-body opacity invariants (explicitly test-backed).
-- FR6 constrained-overload post-call narrowing.
-- FR7 ambiguity diagnostics for unresolved multi-endpoint invalidation.
-- FR8 tiered heuristic confidence pipeline.
-- FR9 low-confidence heuristic guidance diagnostics.
-- Phase 2 explicit `mutator`/`links` fallback path.
-
-## Tests Added
-- `testdata/tests/cases/compiler/identityModifierErrors.ts`
-- `testdata/tests/cases/compiler/identityModifierNarrowing.ts`
-- `testdata/tests/cases/compiler/identityModifierDiagnostics.ts`
-- `testdata/tests/cases/compiler/identityModifierBoundaries.ts`
-
-### Boundary Examples (Latest)
+## Clean Working Examples
 ```ts
+declare const read: identity () => string | undefined;
+declare function unknownMutate(): void;
+declare function invoke(cb: () => void): void;
+declare function delay(): Promise<void>;
+
 if (read() !== undefined) {
-  const result = invoke(() => {});
-  result;
-  const afterAssignedCallbackCall: string = read(); // should error
+  const stable: string = read(); // OK
+}
+
+if (read() !== undefined) {
+  unknownMutate();
+  const afterUnknown: string = read(); // error
+}
+
+if (read() !== undefined) {
+  invoke(() => {});
+  const afterCallbackStmt: string = read(); // error
+}
+
+if (read() !== undefined) {
+  const callbackResult = invoke(() => {});
+  callbackResult;
+  const afterCallbackAssign: string = read(); // error
+}
+
+if (read() !== undefined) {
+  const escapedRead = read;
+  escapedRead;
+  const afterAliasInit: string = read(); // error
+}
+
+let alias: () => string | undefined;
+if (read() !== undefined) {
+  alias = read;
+  alias;
+  const afterAliasReassign: string = read(); // error
+}
+
+async function testAwaitBoundaries() {
+  if (read() !== undefined) {
+    await delay();
+    const afterAwaitStmt: string = read(); // error
+  }
+
+  if (read() !== undefined) {
+    const awaited = await delay();
+    awaited;
+    const afterAwaitAssign: string = read(); // error
+  }
 }
 ```
 
-## Key Implementation Files
-- `internal/parser/parser.go`
-- `internal/binder/binder.go`
-- `internal/checker/flow.go`
-- `internal/ast/ast.go`
+## Not Yet Working (Phase 1)
+- Indirect alias escape and helper passthrough cases.
+- Broader nested/indirect callback boundary forms.
+- Additional Tier 1 write-form invalidation expansion.
+- Tier 2 guarded invalidation slices.
+
+```ts
+declare const read: identity () => string | undefined;
+declare function pass<T>(x: T): T;
+
+if (read() !== undefined) {
+  const indirect = pass(read);
+  indirect;
+  const stillNarrowed: string = read(); // should error after indirect alias escape is implemented
+}
+```
+
+## Phase 2 Out of Scope
+- Explicit `mutator`/`links` fallback resolution.
+- Ambiguity diagnostics for unresolved multi-endpoint impact.
+- Constrained-overload post-call narrowing from explicit contracts.
 
 ## Validation
-Most recent full required run is green:
+Latest tip validation is green:
 - `npx hereby build`
 - `npx hereby test`
 - `npx hereby lint`
 - `npx hereby format`
-
-## Remaining Work (Next Slices)
-1. Expand Step 6 with alias-escape and wider callback boundary coverage.
-2. Expand alias-escape coverage beyond direct assignment forms while preserving narrow blast radius.
-3. Start Tier 2 guarded invalidation tests as red-first slices.
-
-## Update Protocol
-This file is the PR description source-of-truth for this branch.
-After each commit-level slice, update these sections:
-- `Spec Alignment` (`Done`, `In Progress`, `Not Started`)
-- `Tests Added`
-- `Validation`
-- `Remaining Work`
