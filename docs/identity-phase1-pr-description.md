@@ -1,5 +1,75 @@
 # Identity CFA Phase 1
 
+## Executive Summary
+This PR covers Phase 1 implementation for identity-call CFA behavior.
+
+In scope now:
+- `identity` parsing/binding and call-shaped narrowing integration
+- conservative uncertainty-boundary invalidation with guarded preserves
+- parity visibility sweeps and divergence tracking
+
+Out of scope now:
+- explicit `mutator`/`links` contracts
+- ambiguity diagnostics for unresolved multi-endpoint impacts
+- constrained-overload post-call narrowing from explicit contracts
+
+## Current Implementation Status
+- Implemented-shape parity (sweep): `9/9`
+- Missing getter-origin matrix: `5/6` matched (`M6` remains conservative)
+- Latest full validation: green (`npx hereby build`, `npx hereby test`, `npx hereby lint`, `npx hereby format`)
+
+High-signal delivered slices:
+- parser/binder support for `identity` in declaration type positions
+- repeated-read identity narrowing in covered local-flow patterns
+- uncertainty-boundary invalidation slices (unknown call/callback/await/alias forms per covered matrix)
+- Tier 1 write-form invalidation expansion (compound/logical/unary endpoint mutations)
+- narrow Tier 2 passthrough preserves with strict local guards
+
+## Phase Implementation Plan (Committed Order)
+
+### Master Plan
+| Phase | Objective | Deliverables | Entry criteria | Exit criteria | Dependencies | Status |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | Identity core + conservative safety baseline | `identity` parse/bind; repeated-read narrowing; initial uncertainty boundaries; Tier 1 core write invalidation; uncertainty diagnostics (`TS100014`/`TS100015`) | SDD + TDD plan established | Full validation green; parity sweep tracked; missing matrix reported | parser/binder/checker alignment | In progress (major slices landed) |
+| 2 | Parity breadth expansion | callback parity breadth; Tier 1 write-form breadth expansion; Tier 2 guarded forwarding expansion; additional getter-origin mapping | Phase 1 stable and green | Added slices green with negative controls and no broad regressions | Phase 1 boundary classifier + diagnostics | Planned |
+| 3 | Guarded precision hardening | deeper callback/forwarding families under strict proofs; expanded conservative/non-goal matrix | Phase 2 slices stable | Precision gains land with soundness guardrails intact | Tier 2 matcher and alias-proofing infrastructure | Planned |
+| 4 | Stabilization + perf guardrails | regression sweeps; perf trend checks; conservative-gap documentation refresh | Phase 1-3 feature set stabilized | repeated green validation and stable perf envelope | benchmark harness + full suite coverage | Planned |
+| 5 (Final) | Explicit-contract stage | `mutator`/`links` fallback resolution; multi-endpoint ambiguity diagnostics; constrained-overload post-call narrowing with explicit unique links | prior phases stable and gaps justify explicit contracts | explicit-contract tests green and soundness constraints met | parser+binder+checker contract pipeline | Planned (out of scope for this PR) |
+
+### Phase Deliverables (Concrete)
+| Phase | Deliverables in committed order | Status |
+| --- | --- | --- |
+| 1 | 1) `identity` parse/bind support. 2) repeated-read narrowing. 3) uncertainty boundaries + diagnostics. 4) Tier 1 write invalidation local slices. 5) guarded narrow parity preserves. 6) parity/corpus/missing-matrix visibility suites. | Partial complete |
+| 2 | 1) callback breadth parity slices. 2) write-form matrix breadth. 3) Tier 2 guarded forwarding breadth. 4) submodule parity expansion slices. | Not started |
+| 3 | 1) deeper guarded forwarding/callback families. 2) refined conservative gates and additional negative controls. | Not started |
+| 4 | 1) stabilization/refactor sweeps. 2) perf guardrail verification on checker microbench and workload snapshots. | Not started |
+| 5 | 1) explicit contract parser/binder. 2) checker fallback resolution. 3) ambiguity diagnostics. 4) constrained-overload linked post-call narrowing. | Not started |
+
+## Parity Status And Divergences
+Visible parity summary:
+- matched sweep categories: `9/9`
+- missing getter-origin matrix: `5/6` matched, `M6` divergence retained and documented
+
+Top divergences to track:
+- `M6` conformance-style unknown-call contrast remains conservative on identity path (`TS100015` + assignment error)
+- callback const no-op alias (`const cb = () => {}; invoke(cb)`) remains conservative in current baselines
+- broader Tier 2 non-trivial or mutable forwarding remains conservative by design
+
+## Benchmarks / Perf
+- checker microbench harness: `internal/checker/identity_bench_test.go`
+- benchmark command: `go test ./internal/checker -run '^$' -bench BenchmarkIdentityCFAFlow -benchmem -count=1`
+- TS-main snapshot (2026-03-10): `tsgo` ~`5.9x` faster wall-time than upstream `tsc`, ~`5%` lower max RSS
+- branch-vs-main snapshot: wall `+4.51%`, RSS `-2.24%`
+
+## Design Decisions And Re-review Outcomes
+- naming: keep `identity` for continuity in Phase 1; revisit at explicit upstream checkpoint
+- conservative core retained as default safety contract
+- guarded preserves allowed only for strict tested shapes
+- broad carveouts deferred until negative controls + perf evidence
+
+## Detailed Matrices And Appendices
+All previously existing detailed content is preserved below and treated as appendices/source material.
+
 ## Scope
 This PR covers Phase 1 only: `identity` support and heuristic uncertainty-boundary invalidation slices.
 It does not include the final phase explicit contracts (`mutator`/`links`).
