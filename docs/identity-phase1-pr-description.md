@@ -476,36 +476,26 @@ Latest tip validation is green:
 - `npx hereby lint`
 - `npx hereby format`
 
-## TypeScript-main Benchmark Snapshot
+## Benchmark: tsgo main vs this branch
 
-### Environment and workload
+### Setup
 - Date: 2026-03-10
-- Workload: TypeScript-main compile workload, same checkout and same input set for both runners
-- Host: local macOS machine
-- Measurement set: 3 wall-time runs each, plus max RSS sampling
-
-### Comparable commands
-```sh
-# Upstream tsc (TypeScript main)
-node ./_submodules/TypeScript/built/local/tsc.js -p ./_submodules/TypeScript/src/tsconfig.json --noEmit
-
-# tsgo (same project/workload)
-./tsgo -p ./_submodules/TypeScript/src/tsconfig.json --noEmit
-```
+- Workload baseline commit: TypeScript main `c9e7428bb76f0543a3555d0af87777e7db3a41e6`
+- Compared tsgo commits:
+  - main: `4a59cd78390d5789f547db8af35b43be2f829719`
+  - feature: `0bb576a859097252b54e1165bb88b84cf073f06d`
+- Measurement set: 3 wall-time runs per commit and average RSS comparison
 
 ### Results
-| Runner | Wall times (s) | Avg wall (s) | Avg max RSS (MB) |
+| Build | Runs (s) | Avg wall (s) | Avg RSS (MiB) |
 | --- | --- | --- | --- |
-| upstream `tsc` | 8.86, 7.86, 7.84 | 8.19 | 708.3 |
-| `tsgo` | 1.60, 1.29, 1.27 | 1.39 | 672.1 |
+| tsgo main (`4a59cd7`) | 1.34, 1.33, 1.32 | 1.33 | 650.8 |
+| this branch (`0bb576a`) | 1.37, 1.31, 1.49 | 1.39 | 636.2 |
 
-- Speedup: `8.19 / 1.39 ~= 5.9x`
-- Memory: `672.1 MB` vs `708.3 MB` (`~5%` lower max RSS for `tsgo`)
+### Interpretation
+- Wall time delta: `+4.51%` (this branch is slower).
+- RSS delta: `-2.24%` (this branch uses less memory).
+- Net: current Phase 1 behavior trades a small wall-time regression for a modest RSS improvement on this workload.
 
-### Caveats
-- This is a single-machine snapshot, not a cross-hardware benchmark campaign.
-- Results are for this TypeScript-main workload shape and current checkout state.
-- Wall time and max RSS are coarse indicators; they do not isolate all phase-level costs.
-
-### Phase 1 implication
-These numbers support continuing Phase 1 with conservative boundary invalidation while iterating on correctness and parity slices, with less pressure to prematurely relax soundness guards for performance.
+### Caveat
+- This is a small sample size on one machine. Additional runs may reduce noise and tighten the wall-time delta estimate.
