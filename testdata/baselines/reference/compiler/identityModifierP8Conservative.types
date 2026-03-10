@@ -1,8 +1,9 @@
 //// [tests/cases/compiler/identityModifierP8Conservative.ts] ////
 
 === identityModifierP8Conservative.ts ===
-// P8/X3 conservative boundary lock:
-// Unknown calls after discriminant guards must drop identity-call narrowing.
+// P8/X3 guarded unknown-call boundary:
+// Preserve narrowing only for a very narrow shape and keep broader unknown-call
+// forms conservative.
 
 type Shape =
 >Shape : Shape
@@ -17,6 +18,10 @@ type Shape =
 
 declare function unknownMutate(): void;
 >unknownMutate : () => void
+
+declare function unknownMutateWithArg(v: number): void;
+>unknownMutateWithArg : (v: number) => void
+>v : number
 
 declare const getterModel: {
 >getterModel : { readonly value: Shape; }
@@ -66,14 +71,38 @@ if (identityModel().kind === "circle") {
 >unknownMutate() : void
 >unknownMutate : () => void
 
-    const identityAfterUnknown: number = identityModel().radius; // expected conservative error
+    const identityAfterUnknown: number = identityModel().radius; // guarded parity target: OK
 >identityAfterUnknown : number
+>identityModel().radius : number
+>identityModel() : Shape
+>identityModel : () => Shape
+>radius : number
+
+    identityAfterUnknown;
+>identityAfterUnknown : number
+}
+
+if (identityModel().kind === "circle") {
+>identityModel().kind === "circle" : boolean
+>identityModel().kind : "circle" | "square"
+>identityModel() : Shape
+>identityModel : () => Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    unknownMutateWithArg(1);
+>unknownMutateWithArg(1) : void
+>unknownMutateWithArg : (v: number) => void
+>1 : 1
+
+    const identityAfterUnknownWithArg: number = identityModel().radius; // expected conservative error (non-target shape)
+>identityAfterUnknownWithArg : number
 >identityModel().radius : any
 >identityModel() : Shape
 >identityModel : () => Shape
 >radius : any
 
-    identityAfterUnknown;
->identityAfterUnknown : number
+    identityAfterUnknownWithArg;
+>identityAfterUnknownWithArg : number
 }
 

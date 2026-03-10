@@ -294,10 +294,10 @@ if (shape().kind === "circle") {
 
     const afterUnknownShapeCall: number = shape().radius; // should error
 >afterUnknownShapeCall : number
->shape().radius : any
+>shape().radius : number
 >shape() : Shape
 >shape : () => Shape
->radius : any
+>radius : number
 
     afterUnknownShapeCall;
 >afterUnknownShapeCall : number

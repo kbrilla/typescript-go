@@ -543,12 +543,12 @@ if (identityNested().kind === "circle") {
 >unknownMutate() : void
 >unknownMutate : () => void
 
-    const identityAfterUnknown: number = identityNested().radius; // identity observed: error
+    const identityAfterUnknown: number = identityNested().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
 >identityAfterUnknown : number
->identityNested().radius : any
+>identityNested().radius : number
 >identityNested() : Shape
 >identityNested : () => Shape
->radius : any
+>radius : number
 
     identityAfterUnknown;
 >identityAfterUnknown : number

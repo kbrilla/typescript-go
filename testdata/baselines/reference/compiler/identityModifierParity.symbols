@@ -254,7 +254,9 @@ if (shape().kind === "circle") {
 
     const afterUnknownShapeCall: number = shape().radius; // should error
 >afterUnknownShapeCall : Symbol(afterUnknownShapeCall, Decl(identityModifierParity.ts, 102, 9))
+>shape().radius : Symbol(radius, Decl(identityModifierParity.ts, 87, 23))
 >shape : Symbol(shape, Decl(identityModifierParity.ts, 90, 13))
+>radius : Symbol(radius, Decl(identityModifierParity.ts, 87, 23))
 
     afterUnknownShapeCall;
 >afterUnknownShapeCall : Symbol(afterUnknownShapeCall, Decl(identityModifierParity.ts, 102, 9))

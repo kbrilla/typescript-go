@@ -477,9 +477,11 @@ if (identityNested().kind === "circle") {
     unknownMutate();
 >unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterParitySweep.ts, 5, 40))
 
-    const identityAfterUnknown: number = identityNested().radius; // identity observed: error
+    const identityAfterUnknown: number = identityNested().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
 >identityAfterUnknown : Symbol(identityAfterUnknown, Decl(identityModifierGetterParitySweep.ts, 185, 9))
+>identityNested().radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
 >identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 165, 13))
+>radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
 
     identityAfterUnknown;
 >identityAfterUnknown : Symbol(identityAfterUnknown, Decl(identityModifierGetterParitySweep.ts, 185, 9))

@@ -37,9 +37,13 @@ const (
 	identityBoundaryPreserveRuleNoopCallback identityBoundaryPreserveRuleID = iota + 1
 	identityBoundaryPreserveRulePromiseResolveAwait
 	identityBoundaryPreserveRuleAmbientNoArgAwait
+	identityBoundaryPreserveRuleAmbientNoArgVoidUnknownCall
 )
 
 var identityBoundaryPreserveRulesByKind = map[identityBoundaryKind][]identityBoundaryPreserveRuleID{
+	identityBoundaryKindUnknownCall: {
+		identityBoundaryPreserveRuleAmbientNoArgVoidUnknownCall,
+	},
 	identityBoundaryKindCallbackCall: {
 		identityBoundaryPreserveRuleNoopCallback,
 	},
@@ -623,9 +627,57 @@ func (c *Checker) shouldPreserveIdentityBoundaryByRule(reference *ast.Node, boun
 		return c.shouldPreservePromiseResolveAwaitCallNarrowing(reference, boundary)
 	case identityBoundaryPreserveRuleAmbientNoArgAwait:
 		return c.shouldPreserveAmbientNoArgAwaitCallNarrowing(reference, boundary)
+	case identityBoundaryPreserveRuleAmbientNoArgVoidUnknownCall:
+		return c.shouldPreserveAmbientNoArgVoidUnknownCallNarrowing(reference, boundary)
 	default:
 		return false
 	}
+}
+
+func (c *Checker) shouldPreserveAmbientNoArgVoidUnknownCallNarrowing(reference *ast.Node, boundary *ast.Node) bool {
+	if !isNoArgCallExpression(reference) || !ast.IsCallExpression(boundary) {
+		return false
+	}
+
+	if boundary.Parent == nil || !ast.IsExpressionStatement(boundary.Parent) || len(boundary.Arguments()) != 0 {
+		return false
+	}
+
+	callee := ast.SkipParentheses(boundary.Expression())
+	if !ast.IsIdentifier(callee) {
+		return false
+	}
+
+	boundarySignature := c.getResolvedSignature(boundary, nil /*candidatesOutArray*/, CheckModeNormal)
+	if boundarySignature == nil || boundarySignature == c.resolvingSignature || len(boundarySignature.parameters) != 0 || signatureHasRestParameter(boundarySignature) {
+		return false
+	}
+
+	declaration := boundarySignature.declaration
+	if declaration == nil || !ast.IsFunctionDeclaration(declaration) || declaration.Body() != nil {
+		return false
+	}
+
+	boundaryReturnType := c.getReturnTypeOfSignature(boundarySignature)
+	if boundaryReturnType.flags != TypeFlagsVoid {
+		return false
+	}
+
+	readSignature := c.getResolvedSignature(reference, nil /*candidatesOutArray*/, CheckModeTypeOnly)
+	if readSignature == nil || readSignature == c.resolvingSignature {
+		return false
+	}
+
+	readReturnType := c.getReturnTypeOfSignature(readSignature)
+	if readReturnType.flags&TypeFlagsUnion == 0 {
+		return false
+	}
+
+	if c.maybeTypeOfKind(readReturnType, TypeFlagsUndefined|TypeFlagsNull) {
+		return false
+	}
+
+	return true
 }
 
 func (c *Checker) isIdentityCallReference(reference *ast.Node) bool {

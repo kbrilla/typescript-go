@@ -10,12 +10,9 @@ identityModifierParity.ts(75,40): error TS2554: Expected 1 arguments, but got 0.
 identityModifierParity.ts(80,5): error TS2554: Expected 1 arguments, but got 0.
 identityModifierParity.ts(82,11): error TS2322: Type 'void' is not assignable to type 'string'.
 identityModifierParity.ts(82,47): error TS2554: Expected 1 arguments, but got 0.
-identityModifierParity.ts(102,5): error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
-identityModifierParity.ts(103,51): error TS2339: Property 'radius' does not exist on type 'Shape'.
-  Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierParity.ts (12 errors) ====
+==== identityModifierParity.ts (10 errors) ====
     // Parity baseline: property getter/setter repeated read narrowing.
     declare const propertyModel: {
         get value(): string | undefined;
@@ -147,11 +144,6 @@ identityModifierParity.ts(103,51): error TS2339: Property 'radius' does not exis
     
     if (shape().kind === "circle") {
         unknownShapeMutate();
-        ~~~~~~~~~~~~~~~~~~~~
-!!! error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
         const afterUnknownShapeCall: number = shape().radius; // should error
-                                                      ~~~~~~
-!!! error TS2339: Property 'radius' does not exist on type 'Shape'.
-!!! error TS2339:   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
         afterUnknownShapeCall;
     }

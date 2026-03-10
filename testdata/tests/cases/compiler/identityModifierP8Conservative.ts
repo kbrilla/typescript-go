@@ -1,14 +1,16 @@
 // @strict: true
 // @noEmit: true
 
-// P8/X3 conservative boundary lock:
-// Unknown calls after discriminant guards must drop identity-call narrowing.
+// P8/X3 guarded unknown-call boundary:
+// Preserve narrowing only for a very narrow shape and keep broader unknown-call
+// forms conservative.
 
 type Shape =
     | { kind: "circle"; radius: number }
     | { kind: "square"; size: number };
 
 declare function unknownMutate(): void;
+declare function unknownMutateWithArg(v: number): void;
 
 declare const getterModel: {
     get value(): Shape;
@@ -24,6 +26,12 @@ if (getterModel.value.kind === "circle") {
 
 if (identityModel().kind === "circle") {
     unknownMutate();
-    const identityAfterUnknown: number = identityModel().radius; // expected conservative error
+    const identityAfterUnknown: number = identityModel().radius; // guarded parity target: OK
     identityAfterUnknown;
+}
+
+if (identityModel().kind === "circle") {
+    unknownMutateWithArg(1);
+    const identityAfterUnknownWithArg: number = identityModel().radius; // expected conservative error (non-target shape)
+    identityAfterUnknownWithArg;
 }

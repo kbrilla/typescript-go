@@ -186,6 +186,6 @@ if (getterNested.value.kind === "circle") {
 
 if (identityNested().kind === "circle") {
     unknownMutate();
-    const identityAfterUnknown: number = identityNested().radius; // identity observed: error
+    const identityAfterUnknown: number = identityNested().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
     identityAfterUnknown;
 }

@@ -5,12 +5,9 @@ identityModifierGetterParitySweep.ts(48,7): error TS2322: Type 'string | undefin
 identityModifierGetterParitySweep.ts(85,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierGetterParitySweep.ts(86,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierGetterParitySweep.ts(185,5): error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
-identityModifierGetterParitySweep.ts(186,59): error TS2339: Property 'radius' does not exist on type 'Shape'.
-  Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierGetterParitySweep.ts (6 errors) ====
+==== identityModifierGetterParitySweep.ts (4 errors) ====
     // Getter-to-identity parity sweep.
     // Categories: repeated reads, branch merges, callback/await boundaries,
     // write invalidation, aliasing, conditional/ternary, nested access.
@@ -207,12 +204,7 @@ identityModifierGetterParitySweep.ts(186,59): error TS2339: Property 'radius' do
     
     if (identityNested().kind === "circle") {
         unknownMutate();
-        ~~~~~~~~~~~~~~~
-!!! error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
-        const identityAfterUnknown: number = identityNested().radius; // identity observed: error
-                                                              ~~~~~~
-!!! error TS2339: Property 'radius' does not exist on type 'Shape'.
-!!! error TS2339:   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
+        const identityAfterUnknown: number = identityNested().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
         identityAfterUnknown;
     }
     

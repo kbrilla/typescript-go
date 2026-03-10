@@ -73,7 +73,7 @@ flowchart TD
   I3 --> I4["Checker checkCallExpression sees SignatureFlagsIdentity"]
   I4 --> I5["Checker getFlowTypeOfReference call returnType"]
   I5 --> I6["Checker getTypeAtFlowCondition then narrowTypeByTruthiness fallback"]
-  I6 --> I7["FlowCall boundary classify kind then table-dispatch preserve rules then may invalidate plus TS100014 or TS100015"]
+  I6 --> I7["FlowCall boundary classify kind then table-dispatch preserve rules including guarded unknown-call carveout then may invalidate plus TS100014 or TS100015"]
 ```
 
 ### Divergence Overlay
@@ -106,14 +106,21 @@ flowchart LR
 ```
 
 ## Final Sweep Decision (P8)
-- Status: not closed in Phase 1.
+- Status: closed in Phase 1 with a strict guarded shape.
 - Shape: `P8` in `identityModifierGetterParitySweep.ts`, overlapping with corpus `X3` in `identityModifierGetterCorpus.ts`.
-- Decision: keep conservative invalidation at nested unknown-call boundaries after discriminant guards.
-- Safety rationale: we currently do not have a narrow, sound proof that an arbitrary unknown call cannot mutate or invalidate identity endpoint state. Relaxing this boundary would require broader unsound assumptions.
-- Guidance update: unknown-call boundary invalidation now emits dedicated guidance (TS100015) suggesting extraction of a guarded temporary before the unknown call.
-- TDD evidence for this decision:
-  - red: added `identityModifierP8Conservative.ts` and ran `go test -run='TestLocal/identityModifierP8Conservative\.ts' ./internal/testrunner` (baseline creation failure)
-  - green: accepted baselines and reran targeted test successfully
+- Guarded preserve rule:
+  - boundary must be an expression-statement call
+  - call must have zero arguments
+  - callee must resolve to an ambient function declaration with zero parameters and `void` return type
+  - identity read endpoint return type must be a non-nullish union
+- Guardrails:
+  - no broad unknown-call relaxation was added
+  - argument-passing unknown calls remain conservative
+  - non-ambient, non-void, assignment/initializer, method, or property-call boundary shapes remain conservative
+- TDD evidence:
+  - red: updated `identityModifierGetterParitySweep.ts`, `identityModifierGetterCorpus.ts`, and `identityModifierP8Conservative.ts`; targeted tests failed with baseline diffs
+  - green: implemented guarded checker rule, accepted baselines, and reran targeted tests successfully
+  - conservative control: `unknownMutateWithArg(1)` still drops narrowing in `identityModifierP8Conservative.ts`
 
 ## Implemented So Far
 - Parser and binder support for `identity` function-type modifier usage in declaration type positions.
@@ -138,6 +145,9 @@ flowchart LR
 - Narrow await-boundary parity preservation slice:
   - `if (read() !== undefined) { await Promise.resolve(); const s: string = read(); }` preserves narrowing.
   - Broader await boundaries remain conservative (`await delay()`, `const x = await delay()`).
+- Narrow unknown-call parity preservation slice:
+  - `if (read().kind === "circle") { unknownMutate(); const r: number = read().radius; }` preserves narrowing for the strict guarded ambient no-arg `void` unknown-call shape.
+  - Non-target unknown-call shapes remain conservative.
 - Narrow aliasing parity preservation slice:
   - `if (read() !== undefined) { const alias = read; const s: string = read(); }` now preserves narrowing.
   - Indirect and reassigned alias escapes remain conservative.
@@ -185,17 +195,13 @@ flowchart LR
 | Aliasing / escape handling | Object alias keeps getter narrowing in sweep scenario | Direct const alias now preserves narrowing; indirect/reassigned escapes remain conservative | Full (narrow slice) |
 | Conditional/ternary repeated-read shape | Implemented | Implemented | Full |
 | Nested discriminant read reuse | Implemented | Implemented | Full |
-| Nested unknown-call boundary after discriminant guard | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
+| Nested unknown-call boundary after discriminant guard | Remains narrowed in sweep scenario | Preserved for guarded ambient no-arg `void` unknown-call shape | Full (guarded) |
 | Tier 2 forwarding precision (non-trivial helpers) | N/A | Partial | Gap |
 | Heuristic-limit diagnostics | N/A | Implemented for uncertainty-boundary conservative invalidation | Partial |
 
 Parity score summary:
-- `8/9` getter-comparable CFA categories are fully matched in the sweep (`P1`, `P2`, `P3`, `P4`, `P5`, `P6`, `P7`, `P8` read-reuse branch).
-- `1/9` getter-comparable categories show visible mismatches in the sweep (`P8` unknown-call boundary).
-- Additional Phase 1 gaps remain: Tier 2 broader forwarding precision and diagnostics for lower-confidence non-boundary Tier 2 cases.
-
-Remaining visible gaps from getter-to-identity sweep:
-- Nested unknown-call boundary: getter scenario stays narrowed while identity invalidates.
+- `9/9` getter-comparable CFA categories are matched in the sweep for currently implemented guarded shapes.
+- Remaining Phase 1 gaps are outside the sweep score: Tier 2 broader forwarding precision and diagnostics for lower-confidence non-boundary Tier 2 cases.
 
 ## Boundary Coverage Matrix
 | Boundary | Example shape | Status | Test source |
@@ -232,7 +238,7 @@ Remaining visible gaps from getter-to-identity sweep:
 | Aliasing parity | alias/escape then read | Matched for direct const alias; indirect/reassigned escapes intentionally conservative | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Conditional/ternary parity | guarded ternary read fallback | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Nested discriminant reuse parity | kind guard then nested field read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
-| Nested unknown-call boundary parity | kind guard + unknown call + nested read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Nested unknown-call boundary parity | kind guard + unknown call + nested read | Matched (guarded ambient no-arg `void` shape) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Existing hybrid/write-call slices | callable hybrid + setter-call analog | Additional visibility | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 | Broad getter corpus (submodule-derived) | qualified names, dotted names, strict-null getter flow, type-guard member patterns | Visibility-first, includes intentional mismatches | `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts` |
 
@@ -244,14 +250,14 @@ Remaining visible gaps from getter-to-identity sweep:
 - Closed mismatch `QN5` (generic discriminant narrowing over `PetType extends Pet`) by enabling identity-call flow to use narrowable return types.
 - Closed mismatch `X1` (alias escape via ambient passthrough helper `pass`) with a narrow Tier 2 guarded precision extension in alias-escape analysis.
 - Closed mismatch `GC3` (strict-null await boundary from getter control-flow corpus) with a narrow await preserve rule for ambient no-arg `Promise<void>` calls on nullish identity reads.
+- Closed mismatch `X3` (nested discriminant unknown-call boundary) with a strict guarded preserve rule for ambient no-arg `void` expression-statement calls on non-nullish union identity reads.
 - Corpus mismatch movement in this slice:
-  - mismatch cases: `2 -> 1` (`GC3`, `X3` -> `X3`)
-  - corpus error count: `6 -> 4`
-  - getter parity sweep score movement: `7/9 -> 8/9` (`2 -> 1` remaining sweep gaps)
-- Final X3 safety assessment (this update):
-  - attempted to define a minimal unknown-call preserve carveout for `X3`
-  - rejected as not safely provable without broadening unsound behavior at uncertainty boundaries
-  - corpus remains at `1` broad getter mismatch (`X3`) and `4` total corpus errors
+  - mismatch cases: `1 -> 0` (`X3` closed)
+  - corpus error count: `4 -> 2`
+  - getter parity sweep score movement: `8/9 -> 9/9`
+- X3 safety assessment (this update):
+  - closed with a strict syntactic + signature guard
+  - non-target unknown-call forms remain conservative by design
 
 ## Examples and Parity
 
@@ -645,7 +651,6 @@ if (model.user !== null) {
 - Broader nested/indirect callback boundary forms.
 - Additional Tier 1 write-form invalidation expansion beyond currently covered property/method/callable-hybrid local shapes.
 - Tier 2 guarded precision behavior itself (today's Tier 2 starter scenarios intentionally keep conservative invalidation expectations).
-- Remaining broad getter corpus mismatches: `X3`.
 
 ## Phase 2 Out of Scope
 - Explicit `mutator`/`links` fallback resolution.

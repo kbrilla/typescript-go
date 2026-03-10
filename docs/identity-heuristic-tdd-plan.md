@@ -256,10 +256,10 @@ Current status:
   - Added discriminated-union identity parity coverage for kind-guard narrowing and post-unknown-call invalidation.
   - Added comprehensive getter-to-identity parity visibility sweep in `identityModifierGetterParitySweep.ts` with categorized sections (repeated reads, branch merges, callback/await, write invalidation, aliasing, ternary, nested access).
   - Added broad submodule-derived getter-to-identity parity corpus in `identityModifierGetterCorpus.ts` with source-traceable section labels and intentional mismatch visibility baselines.
-  - Current getter-comparable parity score in the sweep is `8/9` matched categories, with `1/9` conservative mismatch.
+  - Current getter-comparable parity score in the sweep is `9/9` matched categories for implemented guarded shapes.
   - Latest corpus mismatch closures: `QN5` (generic discriminant over `PetType extends Pet`), `X1` (alias escape via ambient passthrough helper), and `GC3` (strict-null await boundary).
-  - Broad corpus mismatch count moved `4 -> 1` cases and corpus error count moved `9 -> 4`.
-  - Getter parity sweep score has now moved to `8/9` after the narrow direct const alias parity closure (`P6`).
+  - Broad corpus mismatch count moved `4 -> 0` cases and corpus error count moved `9 -> 2`.
+  - Getter parity sweep score has now moved to `9/9` after closing the guarded unknown-call parity shape (`P8`/`X3`).
   - Remaining: expand parity mapping against additional submodule scenarios.
 - [x] Step 9: Performance guardrails/perf checks (micro-bench baseline)
   - Added deterministic checker micro-bench coverage for repeated reads and uncertainty boundaries in `internal/checker/identity_bench_test.go`.
@@ -268,7 +268,24 @@ Current status:
 ### Next Focus (Immediate)
 1. Expand Tier 2 guarded precision beyond trivial local passthrough forms while preserving soundness.
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
-3. Continue parity-gap reductions from the sweep (nested unknown-call in `P8`) in narrow red/green slices.
+3. Expand parity mapping from the getter corpus beyond currently covered source slices.
+
+### Latest Increment (X3/P8 Guarded Unknown-Call Closure)
+- Closed the remaining sweep/corpus overlap mismatch (`P8`/`X3`) with a strict preserve rule in `internal/checker/flow.go`.
+- Exact guarded rule:
+  - applies only to unknown-call boundaries that are expression-statement calls
+  - call must have zero arguments
+  - target must resolve to an ambient function declaration with zero parameters and `void` return type
+  - identity read endpoint return type must be a non-nullish union
+- Explicit guardrails retained:
+  - argument-passing unknown calls remain conservative
+  - non-ambient, non-void, method/property, and assignment/initializer call shapes remain conservative
+- Added/updated TDD test shapes:
+  - parity/corpus target shape now expects preserved narrowing in `identityModifierGetterParitySweep.ts` and `identityModifierGetterCorpus.ts`
+  - conservative control shape in `identityModifierP8Conservative.ts` keeps `unknownMutateWithArg(1)` as a boundary drop
+- Red->green evidence:
+  - red: `go test -run='TestLocal/(identityModifierGetterCorpus|identityModifierGetterParitySweep|identityModifierP8Conservative)\.ts' ./internal/testrunner`
+  - green: `npx hereby baseline-accept` then same targeted rerun
 
 ### Latest Increment (Parity Gap Closure - P6)
 - Closed `P6` in `identityModifierGetterParitySweep.ts` for the narrow direct alias shape:
@@ -364,19 +381,8 @@ Current status:
   - `TS100014` boundary-conservative invalidation note at the unknown call site
 
 ### Latest Increment (P8 Final Sweep Decision)
-- Evaluated the final sweep mismatch `P8` (`identityModifierGetterParitySweep.ts`) together with corpus overlap `X3` (`identityModifierGetterCorpus.ts`).
-- Decision: keep conservative behavior for nested unknown-call boundary after discriminant guard.
-- Rationale: no narrow syntactic proof currently distinguishes a harmless unknown call from one that can invalidate identity endpoint state; relaxing this boundary would broaden unsoundness risk.
-- Added focused lock test `testdata/tests/cases/compiler/identityModifierP8Conservative.ts` with strict TDD:
-  - red: `go test -run='TestLocal/identityModifierP8Conservative\.ts' ./internal/testrunner` (new baselines created)
-  - green: `npx hereby baseline-accept` then targeted rerun passes
-- Status after this slice:
-  - getter parity sweep remains `8/9` (open category: `P8` unknown-call boundary)
-  - broad getter corpus remains `1` mismatch case (`X3`) and `4` corpus errors
-  - downstream `TS2339` on `identityX3().radius` after the boundary
-- Evaluated a candidate narrow preserve rule for unknown-call boundaries and rejected it.
-- Rejection rationale: no rule was found that is both narrow enough and safety-provable for unknown calls without introducing broad unsound relaxation for uncertainty boundaries.
-- Outcome: keep `X3` intentionally open in Phase 1, with explicit corpus/test comments and docs rationale.
+- Historical note: this conservative-open decision was later superseded.
+- Current status is documented in `Latest Increment (X3/P8 Guarded Unknown-Call Closure)` above: `P8`/`X3` is now closed with a strict guarded unknown-call preserve rule and non-target conservative controls.
 
 ### Latest Increment (P8/X3 Diagnostic Guidance)
 - Kept `P8`/`X3` behavior conservative, but added a dedicated diagnostic for unknown-call boundary drops.

@@ -378,6 +378,6 @@ if (getterX3.value.kind === "circle") {
 
 if (identityX3().kind === "circle") {
     unknownMutate();
-    const x3IdentityB: number = identityX3().radius; // intentional open mismatch: unknown-call boundary remains conservative
+    const x3IdentityB: number = identityX3().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
     x3IdentityB;
 }
