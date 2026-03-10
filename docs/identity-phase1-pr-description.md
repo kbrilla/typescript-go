@@ -18,6 +18,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - Shape: `P8` in `identityModifierGetterParitySweep.ts`, overlapping with corpus `X3` in `identityModifierGetterCorpus.ts`.
 - Decision: keep conservative invalidation at nested unknown-call boundaries after discriminant guards.
 - Safety rationale: we currently do not have a narrow, sound proof that an arbitrary unknown call cannot mutate or invalidate identity endpoint state. Relaxing this boundary would require broader unsound assumptions.
+- Guidance update: unknown-call boundary invalidation now emits dedicated guidance (TS100015) suggesting extraction of a guarded temporary before the unknown call.
 - TDD evidence for this decision:
   - red: added `identityModifierP8Conservative.ts` and ran `go test -run='TestLocal/identityModifierP8Conservative\.ts' ./internal/testrunner` (baseline creation failure)
   - green: accepted baselines and reran targeted test successfully
@@ -28,7 +29,8 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - Repeated-read narrowing for covered local-flow identity call patterns.
 - Conservative invalidation for currently implemented uncertainty boundaries.
 - Heuristic-limit diagnostic guidance for conservative uncertainty-boundary drops in identity call narrowing.
-  - Diagnostic text: `Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.`
+  - Unknown-call diagnostic text (TS100015): `Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.`
+  - Generic boundary diagnostic text (TS100014): `Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.`
 - Conditional-expression callback initializer boundary invalidation (`const x = cond ? invoke(() => {}) : invoke(() => {})`).
 - Tier 1 write-form parity expansion in local parity tests (property assignment and callable hybrid setter-style calls).
 - Tier 2 starter test coverage for candidate forwarding/passthrough shapes with current conservative expectations in `testdata/tests/cases/compiler/identityModifierTier2.ts`.

@@ -532,7 +532,23 @@ func (c *Checker) reportIdentityBoundaryInvalidationDiagnostic(reference *ast.No
 	}
 
 	c.reportedIdentityBoundaryDiagnostics.Add(boundary)
-	c.diagnostics.Add(createDiagnosticForNode(boundary, diagnostics.Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local))
+	message := diagnostics.Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local
+	if c.isUnknownCallBoundaryForIdentityReference(reference, boundary) {
+		message = diagnostics.Identity_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_temporary_before_the_call_to_preserve_precision
+	}
+	c.diagnostics.Add(createDiagnosticForNode(boundary, message))
+}
+
+func (c *Checker) isUnknownCallBoundaryForIdentityReference(reference *ast.Node, boundary *ast.Node) bool {
+	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 || !ast.IsCallExpression(boundary) {
+		return false
+	}
+
+	if c.isMatchingReference(reference, boundary) {
+		return false
+	}
+
+	return len(boundary.Arguments()) == 0
 }
 
 func (c *Checker) isIdentityCallReference(reference *ast.Node) bool {

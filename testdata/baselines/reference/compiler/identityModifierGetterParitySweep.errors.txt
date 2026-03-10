@@ -5,7 +5,7 @@ identityModifierGetterParitySweep.ts(48,7): error TS2322: Type 'string | undefin
 identityModifierGetterParitySweep.ts(85,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierGetterParitySweep.ts(86,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierGetterParitySweep.ts(185,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierGetterParitySweep.ts(185,5): error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
 identityModifierGetterParitySweep.ts(186,59): error TS2339: Property 'radius' does not exist on type 'Shape'.
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
@@ -208,7 +208,7 @@ identityModifierGetterParitySweep.ts(186,59): error TS2339: Property 'radius' do
     if (identityNested().kind === "circle") {
         unknownMutate();
         ~~~~~~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+!!! error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
         const identityAfterUnknown: number = identityNested().radius; // identity observed: error
                                                               ~~~~~~
 !!! error TS2339: Property 'radius' does not exist on type 'Shape'.

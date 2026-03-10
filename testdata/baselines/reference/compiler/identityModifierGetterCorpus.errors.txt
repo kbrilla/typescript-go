@@ -2,7 +2,7 @@ identityModifierGetterCorpus.ts(302,7): error TS2322: Type 'string | false' is n
   Type 'boolean' is not assignable to type 'string | number'.
 identityModifierGetterCorpus.ts(305,7): error TS2322: Type 'string | false' is not assignable to type 'string | number'.
   Type 'boolean' is not assignable to type 'string | number'.
-identityModifierGetterCorpus.ts(376,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierGetterCorpus.ts(376,5): error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
 identityModifierGetterCorpus.ts(377,46): error TS2339: Property 'radius' does not exist on type 'Shape'.
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
@@ -391,7 +391,7 @@ identityModifierGetterCorpus.ts(377,46): error TS2339: Property 'radius' does no
     if (identityX3().kind === "circle") {
         unknownMutate();
         ~~~~~~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+!!! error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
         const x3IdentityB: number = identityX3().radius; // intentional open mismatch: unknown-call boundary remains conservative
                                                  ~~~~~~
 !!! error TS2339: Property 'radius' does not exist on type 'Shape'.

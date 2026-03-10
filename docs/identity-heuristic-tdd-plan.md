@@ -374,6 +374,13 @@ Current status:
 - Rejection rationale: no rule was found that is both narrow enough and safety-provable for unknown calls without introducing broad unsound relaxation for uncertainty boundaries.
 - Outcome: keep `X3` intentionally open in Phase 1, with explicit corpus/test comments and docs rationale.
 
+### Latest Increment (P8/X3 Diagnostic Guidance)
+- Kept `P8`/`X3` behavior conservative, but added a dedicated diagnostic for unknown-call boundary drops.
+- New targeted guidance (TS100015) now appears on unknown-call boundary invalidation sites:
+  - "Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision."
+- Existing generic uncertainty-boundary guidance (TS100014) remains in place for callback and `await` boundary drops.
+- Diagnostics-focused coverage was extended in `identityModifierHeuristicDiagnostics.ts`, including a duplicate-suppression shape to ensure one boundary diagnostic per unknown call node.
+
 ### Latest Increment (Boundaries - Narrow Slice)
 - Added `testdata/tests/cases/compiler/identityModifierBoundaries.ts` for expression-statement call boundaries.
 - Binder change (`internal/binder/binder.go`): expression-statement calls now create flow-call nodes (`maybeBindExpressionFlowIfCall`).

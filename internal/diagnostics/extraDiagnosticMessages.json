@@ -98,5 +98,9 @@
     "Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.": {
         "category": "Error",
         "code": 100014
+    },
+    "Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.": {
+        "category": "Error",
+        "code": 100015
     }
 }
