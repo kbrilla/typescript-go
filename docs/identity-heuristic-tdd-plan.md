@@ -324,6 +324,8 @@ Current status:
   - Latest corpus mismatch closures: `QN5` (generic discriminant over `PetType extends Pet`), `X1` (alias escape via ambient passthrough helper), and `GC3` (strict-null await boundary).
   - Broad corpus mismatch count moved `4 -> 0` cases and corpus error count moved `9 -> 2`.
   - Getter parity sweep score has now moved to `9/9` after closing the guarded unknown-call parity shape (`P8`/`X3`).
+  - Added missing getter-origin parity expansion matrix in `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts`.
+  - Added `6` missing scenarios (`M1`..`M6`) with source-tagged sections; accepted baseline outcome is `5` matched and `1` mismatched (`M6` unknown-call boundary contrast remains conservative for identity).
   - Remaining: expand parity mapping against additional submodule scenarios.
 - [x] Step 9: Performance guardrails/perf checks (micro-bench baseline)
   - Added deterministic checker micro-bench coverage for repeated reads and uncertainty boundaries in `internal/checker/identity_bench_test.go`.
@@ -339,6 +341,24 @@ Current status:
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
 3. Expand parity mapping from the getter corpus beyond currently covered source slices.
 4. Finalize constrained-overload readiness artifacts (R1) without enabling explicit-contract runtime behavior.
+
+### Latest Increment (Missing Getter-Origin Matrix)
+- Added `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts` to cover missing getter-origin parity scenarios requested by sweep/swarm:
+  - qualified-name `typeof` retention across loops
+  - deep qualified-chain repeated checks
+  - dotted-name `while(true)` no-break variant
+  - predicate input `any` vs `unknown`
+  - direct-vs-generic discriminant contrast
+  - selected conformance guard/accessor ports
+- Targeted run and acceptance:
+  - `go test -run='TestLocal/identityModifierGetterMissingMatrix\.ts' ./internal/testrunner`
+  - `npx hereby baseline-accept`
+- Measured result from accepted baseline:
+  - total scenarios: `6`
+  - matched: `5`
+  - mismatched: `1`
+- Newly observed gap to track:
+  - conformance-style unknown-call boundary contrast (`M6`) remains conservative for identity reads.
 
 ## Implementation Checklist Updates From Re-Review
 - [x] Added complexity guardrail requirements for preserve matcher design.

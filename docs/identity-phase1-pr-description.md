@@ -15,6 +15,7 @@ Decision for constrained-overload post-call narrowing:
 - `testdata/tests/cases/compiler/identityModifierTier1Writes.ts`
 - `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`
 - `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts`
+- `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts`
 - `testdata/tests/cases/compiler/identityModifierHeuristicDiagnostics.ts`
 - `testdata/tests/cases/compiler/identityModifierP8Conservative.ts`
 
@@ -292,6 +293,13 @@ Parity score summary:
 - `9/9` getter-comparable CFA categories are matched in the sweep for currently implemented guarded shapes.
 - Remaining Phase 1 gaps are outside the sweep score: Tier 2 broader forwarding precision and diagnostics for lower-confidence non-boundary Tier 2 cases.
 
+Missing getter-origin matrix summary (this run):
+- File: `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts`
+- Added scenarios: `6` (`M1`..`M6`)
+- Matched outcomes: `5`
+- Mismatched outcomes: `1`
+- Mismatch details: `M6` unknown-call boundary contrast remains conservative for identity calls (diagnostic `TS100015` + assignment error), while getter counterpart remains accepted in the same local shape.
+
 ## Boundary Coverage Matrix
 | Boundary | Example shape | Status | Test source |
 | --- | --- | --- | --- |
@@ -337,6 +345,7 @@ Parity score summary:
 | Nested unknown-call boundary parity | kind guard + unknown call + nested read | Matched (guarded ambient no-arg `void` shape) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Existing hybrid/write-call slices | callable hybrid + setter-call analog | Additional visibility | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 | Broad getter corpus (submodule-derived) | qualified names, dotted names, strict-null getter flow, type-guard member patterns | Visibility-first, includes intentional mismatches | `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts` |
+| Missing getter-origin matrix (submodule-derived adds) | qualified-name loop retention, deep chain checks, while(true) no-break, any-vs-unknown predicates, direct-vs-generic discriminants, conformance guard/accessor ports | `5/6` matched; `1/6` mismatch (`M6` unknown-call boundary) | `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts` |
 
 ## Broad Getter Corpus Status
 - New corpus file: `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts`
@@ -354,6 +363,21 @@ Parity score summary:
 - X3 safety assessment (this update):
   - closed with a strict syntactic + signature guard
   - non-target unknown-call forms remain conservative by design
+
+## Missing Getter-Origin Matrix Status
+- New file: `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts`
+- Scenario inventory added in this run:
+  - `M1` qualified-name `typeof` retention across loops
+  - `M2` deep qualified-chain repeated type-query checks
+  - `M3` dotted-name `while(true)` no-break variant
+  - `M4` predicate input contrast (`any` vs `unknown`)
+  - `M5` direct-vs-generic discriminant baseline contrast
+  - `M6` selected conformance guard/accessor parity ports
+- Result summary from accepted baseline:
+  - matched: `5`
+  - mismatched: `1`
+- Newly discovered remaining gap from this run:
+  - `M6` unknown-call boundary contrast in conformance-style guard/accessor shape remains conservative for identity endpoints (`TS100015`, then `string | undefined` not assignable to `string`).
 
 ## Examples and Parity
 

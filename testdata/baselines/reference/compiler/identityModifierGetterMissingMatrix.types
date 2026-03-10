@@ -1,0 +1,933 @@
+//// [tests/cases/compiler/identityModifierGetterMissingMatrix.ts] ////
+
+=== identityModifierGetterMissingMatrix.ts ===
+// Missing getter-origin parity matrix additions discovered by sweep/swarm.
+// Intent: visibility-first local coverage for Phase 1; do not force behavior changes.
+
+declare function unknownMutate(): void;
+>unknownMutate : () => void
+
+// -----------------------------------------------------------------------------
+// [M1] Qualified-name typeof retention across loops
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfQualifiedNames.ts
+// -----------------------------------------------------------------------------
+
+interface M1Props {
+    foo?: {
+>foo : { aaa: string; bbb: string; } | undefined
+
+        aaa: string;
+>aaa : string
+
+        bbb: string;
+>bbb : string
+
+    };
+}
+
+declare const getterM1: {
+>getterM1 : { readonly value: M1Props; }
+
+    get value(): M1Props;
+>value : M1Props
+
+};
+
+declare const identityM1: {
+>identityM1 : { value: () => M1Props; }
+
+    value: identity () => M1Props;
+>value : () => M1Props
+
+};
+
+if (getterM1.value.foo) {
+>getterM1.value.foo : { aaa: string; bbb: string; } | undefined
+>getterM1.value : M1Props
+>getterM1 : { readonly value: M1Props; }
+>value : M1Props
+>foo : { aaa: string; bbb: string; } | undefined
+
+    for (const _ of [1, 2, 3]) {
+>_ : number
+>[1, 2, 3] : number[]
+>1 : 1
+>2 : 2
+>3 : 3
+
+        type M1GetterTypeof = typeof getterM1.value.foo;
+>M1GetterTypeof : { aaa: string; bbb: string; }
+>getterM1.value.foo : { aaa: string; bbb: string; }
+>getterM1.value : M1Props
+>getterM1 : { readonly value: M1Props; }
+>value : M1Props
+>foo : { aaa: string; bbb: string; }
+
+        const m1GetterA: string = getterM1.value.foo.aaa; // getter baseline: OK
+>m1GetterA : string
+>getterM1.value.foo.aaa : string
+>getterM1.value.foo : { aaa: string; bbb: string; }
+>getterM1.value : M1Props
+>getterM1 : { readonly value: M1Props; }
+>value : M1Props
+>foo : { aaa: string; bbb: string; }
+>aaa : string
+
+        const m1GetterB: string = getterM1.value.foo.bbb; // getter baseline: OK
+>m1GetterB : string
+>getterM1.value.foo.bbb : string
+>getterM1.value.foo : { aaa: string; bbb: string; }
+>getterM1.value : M1Props
+>getterM1 : { readonly value: M1Props; }
+>value : M1Props
+>foo : { aaa: string; bbb: string; }
+>bbb : string
+
+        m1GetterA;
+>m1GetterA : string
+
+        m1GetterB;
+>m1GetterB : string
+
+        const _typeWitnessGetter: M1GetterTypeof = getterM1.value.foo;
+>_typeWitnessGetter : { aaa: string; bbb: string; }
+>getterM1.value.foo : { aaa: string; bbb: string; }
+>getterM1.value : M1Props
+>getterM1 : { readonly value: M1Props; }
+>value : M1Props
+>foo : { aaa: string; bbb: string; }
+
+        _typeWitnessGetter;
+>_typeWitnessGetter : { aaa: string; bbb: string; }
+    }
+}
+
+if (identityM1.value().foo) {
+>identityM1.value().foo : { aaa: string; bbb: string; } | undefined
+>identityM1.value() : M1Props
+>identityM1.value : () => M1Props
+>identityM1 : { value: () => M1Props; }
+>value : () => M1Props
+>foo : { aaa: string; bbb: string; } | undefined
+
+    for (const _ of [1, 2, 3]) {
+>_ : number
+>[1, 2, 3] : number[]
+>1 : 1
+>2 : 2
+>3 : 3
+
+        const m1IdentityA: string = identityM1.value().foo.aaa; // identity parity target
+>m1IdentityA : string
+>identityM1.value().foo.aaa : string
+>identityM1.value().foo : { aaa: string; bbb: string; }
+>identityM1.value() : M1Props
+>identityM1.value : () => M1Props
+>identityM1 : { value: () => M1Props; }
+>value : () => M1Props
+>foo : { aaa: string; bbb: string; }
+>aaa : string
+
+        const m1IdentityB: string = identityM1.value().foo.bbb; // identity parity target
+>m1IdentityB : string
+>identityM1.value().foo.bbb : string
+>identityM1.value().foo : { aaa: string; bbb: string; }
+>identityM1.value() : M1Props
+>identityM1.value : () => M1Props
+>identityM1 : { value: () => M1Props; }
+>value : () => M1Props
+>foo : { aaa: string; bbb: string; }
+>bbb : string
+
+        m1IdentityA;
+>m1IdentityA : string
+
+        m1IdentityB;
+>m1IdentityB : string
+    }
+}
+
+// -----------------------------------------------------------------------------
+// [M2] Deep qualified-chain repeated type-query checks
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfQualifiedNames.ts
+// -----------------------------------------------------------------------------
+
+interface M2DeepOptional {
+    a?: {
+>a : { b?: { c?: string | undefined; } | undefined; } | undefined
+
+        b?: {
+>b : { c?: string | undefined; } | undefined
+
+            c?: string;
+>c : string | undefined
+
+        };
+    };
+}
+
+declare const getterM2: {
+>getterM2 : { readonly value: M2DeepOptional; }
+
+    get value(): M2DeepOptional;
+>value : M2DeepOptional
+
+};
+
+declare const identityM2: {
+>identityM2 : { value: () => M2DeepOptional; }
+
+    value: identity () => M2DeepOptional;
+>value : () => M2DeepOptional
+
+};
+
+if (getterM2.value.a) {
+>getterM2.value.a : { b?: { c?: string | undefined; } | undefined; } | undefined
+>getterM2.value : M2DeepOptional
+>getterM2 : { readonly value: M2DeepOptional; }
+>value : M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; } | undefined
+
+    for (const _ of [1]) {
+>_ : number
+>[1] : number[]
+>1 : 1
+
+        type _M2GetterA = typeof getterM2.value.a;
+>_M2GetterA : { b?: { c?: string | undefined; } | undefined; }
+>getterM2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterM2.value : M2DeepOptional
+>getterM2 : { readonly value: M2DeepOptional; }
+>value : M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; }
+
+        type _M2GetterB = typeof getterM2.value.a.b;
+>_M2GetterB : { c?: string | undefined; } | undefined
+>getterM2.value.a.b : { c?: string | undefined; } | undefined
+>getterM2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterM2.value : M2DeepOptional
+>getterM2 : { readonly value: M2DeepOptional; }
+>value : M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; } | undefined
+
+        if (getterM2.value.a.b && getterM2.value.a.b.c) {
+>getterM2.value.a.b && getterM2.value.a.b.c : string | undefined
+>getterM2.value.a.b : { c?: string | undefined; } | undefined
+>getterM2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterM2.value : M2DeepOptional
+>getterM2 : { readonly value: M2DeepOptional; }
+>value : M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; } | undefined
+>getterM2.value.a.b.c : string | undefined
+>getterM2.value.a.b : { c?: string | undefined; }
+>getterM2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterM2.value : M2DeepOptional
+>getterM2 : { readonly value: M2DeepOptional; }
+>value : M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string | undefined
+
+            type _M2GetterC = typeof getterM2.value.a.b.c;
+>_M2GetterC : string
+>getterM2.value.a.b.c : string
+>getterM2.value.a.b : { c?: string | undefined; }
+>getterM2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterM2.value : M2DeepOptional
+>getterM2 : { readonly value: M2DeepOptional; }
+>value : M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string
+
+            const m2Getter: string = getterM2.value.a.b.c; // getter baseline: OK
+>m2Getter : string
+>getterM2.value.a.b.c : string
+>getterM2.value.a.b : { c?: string | undefined; }
+>getterM2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterM2.value : M2DeepOptional
+>getterM2 : { readonly value: M2DeepOptional; }
+>value : M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string
+
+            m2Getter;
+>m2Getter : string
+        }
+    }
+}
+
+if (identityM2.value().a) {
+>identityM2.value().a : { b?: { c?: string | undefined; } | undefined; } | undefined
+>identityM2.value() : M2DeepOptional
+>identityM2.value : () => M2DeepOptional
+>identityM2 : { value: () => M2DeepOptional; }
+>value : () => M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; } | undefined
+
+    for (const _ of [1]) {
+>_ : number
+>[1] : number[]
+>1 : 1
+
+        type _M2IdentityA = M2DeepOptional["a"];
+>_M2IdentityA : { b?: { c?: string | undefined; } | undefined; } | undefined
+
+        type _M2IdentityB = M2DeepOptional["a"] extends infer A
+>_M2IdentityB : { c?: string | undefined; }
+
+            ? A extends { b?: infer B }
+>b : B | undefined
+
+                ? B
+                : never
+            : never;
+        if (identityM2.value().a.b && identityM2.value().a.b.c) {
+>identityM2.value().a.b && identityM2.value().a.b.c : string | undefined
+>identityM2.value().a.b : { c?: string | undefined; } | undefined
+>identityM2.value().a : { b?: { c?: string | undefined; } | undefined; }
+>identityM2.value() : M2DeepOptional
+>identityM2.value : () => M2DeepOptional
+>identityM2 : { value: () => M2DeepOptional; }
+>value : () => M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; } | undefined
+>identityM2.value().a.b.c : string | undefined
+>identityM2.value().a.b : { c?: string | undefined; }
+>identityM2.value().a : { b?: { c?: string | undefined; } | undefined; }
+>identityM2.value() : M2DeepOptional
+>identityM2.value : () => M2DeepOptional
+>identityM2 : { value: () => M2DeepOptional; }
+>value : () => M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string | undefined
+
+            type _M2IdentityC = NonNullable<
+>_M2IdentityC : string
+
+                NonNullable<NonNullable<M2DeepOptional["a"]>["b"]>["c"]
+            >;
+            const m2Identity: string = identityM2.value().a.b.c; // identity parity target
+>m2Identity : string
+>identityM2.value().a.b.c : string
+>identityM2.value().a.b : { c?: string | undefined; }
+>identityM2.value().a : { b?: { c?: string | undefined; } | undefined; }
+>identityM2.value() : M2DeepOptional
+>identityM2.value : () => M2DeepOptional
+>identityM2 : { value: () => M2DeepOptional; }
+>value : () => M2DeepOptional
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string
+
+            m2Identity;
+>m2Identity : string
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// [M3] Dotted-name while(true) no-break variant
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfDottedNames.ts
+// -----------------------------------------------------------------------------
+
+class M3A {
+>M3A : M3A
+
+    prop!: { a: string };
+>prop : { a: string; }
+>a : string
+}
+
+class M3B {
+>M3B : M3B
+
+    prop!: { b: string };
+>prop : { b: string; }
+>b : string
+}
+
+class M3AIdentity {
+>M3AIdentity : M3AIdentity
+
+    prop!: identity () => { a: string };
+>prop : () => { a: string; }
+>a : string
+}
+
+class M3BIdentity {
+>M3BIdentity : M3BIdentity
+
+    prop!: identity () => { b: string };
+>prop : () => { b: string; }
+>b : string
+}
+
+function m3GetterWhileTrue(x: M3A | M3B) {
+>m3GetterWhileTrue : (x: M3A | M3B) => void
+>x : M3A | M3B
+
+    while (true) {
+>true : true
+
+        if (x instanceof M3A) {
+>x instanceof M3A : boolean
+>x : M3A | M3B
+>M3A : typeof M3A
+
+            const m3a: string = x.prop.a; // getter baseline: OK
+>m3a : string
+>x.prop.a : string
+>x.prop : { a: string; }
+>x : M3A
+>prop : { a: string; }
+>a : string
+
+            m3a;
+>m3a : string
+
+        } else if (x instanceof M3B) {
+>x instanceof M3B : boolean
+>x : M3B
+>M3B : typeof M3B
+
+            const m3b: string = x.prop.b; // getter baseline: OK
+>m3b : string
+>x.prop.b : string
+>x.prop : { b: string; }
+>x : M3B
+>prop : { b: string; }
+>b : string
+
+            m3b;
+>m3b : string
+        }
+    }
+}
+
+function m3IdentityWhileTrue(x: M3AIdentity | M3BIdentity) {
+>m3IdentityWhileTrue : (x: M3AIdentity | M3BIdentity) => void
+>x : M3AIdentity | M3BIdentity
+
+    while (true) {
+>true : true
+
+        if (x instanceof M3AIdentity) {
+>x instanceof M3AIdentity : boolean
+>x : M3AIdentity | M3BIdentity
+>M3AIdentity : typeof M3AIdentity
+
+            const m3a: string = x.prop().a; // identity parity target
+>m3a : string
+>x.prop().a : string
+>x.prop() : { a: string; }
+>x.prop : () => { a: string; }
+>x : M3AIdentity
+>prop : () => { a: string; }
+>a : string
+
+            m3a;
+>m3a : string
+
+        } else if (x instanceof M3BIdentity) {
+>x instanceof M3BIdentity : boolean
+>x : M3BIdentity
+>M3BIdentity : typeof M3BIdentity
+
+            const m3b: string = x.prop().b; // identity parity target
+>m3b : string
+>x.prop().b : string
+>x.prop() : { b: string; }
+>x.prop : () => { b: string; }
+>x : M3BIdentity
+>prop : () => { b: string; }
+>b : string
+
+            m3b;
+>m3b : string
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// [M4] Predicate input typed any vs unknown
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfDottedNames.ts
+// -----------------------------------------------------------------------------
+
+function isM3AAny(x: any): x is M3AIdentity {
+>isM3AAny : (x: any) => x is M3AIdentity
+>x : any
+
+    return x instanceof M3AIdentity;
+>x instanceof M3AIdentity : boolean
+>x : any
+>M3AIdentity : typeof M3AIdentity
+}
+
+function isM3BAny(x: any): x is M3BIdentity {
+>isM3BAny : (x: any) => x is M3BIdentity
+>x : any
+
+    return x instanceof M3BIdentity;
+>x instanceof M3BIdentity : boolean
+>x : any
+>M3BIdentity : typeof M3BIdentity
+}
+
+function isM3AUnknown(x: unknown): x is M3AIdentity {
+>isM3AUnknown : (x: unknown) => x is M3AIdentity
+>x : unknown
+
+    return x instanceof M3AIdentity;
+>x instanceof M3AIdentity : boolean
+>x : unknown
+>M3AIdentity : typeof M3AIdentity
+}
+
+function isM3BUnknown(x: unknown): x is M3BIdentity {
+>isM3BUnknown : (x: unknown) => x is M3BIdentity
+>x : unknown
+
+    return x instanceof M3BIdentity;
+>x instanceof M3BIdentity : boolean
+>x : unknown
+>M3BIdentity : typeof M3BIdentity
+}
+
+function m4IdentityPredicateAny(x: M3AIdentity | M3BIdentity) {
+>m4IdentityPredicateAny : (x: M3AIdentity | M3BIdentity) => void
+>x : M3AIdentity | M3BIdentity
+
+    while (true) {
+>true : true
+
+        if (isM3AAny(x)) {
+>isM3AAny(x) : boolean
+>isM3AAny : (x: any) => x is M3AIdentity
+>x : M3AIdentity | M3BIdentity
+
+            const m4a: string = x.prop().a; // identity parity target
+>m4a : string
+>x.prop().a : string
+>x.prop() : { a: string; }
+>x.prop : () => { a: string; }
+>x : M3AIdentity
+>prop : () => { a: string; }
+>a : string
+
+            m4a;
+>m4a : string
+
+        } else if (isM3BAny(x)) {
+>isM3BAny(x) : boolean
+>isM3BAny : (x: any) => x is M3BIdentity
+>x : M3BIdentity
+
+            const m4b: string = x.prop().b; // identity parity target
+>m4b : string
+>x.prop().b : string
+>x.prop() : { b: string; }
+>x.prop : () => { b: string; }
+>x : M3BIdentity
+>prop : () => { b: string; }
+>b : string
+
+            m4b;
+>m4b : string
+        }
+    }
+}
+
+function m4IdentityPredicateUnknown(x: M3AIdentity | M3BIdentity) {
+>m4IdentityPredicateUnknown : (x: M3AIdentity | M3BIdentity) => void
+>x : M3AIdentity | M3BIdentity
+
+    while (true) {
+>true : true
+
+        if (isM3AUnknown(x)) {
+>isM3AUnknown(x) : boolean
+>isM3AUnknown : (x: unknown) => x is M3AIdentity
+>x : M3AIdentity | M3BIdentity
+
+            const m4a: string = x.prop().a; // identity parity target
+>m4a : string
+>x.prop().a : string
+>x.prop() : { a: string; }
+>x.prop : () => { a: string; }
+>x : M3AIdentity
+>prop : () => { a: string; }
+>a : string
+
+            m4a;
+>m4a : string
+
+        } else if (isM3BUnknown(x)) {
+>isM3BUnknown(x) : boolean
+>isM3BUnknown : (x: unknown) => x is M3BIdentity
+>x : M3BIdentity
+
+            const m4b: string = x.prop().b; // identity parity target
+>m4b : string
+>x.prop().b : string
+>x.prop() : { b: string; }
+>x.prop : () => { b: string; }
+>x : M3BIdentity
+>prop : () => { b: string; }
+>b : string
+
+            m4b;
+>m4b : string
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// [M5] Direct-vs-generic discriminant baseline contrast
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfQualifiedNames.ts
+// -----------------------------------------------------------------------------
+
+type M5Fish = { type: "fish"; hasFins: true };
+>M5Fish : M5Fish
+>type : "fish"
+>hasFins : true
+>true : true
+
+type M5Dog = { type: "dog"; saysWoof: true };
+>M5Dog : M5Dog
+>type : "dog"
+>saysWoof : true
+>true : true
+
+type M5Pet = M5Fish | M5Dog;
+>M5Pet : M5Pet
+
+function m5GetterDirect(pet: { get value(): M5Pet }) {
+>m5GetterDirect : (pet: { readonly value: M5Pet; }) => void
+>pet : { readonly value: M5Pet; }
+>value : M5Pet
+
+    if (pet.value.type === "dog") {
+>pet.value.type === "dog" : boolean
+>pet.value.type : "dog" | "fish"
+>pet.value : M5Pet
+>pet : { readonly value: M5Pet; }
+>value : M5Pet
+>type : "dog" | "fish"
+>"dog" : "dog"
+
+        const m5a: true = pet.value.saysWoof; // getter baseline: OK
+>m5a : true
+>true : true
+>pet.value.saysWoof : true
+>pet.value : M5Dog
+>pet : { readonly value: M5Pet; }
+>value : M5Dog
+>saysWoof : true
+
+        m5a;
+>m5a : true
+    }
+}
+
+function m5IdentityDirect(pet: { value: identity () => M5Pet }) {
+>m5IdentityDirect : (pet: { value: () => M5Pet; }) => void
+>pet : { value: () => M5Pet; }
+>value : () => M5Pet
+
+    if (pet.value().type === "dog") {
+>pet.value().type === "dog" : boolean
+>pet.value().type : "dog" | "fish"
+>pet.value() : M5Pet
+>pet.value : () => M5Pet
+>pet : { value: () => M5Pet; }
+>value : () => M5Pet
+>type : "dog" | "fish"
+>"dog" : "dog"
+
+        const m5a: true = pet.value().saysWoof; // identity parity target
+>m5a : true
+>true : true
+>pet.value().saysWoof : true
+>pet.value() : M5Pet
+>pet.value : () => M5Pet
+>pet : { value: () => M5Pet; }
+>value : () => M5Pet
+>saysWoof : true
+
+        m5a;
+>m5a : true
+    }
+}
+
+function m5GetterGeneric<PetType extends M5Pet>(pet: { get value(): PetType }) {
+>m5GetterGeneric : <PetType extends M5Pet>(pet: { readonly value: PetType; }) => void
+>pet : { readonly value: PetType; }
+>value : PetType
+
+    if (pet.value.type === "dog") {
+>pet.value.type === "dog" : boolean
+>pet.value.type : "dog" | "fish"
+>pet.value : M5Pet
+>pet : { readonly value: PetType; }
+>value : M5Pet
+>type : "dog" | "fish"
+>"dog" : "dog"
+
+        const m5a: true = pet.value.saysWoof; // getter baseline: OK
+>m5a : true
+>true : true
+>pet.value.saysWoof : true
+>pet.value : M5Dog
+>pet : { readonly value: PetType; }
+>value : M5Dog
+>saysWoof : true
+
+        m5a;
+>m5a : true
+    }
+}
+
+function m5IdentityGeneric<PetType extends M5Pet>(pet: { value: identity () => PetType }) {
+>m5IdentityGeneric : <PetType extends M5Pet>(pet: { value: () => PetType; }) => void
+>pet : { value: () => PetType; }
+>value : () => PetType
+
+    if (pet.value().type === "dog") {
+>pet.value().type === "dog" : boolean
+>pet.value().type : "dog" | "fish"
+>pet.value() : PetType
+>pet.value : () => PetType
+>pet : { value: () => PetType; }
+>value : () => PetType
+>type : "dog" | "fish"
+>"dog" : "dog"
+
+        const m5a: true = pet.value().saysWoof; // identity parity target
+>m5a : true
+>true : true
+>pet.value().saysWoof : true
+>pet.value() : PetType
+>pet.value : () => PetType
+>pet : { value: () => PetType; }
+>value : () => PetType
+>saysWoof : true
+
+        m5a;
+>m5a : true
+    }
+}
+
+// -----------------------------------------------------------------------------
+// [M6] Selected conformance guard/accessor scenarios (Phase 1 meaningful ports)
+// Sources:
+//   - _submodules/TypeScript/tests/cases/conformance/expressions/typeGuards/typeGuardsInProperties.ts
+//   - _submodules/TypeScript/tests/cases/conformance/expressions/typeGuards/typeGuardsInClassAccessors.ts
+// -----------------------------------------------------------------------------
+
+let m6Sink: string | number | false;
+>m6Sink : string | number | false
+>false : false
+
+class M6GetterContainer {
+>M6GetterContainer : M6GetterContainer
+
+    member: string | number = "x";
+>member : string | number
+>"x" : "x"
+
+    get accessor() {
+>accessor : string | number
+
+        return this.member;
+>this.member : string | number
+>this : this
+>member : string | number
+    }
+}
+
+class M6IdentityContainer {
+>M6IdentityContainer : M6IdentityContainer
+
+    memberRead: identity () => string | number = (() => "x") as identity () => string | number;
+>memberRead : () => string | number
+>(() => "x") as identity () => string | number : () => string | number
+>(() => "x") : () => string
+>() => "x" : () => string
+>"x" : "x"
+}
+
+declare const m6GetterObj: {
+>m6GetterObj : { value: string | number; }
+
+    value: string | number;
+>value : string | number
+
+};
+
+declare const m6IdentityObj: {
+>m6IdentityObj : { value: () => string | number; }
+
+    value: identity () => string | number;
+>value : () => string | number
+
+};
+
+declare const m6BoundaryGetter: {
+>m6BoundaryGetter : { readonly value: string | undefined; }
+
+    get value(): string | undefined;
+>value : string | undefined
+
+};
+
+declare const m6BoundaryIdentity: identity () => string | undefined;
+>m6BoundaryIdentity : () => string | undefined
+
+m6Sink = typeof m6GetterObj.value === "string" && m6GetterObj.value; // getter baseline: string | number
+>m6Sink = typeof m6GetterObj.value === "string" && m6GetterObj.value : string | false
+>m6Sink : string | number | false
+>typeof m6GetterObj.value === "string" && m6GetterObj.value : string | false
+>typeof m6GetterObj.value === "string" : boolean
+>typeof m6GetterObj.value : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>m6GetterObj.value : string | number
+>m6GetterObj : { value: string | number; }
+>value : string | number
+>"string" : "string"
+>m6GetterObj.value : string
+>m6GetterObj : { value: string | number; }
+>value : string
+
+m6Sink = typeof m6IdentityObj.value() === "string" && m6IdentityObj.value(); // identity parity target
+>m6Sink = typeof m6IdentityObj.value() === "string" && m6IdentityObj.value() : string | false
+>m6Sink : string | number | false
+>typeof m6IdentityObj.value() === "string" && m6IdentityObj.value() : string | false
+>typeof m6IdentityObj.value() === "string" : boolean
+>typeof m6IdentityObj.value() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>m6IdentityObj.value() : string | number
+>m6IdentityObj.value : () => string | number
+>m6IdentityObj : { value: () => string | number; }
+>value : () => string | number
+>"string" : "string"
+>m6IdentityObj.value() : string | number
+>m6IdentityObj.value : () => string | number
+>m6IdentityObj : { value: () => string | number; }
+>value : () => string | number
+
+const m6GetterInstance = new M6GetterContainer();
+>m6GetterInstance : M6GetterContainer
+>new M6GetterContainer() : M6GetterContainer
+>M6GetterContainer : typeof M6GetterContainer
+
+const m6IdentityInstance = new M6IdentityContainer();
+>m6IdentityInstance : M6IdentityContainer
+>new M6IdentityContainer() : M6IdentityContainer
+>M6IdentityContainer : typeof M6IdentityContainer
+
+m6Sink = typeof m6GetterInstance.member === "string" && m6GetterInstance.member; // getter baseline: string | number
+>m6Sink = typeof m6GetterInstance.member === "string" && m6GetterInstance.member : string | false
+>m6Sink : string | number | false
+>typeof m6GetterInstance.member === "string" && m6GetterInstance.member : string | false
+>typeof m6GetterInstance.member === "string" : boolean
+>typeof m6GetterInstance.member : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>m6GetterInstance.member : string | number
+>m6GetterInstance : M6GetterContainer
+>member : string | number
+>"string" : "string"
+>m6GetterInstance.member : string
+>m6GetterInstance : M6GetterContainer
+>member : string
+
+m6Sink = typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstance.memberRead(); // identity parity target
+>m6Sink = typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstance.memberRead() : string | false
+>m6Sink : string | number | false
+>typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstance.memberRead() : string | false
+>typeof m6IdentityInstance.memberRead() === "string" : boolean
+>typeof m6IdentityInstance.memberRead() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>m6IdentityInstance.memberRead() : string | number
+>m6IdentityInstance.memberRead : () => string | number
+>m6IdentityInstance : M6IdentityContainer
+>memberRead : () => string | number
+>"string" : "string"
+>m6IdentityInstance.memberRead() : string | number
+>m6IdentityInstance.memberRead : () => string | number
+>m6IdentityInstance : M6IdentityContainer
+>memberRead : () => string | number
+
+m6Sink = typeof m6GetterInstance.accessor === "string" && m6GetterInstance.accessor; // getter baseline: string | number
+>m6Sink = typeof m6GetterInstance.accessor === "string" && m6GetterInstance.accessor : string | false
+>m6Sink : string | number | false
+>typeof m6GetterInstance.accessor === "string" && m6GetterInstance.accessor : string | false
+>typeof m6GetterInstance.accessor === "string" : boolean
+>typeof m6GetterInstance.accessor : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>m6GetterInstance.accessor : string | number
+>m6GetterInstance : M6GetterContainer
+>accessor : string | number
+>"string" : "string"
+>m6GetterInstance.accessor : string
+>m6GetterInstance : M6GetterContainer
+>accessor : string
+
+m6Sink = typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstance.memberRead(); // identity parity target
+>m6Sink = typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstance.memberRead() : string | false
+>m6Sink : string | number | false
+>typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstance.memberRead() : string | false
+>typeof m6IdentityInstance.memberRead() === "string" : boolean
+>typeof m6IdentityInstance.memberRead() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>m6IdentityInstance.memberRead() : string | number
+>m6IdentityInstance.memberRead : () => string | number
+>m6IdentityInstance : M6IdentityContainer
+>memberRead : () => string | number
+>"string" : "string"
+>m6IdentityInstance.memberRead() : string | number
+>m6IdentityInstance.memberRead : () => string | number
+>m6IdentityInstance : M6IdentityContainer
+>memberRead : () => string | number
+
+// Boundary control in this matrix file: if getter path remains narrowed but identity drops,
+// keep the delta visible for parity tracking.
+if (m6BoundaryGetter.value !== undefined) {
+>m6BoundaryGetter.value !== undefined : boolean
+>m6BoundaryGetter.value : string | undefined
+>m6BoundaryGetter : { readonly value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const m6GetterBoundaryControl: string = m6BoundaryGetter.value; // getter baseline contrast
+>m6GetterBoundaryControl : string
+>m6BoundaryGetter.value : string
+>m6BoundaryGetter : { readonly value: string | undefined; }
+>value : string
+
+    m6GetterBoundaryControl;
+>m6GetterBoundaryControl : string
+}
+
+if (m6BoundaryIdentity() !== undefined) {
+>m6BoundaryIdentity() !== undefined : boolean
+>m6BoundaryIdentity() : string | undefined
+>m6BoundaryIdentity : () => string | undefined
+>undefined : undefined
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const m6IdentityBoundaryControl: string = m6BoundaryIdentity(); // expected to remain conservative
+>m6IdentityBoundaryControl : string
+>m6BoundaryIdentity() : string | undefined
+>m6BoundaryIdentity : () => string | undefined
+
+    m6IdentityBoundaryControl;
+>m6IdentityBoundaryControl : string
+}
+

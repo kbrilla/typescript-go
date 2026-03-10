@@ -1,0 +1,865 @@
+//// [tests/cases/compiler/identityModifierGetterMissingMatrix.ts] ////
+
+=== identityModifierGetterMissingMatrix.ts ===
+// Missing getter-origin parity matrix additions discovered by sweep/swarm.
+// Intent: visibility-first local coverage for Phase 1; do not force behavior changes.
+
+declare function unknownMutate(): void;
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterMissingMatrix.ts, 0, 0))
+
+// -----------------------------------------------------------------------------
+// [M1] Qualified-name typeof retention across loops
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfQualifiedNames.ts
+// -----------------------------------------------------------------------------
+
+interface M1Props {
+>M1Props : Symbol(M1Props, Decl(identityModifierGetterMissingMatrix.ts, 3, 39))
+
+    foo?: {
+>foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+
+        aaa: string;
+>aaa : Symbol(aaa, Decl(identityModifierGetterMissingMatrix.ts, 11, 11))
+
+        bbb: string;
+>bbb : Symbol(bbb, Decl(identityModifierGetterMissingMatrix.ts, 12, 20))
+
+    };
+}
+
+declare const getterM1: {
+>getterM1 : Symbol(getterM1, Decl(identityModifierGetterMissingMatrix.ts, 17, 13))
+
+    get value(): M1Props;
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>M1Props : Symbol(M1Props, Decl(identityModifierGetterMissingMatrix.ts, 3, 39))
+
+};
+
+declare const identityM1: {
+>identityM1 : Symbol(identityM1, Decl(identityModifierGetterMissingMatrix.ts, 21, 13))
+
+    value: identity () => M1Props;
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 21, 27))
+>M1Props : Symbol(M1Props, Decl(identityModifierGetterMissingMatrix.ts, 3, 39))
+
+};
+
+if (getterM1.value.foo) {
+>getterM1.value.foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>getterM1.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>getterM1 : Symbol(getterM1, Decl(identityModifierGetterMissingMatrix.ts, 17, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+
+    for (const _ of [1, 2, 3]) {
+>_ : Symbol(_, Decl(identityModifierGetterMissingMatrix.ts, 26, 14))
+
+        type M1GetterTypeof = typeof getterM1.value.foo;
+>M1GetterTypeof : Symbol(M1GetterTypeof, Decl(identityModifierGetterMissingMatrix.ts, 26, 32))
+>getterM1.value.foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>getterM1.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>getterM1 : Symbol(getterM1, Decl(identityModifierGetterMissingMatrix.ts, 17, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+
+        const m1GetterA: string = getterM1.value.foo.aaa; // getter baseline: OK
+>m1GetterA : Symbol(m1GetterA, Decl(identityModifierGetterMissingMatrix.ts, 28, 13))
+>getterM1.value.foo.aaa : Symbol(aaa, Decl(identityModifierGetterMissingMatrix.ts, 11, 11))
+>getterM1.value.foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>getterM1.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>getterM1 : Symbol(getterM1, Decl(identityModifierGetterMissingMatrix.ts, 17, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>aaa : Symbol(aaa, Decl(identityModifierGetterMissingMatrix.ts, 11, 11))
+
+        const m1GetterB: string = getterM1.value.foo.bbb; // getter baseline: OK
+>m1GetterB : Symbol(m1GetterB, Decl(identityModifierGetterMissingMatrix.ts, 29, 13))
+>getterM1.value.foo.bbb : Symbol(bbb, Decl(identityModifierGetterMissingMatrix.ts, 12, 20))
+>getterM1.value.foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>getterM1.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>getterM1 : Symbol(getterM1, Decl(identityModifierGetterMissingMatrix.ts, 17, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>bbb : Symbol(bbb, Decl(identityModifierGetterMissingMatrix.ts, 12, 20))
+
+        m1GetterA;
+>m1GetterA : Symbol(m1GetterA, Decl(identityModifierGetterMissingMatrix.ts, 28, 13))
+
+        m1GetterB;
+>m1GetterB : Symbol(m1GetterB, Decl(identityModifierGetterMissingMatrix.ts, 29, 13))
+
+        const _typeWitnessGetter: M1GetterTypeof = getterM1.value.foo;
+>_typeWitnessGetter : Symbol(_typeWitnessGetter, Decl(identityModifierGetterMissingMatrix.ts, 32, 13))
+>M1GetterTypeof : Symbol(M1GetterTypeof, Decl(identityModifierGetterMissingMatrix.ts, 26, 32))
+>getterM1.value.foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>getterM1.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>getterM1 : Symbol(getterM1, Decl(identityModifierGetterMissingMatrix.ts, 17, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 17, 25))
+>foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+
+        _typeWitnessGetter;
+>_typeWitnessGetter : Symbol(_typeWitnessGetter, Decl(identityModifierGetterMissingMatrix.ts, 32, 13))
+    }
+}
+
+if (identityM1.value().foo) {
+>identityM1.value().foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>identityM1.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 21, 27))
+>identityM1 : Symbol(identityM1, Decl(identityModifierGetterMissingMatrix.ts, 21, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 21, 27))
+>foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+
+    for (const _ of [1, 2, 3]) {
+>_ : Symbol(_, Decl(identityModifierGetterMissingMatrix.ts, 38, 14))
+
+        const m1IdentityA: string = identityM1.value().foo.aaa; // identity parity target
+>m1IdentityA : Symbol(m1IdentityA, Decl(identityModifierGetterMissingMatrix.ts, 39, 13))
+>identityM1.value().foo.aaa : Symbol(aaa, Decl(identityModifierGetterMissingMatrix.ts, 11, 11))
+>identityM1.value().foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>identityM1.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 21, 27))
+>identityM1 : Symbol(identityM1, Decl(identityModifierGetterMissingMatrix.ts, 21, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 21, 27))
+>foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>aaa : Symbol(aaa, Decl(identityModifierGetterMissingMatrix.ts, 11, 11))
+
+        const m1IdentityB: string = identityM1.value().foo.bbb; // identity parity target
+>m1IdentityB : Symbol(m1IdentityB, Decl(identityModifierGetterMissingMatrix.ts, 40, 13))
+>identityM1.value().foo.bbb : Symbol(bbb, Decl(identityModifierGetterMissingMatrix.ts, 12, 20))
+>identityM1.value().foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>identityM1.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 21, 27))
+>identityM1 : Symbol(identityM1, Decl(identityModifierGetterMissingMatrix.ts, 21, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 21, 27))
+>foo : Symbol(M1Props.foo, Decl(identityModifierGetterMissingMatrix.ts, 10, 19))
+>bbb : Symbol(bbb, Decl(identityModifierGetterMissingMatrix.ts, 12, 20))
+
+        m1IdentityA;
+>m1IdentityA : Symbol(m1IdentityA, Decl(identityModifierGetterMissingMatrix.ts, 39, 13))
+
+        m1IdentityB;
+>m1IdentityB : Symbol(m1IdentityB, Decl(identityModifierGetterMissingMatrix.ts, 40, 13))
+    }
+}
+
+// -----------------------------------------------------------------------------
+// [M2] Deep qualified-chain repeated type-query checks
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfQualifiedNames.ts
+// -----------------------------------------------------------------------------
+
+interface M2DeepOptional {
+>M2DeepOptional : Symbol(M2DeepOptional, Decl(identityModifierGetterMissingMatrix.ts, 44, 1))
+
+    a?: {
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+
+        b?: {
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+
+            c?: string;
+>c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+
+        };
+    };
+}
+
+declare const getterM2: {
+>getterM2 : Symbol(getterM2, Decl(identityModifierGetterMissingMatrix.ts, 59, 13))
+
+    get value(): M2DeepOptional;
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>M2DeepOptional : Symbol(M2DeepOptional, Decl(identityModifierGetterMissingMatrix.ts, 44, 1))
+
+};
+
+declare const identityM2: {
+>identityM2 : Symbol(identityM2, Decl(identityModifierGetterMissingMatrix.ts, 63, 13))
+
+    value: identity () => M2DeepOptional;
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 63, 27))
+>M2DeepOptional : Symbol(M2DeepOptional, Decl(identityModifierGetterMissingMatrix.ts, 44, 1))
+
+};
+
+if (getterM2.value.a) {
+>getterM2.value.a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>getterM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>getterM2 : Symbol(getterM2, Decl(identityModifierGetterMissingMatrix.ts, 59, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+
+    for (const _ of [1]) {
+>_ : Symbol(_, Decl(identityModifierGetterMissingMatrix.ts, 68, 14))
+
+        type _M2GetterA = typeof getterM2.value.a;
+>_M2GetterA : Symbol(_M2GetterA, Decl(identityModifierGetterMissingMatrix.ts, 68, 26))
+>getterM2.value.a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>getterM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>getterM2 : Symbol(getterM2, Decl(identityModifierGetterMissingMatrix.ts, 59, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+
+        type _M2GetterB = typeof getterM2.value.a.b;
+>_M2GetterB : Symbol(_M2GetterB, Decl(identityModifierGetterMissingMatrix.ts, 69, 50))
+>getterM2.value.a.b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>getterM2.value.a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>getterM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>getterM2 : Symbol(getterM2, Decl(identityModifierGetterMissingMatrix.ts, 59, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+
+        if (getterM2.value.a.b && getterM2.value.a.b.c) {
+>getterM2.value.a.b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>getterM2.value.a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>getterM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>getterM2 : Symbol(getterM2, Decl(identityModifierGetterMissingMatrix.ts, 59, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>getterM2.value.a.b.c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+>getterM2.value.a.b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>getterM2.value.a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>getterM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>getterM2 : Symbol(getterM2, Decl(identityModifierGetterMissingMatrix.ts, 59, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+
+            type _M2GetterC = typeof getterM2.value.a.b.c;
+>_M2GetterC : Symbol(_M2GetterC, Decl(identityModifierGetterMissingMatrix.ts, 71, 57))
+>getterM2.value.a.b.c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+>getterM2.value.a.b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>getterM2.value.a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>getterM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>getterM2 : Symbol(getterM2, Decl(identityModifierGetterMissingMatrix.ts, 59, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+
+            const m2Getter: string = getterM2.value.a.b.c; // getter baseline: OK
+>m2Getter : Symbol(m2Getter, Decl(identityModifierGetterMissingMatrix.ts, 73, 17))
+>getterM2.value.a.b.c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+>getterM2.value.a.b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>getterM2.value.a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>getterM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>getterM2 : Symbol(getterM2, Decl(identityModifierGetterMissingMatrix.ts, 59, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 59, 25))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+
+            m2Getter;
+>m2Getter : Symbol(m2Getter, Decl(identityModifierGetterMissingMatrix.ts, 73, 17))
+        }
+    }
+}
+
+if (identityM2.value().a) {
+>identityM2.value().a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>identityM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 63, 27))
+>identityM2 : Symbol(identityM2, Decl(identityModifierGetterMissingMatrix.ts, 63, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 63, 27))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+
+    for (const _ of [1]) {
+>_ : Symbol(_, Decl(identityModifierGetterMissingMatrix.ts, 80, 14))
+
+        type _M2IdentityA = M2DeepOptional["a"];
+>_M2IdentityA : Symbol(_M2IdentityA, Decl(identityModifierGetterMissingMatrix.ts, 80, 26))
+>M2DeepOptional : Symbol(M2DeepOptional, Decl(identityModifierGetterMissingMatrix.ts, 44, 1))
+
+        type _M2IdentityB = M2DeepOptional["a"] extends infer A
+>_M2IdentityB : Symbol(_M2IdentityB, Decl(identityModifierGetterMissingMatrix.ts, 81, 48))
+>M2DeepOptional : Symbol(M2DeepOptional, Decl(identityModifierGetterMissingMatrix.ts, 44, 1))
+>A : Symbol(A, Decl(identityModifierGetterMissingMatrix.ts, 82, 61))
+
+            ? A extends { b?: infer B }
+>A : Symbol(A, Decl(identityModifierGetterMissingMatrix.ts, 82, 61))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 83, 25))
+>B : Symbol(B, Decl(identityModifierGetterMissingMatrix.ts, 83, 35))
+
+                ? B
+>B : Symbol(B, Decl(identityModifierGetterMissingMatrix.ts, 83, 35))
+
+                : never
+            : never;
+        if (identityM2.value().a.b && identityM2.value().a.b.c) {
+>identityM2.value().a.b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>identityM2.value().a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>identityM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 63, 27))
+>identityM2 : Symbol(identityM2, Decl(identityModifierGetterMissingMatrix.ts, 63, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 63, 27))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>identityM2.value().a.b.c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+>identityM2.value().a.b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>identityM2.value().a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>identityM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 63, 27))
+>identityM2 : Symbol(identityM2, Decl(identityModifierGetterMissingMatrix.ts, 63, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 63, 27))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+
+            type _M2IdentityC = NonNullable<
+>_M2IdentityC : Symbol(_M2IdentityC, Decl(identityModifierGetterMissingMatrix.ts, 87, 65))
+>NonNullable : Symbol(NonNullable, Decl(lib.es5.d.ts, --, --))
+
+                NonNullable<NonNullable<M2DeepOptional["a"]>["b"]>["c"]
+>NonNullable : Symbol(NonNullable, Decl(lib.es5.d.ts, --, --))
+>NonNullable : Symbol(NonNullable, Decl(lib.es5.d.ts, --, --))
+>M2DeepOptional : Symbol(M2DeepOptional, Decl(identityModifierGetterMissingMatrix.ts, 44, 1))
+
+            >;
+            const m2Identity: string = identityM2.value().a.b.c; // identity parity target
+>m2Identity : Symbol(m2Identity, Decl(identityModifierGetterMissingMatrix.ts, 91, 17))
+>identityM2.value().a.b.c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+>identityM2.value().a.b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>identityM2.value().a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>identityM2.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 63, 27))
+>identityM2 : Symbol(identityM2, Decl(identityModifierGetterMissingMatrix.ts, 63, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 63, 27))
+>a : Symbol(M2DeepOptional.a, Decl(identityModifierGetterMissingMatrix.ts, 51, 26))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 52, 9))
+>c : Symbol(c, Decl(identityModifierGetterMissingMatrix.ts, 53, 13))
+
+            m2Identity;
+>m2Identity : Symbol(m2Identity, Decl(identityModifierGetterMissingMatrix.ts, 91, 17))
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// [M3] Dotted-name while(true) no-break variant
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfDottedNames.ts
+// -----------------------------------------------------------------------------
+
+class M3A {
+>M3A : Symbol(M3A, Decl(identityModifierGetterMissingMatrix.ts, 95, 1))
+
+    prop!: { a: string };
+>prop : Symbol(M3A.prop, Decl(identityModifierGetterMissingMatrix.ts, 102, 11))
+>a : Symbol(a, Decl(identityModifierGetterMissingMatrix.ts, 103, 12))
+}
+
+class M3B {
+>M3B : Symbol(M3B, Decl(identityModifierGetterMissingMatrix.ts, 104, 1))
+
+    prop!: { b: string };
+>prop : Symbol(M3B.prop, Decl(identityModifierGetterMissingMatrix.ts, 106, 11))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 107, 12))
+}
+
+class M3AIdentity {
+>M3AIdentity : Symbol(M3AIdentity, Decl(identityModifierGetterMissingMatrix.ts, 108, 1))
+
+    prop!: identity () => { a: string };
+>prop : Symbol(M3AIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 110, 19))
+>a : Symbol(a, Decl(identityModifierGetterMissingMatrix.ts, 111, 27))
+}
+
+class M3BIdentity {
+>M3BIdentity : Symbol(M3BIdentity, Decl(identityModifierGetterMissingMatrix.ts, 112, 1))
+
+    prop!: identity () => { b: string };
+>prop : Symbol(M3BIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 114, 19))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 115, 27))
+}
+
+function m3GetterWhileTrue(x: M3A | M3B) {
+>m3GetterWhileTrue : Symbol(m3GetterWhileTrue, Decl(identityModifierGetterMissingMatrix.ts, 116, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 118, 27))
+>M3A : Symbol(M3A, Decl(identityModifierGetterMissingMatrix.ts, 95, 1))
+>M3B : Symbol(M3B, Decl(identityModifierGetterMissingMatrix.ts, 104, 1))
+
+    while (true) {
+        if (x instanceof M3A) {
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 118, 27))
+>M3A : Symbol(M3A, Decl(identityModifierGetterMissingMatrix.ts, 95, 1))
+
+            const m3a: string = x.prop.a; // getter baseline: OK
+>m3a : Symbol(m3a, Decl(identityModifierGetterMissingMatrix.ts, 121, 17))
+>x.prop.a : Symbol(a, Decl(identityModifierGetterMissingMatrix.ts, 103, 12))
+>x.prop : Symbol(M3A.prop, Decl(identityModifierGetterMissingMatrix.ts, 102, 11))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 118, 27))
+>prop : Symbol(M3A.prop, Decl(identityModifierGetterMissingMatrix.ts, 102, 11))
+>a : Symbol(a, Decl(identityModifierGetterMissingMatrix.ts, 103, 12))
+
+            m3a;
+>m3a : Symbol(m3a, Decl(identityModifierGetterMissingMatrix.ts, 121, 17))
+
+        } else if (x instanceof M3B) {
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 118, 27))
+>M3B : Symbol(M3B, Decl(identityModifierGetterMissingMatrix.ts, 104, 1))
+
+            const m3b: string = x.prop.b; // getter baseline: OK
+>m3b : Symbol(m3b, Decl(identityModifierGetterMissingMatrix.ts, 124, 17))
+>x.prop.b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 107, 12))
+>x.prop : Symbol(M3B.prop, Decl(identityModifierGetterMissingMatrix.ts, 106, 11))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 118, 27))
+>prop : Symbol(M3B.prop, Decl(identityModifierGetterMissingMatrix.ts, 106, 11))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 107, 12))
+
+            m3b;
+>m3b : Symbol(m3b, Decl(identityModifierGetterMissingMatrix.ts, 124, 17))
+        }
+    }
+}
+
+function m3IdentityWhileTrue(x: M3AIdentity | M3BIdentity) {
+>m3IdentityWhileTrue : Symbol(m3IdentityWhileTrue, Decl(identityModifierGetterMissingMatrix.ts, 128, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 130, 29))
+>M3AIdentity : Symbol(M3AIdentity, Decl(identityModifierGetterMissingMatrix.ts, 108, 1))
+>M3BIdentity : Symbol(M3BIdentity, Decl(identityModifierGetterMissingMatrix.ts, 112, 1))
+
+    while (true) {
+        if (x instanceof M3AIdentity) {
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 130, 29))
+>M3AIdentity : Symbol(M3AIdentity, Decl(identityModifierGetterMissingMatrix.ts, 108, 1))
+
+            const m3a: string = x.prop().a; // identity parity target
+>m3a : Symbol(m3a, Decl(identityModifierGetterMissingMatrix.ts, 133, 17))
+>x.prop().a : Symbol(a, Decl(identityModifierGetterMissingMatrix.ts, 111, 27))
+>x.prop : Symbol(M3AIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 110, 19))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 130, 29))
+>prop : Symbol(M3AIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 110, 19))
+>a : Symbol(a, Decl(identityModifierGetterMissingMatrix.ts, 111, 27))
+
+            m3a;
+>m3a : Symbol(m3a, Decl(identityModifierGetterMissingMatrix.ts, 133, 17))
+
+        } else if (x instanceof M3BIdentity) {
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 130, 29))
+>M3BIdentity : Symbol(M3BIdentity, Decl(identityModifierGetterMissingMatrix.ts, 112, 1))
+
+            const m3b: string = x.prop().b; // identity parity target
+>m3b : Symbol(m3b, Decl(identityModifierGetterMissingMatrix.ts, 136, 17))
+>x.prop().b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 115, 27))
+>x.prop : Symbol(M3BIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 114, 19))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 130, 29))
+>prop : Symbol(M3BIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 114, 19))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 115, 27))
+
+            m3b;
+>m3b : Symbol(m3b, Decl(identityModifierGetterMissingMatrix.ts, 136, 17))
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// [M4] Predicate input typed any vs unknown
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfDottedNames.ts
+// -----------------------------------------------------------------------------
+
+function isM3AAny(x: any): x is M3AIdentity {
+>isM3AAny : Symbol(isM3AAny, Decl(identityModifierGetterMissingMatrix.ts, 140, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 147, 18))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 147, 18))
+>M3AIdentity : Symbol(M3AIdentity, Decl(identityModifierGetterMissingMatrix.ts, 108, 1))
+
+    return x instanceof M3AIdentity;
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 147, 18))
+>M3AIdentity : Symbol(M3AIdentity, Decl(identityModifierGetterMissingMatrix.ts, 108, 1))
+}
+
+function isM3BAny(x: any): x is M3BIdentity {
+>isM3BAny : Symbol(isM3BAny, Decl(identityModifierGetterMissingMatrix.ts, 149, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 151, 18))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 151, 18))
+>M3BIdentity : Symbol(M3BIdentity, Decl(identityModifierGetterMissingMatrix.ts, 112, 1))
+
+    return x instanceof M3BIdentity;
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 151, 18))
+>M3BIdentity : Symbol(M3BIdentity, Decl(identityModifierGetterMissingMatrix.ts, 112, 1))
+}
+
+function isM3AUnknown(x: unknown): x is M3AIdentity {
+>isM3AUnknown : Symbol(isM3AUnknown, Decl(identityModifierGetterMissingMatrix.ts, 153, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 155, 22))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 155, 22))
+>M3AIdentity : Symbol(M3AIdentity, Decl(identityModifierGetterMissingMatrix.ts, 108, 1))
+
+    return x instanceof M3AIdentity;
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 155, 22))
+>M3AIdentity : Symbol(M3AIdentity, Decl(identityModifierGetterMissingMatrix.ts, 108, 1))
+}
+
+function isM3BUnknown(x: unknown): x is M3BIdentity {
+>isM3BUnknown : Symbol(isM3BUnknown, Decl(identityModifierGetterMissingMatrix.ts, 157, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 159, 22))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 159, 22))
+>M3BIdentity : Symbol(M3BIdentity, Decl(identityModifierGetterMissingMatrix.ts, 112, 1))
+
+    return x instanceof M3BIdentity;
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 159, 22))
+>M3BIdentity : Symbol(M3BIdentity, Decl(identityModifierGetterMissingMatrix.ts, 112, 1))
+}
+
+function m4IdentityPredicateAny(x: M3AIdentity | M3BIdentity) {
+>m4IdentityPredicateAny : Symbol(m4IdentityPredicateAny, Decl(identityModifierGetterMissingMatrix.ts, 161, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 163, 32))
+>M3AIdentity : Symbol(M3AIdentity, Decl(identityModifierGetterMissingMatrix.ts, 108, 1))
+>M3BIdentity : Symbol(M3BIdentity, Decl(identityModifierGetterMissingMatrix.ts, 112, 1))
+
+    while (true) {
+        if (isM3AAny(x)) {
+>isM3AAny : Symbol(isM3AAny, Decl(identityModifierGetterMissingMatrix.ts, 140, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 163, 32))
+
+            const m4a: string = x.prop().a; // identity parity target
+>m4a : Symbol(m4a, Decl(identityModifierGetterMissingMatrix.ts, 166, 17))
+>x.prop().a : Symbol(a, Decl(identityModifierGetterMissingMatrix.ts, 111, 27))
+>x.prop : Symbol(M3AIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 110, 19))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 163, 32))
+>prop : Symbol(M3AIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 110, 19))
+>a : Symbol(a, Decl(identityModifierGetterMissingMatrix.ts, 111, 27))
+
+            m4a;
+>m4a : Symbol(m4a, Decl(identityModifierGetterMissingMatrix.ts, 166, 17))
+
+        } else if (isM3BAny(x)) {
+>isM3BAny : Symbol(isM3BAny, Decl(identityModifierGetterMissingMatrix.ts, 149, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 163, 32))
+
+            const m4b: string = x.prop().b; // identity parity target
+>m4b : Symbol(m4b, Decl(identityModifierGetterMissingMatrix.ts, 169, 17))
+>x.prop().b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 115, 27))
+>x.prop : Symbol(M3BIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 114, 19))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 163, 32))
+>prop : Symbol(M3BIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 114, 19))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 115, 27))
+
+            m4b;
+>m4b : Symbol(m4b, Decl(identityModifierGetterMissingMatrix.ts, 169, 17))
+        }
+    }
+}
+
+function m4IdentityPredicateUnknown(x: M3AIdentity | M3BIdentity) {
+>m4IdentityPredicateUnknown : Symbol(m4IdentityPredicateUnknown, Decl(identityModifierGetterMissingMatrix.ts, 173, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 175, 36))
+>M3AIdentity : Symbol(M3AIdentity, Decl(identityModifierGetterMissingMatrix.ts, 108, 1))
+>M3BIdentity : Symbol(M3BIdentity, Decl(identityModifierGetterMissingMatrix.ts, 112, 1))
+
+    while (true) {
+        if (isM3AUnknown(x)) {
+>isM3AUnknown : Symbol(isM3AUnknown, Decl(identityModifierGetterMissingMatrix.ts, 153, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 175, 36))
+
+            const m4a: string = x.prop().a; // identity parity target
+>m4a : Symbol(m4a, Decl(identityModifierGetterMissingMatrix.ts, 178, 17))
+>x.prop().a : Symbol(a, Decl(identityModifierGetterMissingMatrix.ts, 111, 27))
+>x.prop : Symbol(M3AIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 110, 19))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 175, 36))
+>prop : Symbol(M3AIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 110, 19))
+>a : Symbol(a, Decl(identityModifierGetterMissingMatrix.ts, 111, 27))
+
+            m4a;
+>m4a : Symbol(m4a, Decl(identityModifierGetterMissingMatrix.ts, 178, 17))
+
+        } else if (isM3BUnknown(x)) {
+>isM3BUnknown : Symbol(isM3BUnknown, Decl(identityModifierGetterMissingMatrix.ts, 157, 1))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 175, 36))
+
+            const m4b: string = x.prop().b; // identity parity target
+>m4b : Symbol(m4b, Decl(identityModifierGetterMissingMatrix.ts, 181, 17))
+>x.prop().b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 115, 27))
+>x.prop : Symbol(M3BIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 114, 19))
+>x : Symbol(x, Decl(identityModifierGetterMissingMatrix.ts, 175, 36))
+>prop : Symbol(M3BIdentity.prop, Decl(identityModifierGetterMissingMatrix.ts, 114, 19))
+>b : Symbol(b, Decl(identityModifierGetterMissingMatrix.ts, 115, 27))
+
+            m4b;
+>m4b : Symbol(m4b, Decl(identityModifierGetterMissingMatrix.ts, 181, 17))
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// [M5] Direct-vs-generic discriminant baseline contrast
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfQualifiedNames.ts
+// -----------------------------------------------------------------------------
+
+type M5Fish = { type: "fish"; hasFins: true };
+>M5Fish : Symbol(M5Fish, Decl(identityModifierGetterMissingMatrix.ts, 185, 1))
+>type : Symbol(type, Decl(identityModifierGetterMissingMatrix.ts, 192, 15))
+>hasFins : Symbol(hasFins, Decl(identityModifierGetterMissingMatrix.ts, 192, 29))
+
+type M5Dog = { type: "dog"; saysWoof: true };
+>M5Dog : Symbol(M5Dog, Decl(identityModifierGetterMissingMatrix.ts, 192, 46))
+>type : Symbol(type, Decl(identityModifierGetterMissingMatrix.ts, 193, 14))
+>saysWoof : Symbol(saysWoof, Decl(identityModifierGetterMissingMatrix.ts, 193, 27))
+
+type M5Pet = M5Fish | M5Dog;
+>M5Pet : Symbol(M5Pet, Decl(identityModifierGetterMissingMatrix.ts, 193, 45))
+>M5Fish : Symbol(M5Fish, Decl(identityModifierGetterMissingMatrix.ts, 185, 1))
+>M5Dog : Symbol(M5Dog, Decl(identityModifierGetterMissingMatrix.ts, 192, 46))
+
+function m5GetterDirect(pet: { get value(): M5Pet }) {
+>m5GetterDirect : Symbol(m5GetterDirect, Decl(identityModifierGetterMissingMatrix.ts, 194, 28))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 196, 24))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 196, 30))
+>M5Pet : Symbol(M5Pet, Decl(identityModifierGetterMissingMatrix.ts, 193, 45))
+
+    if (pet.value.type === "dog") {
+>pet.value.type : Symbol(type, Decl(identityModifierGetterMissingMatrix.ts, 193, 14), Decl(identityModifierGetterMissingMatrix.ts, 192, 15))
+>pet.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 196, 30))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 196, 24))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 196, 30))
+>type : Symbol(type, Decl(identityModifierGetterMissingMatrix.ts, 193, 14), Decl(identityModifierGetterMissingMatrix.ts, 192, 15))
+
+        const m5a: true = pet.value.saysWoof; // getter baseline: OK
+>m5a : Symbol(m5a, Decl(identityModifierGetterMissingMatrix.ts, 198, 13))
+>pet.value.saysWoof : Symbol(saysWoof, Decl(identityModifierGetterMissingMatrix.ts, 193, 27))
+>pet.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 196, 30))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 196, 24))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 196, 30))
+>saysWoof : Symbol(saysWoof, Decl(identityModifierGetterMissingMatrix.ts, 193, 27))
+
+        m5a;
+>m5a : Symbol(m5a, Decl(identityModifierGetterMissingMatrix.ts, 198, 13))
+    }
+}
+
+function m5IdentityDirect(pet: { value: identity () => M5Pet }) {
+>m5IdentityDirect : Symbol(m5IdentityDirect, Decl(identityModifierGetterMissingMatrix.ts, 201, 1))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 203, 26))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 203, 32))
+>M5Pet : Symbol(M5Pet, Decl(identityModifierGetterMissingMatrix.ts, 193, 45))
+
+    if (pet.value().type === "dog") {
+>pet.value().type : Symbol(type, Decl(identityModifierGetterMissingMatrix.ts, 193, 14), Decl(identityModifierGetterMissingMatrix.ts, 192, 15))
+>pet.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 203, 32))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 203, 26))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 203, 32))
+>type : Symbol(type, Decl(identityModifierGetterMissingMatrix.ts, 193, 14), Decl(identityModifierGetterMissingMatrix.ts, 192, 15))
+
+        const m5a: true = pet.value().saysWoof; // identity parity target
+>m5a : Symbol(m5a, Decl(identityModifierGetterMissingMatrix.ts, 205, 13))
+>pet.value().saysWoof : Symbol(saysWoof, Decl(identityModifierGetterMissingMatrix.ts, 193, 27))
+>pet.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 203, 32))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 203, 26))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 203, 32))
+>saysWoof : Symbol(saysWoof, Decl(identityModifierGetterMissingMatrix.ts, 193, 27))
+
+        m5a;
+>m5a : Symbol(m5a, Decl(identityModifierGetterMissingMatrix.ts, 205, 13))
+    }
+}
+
+function m5GetterGeneric<PetType extends M5Pet>(pet: { get value(): PetType }) {
+>m5GetterGeneric : Symbol(m5GetterGeneric, Decl(identityModifierGetterMissingMatrix.ts, 208, 1))
+>PetType : Symbol(PetType, Decl(identityModifierGetterMissingMatrix.ts, 210, 25))
+>M5Pet : Symbol(M5Pet, Decl(identityModifierGetterMissingMatrix.ts, 193, 45))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 210, 48))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 210, 54))
+>PetType : Symbol(PetType, Decl(identityModifierGetterMissingMatrix.ts, 210, 25))
+
+    if (pet.value.type === "dog") {
+>pet.value.type : Symbol(type, Decl(identityModifierGetterMissingMatrix.ts, 193, 14), Decl(identityModifierGetterMissingMatrix.ts, 192, 15))
+>pet.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 210, 54))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 210, 48))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 210, 54))
+>type : Symbol(type, Decl(identityModifierGetterMissingMatrix.ts, 193, 14), Decl(identityModifierGetterMissingMatrix.ts, 192, 15))
+
+        const m5a: true = pet.value.saysWoof; // getter baseline: OK
+>m5a : Symbol(m5a, Decl(identityModifierGetterMissingMatrix.ts, 212, 13))
+>pet.value.saysWoof : Symbol(saysWoof, Decl(identityModifierGetterMissingMatrix.ts, 193, 27))
+>pet.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 210, 54))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 210, 48))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 210, 54))
+>saysWoof : Symbol(saysWoof, Decl(identityModifierGetterMissingMatrix.ts, 193, 27))
+
+        m5a;
+>m5a : Symbol(m5a, Decl(identityModifierGetterMissingMatrix.ts, 212, 13))
+    }
+}
+
+function m5IdentityGeneric<PetType extends M5Pet>(pet: { value: identity () => PetType }) {
+>m5IdentityGeneric : Symbol(m5IdentityGeneric, Decl(identityModifierGetterMissingMatrix.ts, 215, 1))
+>PetType : Symbol(PetType, Decl(identityModifierGetterMissingMatrix.ts, 217, 27))
+>M5Pet : Symbol(M5Pet, Decl(identityModifierGetterMissingMatrix.ts, 193, 45))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 217, 50))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 217, 56))
+>PetType : Symbol(PetType, Decl(identityModifierGetterMissingMatrix.ts, 217, 27))
+
+    if (pet.value().type === "dog") {
+>pet.value().type : Symbol(type, Decl(identityModifierGetterMissingMatrix.ts, 193, 14), Decl(identityModifierGetterMissingMatrix.ts, 192, 15))
+>pet.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 217, 56))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 217, 50))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 217, 56))
+>type : Symbol(type, Decl(identityModifierGetterMissingMatrix.ts, 193, 14), Decl(identityModifierGetterMissingMatrix.ts, 192, 15))
+
+        const m5a: true = pet.value().saysWoof; // identity parity target
+>m5a : Symbol(m5a, Decl(identityModifierGetterMissingMatrix.ts, 219, 13))
+>pet.value().saysWoof : Symbol(saysWoof, Decl(identityModifierGetterMissingMatrix.ts, 193, 27))
+>pet.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 217, 56))
+>pet : Symbol(pet, Decl(identityModifierGetterMissingMatrix.ts, 217, 50))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 217, 56))
+>saysWoof : Symbol(saysWoof, Decl(identityModifierGetterMissingMatrix.ts, 193, 27))
+
+        m5a;
+>m5a : Symbol(m5a, Decl(identityModifierGetterMissingMatrix.ts, 219, 13))
+    }
+}
+
+// -----------------------------------------------------------------------------
+// [M6] Selected conformance guard/accessor scenarios (Phase 1 meaningful ports)
+// Sources:
+//   - _submodules/TypeScript/tests/cases/conformance/expressions/typeGuards/typeGuardsInProperties.ts
+//   - _submodules/TypeScript/tests/cases/conformance/expressions/typeGuards/typeGuardsInClassAccessors.ts
+// -----------------------------------------------------------------------------
+
+let m6Sink: string | number | false;
+>m6Sink : Symbol(m6Sink, Decl(identityModifierGetterMissingMatrix.ts, 231, 3))
+
+class M6GetterContainer {
+>M6GetterContainer : Symbol(M6GetterContainer, Decl(identityModifierGetterMissingMatrix.ts, 231, 36))
+
+    member: string | number = "x";
+>member : Symbol(M6GetterContainer.member, Decl(identityModifierGetterMissingMatrix.ts, 233, 25))
+
+    get accessor() {
+>accessor : Symbol(M6GetterContainer.accessor, Decl(identityModifierGetterMissingMatrix.ts, 234, 34))
+
+        return this.member;
+>this.member : Symbol(M6GetterContainer.member, Decl(identityModifierGetterMissingMatrix.ts, 233, 25))
+>this : Symbol(M6GetterContainer, Decl(identityModifierGetterMissingMatrix.ts, 231, 36))
+>member : Symbol(M6GetterContainer.member, Decl(identityModifierGetterMissingMatrix.ts, 233, 25))
+    }
+}
+
+class M6IdentityContainer {
+>M6IdentityContainer : Symbol(M6IdentityContainer, Decl(identityModifierGetterMissingMatrix.ts, 238, 1))
+
+    memberRead: identity () => string | number = (() => "x") as identity () => string | number;
+>memberRead : Symbol(M6IdentityContainer.memberRead, Decl(identityModifierGetterMissingMatrix.ts, 240, 27))
+}
+
+declare const m6GetterObj: {
+>m6GetterObj : Symbol(m6GetterObj, Decl(identityModifierGetterMissingMatrix.ts, 244, 13))
+
+    value: string | number;
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 244, 28))
+
+};
+
+declare const m6IdentityObj: {
+>m6IdentityObj : Symbol(m6IdentityObj, Decl(identityModifierGetterMissingMatrix.ts, 248, 13))
+
+    value: identity () => string | number;
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 248, 30))
+
+};
+
+declare const m6BoundaryGetter: {
+>m6BoundaryGetter : Symbol(m6BoundaryGetter, Decl(identityModifierGetterMissingMatrix.ts, 252, 13))
+
+    get value(): string | undefined;
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 252, 33))
+
+};
+
+declare const m6BoundaryIdentity: identity () => string | undefined;
+>m6BoundaryIdentity : Symbol(m6BoundaryIdentity, Decl(identityModifierGetterMissingMatrix.ts, 256, 13))
+
+m6Sink = typeof m6GetterObj.value === "string" && m6GetterObj.value; // getter baseline: string | number
+>m6Sink : Symbol(m6Sink, Decl(identityModifierGetterMissingMatrix.ts, 231, 3))
+>m6GetterObj.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 244, 28))
+>m6GetterObj : Symbol(m6GetterObj, Decl(identityModifierGetterMissingMatrix.ts, 244, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 244, 28))
+>m6GetterObj.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 244, 28))
+>m6GetterObj : Symbol(m6GetterObj, Decl(identityModifierGetterMissingMatrix.ts, 244, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 244, 28))
+
+m6Sink = typeof m6IdentityObj.value() === "string" && m6IdentityObj.value(); // identity parity target
+>m6Sink : Symbol(m6Sink, Decl(identityModifierGetterMissingMatrix.ts, 231, 3))
+>m6IdentityObj.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 248, 30))
+>m6IdentityObj : Symbol(m6IdentityObj, Decl(identityModifierGetterMissingMatrix.ts, 248, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 248, 30))
+>m6IdentityObj.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 248, 30))
+>m6IdentityObj : Symbol(m6IdentityObj, Decl(identityModifierGetterMissingMatrix.ts, 248, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 248, 30))
+
+const m6GetterInstance = new M6GetterContainer();
+>m6GetterInstance : Symbol(m6GetterInstance, Decl(identityModifierGetterMissingMatrix.ts, 261, 5))
+>M6GetterContainer : Symbol(M6GetterContainer, Decl(identityModifierGetterMissingMatrix.ts, 231, 36))
+
+const m6IdentityInstance = new M6IdentityContainer();
+>m6IdentityInstance : Symbol(m6IdentityInstance, Decl(identityModifierGetterMissingMatrix.ts, 262, 5))
+>M6IdentityContainer : Symbol(M6IdentityContainer, Decl(identityModifierGetterMissingMatrix.ts, 238, 1))
+
+m6Sink = typeof m6GetterInstance.member === "string" && m6GetterInstance.member; // getter baseline: string | number
+>m6Sink : Symbol(m6Sink, Decl(identityModifierGetterMissingMatrix.ts, 231, 3))
+>m6GetterInstance.member : Symbol(M6GetterContainer.member, Decl(identityModifierGetterMissingMatrix.ts, 233, 25))
+>m6GetterInstance : Symbol(m6GetterInstance, Decl(identityModifierGetterMissingMatrix.ts, 261, 5))
+>member : Symbol(M6GetterContainer.member, Decl(identityModifierGetterMissingMatrix.ts, 233, 25))
+>m6GetterInstance.member : Symbol(M6GetterContainer.member, Decl(identityModifierGetterMissingMatrix.ts, 233, 25))
+>m6GetterInstance : Symbol(m6GetterInstance, Decl(identityModifierGetterMissingMatrix.ts, 261, 5))
+>member : Symbol(M6GetterContainer.member, Decl(identityModifierGetterMissingMatrix.ts, 233, 25))
+
+m6Sink = typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstance.memberRead(); // identity parity target
+>m6Sink : Symbol(m6Sink, Decl(identityModifierGetterMissingMatrix.ts, 231, 3))
+>m6IdentityInstance.memberRead : Symbol(M6IdentityContainer.memberRead, Decl(identityModifierGetterMissingMatrix.ts, 240, 27))
+>m6IdentityInstance : Symbol(m6IdentityInstance, Decl(identityModifierGetterMissingMatrix.ts, 262, 5))
+>memberRead : Symbol(M6IdentityContainer.memberRead, Decl(identityModifierGetterMissingMatrix.ts, 240, 27))
+>m6IdentityInstance.memberRead : Symbol(M6IdentityContainer.memberRead, Decl(identityModifierGetterMissingMatrix.ts, 240, 27))
+>m6IdentityInstance : Symbol(m6IdentityInstance, Decl(identityModifierGetterMissingMatrix.ts, 262, 5))
+>memberRead : Symbol(M6IdentityContainer.memberRead, Decl(identityModifierGetterMissingMatrix.ts, 240, 27))
+
+m6Sink = typeof m6GetterInstance.accessor === "string" && m6GetterInstance.accessor; // getter baseline: string | number
+>m6Sink : Symbol(m6Sink, Decl(identityModifierGetterMissingMatrix.ts, 231, 3))
+>m6GetterInstance.accessor : Symbol(M6GetterContainer.accessor, Decl(identityModifierGetterMissingMatrix.ts, 234, 34))
+>m6GetterInstance : Symbol(m6GetterInstance, Decl(identityModifierGetterMissingMatrix.ts, 261, 5))
+>accessor : Symbol(M6GetterContainer.accessor, Decl(identityModifierGetterMissingMatrix.ts, 234, 34))
+>m6GetterInstance.accessor : Symbol(M6GetterContainer.accessor, Decl(identityModifierGetterMissingMatrix.ts, 234, 34))
+>m6GetterInstance : Symbol(m6GetterInstance, Decl(identityModifierGetterMissingMatrix.ts, 261, 5))
+>accessor : Symbol(M6GetterContainer.accessor, Decl(identityModifierGetterMissingMatrix.ts, 234, 34))
+
+m6Sink = typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstance.memberRead(); // identity parity target
+>m6Sink : Symbol(m6Sink, Decl(identityModifierGetterMissingMatrix.ts, 231, 3))
+>m6IdentityInstance.memberRead : Symbol(M6IdentityContainer.memberRead, Decl(identityModifierGetterMissingMatrix.ts, 240, 27))
+>m6IdentityInstance : Symbol(m6IdentityInstance, Decl(identityModifierGetterMissingMatrix.ts, 262, 5))
+>memberRead : Symbol(M6IdentityContainer.memberRead, Decl(identityModifierGetterMissingMatrix.ts, 240, 27))
+>m6IdentityInstance.memberRead : Symbol(M6IdentityContainer.memberRead, Decl(identityModifierGetterMissingMatrix.ts, 240, 27))
+>m6IdentityInstance : Symbol(m6IdentityInstance, Decl(identityModifierGetterMissingMatrix.ts, 262, 5))
+>memberRead : Symbol(M6IdentityContainer.memberRead, Decl(identityModifierGetterMissingMatrix.ts, 240, 27))
+
+// Boundary control in this matrix file: if getter path remains narrowed but identity drops,
+// keep the delta visible for parity tracking.
+if (m6BoundaryGetter.value !== undefined) {
+>m6BoundaryGetter.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 252, 33))
+>m6BoundaryGetter : Symbol(m6BoundaryGetter, Decl(identityModifierGetterMissingMatrix.ts, 252, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 252, 33))
+>undefined : Symbol(undefined)
+
+    unknownMutate();
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterMissingMatrix.ts, 0, 0))
+
+    const m6GetterBoundaryControl: string = m6BoundaryGetter.value; // getter baseline contrast
+>m6GetterBoundaryControl : Symbol(m6GetterBoundaryControl, Decl(identityModifierGetterMissingMatrix.ts, 274, 9))
+>m6BoundaryGetter.value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 252, 33))
+>m6BoundaryGetter : Symbol(m6BoundaryGetter, Decl(identityModifierGetterMissingMatrix.ts, 252, 13))
+>value : Symbol(value, Decl(identityModifierGetterMissingMatrix.ts, 252, 33))
+
+    m6GetterBoundaryControl;
+>m6GetterBoundaryControl : Symbol(m6GetterBoundaryControl, Decl(identityModifierGetterMissingMatrix.ts, 274, 9))
+}
+
+if (m6BoundaryIdentity() !== undefined) {
+>m6BoundaryIdentity : Symbol(m6BoundaryIdentity, Decl(identityModifierGetterMissingMatrix.ts, 256, 13))
+>undefined : Symbol(undefined)
+
+    unknownMutate();
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterMissingMatrix.ts, 0, 0))
+
+    const m6IdentityBoundaryControl: string = m6BoundaryIdentity(); // expected to remain conservative
+>m6IdentityBoundaryControl : Symbol(m6IdentityBoundaryControl, Decl(identityModifierGetterMissingMatrix.ts, 280, 9))
+>m6BoundaryIdentity : Symbol(m6BoundaryIdentity, Decl(identityModifierGetterMissingMatrix.ts, 256, 13))
+
+    m6IdentityBoundaryControl;
+>m6IdentityBoundaryControl : Symbol(m6IdentityBoundaryControl, Decl(identityModifierGetterMissingMatrix.ts, 280, 9))
+}
+
