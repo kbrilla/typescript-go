@@ -267,6 +267,68 @@ const x = model.count !== null ? model.count : 0; // property-style baseline
 x;
 ```
 
+## Angular Signals: Nullability and Narrowing
+
+Context: `angular/angular#49161` highlights a common signal call-site pain point in plain TypeScript: repeated calls (in ternary/if/discriminant checks) do not consistently preserve narrowing like property getters do.
+
+### Current pain shape (repeated signal calls)
+```ts
+declare const count: () => number | null;
+
+const value = count() !== null ? count() : 0;
+// Today this often requires extra ceremony because the second count()
+// may not reuse the first check's narrowing in all patterns.
+value;
+```
+
+### Identity-enabled equivalent (narrowing reuse)
+```ts
+declare const count: identity () => number | null;
+
+const value = count() !== null ? count() : 0; // parity target with getter-style CFA
+value;
+
+if (count() !== null) {
+  const n: number = count(); // intended plain-TS ergonomics improvement in this PR
+  n;
+}
+```
+
+### Workaround with local variable (pre-identity pattern)
+```ts
+declare const count: () => number | null;
+
+const current = count();
+const value = current !== null ? current : 0;
+value;
+```
+
+With `identity` CFA, the local-temp workaround is still valid, but many repeated-read guard patterns no longer require introducing a temporary only to keep narrowing.
+
+### Discriminated-union signal access shape
+```ts
+type Shape =
+  | { kind: "circle"; radius: number }
+  | { kind: "square"; size: number };
+
+declare const shape: identity () => Shape;
+
+if (shape().kind === "circle") {
+  const r = shape().radius; // parity target: kind check narrows repeated identity reads
+  r;
+}
+```
+
+### What this enables in Angular signals
+- Fewer forced temporary locals (for example `const v = signal()`) just to preserve null checks in plain TypeScript code.
+- Fewer redundant optional chains and fallback reshaping when repeated guarded reads are already safe.
+- Better parity with getter ergonomics in plain TypeScript code (`obj.value` flow behavior vs `signal()` flow behavior).
+- More predictable behavior when refactoring from property-getter access patterns to signal-call access patterns in component/service logic.
+
+Scope note:
+- This PR improves plain TypeScript checker behavior for covered `identity` call patterns.
+- Angular template type-checking behavior is outside this compiler PR and is not claimed as changed here.
+
 ### Angular #49161: discriminated-union shape-kind narrowing style
 Status: partially covered
 
