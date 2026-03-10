@@ -102,7 +102,7 @@ declare const identityStore: {
 
 if (identityStore.read() !== undefined) {
     identityStore.set("next");
-    const identityAfterWrite: string = identityStore.read(); // identity observed: error
+    const identityAfterWrite: string = identityStore.read(); // identity parity target: OK
     identityAfterWrite;
 }
 

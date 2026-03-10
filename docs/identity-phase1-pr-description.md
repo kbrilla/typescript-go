@@ -41,6 +41,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - [x] Dedicated local parity suite exists and is green (`identityModifierParity.ts`).
 - [x] Getter-to-identity parity visibility sweep is green (`identityModifierGetterParitySweep.ts`).
 - [x] Tier 1 parity slice coverage for property assignment and callable hybrid setter-style writes in local tests.
+- [x] Narrow write parity slice: same-receiver `read()` then `set(non-nullish)` now preserves narrowing (`P5` in getter parity sweep).
 - [x] Tier 2 narrow precision for trivial local passthrough helper shapes.
 
 ### Left for Phase 1
@@ -57,7 +58,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Branch merge reset after guard split | Implemented | Implemented | Full |
 | Callback boundary invalidation | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
 | Await boundary invalidation | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
-| Write invalidation after setter/write call | Remains narrowed in sweep scenario | Invalidates conservatively | Gap |
+| Write invalidation after setter/write call (`set(non-nullish)` sweep slice) | Remains narrowed in sweep scenario | Matches for narrow same-receiver `read`/`set` shape | Full |
 | Aliasing / escape handling | Object alias keeps getter narrowing in sweep scenario | Function alias invalidates | Gap |
 | Conditional/ternary repeated-read shape | Implemented | Implemented | Full |
 | Nested discriminant read reuse | Implemented | Implemented | Full |
@@ -66,14 +67,13 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Heuristic-limit diagnostics | N/A | Not implemented | Gap |
 
 Parity score summary:
-- `4/9` getter-comparable CFA categories are fully matched in the new sweep (`P1`, `P2`, `P7`, `P8` read-reuse branch).
-- `5/9` getter-comparable categories show visible mismatches in the sweep (`P3`, `P4`, `P5`, `P6`, `P8` unknown-call boundary).
+- `5/9` getter-comparable CFA categories are fully matched in the sweep (`P1`, `P2`, `P5`, `P7`, `P8` read-reuse branch).
+- `4/9` getter-comparable categories show visible mismatches in the sweep (`P3`, `P4`, `P6`, `P8` unknown-call boundary).
 - Additional Phase 1 gaps remain unchanged: Tier 2 broader forwarding precision and heuristic-limit diagnostics.
 
 Newly visible gaps from getter-to-identity sweep:
 - Callback boundary: getter scenario stays narrowed while identity invalidates.
 - Await boundary: getter scenario stays narrowed while identity invalidates.
-- Write invalidation parity slice: getter scenario stays narrowed while identity invalidates.
 - Aliasing: object aliasing for getter stays narrowed while identity function aliasing invalidates.
 - Nested unknown-call boundary: getter scenario stays narrowed while identity invalidates.
 
@@ -107,7 +107,7 @@ Newly visible gaps from getter-to-identity sweep:
 | Branch merge parity | post-merge `string` assignment | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Callback boundary parity | `invoke(() => {})` then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Await boundary parity | `await delay()` then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
-| Write invalidation parity | setter/write call then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Write invalidation parity (`set(non-nullish)` slice) | setter/write call then read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Aliasing parity | alias/escape then read | Mismatch (identity more conservative) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Conditional/ternary parity | guarded ternary read fallback | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Nested discriminant reuse parity | kind guard then nested field read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |

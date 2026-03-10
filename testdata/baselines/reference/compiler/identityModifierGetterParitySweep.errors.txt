@@ -6,8 +6,6 @@ identityModifierGetterParitySweep.ts(63,11): error TS2322: Type 'string | undefi
   Type 'undefined' is not assignable to type 'string'.
 identityModifierGetterParitySweep.ts(80,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierGetterParitySweep.ts(102,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
 identityModifierGetterParitySweep.ts(120,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 identityModifierGetterParitySweep.ts(127,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
@@ -16,7 +14,7 @@ identityModifierGetterParitySweep.ts(174,59): error TS2339: Property 'radius' do
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierGetterParitySweep.ts (8 errors) ====
+==== identityModifierGetterParitySweep.ts (7 errors) ====
     // Getter-to-identity parity sweep.
     // Categories: repeated reads, branch merges, callback/await boundaries,
     // write invalidation, aliasing, conditional/ternary, nested access.
@@ -130,10 +128,7 @@ identityModifierGetterParitySweep.ts(174,59): error TS2339: Property 'radius' do
     
     if (identityStore.read() !== undefined) {
         identityStore.set("next");
-        const identityAfterWrite: string = identityStore.read(); // identity observed: error
-              ~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        const identityAfterWrite: string = identityStore.read(); // identity parity target: OK
         identityAfterWrite;
     }
     

@@ -147,7 +147,7 @@ if (store.read() !== undefined) {
 >store : Symbol(store, Decl(identityModifierParity.ts, 52, 13))
 >set : Symbol(set, Decl(identityModifierParity.ts, 53, 44))
 
-    const afterSetCall: string = store.read(); // should error
+    const afterSetCall: string = store.read(); // should be OK
 >afterSetCall : Symbol(afterSetCall, Decl(identityModifierParity.ts, 59, 9))
 >store.read : Symbol(read, Decl(identityModifierParity.ts, 52, 22))
 >store : Symbol(store, Decl(identityModifierParity.ts, 52, 13))

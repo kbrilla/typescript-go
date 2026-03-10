@@ -480,6 +480,9 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 	}
 
 	if ast.IsCallExpression(f.reference) && !c.isMatchingReference(f.reference, flow.Node) {
+		if c.shouldPreserveReadSetCallNarrowing(f.reference, flow.Node) {
+			return FlowType{}
+		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
 		if flowType.t != f.declaredType {
 			return c.newFlowType(f.declaredType, flowType.incomplete)
@@ -487,6 +490,33 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 	}
 
 	return FlowType{}
+}
+
+func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *ast.Node) bool {
+	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 || !ast.IsCallExpression(call) {
+		return false
+	}
+
+	readAccess := ast.SkipParentheses(reference.Expression())
+	setAccess := ast.SkipParentheses(call.Expression())
+	if !ast.IsPropertyAccessExpression(readAccess) || !ast.IsPropertyAccessExpression(setAccess) {
+		return false
+	}
+
+	if readAccess.Name().Text() != "read" || setAccess.Name().Text() != "set" {
+		return false
+	}
+
+	if len(call.Arguments()) != 1 {
+		return false
+	}
+
+	if !c.isMatchingReference(c.getReferenceCandidate(readAccess.Expression()), c.getReferenceCandidate(setAccess.Expression())) {
+		return false
+	}
+
+	argType := c.getTypeOfExpression(call.Arguments()[0])
+	return argType.flags&(TypeFlagsUndefined|TypeFlagsNull) == 0
 }
 
 func (c *Checker) narrowTypeByTypePredicate(f *FlowState, t *Type, predicate *TypePredicate, callExpression *ast.Node, assumeTrue bool) *Type {

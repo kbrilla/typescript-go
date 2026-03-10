@@ -60,7 +60,7 @@ declare const store: {
 
 if (store.read() !== undefined) {
     store.set("next");
-    const afterSetCall: string = store.read(); // should error
+    const afterSetCall: string = store.read(); // should be OK
     afterSetCall;
 }
 

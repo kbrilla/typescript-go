@@ -246,7 +246,7 @@ if (identityStore.read() !== undefined) {
 >identityStore : Symbol(identityStore, Decl(identityModifierGetterParitySweep.ts, 94, 13))
 >set : Symbol(set, Decl(identityModifierGetterParitySweep.ts, 95, 44))
 
-    const identityAfterWrite: string = identityStore.read(); // identity observed: error
+    const identityAfterWrite: string = identityStore.read(); // identity parity target: OK
 >identityAfterWrite : Symbol(identityAfterWrite, Decl(identityModifierGetterParitySweep.ts, 101, 9))
 >identityStore.read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 94, 30))
 >identityStore : Symbol(identityStore, Decl(identityModifierGetterParitySweep.ts, 94, 13))

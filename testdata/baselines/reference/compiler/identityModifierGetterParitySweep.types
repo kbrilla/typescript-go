@@ -275,7 +275,7 @@ if (identityStore.read() !== undefined) {
 >set : (v: string | undefined) => void
 >"next" : "next"
 
-    const identityAfterWrite: string = identityStore.read(); // identity observed: error
+    const identityAfterWrite: string = identityStore.read(); // identity parity target: OK
 >identityAfterWrite : string
 >identityStore.read() : string | undefined
 >identityStore.read : () => string | undefined

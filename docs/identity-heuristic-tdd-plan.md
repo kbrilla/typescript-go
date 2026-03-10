@@ -441,3 +441,21 @@ Current status:
   - accepted only `identityModifierTier2` baselines
   - green rerun of the same test and targeted identity suite including the new file
 - No production parser/binder/checker changes were required for this starter coverage slice.
+
+### Latest Increment (Getter Parity Sweep - P5 Write Slice)
+- Chosen low-risk mismatch: `P5` write parity in `identityModifierGetterParitySweep.ts`.
+- Rationale: unlike callback/await/unknown-call boundaries, this slice can be addressed with a narrow same-receiver call-shape rule and no broad control-flow refactor.
+- Red phase (tests first):
+  - Updated expectations in:
+    - `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`
+    - `testdata/tests/cases/compiler/identityModifierParity.ts`
+  - Targeted run failed as expected:
+    - `go test -run='TestLocal/(identityModifierGetterParitySweep|identityModifierParity)\.ts' ./internal/testrunner`
+- Green phase (minimal implementation):
+  - Checker-only narrow change in `internal/checker/flow.go`:
+    - `getTypeAtFlowCall` now consults `shouldPreserveReadSetCallNarrowing` before conservative call-boundary reset.
+    - Preservation is limited to: zero-arg `read()` reference, same-receiver `.set(...)` call, single argument, and argument type excluding `null | undefined`.
+- Baseline + targeted verification:
+  - `npx hereby baseline-accept`
+  - `go test -run='TestLocal/(identityModifierGetterParitySweep|identityModifierParity)\.ts' ./internal/testrunner`
+  - Result: green.

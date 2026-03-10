@@ -172,7 +172,7 @@ if (store.read() !== undefined) {
 >set : (v: string | undefined) => void
 >"next" : "next"
 
-    const afterSetCall: string = store.read(); // should error
+    const afterSetCall: string = store.read(); // should be OK
 >afterSetCall : string
 >store.read() : string | undefined
 >store.read : () => string | undefined

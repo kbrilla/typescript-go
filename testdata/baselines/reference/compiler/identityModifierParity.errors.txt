@@ -2,8 +2,6 @@ identityModifierParity.ts(37,11): error TS2322: Type 'string | undefined' is not
   Type 'undefined' is not assignable to type 'string'.
 identityModifierParity.ts(47,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierParity.ts(60,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
 identityModifierParity.ts(72,5): error TS2554: Expected 1 arguments, but got 0.
 identityModifierParity.ts(74,11): error TS2322: Type 'void' is not assignable to type 'string'.
 identityModifierParity.ts(74,40): error TS2554: Expected 1 arguments, but got 0.
@@ -14,7 +12,7 @@ identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exis
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierParity.ts (10 errors) ====
+==== identityModifierParity.ts (9 errors) ====
     // Parity baseline: property getter/setter repeated read narrowing.
     declare const propertyModel: {
         get value(): string | undefined;
@@ -80,10 +78,7 @@ identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exis
     
     if (store.read() !== undefined) {
         store.set("next");
-        const afterSetCall: string = store.read(); // should error
-              ~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        const afterSetCall: string = store.read(); // should be OK
         afterSetCall;
     }
     
