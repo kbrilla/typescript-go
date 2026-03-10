@@ -19853,6 +19853,32 @@ func (c *Checker) shouldReportErrorsFromWideningWithContextualSignature(declarat
 	return false
 }
 
+func (c *Checker) shouldReportIdentityBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node) bool {
+	if boundary == nil || c.reportedIdentityBoundaryDiagnostics.Has(boundary) || !c.isIdentityCallReference(reference) {
+		return false
+	}
+
+	c.reportedIdentityBoundaryDiagnostics.Add(boundary)
+	return true
+}
+
+func (c *Checker) identityBoundaryInvalidationDiagnosticMessage(reference *ast.Node, boundary *ast.Node) *diagnostics.Message {
+	if c.isUnknownCallBoundaryForIdentityReference(reference, boundary) {
+		return diagnostics.Identity_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_temporary_before_the_call_to_preserve_precision
+	}
+
+	return diagnostics.Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local
+}
+
+func (c *Checker) reportIdentityBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node) {
+	if !c.shouldReportIdentityBoundaryInvalidationDiagnostic(reference, boundary) {
+		return
+	}
+
+	message := c.identityBoundaryInvalidationDiagnosticMessage(reference, boundary)
+	c.diagnostics.Add(createDiagnosticForNode(boundary, message))
+}
+
 // Reports implicit any errors that occur as a result of widening 'null' and 'undefined'
 // to 'any'. A call to reportWideningErrorsInType is normally accompanied by a call to
 // getWidenedType. But in some cases getWidenedType is called without reporting errors

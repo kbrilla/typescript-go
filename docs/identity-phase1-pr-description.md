@@ -39,6 +39,14 @@ Simplification landed (low risk, semantics-preserving):
 - Identity alias/boundary checks and getter-like narrowing checks now use the same candidate normalization path before `isMatchingReference` comparisons.
 - Behavior is intentionally unchanged; this refactor reduces normalization drift risk while preserving existing flow outcomes.
 
+Simplification landed (this update, low risk, semantics-preserving):
+- Unified identity boundary diagnostic emission/selection via shared checker helpers in `internal/checker/checker.go`:
+  - `shouldReportIdentityBoundaryInvalidationDiagnostic(reference, boundary)`
+  - `identityBoundaryInvalidationDiagnosticMessage(reference, boundary)`
+  - `reportIdentityBoundaryInvalidationDiagnostic(reference, boundary)`
+- `TS100014` (generic uncertainty boundary) vs `TS100015` (unknown-call boundary) selection conditions are unchanged.
+- Deduping remains boundary-node keyed using `reportedIdentityBoundaryDiagnostics` and is unchanged in behavior.
+
 ## Flow Graphs
 
 ### Getter Flow Graph
@@ -71,7 +79,8 @@ flowchart LR
     S3[narrowTypeByTruthiness]
     S4[Shared reference-candidate normalization in flow.go]
     S5[Shared call-boundary preconditions in flow.go]
-    S1 --> S2 --> S3 --> S4 --> S5
+    S6[Shared boundary diagnostic selection + dedupe in checker.go]
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6
   end
 
   subgraph GetterOnly[Getter-specific]
@@ -84,9 +93,9 @@ flowchart LR
   subgraph IdentityOnly[Identity-specific]
     I1[call expression reference]
     I2[checkCallExpression identity hook]
-    I3[getTypeAtFlowCall identity invalidation + diagnostics]
+    I3[getTypeAtFlowCall identity invalidation]
     I1 --> I2 --> S1
-    S5 --> I3
+    S5 --> I3 --> S6
   end
 ```
 

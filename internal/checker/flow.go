@@ -534,19 +534,6 @@ func (c *Checker) isNonMatchingCallBoundary(reference *ast.Node, boundary *ast.N
 	return ast.IsCallExpression(reference) && !c.isMatchingReference(reference, boundary)
 }
 
-func (c *Checker) reportIdentityBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node) {
-	if boundary == nil || c.reportedIdentityBoundaryDiagnostics.Has(boundary) || !c.isIdentityCallReference(reference) {
-		return
-	}
-
-	c.reportedIdentityBoundaryDiagnostics.Add(boundary)
-	message := diagnostics.Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local
-	if c.isUnknownCallBoundaryForIdentityReference(reference, boundary) {
-		message = diagnostics.Identity_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_temporary_before_the_call_to_preserve_precision
-	}
-	c.diagnostics.Add(createDiagnosticForNode(boundary, message))
-}
-
 func (c *Checker) isUnknownCallBoundaryForIdentityReference(reference *ast.Node, boundary *ast.Node) bool {
 	return isNoArgCallExpression(reference) && isNoArgCallExpression(boundary) && !c.isMatchingReference(reference, boundary)
 }
