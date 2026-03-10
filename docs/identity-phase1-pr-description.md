@@ -273,7 +273,7 @@ Parity score summary:
 | Await statement | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await assignment | `const x = await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await safe preserve (narrow) | `await Promise.resolve();` then `read()` in expression-statement form | Implemented | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
-| Tier 2 starter (alias-preserving forwarding) | `const forwarded = pass(read);` then `read()` | Starter coverage (current conservative) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
+| Tier 2 starter (alias-preserving forwarding) | `const forwarded = pass(read);` then `read()` | Implemented (narrow preserve) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 | Tier 2 starter (helper passthrough) | `useReader(pass(read));` then `read()` | Starter coverage (current conservative) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 | Tier 2 narrow precision (inline passthrough lambda) | `const fwd = ((x) => x)(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 | Tier 2 narrow precision (const helper identifier passthrough) | `const localId = <T>(x: T) => x; localId(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
