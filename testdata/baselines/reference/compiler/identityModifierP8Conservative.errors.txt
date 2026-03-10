@@ -1,0 +1,38 @@
+identityModifierP8Conservative.ts(23,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierP8Conservative.ts(24,58): error TS2339: Property 'radius' does not exist on type 'Shape'.
+  Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
+
+
+==== identityModifierP8Conservative.ts (2 errors) ====
+    // P8/X3 conservative boundary lock:
+    // Unknown calls after discriminant guards must drop identity-call narrowing.
+    
+    type Shape =
+        | { kind: "circle"; radius: number }
+        | { kind: "square"; size: number };
+    
+    declare function unknownMutate(): void;
+    
+    declare const getterModel: {
+        get value(): Shape;
+    };
+    
+    declare const identityModel: identity () => Shape;
+    
+    if (getterModel.value.kind === "circle") {
+        unknownMutate();
+        const getterAfterUnknown: number = getterModel.value.radius; // getter baseline: remains narrowed in this sweep shape
+        getterAfterUnknown;
+    }
+    
+    if (identityModel().kind === "circle") {
+        unknownMutate();
+        ~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const identityAfterUnknown: number = identityModel().radius; // expected conservative error
+                                                             ~~~~~~
+!!! error TS2339: Property 'radius' does not exist on type 'Shape'.
+!!! error TS2339:   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
+        identityAfterUnknown;
+    }
+    

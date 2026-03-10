@@ -11,6 +11,16 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`
 - `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts`
 - `testdata/tests/cases/compiler/identityModifierHeuristicDiagnostics.ts`
+- `testdata/tests/cases/compiler/identityModifierP8Conservative.ts`
+
+## Final Sweep Decision (P8)
+- Status: not closed in Phase 1.
+- Shape: `P8` in `identityModifierGetterParitySweep.ts`, overlapping with corpus `X3` in `identityModifierGetterCorpus.ts`.
+- Decision: keep conservative invalidation at nested unknown-call boundaries after discriminant guards.
+- Safety rationale: we currently do not have a narrow, sound proof that an arbitrary unknown call cannot mutate or invalidate identity endpoint state. Relaxing this boundary would require broader unsound assumptions.
+- TDD evidence for this decision:
+  - red: added `identityModifierP8Conservative.ts` and ran `go test -run='TestLocal/identityModifierP8Conservative\.ts' ./internal/testrunner` (baseline creation failure)
+  - green: accepted baselines and reran targeted test successfully
 
 ## Implemented So Far
 - Parser and binder support for `identity` function-type modifier usage in declaration type positions.

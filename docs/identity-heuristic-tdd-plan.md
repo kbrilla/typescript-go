@@ -358,6 +358,17 @@ Current status:
 ### Latest Increment (Getter Corpus X3 Assessment)
 - Inspected `X3` exact shape in `identityModifierGetterCorpus.ts` and confirmed baseline diagnostics remain:
   - `TS100014` boundary-conservative invalidation note at the unknown call site
+
+### Latest Increment (P8 Final Sweep Decision)
+- Evaluated the final sweep mismatch `P8` (`identityModifierGetterParitySweep.ts`) together with corpus overlap `X3` (`identityModifierGetterCorpus.ts`).
+- Decision: keep conservative behavior for nested unknown-call boundary after discriminant guard.
+- Rationale: no narrow syntactic proof currently distinguishes a harmless unknown call from one that can invalidate identity endpoint state; relaxing this boundary would broaden unsoundness risk.
+- Added focused lock test `testdata/tests/cases/compiler/identityModifierP8Conservative.ts` with strict TDD:
+  - red: `go test -run='TestLocal/identityModifierP8Conservative\.ts' ./internal/testrunner` (new baselines created)
+  - green: `npx hereby baseline-accept` then targeted rerun passes
+- Status after this slice:
+  - getter parity sweep remains `8/9` (open category: `P8` unknown-call boundary)
+  - broad getter corpus remains `1` mismatch case (`X3`) and `4` corpus errors
   - downstream `TS2339` on `identityX3().radius` after the boundary
 - Evaluated a candidate narrow preserve rule for unknown-call boundaries and rejected it.
 - Rejection rationale: no rule was found that is both narrow enough and safety-provable for unknown calls without introducing broad unsound relaxation for uncertainty boundaries.

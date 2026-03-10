@@ -1,0 +1,79 @@
+//// [tests/cases/compiler/identityModifierP8Conservative.ts] ////
+
+=== identityModifierP8Conservative.ts ===
+// P8/X3 conservative boundary lock:
+// Unknown calls after discriminant guards must drop identity-call narrowing.
+
+type Shape =
+>Shape : Shape
+
+    | { kind: "circle"; radius: number }
+>kind : "circle"
+>radius : number
+
+    | { kind: "square"; size: number };
+>kind : "square"
+>size : number
+
+declare function unknownMutate(): void;
+>unknownMutate : () => void
+
+declare const getterModel: {
+>getterModel : { readonly value: Shape; }
+
+    get value(): Shape;
+>value : Shape
+
+};
+
+declare const identityModel: identity () => Shape;
+>identityModel : () => Shape
+
+if (getterModel.value.kind === "circle") {
+>getterModel.value.kind === "circle" : boolean
+>getterModel.value.kind : "circle" | "square"
+>getterModel.value : Shape
+>getterModel : { readonly value: Shape; }
+>value : Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const getterAfterUnknown: number = getterModel.value.radius; // getter baseline: remains narrowed in this sweep shape
+>getterAfterUnknown : number
+>getterModel.value.radius : number
+>getterModel.value : { kind: "circle"; radius: number; }
+>getterModel : { readonly value: Shape; }
+>value : { kind: "circle"; radius: number; }
+>radius : number
+
+    getterAfterUnknown;
+>getterAfterUnknown : number
+}
+
+if (identityModel().kind === "circle") {
+>identityModel().kind === "circle" : boolean
+>identityModel().kind : "circle" | "square"
+>identityModel() : Shape
+>identityModel : () => Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const identityAfterUnknown: number = identityModel().radius; // expected conservative error
+>identityAfterUnknown : number
+>identityModel().radius : any
+>identityModel() : Shape
+>identityModel : () => Shape
+>radius : any
+
+    identityAfterUnknown;
+>identityAfterUnknown : number
+}
+
