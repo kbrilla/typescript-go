@@ -332,8 +332,10 @@ declare const identityX1: identity () => string | undefined;
 if (identityX1() !== undefined) {
     const escaped = pass(identityX1);
     escaped;
-    const x1: string = identityX1(); // intentional gap visibility candidate
+    const x1: string = identityX1(); // parity target: OK
+    const x1Upper: string = identityX1().toUpperCase(); // parity target: OK
     x1;
+    x1Upper;
 }
 
 // Case X2: conditional expression repeated reads.

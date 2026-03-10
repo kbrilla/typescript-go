@@ -16,9 +16,6 @@ identityModifierBoundaries.ts(55,11): error TS2322: Type 'string | undefined' is
 identityModifierBoundaries.ts(59,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierBoundaries.ts(60,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(65,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierBoundaries.ts(67,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
 identityModifierBoundaries.ts(81,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierBoundaries.ts(82,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
@@ -27,7 +24,7 @@ identityModifierBoundaries.ts(90,15): error TS2322: Type 'string | undefined' is
   Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierBoundaries.ts (18 errors) ====
+==== identityModifierBoundaries.ts (16 errors) ====
     declare const read: identity () => string | undefined;
     
     if (read() !== undefined) {
@@ -135,13 +132,8 @@ identityModifierBoundaries.ts(90,15): error TS2322: Type 'string | undefined' is
     
     if (read() !== undefined) {
         const indirect = pass(read);
-              ~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         indirect;
         const afterIndirectAliasEscape: string = read(); // should error
-              ~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
     }
     
     

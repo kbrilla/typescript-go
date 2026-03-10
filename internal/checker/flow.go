@@ -343,10 +343,26 @@ func (c *Checker) isInlineTrivialPassthroughCallForCallReference(callee *ast.Nod
 	}
 
 	if ast.IsIdentifier(invoked) {
-		return c.isConstAliasChainTrivialPassthroughHelper(invoked)
+		return c.isConstAliasChainTrivialPassthroughHelper(invoked) || c.isAmbientIdentityPassthroughCallForCallReference(initializer)
 	}
 
 	return false
+}
+
+func (c *Checker) isAmbientIdentityPassthroughCallForCallReference(call *ast.Node) bool {
+	signature := c.getResolvedSignature(call, nil /*candidatesOutArray*/, CheckModeNormal)
+	if signature == nil || signature == c.resolvingSignature || len(signature.parameters) != 1 || signatureHasRestParameter(signature) {
+		return false
+	}
+
+	declaration := signature.declaration
+	if declaration == nil || !ast.IsFunctionDeclaration(declaration) || declaration.Body() != nil {
+		return false
+	}
+
+	parameterType := c.getTypeOfSymbol(signature.parameters[0])
+	returnType := c.getReturnTypeOfSignature(signature)
+	return c.isTypeIdenticalTo(parameterType, returnType)
 }
 
 func (c *Checker) isConstAliasChainTrivialPassthroughHelper(identifier *ast.Node) bool {

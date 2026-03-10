@@ -242,7 +242,7 @@ if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 >undefined : Symbol(undefined)
 
-    // current conservative: alias-preserving helper passthrough is treated as an uncertainty boundary
+    // Tier 2 precision target: ambient identity helper passthrough preserves narrowing.
     const forwarded = pass(read);
 >forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 89, 9))
 >pass : Symbol(pass, Decl(identityModifierTier2.ts, 1, 54))
@@ -251,14 +251,12 @@ if (read() !== undefined) {
     forwarded;
 >forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 89, 9))
 
-    const afterAliasPreservingPass: string = read(); // current conservative: error
+    const afterAliasPreservingPass: string = read(); // should stay narrowed
 >afterAliasPreservingPass : Symbol(afterAliasPreservingPass, Decl(identityModifierTier2.ts, 92, 9))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     afterAliasPreservingPass;
 >afterAliasPreservingPass : Symbol(afterAliasPreservingPass, Decl(identityModifierTier2.ts, 92, 9))
-
-    // Tier 2 target: preserve narrowing when helper forwarding can be proven alias-preserving and non-mutating.
 }
 
 if (read() !== undefined) {
@@ -272,11 +270,11 @@ if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     const afterHelperPassthrough: string = read(); // current conservative: error
->afterHelperPassthrough : Symbol(afterHelperPassthrough, Decl(identityModifierTier2.ts, 102, 9))
+>afterHelperPassthrough : Symbol(afterHelperPassthrough, Decl(identityModifierTier2.ts, 100, 9))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     afterHelperPassthrough;
->afterHelperPassthrough : Symbol(afterHelperPassthrough, Decl(identityModifierTier2.ts, 102, 9))
+>afterHelperPassthrough : Symbol(afterHelperPassthrough, Decl(identityModifierTier2.ts, 100, 9))
 
     // Tier 2 target: keep precision with guarded inference in provably stable local forwarding shapes.
 }

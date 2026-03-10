@@ -89,14 +89,12 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
-    // current conservative: alias-preserving helper passthrough is treated as an uncertainty boundary
+    // Tier 2 precision target: ambient identity helper passthrough preserves narrowing.
     const forwarded = pass(read);
     forwarded;
 
-    const afterAliasPreservingPass: string = read(); // current conservative: error
+    const afterAliasPreservingPass: string = read(); // should stay narrowed
     afterAliasPreservingPass;
-
-    // Tier 2 target: preserve narrowing when helper forwarding can be proven alias-preserving and non-mutating.
 }
 
 if (read() !== undefined) {

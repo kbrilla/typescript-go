@@ -243,8 +243,8 @@ Current status:
   - Added comprehensive getter-to-identity parity visibility sweep in `identityModifierGetterParitySweep.ts` with categorized sections (repeated reads, branch merges, callback/await, write invalidation, aliasing, ternary, nested access).
   - Added broad submodule-derived getter-to-identity parity corpus in `identityModifierGetterCorpus.ts` with source-traceable section labels and intentional mismatch visibility baselines.
   - Current getter-comparable parity score in the sweep is `7/9` matched categories, with `2/9` conservative mismatches.
-  - Latest corpus mismatch closure: `QN5` (generic discriminant over `PetType extends Pet`) is now parity-matched.
-  - Broad corpus mismatch count moved `4 -> 3` cases and corpus error count moved `9 -> 8`.
+  - Latest corpus mismatch closures: `QN5` (generic discriminant over `PetType extends Pet`) and `X1` (alias escape via ambient passthrough helper).
+  - Broad corpus mismatch count moved `4 -> 2` cases and corpus error count moved `9 -> 6`.
   - Getter parity sweep score is unchanged in this slice (`7/9`).
   - Remaining: expand parity mapping against additional submodule scenarios.
 - [ ] Step 9: Performance guardrails/perf checks

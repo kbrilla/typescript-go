@@ -957,138 +957,147 @@ if (identityX1() !== undefined) {
     escaped;
 >escaped : Symbol(escaped, Decl(identityModifierGetterCorpus.ts, 328, 9))
 
-    const x1: string = identityX1(); // intentional gap visibility candidate
+    const x1: string = identityX1(); // parity target: OK
 >x1 : Symbol(x1, Decl(identityModifierGetterCorpus.ts, 330, 9))
 >identityX1 : Symbol(identityX1, Decl(identityModifierGetterCorpus.ts, 325, 13))
 
+    const x1Upper: string = identityX1().toUpperCase(); // parity target: OK
+>x1Upper : Symbol(x1Upper, Decl(identityModifierGetterCorpus.ts, 331, 9))
+>identityX1().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>identityX1 : Symbol(identityX1, Decl(identityModifierGetterCorpus.ts, 325, 13))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
     x1;
 >x1 : Symbol(x1, Decl(identityModifierGetterCorpus.ts, 330, 9))
+
+    x1Upper;
+>x1Upper : Symbol(x1Upper, Decl(identityModifierGetterCorpus.ts, 331, 9))
 }
 
 // Case X2: conditional expression repeated reads.
 declare const getterX2: {
->getterX2 : Symbol(getterX2, Decl(identityModifierGetterCorpus.ts, 335, 13))
+>getterX2 : Symbol(getterX2, Decl(identityModifierGetterCorpus.ts, 337, 13))
 
     get value(): string | undefined;
->value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 335, 25))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 337, 25))
 
 };
 
 declare const identityX2: identity () => string | undefined;
->identityX2 : Symbol(identityX2, Decl(identityModifierGetterCorpus.ts, 339, 13))
+>identityX2 : Symbol(identityX2, Decl(identityModifierGetterCorpus.ts, 341, 13))
 
 const x2Getter: string = getterX2.value !== undefined ? getterX2.value : "fallback"; // getter baseline: OK
->x2Getter : Symbol(x2Getter, Decl(identityModifierGetterCorpus.ts, 341, 5))
->getterX2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 335, 25))
->getterX2 : Symbol(getterX2, Decl(identityModifierGetterCorpus.ts, 335, 13))
->value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 335, 25))
+>x2Getter : Symbol(x2Getter, Decl(identityModifierGetterCorpus.ts, 343, 5))
+>getterX2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 337, 25))
+>getterX2 : Symbol(getterX2, Decl(identityModifierGetterCorpus.ts, 337, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 337, 25))
 >undefined : Symbol(undefined)
->getterX2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 335, 25))
->getterX2 : Symbol(getterX2, Decl(identityModifierGetterCorpus.ts, 335, 13))
->value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 335, 25))
+>getterX2.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 337, 25))
+>getterX2 : Symbol(getterX2, Decl(identityModifierGetterCorpus.ts, 337, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 337, 25))
 
 x2Getter;
->x2Getter : Symbol(x2Getter, Decl(identityModifierGetterCorpus.ts, 341, 5))
+>x2Getter : Symbol(x2Getter, Decl(identityModifierGetterCorpus.ts, 343, 5))
 
 const x2Identity: string = identityX2() !== undefined ? identityX2() : "fallback"; // identity parity target: OK
->x2Identity : Symbol(x2Identity, Decl(identityModifierGetterCorpus.ts, 344, 5))
->identityX2 : Symbol(identityX2, Decl(identityModifierGetterCorpus.ts, 339, 13))
+>x2Identity : Symbol(x2Identity, Decl(identityModifierGetterCorpus.ts, 346, 5))
+>identityX2 : Symbol(identityX2, Decl(identityModifierGetterCorpus.ts, 341, 13))
 >undefined : Symbol(undefined)
->identityX2 : Symbol(identityX2, Decl(identityModifierGetterCorpus.ts, 339, 13))
+>identityX2 : Symbol(identityX2, Decl(identityModifierGetterCorpus.ts, 341, 13))
 
 x2Identity;
->x2Identity : Symbol(x2Identity, Decl(identityModifierGetterCorpus.ts, 344, 5))
+>x2Identity : Symbol(x2Identity, Decl(identityModifierGetterCorpus.ts, 346, 5))
 
 // Case X3: nested discriminant with unknown boundary.
 type Shape = { kind: "circle"; radius: number } | { kind: "square"; size: number };
->Shape : Symbol(Shape, Decl(identityModifierGetterCorpus.ts, 345, 11))
->kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14))
->radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
->kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 51))
->size : Symbol(size, Decl(identityModifierGetterCorpus.ts, 348, 67))
+>Shape : Symbol(Shape, Decl(identityModifierGetterCorpus.ts, 347, 11))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 350, 14))
+>radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 350, 30))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 350, 51))
+>size : Symbol(size, Decl(identityModifierGetterCorpus.ts, 350, 67))
 
 declare const getterX3: {
->getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 350, 13))
+>getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 352, 13))
 
     get value(): Shape;
->value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
->Shape : Symbol(Shape, Decl(identityModifierGetterCorpus.ts, 345, 11))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 352, 25))
+>Shape : Symbol(Shape, Decl(identityModifierGetterCorpus.ts, 347, 11))
 
 };
 
 declare const identityX3: identity () => Shape;
->identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 354, 13))
->Shape : Symbol(Shape, Decl(identityModifierGetterCorpus.ts, 345, 11))
+>identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 356, 13))
+>Shape : Symbol(Shape, Decl(identityModifierGetterCorpus.ts, 347, 11))
 
 if (getterX3.value.kind === "circle") {
->getterX3.value.kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
->getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
->getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 350, 13))
->value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
->kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+>getterX3.value.kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 350, 14), Decl(identityModifierGetterCorpus.ts, 350, 51))
+>getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 352, 25))
+>getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 352, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 352, 25))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 350, 14), Decl(identityModifierGetterCorpus.ts, 350, 51))
 
     const x3GetterA: number = getterX3.value.radius; // getter baseline: OK
->x3GetterA : Symbol(x3GetterA, Decl(identityModifierGetterCorpus.ts, 357, 9))
->getterX3.value.radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
->getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
->getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 350, 13))
->value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
->radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
+>x3GetterA : Symbol(x3GetterA, Decl(identityModifierGetterCorpus.ts, 359, 9))
+>getterX3.value.radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 350, 30))
+>getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 352, 25))
+>getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 352, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 352, 25))
+>radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 350, 30))
 
     x3GetterA;
->x3GetterA : Symbol(x3GetterA, Decl(identityModifierGetterCorpus.ts, 357, 9))
+>x3GetterA : Symbol(x3GetterA, Decl(identityModifierGetterCorpus.ts, 359, 9))
 }
 
 if (identityX3().kind === "circle") {
->identityX3().kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
->identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 354, 13))
->kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+>identityX3().kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 350, 14), Decl(identityModifierGetterCorpus.ts, 350, 51))
+>identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 356, 13))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 350, 14), Decl(identityModifierGetterCorpus.ts, 350, 51))
 
     const x3IdentityA: number = identityX3().radius; // identity parity target: OK
->x3IdentityA : Symbol(x3IdentityA, Decl(identityModifierGetterCorpus.ts, 362, 9))
->identityX3().radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
->identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 354, 13))
->radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
+>x3IdentityA : Symbol(x3IdentityA, Decl(identityModifierGetterCorpus.ts, 364, 9))
+>identityX3().radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 350, 30))
+>identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 356, 13))
+>radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 350, 30))
 
     x3IdentityA;
->x3IdentityA : Symbol(x3IdentityA, Decl(identityModifierGetterCorpus.ts, 362, 9))
+>x3IdentityA : Symbol(x3IdentityA, Decl(identityModifierGetterCorpus.ts, 364, 9))
 }
 
 if (getterX3.value.kind === "circle") {
->getterX3.value.kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
->getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
->getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 350, 13))
->value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
->kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+>getterX3.value.kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 350, 14), Decl(identityModifierGetterCorpus.ts, 350, 51))
+>getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 352, 25))
+>getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 352, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 352, 25))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 350, 14), Decl(identityModifierGetterCorpus.ts, 350, 51))
 
     unknownMutate();
 >unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterCorpus.ts, 3, 46))
 
     const x3GetterB: number = getterX3.value.radius; // getter sweep often remains narrowed
->x3GetterB : Symbol(x3GetterB, Decl(identityModifierGetterCorpus.ts, 368, 9))
->getterX3.value.radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
->getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
->getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 350, 13))
->value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 350, 25))
->radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 348, 30))
+>x3GetterB : Symbol(x3GetterB, Decl(identityModifierGetterCorpus.ts, 370, 9))
+>getterX3.value.radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 350, 30))
+>getterX3.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 352, 25))
+>getterX3 : Symbol(getterX3, Decl(identityModifierGetterCorpus.ts, 352, 13))
+>value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 352, 25))
+>radius : Symbol(radius, Decl(identityModifierGetterCorpus.ts, 350, 30))
 
     x3GetterB;
->x3GetterB : Symbol(x3GetterB, Decl(identityModifierGetterCorpus.ts, 368, 9))
+>x3GetterB : Symbol(x3GetterB, Decl(identityModifierGetterCorpus.ts, 370, 9))
 }
 
 if (identityX3().kind === "circle") {
->identityX3().kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
->identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 354, 13))
->kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 348, 14), Decl(identityModifierGetterCorpus.ts, 348, 51))
+>identityX3().kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 350, 14), Decl(identityModifierGetterCorpus.ts, 350, 51))
+>identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 356, 13))
+>kind : Symbol(kind, Decl(identityModifierGetterCorpus.ts, 350, 14), Decl(identityModifierGetterCorpus.ts, 350, 51))
 
     unknownMutate();
 >unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterCorpus.ts, 3, 46))
 
     const x3IdentityB: number = identityX3().radius; // intentional gap visibility candidate
->x3IdentityB : Symbol(x3IdentityB, Decl(identityModifierGetterCorpus.ts, 374, 9))
->identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 354, 13))
+>x3IdentityB : Symbol(x3IdentityB, Decl(identityModifierGetterCorpus.ts, 376, 9))
+>identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 356, 13))
 
     x3IdentityB;
->x3IdentityB : Symbol(x3IdentityB, Decl(identityModifierGetterCorpus.ts, 374, 9))
+>x3IdentityB : Symbol(x3IdentityB, Decl(identityModifierGetterCorpus.ts, 376, 9))
 }
 

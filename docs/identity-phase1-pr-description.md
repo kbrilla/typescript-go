@@ -136,9 +136,10 @@ Remaining visible gaps from getter-to-identity sweep:
 - Failing identity-side parity cases are expected and intentionally baseline-accepted.
 - This corpus is now part of local parity evidence and should be used to track gap closure slices in subsequent PRs.
 - Closed mismatch `QN5` (generic discriminant narrowing over `PetType extends Pet`) by enabling identity-call flow to use narrowable return types.
+- Closed mismatch `X1` (alias escape via ambient passthrough helper `pass`) with a narrow Tier 2 guarded precision extension in alias-escape analysis.
 - Corpus mismatch movement in this slice:
-  - mismatch cases: `4 -> 3` (`QN5`, `GC3`, `X1`, `X3` -> `GC3`, `X1`, `X3`)
-  - corpus error count: `9 -> 8`
+  - mismatch cases: `3 -> 2` (`GC3`, `X1`, `X3` -> `GC3`, `X3`)
+  - corpus error count: `8 -> 6`
   - getter parity sweep score movement: no change (`7/9`, `2` remaining sweep gaps)
 
 ## Examples and Parity
@@ -523,6 +524,7 @@ if (model.user !== null) {
 - Broader nested/indirect callback boundary forms.
 - Additional Tier 1 write-form invalidation expansion beyond currently covered property/method/callable-hybrid local shapes.
 - Tier 2 guarded precision behavior itself (today's Tier 2 starter scenarios intentionally keep conservative invalidation expectations).
+- Remaining broad getter corpus mismatches: `GC3`, `X3`.
 
 ## Phase 2 Out of Scope
 - Explicit `mutator`/`links` fallback resolution.

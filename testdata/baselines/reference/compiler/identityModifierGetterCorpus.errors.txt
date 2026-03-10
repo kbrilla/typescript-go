@@ -4,15 +4,12 @@ identityModifierGetterCorpus.ts(302,7): error TS2322: Type 'string | false' is n
   Type 'boolean' is not assignable to type 'string | number'.
 identityModifierGetterCorpus.ts(305,7): error TS2322: Type 'string | false' is not assignable to type 'string | number'.
   Type 'boolean' is not assignable to type 'string | number'.
-identityModifierGetterCorpus.ts(329,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierGetterCorpus.ts(331,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-identityModifierGetterCorpus.ts(374,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierGetterCorpus.ts(375,46): error TS2339: Property 'radius' does not exist on type 'Shape'.
+identityModifierGetterCorpus.ts(376,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierGetterCorpus.ts(377,46): error TS2339: Property 'radius' does not exist on type 'Shape'.
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierGetterCorpus.ts (8 errors) ====
+==== identityModifierGetterCorpus.ts (6 errors) ====
     // Broad getter -> identity parity corpus.
     // Visibility-focused: intentional parity gaps are kept to track divergence.
     
@@ -352,14 +349,11 @@ identityModifierGetterCorpus.ts(375,46): error TS2339: Property 'radius' does no
     
     if (identityX1() !== undefined) {
         const escaped = pass(identityX1);
-              ~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         escaped;
-        const x1: string = identityX1(); // intentional gap visibility candidate
-              ~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        const x1: string = identityX1(); // parity target: OK
+        const x1Upper: string = identityX1().toUpperCase(); // parity target: OK
         x1;
+        x1Upper;
     }
     
     // Case X2: conditional expression repeated reads.

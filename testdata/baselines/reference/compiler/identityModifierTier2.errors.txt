@@ -7,15 +7,12 @@ identityModifierTier2.ts(72,11): error TS2322: Type 'string | undefined' is not 
 identityModifierTier2.ts(81,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierTier2.ts(84,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(90,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierTier2.ts(93,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(101,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierTier2.ts(103,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(99,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier2.ts(101,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierTier2.ts (10 errors) ====
+==== identityModifierTier2.ts (8 errors) ====
     // Candidate Tier 2 patterns: local alias-preserving forwarding and helper passthrough.
     declare const read: identity () => string | undefined;
     declare function pass<T>(x: T): T;
@@ -119,19 +116,12 @@ identityModifierTier2.ts(103,11): error TS2322: Type 'string | undefined' is not
     }
     
     if (read() !== undefined) {
-        // current conservative: alias-preserving helper passthrough is treated as an uncertainty boundary
+        // Tier 2 precision target: ambient identity helper passthrough preserves narrowing.
         const forwarded = pass(read);
-              ~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         forwarded;
     
-        const afterAliasPreservingPass: string = read(); // current conservative: error
-              ~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        const afterAliasPreservingPass: string = read(); // should stay narrowed
         afterAliasPreservingPass;
-    
-        // Tier 2 target: preserve narrowing when helper forwarding can be proven alias-preserving and non-mutating.
     }
     
     if (read() !== undefined) {

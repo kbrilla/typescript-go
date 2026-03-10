@@ -1017,13 +1017,24 @@ if (identityX1() !== undefined) {
     escaped;
 >escaped : () => string | undefined
 
-    const x1: string = identityX1(); // intentional gap visibility candidate
+    const x1: string = identityX1(); // parity target: OK
 >x1 : string
 >identityX1() : string | undefined
 >identityX1 : () => string | undefined
 
+    const x1Upper: string = identityX1().toUpperCase(); // parity target: OK
+>x1Upper : string
+>identityX1().toUpperCase() : string
+>identityX1().toUpperCase : () => string
+>identityX1() : string | undefined
+>identityX1 : () => string | undefined
+>toUpperCase : () => string
+
     x1;
 >x1 : string
+
+    x1Upper;
+>x1Upper : string
 }
 
 // Case X2: conditional expression repeated reads.
