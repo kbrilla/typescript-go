@@ -82,30 +82,62 @@ if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 >undefined : Symbol(undefined)
 
-    // Tier 2 precision target: local function declaration helper with trivial passthrough body.
-    function localFnId<T>(x: T) {
->localFnId : Symbol(localFnId, Decl(identityModifierTier2.ts, 29, 27))
->T : Symbol(T, Decl(identityModifierTier2.ts, 31, 23))
->x : Symbol(x, Decl(identityModifierTier2.ts, 31, 26))
->T : Symbol(T, Decl(identityModifierTier2.ts, 31, 23))
+    // Tier 2 precision target: const alias-chain to trivial passthrough helper should preserve narrowing.
+    const localId = <T>(x: T) => x;
+>localId : Symbol(localId, Decl(identityModifierTier2.ts, 31, 9))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 31, 21))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 31, 24))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 31, 21))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 31, 24))
 
-        return x;
->x : Symbol(x, Decl(identityModifierTier2.ts, 31, 26))
-    }
-    const forwarded = localFnId(read);
->forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 34, 9))
->localFnId : Symbol(localFnId, Decl(identityModifierTier2.ts, 29, 27))
+    const localId2 = localId;
+>localId2 : Symbol(localId2, Decl(identityModifierTier2.ts, 32, 9))
+>localId : Symbol(localId, Decl(identityModifierTier2.ts, 31, 9))
+
+    const forwarded = localId2(read);
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 33, 9))
+>localId2 : Symbol(localId2, Decl(identityModifierTier2.ts, 32, 9))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     forwarded;
->forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 34, 9))
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 33, 9))
+
+    const afterConstHelperAliasChain: string = read(); // should stay narrowed
+>afterConstHelperAliasChain : Symbol(afterConstHelperAliasChain, Decl(identityModifierTier2.ts, 36, 9))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    afterConstHelperAliasChain;
+>afterConstHelperAliasChain : Symbol(afterConstHelperAliasChain, Decl(identityModifierTier2.ts, 36, 9))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    // Tier 2 precision target: local function declaration helper with trivial passthrough body.
+    function localFnId<T>(x: T) {
+>localFnId : Symbol(localFnId, Decl(identityModifierTier2.ts, 40, 27))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 42, 23))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 42, 26))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 42, 23))
+
+        return x;
+>x : Symbol(x, Decl(identityModifierTier2.ts, 42, 26))
+    }
+    const forwarded = localFnId(read);
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 45, 9))
+>localFnId : Symbol(localFnId, Decl(identityModifierTier2.ts, 40, 27))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    forwarded;
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 45, 9))
 
     const stillString: string = read(); // should stay narrowed
->stillString : Symbol(stillString, Decl(identityModifierTier2.ts, 37, 9))
+>stillString : Symbol(stillString, Decl(identityModifierTier2.ts, 48, 9))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     stillString;
->stillString : Symbol(stillString, Decl(identityModifierTier2.ts, 37, 9))
+>stillString : Symbol(stillString, Decl(identityModifierTier2.ts, 48, 9))
 }
 
 if (read() !== undefined) {
@@ -114,28 +146,28 @@ if (read() !== undefined) {
 
     // Conservative boundary: non-trivial helper body should still invalidate prior narrowing.
     function localFnWrap<T>(x: T) {
->localFnWrap : Symbol(localFnWrap, Decl(identityModifierTier2.ts, 41, 27))
->T : Symbol(T, Decl(identityModifierTier2.ts, 43, 25))
->x : Symbol(x, Decl(identityModifierTier2.ts, 43, 28))
->T : Symbol(T, Decl(identityModifierTier2.ts, 43, 25))
+>localFnWrap : Symbol(localFnWrap, Decl(identityModifierTier2.ts, 52, 27))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 54, 25))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 54, 28))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 54, 25))
 
         return () => x;
->x : Symbol(x, Decl(identityModifierTier2.ts, 43, 28))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 54, 28))
     }
     const forwarded = localFnWrap(read);
->forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 46, 9))
->localFnWrap : Symbol(localFnWrap, Decl(identityModifierTier2.ts, 41, 27))
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 57, 9))
+>localFnWrap : Symbol(localFnWrap, Decl(identityModifierTier2.ts, 52, 27))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     forwarded;
->forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 46, 9))
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 57, 9))
 
     const afterNonTrivialFnHelper: string = read(); // current conservative: error
->afterNonTrivialFnHelper : Symbol(afterNonTrivialFnHelper, Decl(identityModifierTier2.ts, 49, 9))
+>afterNonTrivialFnHelper : Symbol(afterNonTrivialFnHelper, Decl(identityModifierTier2.ts, 60, 9))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     afterNonTrivialFnHelper;
->afterNonTrivialFnHelper : Symbol(afterNonTrivialFnHelper, Decl(identityModifierTier2.ts, 49, 9))
+>afterNonTrivialFnHelper : Symbol(afterNonTrivialFnHelper, Decl(identityModifierTier2.ts, 60, 9))
 }
 
 if (read() !== undefined) {
@@ -144,30 +176,66 @@ if (read() !== undefined) {
 
     // Conservative boundary: mutable helper can be reassigned and must invalidate prior narrowing.
     let localMaybeId = <T>(x: T) => x;
->localMaybeId : Symbol(localMaybeId, Decl(identityModifierTier2.ts, 55, 7))
->T : Symbol(T, Decl(identityModifierTier2.ts, 55, 24))
->x : Symbol(x, Decl(identityModifierTier2.ts, 55, 27))
->T : Symbol(T, Decl(identityModifierTier2.ts, 55, 24))
->x : Symbol(x, Decl(identityModifierTier2.ts, 55, 27))
+>localMaybeId : Symbol(localMaybeId, Decl(identityModifierTier2.ts, 66, 7))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 66, 24))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 66, 27))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 66, 24))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 66, 27))
 
     localMaybeId = pass;
->localMaybeId : Symbol(localMaybeId, Decl(identityModifierTier2.ts, 55, 7))
+>localMaybeId : Symbol(localMaybeId, Decl(identityModifierTier2.ts, 66, 7))
 >pass : Symbol(pass, Decl(identityModifierTier2.ts, 1, 54))
 
     const forwarded = localMaybeId(read);
->forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 57, 9))
->localMaybeId : Symbol(localMaybeId, Decl(identityModifierTier2.ts, 55, 7))
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 68, 9))
+>localMaybeId : Symbol(localMaybeId, Decl(identityModifierTier2.ts, 66, 7))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     forwarded;
->forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 57, 9))
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 68, 9))
 
     const afterMutableHelperPassthrough: string = read(); // current conservative: error
->afterMutableHelperPassthrough : Symbol(afterMutableHelperPassthrough, Decl(identityModifierTier2.ts, 60, 9))
+>afterMutableHelperPassthrough : Symbol(afterMutableHelperPassthrough, Decl(identityModifierTier2.ts, 71, 9))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     afterMutableHelperPassthrough;
->afterMutableHelperPassthrough : Symbol(afterMutableHelperPassthrough, Decl(identityModifierTier2.ts, 60, 9))
+>afterMutableHelperPassthrough : Symbol(afterMutableHelperPassthrough, Decl(identityModifierTier2.ts, 71, 9))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    // Conservative boundary: mutable alias chain remains invalidating after reassignment.
+    const localId = <T>(x: T) => x;
+>localId : Symbol(localId, Decl(identityModifierTier2.ts, 77, 9))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 77, 21))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 77, 24))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 77, 21))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 77, 24))
+
+    let maybeAlias = localId;
+>maybeAlias : Symbol(maybeAlias, Decl(identityModifierTier2.ts, 78, 7))
+>localId : Symbol(localId, Decl(identityModifierTier2.ts, 77, 9))
+
+    maybeAlias = pass;
+>maybeAlias : Symbol(maybeAlias, Decl(identityModifierTier2.ts, 78, 7))
+>pass : Symbol(pass, Decl(identityModifierTier2.ts, 1, 54))
+
+    const forwarded = maybeAlias(read);
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 80, 9))
+>maybeAlias : Symbol(maybeAlias, Decl(identityModifierTier2.ts, 78, 7))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    forwarded;
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 80, 9))
+
+    const afterMutableAliasChain: string = read(); // current conservative: error
+>afterMutableAliasChain : Symbol(afterMutableAliasChain, Decl(identityModifierTier2.ts, 83, 9))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    afterMutableAliasChain;
+>afterMutableAliasChain : Symbol(afterMutableAliasChain, Decl(identityModifierTier2.ts, 83, 9))
 }
 
 if (read() !== undefined) {
@@ -176,19 +244,19 @@ if (read() !== undefined) {
 
     // current conservative: alias-preserving helper passthrough is treated as an uncertainty boundary
     const forwarded = pass(read);
->forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 66, 9))
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 89, 9))
 >pass : Symbol(pass, Decl(identityModifierTier2.ts, 1, 54))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     forwarded;
->forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 66, 9))
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 89, 9))
 
     const afterAliasPreservingPass: string = read(); // current conservative: error
->afterAliasPreservingPass : Symbol(afterAliasPreservingPass, Decl(identityModifierTier2.ts, 69, 9))
+>afterAliasPreservingPass : Symbol(afterAliasPreservingPass, Decl(identityModifierTier2.ts, 92, 9))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     afterAliasPreservingPass;
->afterAliasPreservingPass : Symbol(afterAliasPreservingPass, Decl(identityModifierTier2.ts, 69, 9))
+>afterAliasPreservingPass : Symbol(afterAliasPreservingPass, Decl(identityModifierTier2.ts, 92, 9))
 
     // Tier 2 target: preserve narrowing when helper forwarding can be proven alias-preserving and non-mutating.
 }
@@ -204,11 +272,11 @@ if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     const afterHelperPassthrough: string = read(); // current conservative: error
->afterHelperPassthrough : Symbol(afterHelperPassthrough, Decl(identityModifierTier2.ts, 79, 9))
+>afterHelperPassthrough : Symbol(afterHelperPassthrough, Decl(identityModifierTier2.ts, 102, 9))
 >read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
 
     afterHelperPassthrough;
->afterHelperPassthrough : Symbol(afterHelperPassthrough, Decl(identityModifierTier2.ts, 79, 9))
+>afterHelperPassthrough : Symbol(afterHelperPassthrough, Decl(identityModifierTier2.ts, 102, 9))
 
     // Tier 2 target: keep precision with guarded inference in provably stable local forwarding shapes.
 }

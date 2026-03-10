@@ -341,10 +341,27 @@ func (c *Checker) isInlineTrivialPassthroughCallForCallReference(callee *ast.Nod
 	}
 
 	if ast.IsIdentifier(invoked) {
-		symbol := c.getResolvedSymbol(invoked)
-		if symbol == c.unknownSymbol {
+		return c.isConstAliasChainTrivialPassthroughHelper(invoked)
+	}
+
+	return false
+}
+
+func (c *Checker) isConstAliasChainTrivialPassthroughHelper(identifier *ast.Node) bool {
+	const maxAliasChainSteps = 5
+	seen := map[*ast.Symbol]bool{}
+	current := identifier
+
+	for range maxAliasChainSteps {
+		if !ast.IsIdentifier(current) {
 			return false
 		}
+
+		symbol := c.getResolvedSymbol(current)
+		if symbol == c.unknownSymbol || seen[symbol] {
+			return false
+		}
+		seen[symbol] = true
 
 		declaration := symbol.ValueDeclaration
 		if declaration == nil {
@@ -368,6 +385,13 @@ func (c *Checker) isInlineTrivialPassthroughCallForCallReference(callee *ast.Nod
 		if ast.IsArrowFunction(helper) || ast.IsFunctionExpression(helper) {
 			return c.isTrivialPassthroughFunctionLike(helper)
 		}
+
+		if ast.IsIdentifier(helper) {
+			current = helper
+			continue
+		}
+
+		return false
 	}
 
 	return false

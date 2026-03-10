@@ -1,14 +1,16 @@
-identityModifierTier2.ts(50,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
 identityModifierTier2.ts(61,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(70,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(72,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(80,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(84,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(93,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(103,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierTier2.ts (4 errors) ====
+==== identityModifierTier2.ts (5 errors) ====
     // Candidate Tier 2 patterns: local alias-preserving forwarding and helper passthrough.
     declare const read: identity () => string | undefined;
     declare function pass<T>(x: T): T;
@@ -36,6 +38,17 @@ identityModifierTier2.ts(80,11): error TS2322: Type 'string | undefined' is not 
     
         const afterConstHelperPassthrough: string = read(); // should stay narrowed
         afterConstHelperPassthrough;
+    }
+    
+    if (read() !== undefined) {
+        // Tier 2 precision target: const alias-chain to trivial passthrough helper should preserve narrowing.
+        const localId = <T>(x: T) => x;
+        const localId2 = localId;
+        const forwarded = localId2(read);
+        forwarded;
+    
+        const afterConstHelperAliasChain: string = read(); // should stay narrowed
+        afterConstHelperAliasChain;
     }
     
     if (read() !== undefined) {
@@ -77,6 +90,21 @@ identityModifierTier2.ts(80,11): error TS2322: Type 'string | undefined' is not 
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
 !!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         afterMutableHelperPassthrough;
+    }
+    
+    if (read() !== undefined) {
+        // Conservative boundary: mutable alias chain remains invalidating after reassignment.
+        const localId = <T>(x: T) => x;
+        let maybeAlias = localId;
+        maybeAlias = pass;
+        const forwarded = maybeAlias(read);
+        forwarded;
+    
+        const afterMutableAliasChain: string = read(); // current conservative: error
+              ~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterMutableAliasChain;
     }
     
     if (read() !== undefined) {
