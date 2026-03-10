@@ -121,6 +121,16 @@ During implementation and refactors:
 - avoid global graph traversal in hot checker paths
 - cache reusable symbol/endpoint lookup results where safe
 
+Micro-bench guardrail (Phase 1 narrow slice):
+- Added checker micro-bench coverage in `internal/checker/identity_bench_test.go`.
+- Covered scenarios:
+  - repeated-read narrowing hot path (`RepeatedReads`)
+  - uncertainty-boundary invalidation path (`UncertaintyBoundary`)
+- Repro command:
+```sh
+go test ./internal/checker -run '^$' -bench BenchmarkIdentityCFAFlow -benchmem -count=1
+```
+
 Verification:
 - compare test runtime before/after each major step
 - inspect hot paths if checker regressions appear
@@ -247,7 +257,9 @@ Current status:
   - Broad corpus mismatch count moved `4 -> 1` cases and corpus error count moved `9 -> 4`.
   - Getter parity sweep score is unchanged in this slice (`7/9`).
   - Remaining: expand parity mapping against additional submodule scenarios.
-- [ ] Step 9: Performance guardrails/perf checks
+- [x] Step 9: Performance guardrails/perf checks (micro-bench baseline)
+  - Added deterministic checker micro-bench coverage for repeated reads and uncertainty boundaries in `internal/checker/identity_bench_test.go`.
+  - Remaining: broaden perf corpus only after additional Phase 1 behavior slices land.
 
 ### Next Focus (Immediate)
 1. Expand Tier 2 guarded precision beyond trivial local passthrough forms while preserving soundness.

@@ -553,6 +553,17 @@ Latest tip validation is green:
 - `npx hereby lint`
 - `npx hereby format`
 
+## Perf Guardrail Benchmarks (Phase 1 Narrow Slice)
+- Added checker micro-bench file: `internal/checker/identity_bench_test.go`
+- Bench scenarios:
+  - `BenchmarkIdentityCFAFlow/RepeatedReads`
+  - `BenchmarkIdentityCFAFlow/UncertaintyBoundary`
+- Repro command:
+```sh
+go test ./internal/checker -run '^$' -bench BenchmarkIdentityCFAFlow -benchmem -count=1
+```
+- Purpose: maintain a lightweight, reproducible identity-CFA hot-path baseline to monitor regressions as Phase 1 slices evolve.
+
 ## TypeScript-main Benchmark Snapshot
 
 ### Setup
