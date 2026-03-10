@@ -1,18 +1,24 @@
-identityModifierTier2.ts(58,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierTier2.ts(61,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(78,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier2.ts(81,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(69,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierTier2.ts(72,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(89,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier2.ts(92,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(81,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierTier2.ts(84,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(101,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier2.ts(104,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(99,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierTier2.ts(101,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(112,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier2.ts(114,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(123,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier2.ts(125,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(140,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier2.ts(142,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierTier2.ts (8 errors) ====
+==== identityModifierTier2.ts (12 errors) ====
     // Candidate Tier 2 patterns: local alias-preserving forwarding and helper passthrough.
     declare const read: identity () => string | undefined;
     declare function pass<T>(x: T): T;
@@ -66,6 +72,26 @@ identityModifierTier2.ts(101,11): error TS2322: Type 'string | undefined' is not
     }
     
     if (read() !== undefined) {
+        // Tier 2 precision target: expression-statement passthrough via local const helper should preserve narrowing.
+        const localId = <T>(x: T) => x;
+        localId(read);
+    
+        const afterExprStmtConstHelper: string = read(); // should stay narrowed
+        afterExprStmtConstHelper;
+    }
+    
+    if (read() !== undefined) {
+        // Tier 2 precision target: expression-statement passthrough via local function declaration should preserve narrowing.
+        function localFnId<T>(x: T) {
+            return x;
+        }
+        localFnId(read);
+    
+        const afterExprStmtFunctionDecl: string = read(); // should stay narrowed
+        afterExprStmtFunctionDecl;
+    }
+    
+    if (read() !== undefined) {
         // Conservative boundary: non-trivial helper body should still invalidate prior narrowing.
         function localFnWrap<T>(x: T) {
             return () => x;
@@ -113,6 +139,37 @@ identityModifierTier2.ts(101,11): error TS2322: Type 'string | undefined' is not
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
 !!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         afterMutableAliasChain;
+    }
+    
+    if (read() !== undefined) {
+        // Conservative boundary: mutable helper in expression-statement form remains invalidating.
+        let localMaybeId = <T>(x: T) => x;
+        localMaybeId = pass;
+        localMaybeId(read);
+        ~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+    
+        const afterExprStmtMutableHelper: string = read(); // current conservative: error
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterExprStmtMutableHelper;
+    }
+    
+    if (read() !== undefined) {
+        // Conservative boundary: non-trivial helper in expression-statement form remains invalidating.
+        function localFnWrap<T>(x: T) {
+            return () => x;
+        }
+        localFnWrap(read);
+        ~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+    
+        const afterExprStmtNonTrivialHelper: string = read(); // current conservative: error
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterExprStmtNonTrivialHelper;
     }
     
     if (read() !== undefined) {

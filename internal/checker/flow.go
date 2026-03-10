@@ -38,6 +38,7 @@ const (
 	identityBoundaryPreserveRulePromiseResolveAwait
 	identityBoundaryPreserveRuleAmbientNoArgAwait
 	identityBoundaryPreserveRuleAmbientNoArgVoidUnknownCall
+	identityBoundaryPreserveRuleExprStmtTrivialPassthrough
 )
 
 var identityBoundaryPreserveRulesByKind = map[identityBoundaryKind][]identityBoundaryPreserveRuleID{
@@ -50,6 +51,9 @@ var identityBoundaryPreserveRulesByKind = map[identityBoundaryKind][]identityBou
 	identityBoundaryKindAwaitBoundary: {
 		identityBoundaryPreserveRulePromiseResolveAwait,
 		identityBoundaryPreserveRuleAmbientNoArgAwait,
+	},
+	identityBoundaryKindOther: {
+		identityBoundaryPreserveRuleExprStmtTrivialPassthrough,
 	},
 }
 
@@ -664,9 +668,38 @@ func (c *Checker) shouldPreserveIdentityBoundaryByRule(reference *ast.Node, boun
 		return c.shouldPreserveAmbientNoArgAwaitCallNarrowing(reference, boundary)
 	case identityBoundaryPreserveRuleAmbientNoArgVoidUnknownCall:
 		return c.shouldPreserveAmbientNoArgVoidUnknownCallNarrowing(reference, boundary)
+	case identityBoundaryPreserveRuleExprStmtTrivialPassthrough:
+		return c.shouldPreserveExprStmtTrivialPassthroughNarrowing(reference, boundary)
 	default:
 		return false
 	}
+}
+
+func (c *Checker) shouldPreserveExprStmtTrivialPassthroughNarrowing(reference *ast.Node, boundary *ast.Node) bool {
+	if !isNoArgCallExpression(reference) || !ast.IsCallExpression(boundary) {
+		return false
+	}
+
+	if boundary.Parent == nil || !ast.IsExpressionStatement(boundary.Parent) || len(boundary.Arguments()) != 1 {
+		return false
+	}
+
+	callee := c.getNormalizedReferenceCandidate(reference.Expression())
+	argument := c.getNormalizedReferenceCandidate(boundary.Arguments()[0])
+	if !c.isMatchingReference(callee, argument) {
+		return false
+	}
+
+	invoked := ast.SkipParentheses(boundary.Expression())
+	if ast.IsArrowFunction(invoked) || ast.IsFunctionExpression(invoked) {
+		return c.isTrivialPassthroughFunctionLike(invoked)
+	}
+
+	if ast.IsIdentifier(invoked) {
+		return c.isConstAliasChainTrivialPassthroughHelper(invoked)
+	}
+
+	return false
 }
 
 func (c *Checker) shouldPreserveAmbientNoArgVoidUnknownCallNarrowing(reference *ast.Node, boundary *ast.Node) bool {

@@ -147,6 +147,9 @@ flowchart LR
   - `const localId = <T>(x: T) => x; const localId2 = localId; const forwarded = localId2(read);` preserves prior narrowing.
 - Narrow Tier 2 precision slice for local function declaration passthrough identifiers:
   - `function localFnId<T>(x: T) { return x; } const forwarded = localFnId(read);` preserves prior narrowing.
+  - Expression-statement passthrough is now also preserved for the same strict local trivial-helper shapes:
+    - `const localId = <T>(x: T) => x; localId(read);`
+    - `function localFnId<T>(x: T) { return x; } localFnId(read);`
   - Non-inline helper passthrough remains conservative (`pass(read)`, `useReader(pass(read))`).
 - Narrow await-boundary parity preservation slice:
   - `if (read() !== undefined) { await Promise.resolve(); const s: string = read(); }` preserves narrowing.
@@ -190,7 +193,7 @@ flowchart LR
 ### Left for Phase 1
 - [ ] Broaden nested/indirect callback boundary parity beyond currently covered forms (statement, declaration-initializer, assignment-expression, conditional initializer, and strict const no-op alias forms are now covered).
 - [ ] Expand Tier 1 write-form matrix breadth beyond the current compound/logical/unary local endpoint slice.
-- [ ] Extend Tier 2 guarded precision beyond trivial syntactic passthrough forms while preserving soundness.
+- [ ] Extend Tier 2 guarded precision beyond current strict trivial passthrough forms (initializer and expression-statement local const/function helper shapes) while preserving soundness.
 - [x] Add heuristic-limit diagnostics for uncertainty-boundary conservative invalidation (Step 7 narrow slice).
 - [ ] Expand parity mapping against submodule scenarios where practical.
 
@@ -253,6 +256,8 @@ Parity score summary:
 | Tier 2 narrow precision (const helper identifier passthrough) | `const localId = <T>(x: T) => x; localId(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 | Tier 2 narrow precision (const helper alias-chain passthrough) | `const localId = <T>(x: T) => x; const localId2 = localId; localId2(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 | Tier 2 narrow precision (function declaration helper passthrough) | `function localFnId<T>(x: T) { return x; } localFnId(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
+| Tier 2 narrow precision (expression-statement const helper passthrough) | `const localId = <T>(x: T) => x; localId(read);` then `read()` | Implemented (strict guard) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
+| Tier 2 narrow precision (expression-statement function declaration passthrough) | `function localFnId<T>(x: T) { return x; } localFnId(read);` then `read()` | Implemented (strict guard) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 | Tier 2 conservative non-goal (non-trivial function declaration helper body) | `function localFnWrap<T>(x: T) { return () => x; } localFnWrap(read);` then `read()` | Intentionally conservative (error) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 | Tier 2 conservative non-goal (mutable helper reassignment) | `let localMaybeId = <T>(x: T) => x; localMaybeId = pass; localMaybeId(read);` then `read()` | Intentionally conservative (error) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 | Tier 2 conservative non-goal (mutable helper alias-chain reassignment) | `const localId = <T>(x: T) => x; let maybeAlias = localId; maybeAlias = pass; maybeAlias(read);` then `read()` | Intentionally conservative (error) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |

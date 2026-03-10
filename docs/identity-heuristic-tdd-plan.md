@@ -244,8 +244,8 @@ Current status:
   - Remaining: broaden write-form coverage to additional operators/shapes beyond the current narrow local matrix.
 - [ ] Step 5: Tier 2 guarded invalidation (broad)
   - Added starter local test coverage for candidate Tier 2 forwarding/passthrough patterns with current conservative expectations.
-  - Added narrow positive precision slices for trivial local passthrough helper forms.
-  - Remaining: implement guarded precision preservation when receiver identity and non-mutating forwarding can be proven.
+  - Added narrow positive precision slices for trivial local passthrough helper forms, including expression-statement passthrough calls with strict local helper guards.
+  - Remaining: implement guarded precision preservation for broader local consumer/passthrough forms when receiver identity and non-mutating forwarding can be proven.
 - [x] Step 6: Uncertainty boundaries (covered slices)
   - Covered in local tests: unknown direct call; callback invocation boundaries (statement, declaration-initializer assignment, assignment-expression assignment, conditional initializer, indirect callback argument); await suspension boundary; assignment-based alias-escape; and indirect alias escape via helper passthrough.
   - Added strict callback preserve slice: `const cb = () => {}; invoke(cb);` preserves narrowing, while mutable or non-empty callback aliases remain conservative.
@@ -268,7 +268,7 @@ Current status:
   - Remaining: broaden perf corpus only after additional Phase 1 behavior slices land.
 
 ### Next Focus (Immediate)
-1. Expand Tier 2 guarded precision beyond trivial local passthrough forms while preserving soundness.
+1. Expand Tier 2 guarded precision beyond current strict trivial passthrough forms (initializer + expression-statement) while preserving soundness.
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
 3. Expand parity mapping from the getter corpus beyond currently covered source slices.
 
@@ -389,6 +389,9 @@ Tier 1 write-form gaps still open:
   - `const localId = <T>(x: T) => x; const localId2 = localId; const forwarded = localId2(read);` preserves narrowing.
 - Extended Tier 2 positive coverage to local function declaration helpers with trivial passthrough bodies:
   - `function localFnId<T>(x: T) { return x; } const forwarded = localFnId(read);` preserves narrowing.
+- Expanded Tier 2 positive coverage to expression-statement passthrough calls for strict local trivial helper shapes:
+  - `const localId = <T>(x: T) => x; localId(read);` preserves narrowing.
+  - `function localFnId<T>(x: T) { return x; } localFnId(read);` preserves narrowing.
 - Kept conservative invalidation for non-inline helper passthrough patterns:
   - `const forwarded = pass(read);`
   - `useReader(pass(read));`
@@ -399,6 +402,7 @@ Tier 1 write-form gaps still open:
   - `function localFnWrap<T>(x: T) { return () => x; } localFnWrap(read);` invalidates prior narrowing.
 - Checker change is intentionally narrow and syntactic in `internal/checker/flow.go`:
   - exempt only call initializers that are inline trivial passthrough function values, identifier callees that resolve to trivial local function declarations, or identifier callees that resolve through a small `const` alias chain to trivial passthrough function-like values
+  - exempt expression-statement passthrough calls only when the helper target is a trivial local passthrough function-like shape and the single argument is the exact identity read endpoint
   - accepted forms: single parameter, body is parameter expression or single `return` of parameter
   - implementation guardrails: alias-chain depth limit and cycle detection; mutable or reassigned paths remain conservative
 - Remaining Tier 2 gaps:

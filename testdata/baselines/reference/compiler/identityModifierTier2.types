@@ -160,6 +160,61 @@ if (read() !== undefined) {
 >read : () => string | undefined
 >undefined : undefined
 
+    // Tier 2 precision target: expression-statement passthrough via local const helper should preserve narrowing.
+    const localId = <T>(x: T) => x;
+>localId : <T>(x: T) => T
+><T>(x: T) => x : <T>(x: T) => T
+>x : T
+>x : T
+
+    localId(read);
+>localId(read) : () => string | undefined
+>localId : <T>(x: T) => T
+>read : () => string | undefined
+
+    const afterExprStmtConstHelper: string = read(); // should stay narrowed
+>afterExprStmtConstHelper : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterExprStmtConstHelper;
+>afterExprStmtConstHelper : string
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    // Tier 2 precision target: expression-statement passthrough via local function declaration should preserve narrowing.
+    function localFnId<T>(x: T) {
+>localFnId : <T>(x: T) => T
+>x : T
+
+        return x;
+>x : T
+    }
+    localFnId(read);
+>localFnId(read) : () => string | undefined
+>localFnId : <T>(x: T) => T
+>read : () => string | undefined
+
+    const afterExprStmtFunctionDecl: string = read(); // should stay narrowed
+>afterExprStmtFunctionDecl : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterExprStmtFunctionDecl;
+>afterExprStmtFunctionDecl : string
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
     // Conservative boundary: non-trivial helper body should still invalidate prior narrowing.
     function localFnWrap<T>(x: T) {
 >localFnWrap : <T>(x: T) => () => T
@@ -261,6 +316,67 @@ if (read() !== undefined) {
 
     afterMutableAliasChain;
 >afterMutableAliasChain : string
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    // Conservative boundary: mutable helper in expression-statement form remains invalidating.
+    let localMaybeId = <T>(x: T) => x;
+>localMaybeId : <T>(x: T) => T
+><T>(x: T) => x : <T>(x: T) => T
+>x : T
+>x : T
+
+    localMaybeId = pass;
+>localMaybeId = pass : <T>(x: T) => T
+>localMaybeId : <T>(x: T) => T
+>pass : <T>(x: T) => T
+
+    localMaybeId(read);
+>localMaybeId(read) : () => string | undefined
+>localMaybeId : <T>(x: T) => T
+>read : () => string | undefined
+
+    const afterExprStmtMutableHelper: string = read(); // current conservative: error
+>afterExprStmtMutableHelper : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterExprStmtMutableHelper;
+>afterExprStmtMutableHelper : string
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    // Conservative boundary: non-trivial helper in expression-statement form remains invalidating.
+    function localFnWrap<T>(x: T) {
+>localFnWrap : <T>(x: T) => () => T
+>x : T
+
+        return () => x;
+>() => x : () => T
+>x : T
+    }
+    localFnWrap(read);
+>localFnWrap(read) : () => () => string | undefined
+>localFnWrap : <T>(x: T) => () => T
+>read : () => string | undefined
+
+    const afterExprStmtNonTrivialHelper: string = read(); // current conservative: error
+>afterExprStmtNonTrivialHelper : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterExprStmtNonTrivialHelper;
+>afterExprStmtNonTrivialHelper : string
 }
 
 if (read() !== undefined) {

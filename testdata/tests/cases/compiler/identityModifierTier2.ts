@@ -54,6 +54,26 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
+    // Tier 2 precision target: expression-statement passthrough via local const helper should preserve narrowing.
+    const localId = <T>(x: T) => x;
+    localId(read);
+
+    const afterExprStmtConstHelper: string = read(); // should stay narrowed
+    afterExprStmtConstHelper;
+}
+
+if (read() !== undefined) {
+    // Tier 2 precision target: expression-statement passthrough via local function declaration should preserve narrowing.
+    function localFnId<T>(x: T) {
+        return x;
+    }
+    localFnId(read);
+
+    const afterExprStmtFunctionDecl: string = read(); // should stay narrowed
+    afterExprStmtFunctionDecl;
+}
+
+if (read() !== undefined) {
     // Conservative boundary: non-trivial helper body should still invalidate prior narrowing.
     function localFnWrap<T>(x: T) {
         return () => x;
@@ -86,6 +106,27 @@ if (read() !== undefined) {
 
     const afterMutableAliasChain: string = read(); // current conservative: error
     afterMutableAliasChain;
+}
+
+if (read() !== undefined) {
+    // Conservative boundary: mutable helper in expression-statement form remains invalidating.
+    let localMaybeId = <T>(x: T) => x;
+    localMaybeId = pass;
+    localMaybeId(read);
+
+    const afterExprStmtMutableHelper: string = read(); // current conservative: error
+    afterExprStmtMutableHelper;
+}
+
+if (read() !== undefined) {
+    // Conservative boundary: non-trivial helper in expression-statement form remains invalidating.
+    function localFnWrap<T>(x: T) {
+        return () => x;
+    }
+    localFnWrap(read);
+
+    const afterExprStmtNonTrivialHelper: string = read(); // current conservative: error
+    afterExprStmtNonTrivialHelper;
 }
 
 if (read() !== undefined) {
