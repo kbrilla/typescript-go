@@ -17,6 +17,10 @@ Guarantee:
 - In well-typed declarations, callable CFA must match or improve getter/setter CFA outcomes.
 - Ambiguous multi-endpoint impact is diagnosable, not silently degraded.
 
+Phase boundary decision:
+- Constrained-overload post-call narrowing that depends on explicit contracts remains out of Phase 1 implementation scope.
+- Phase 1 may include readiness-only slices (tests/spec/checklist) that do not require parsing or checking `mutator`/`links` semantics.
+
 ## 3. Problem Statement
 ```ts
 declare const value: () => string | undefined;
@@ -92,10 +96,13 @@ Normative behavior:
 - FR3: Invalidate previous narrowing on resolved mutator impacts.
 - FR4: Invalidate on uncertainty boundaries (unknown calls, callbacks, alias uncertainty, async boundaries).
 - FR5: Keep mutator callback bodies opaque.
-- FR6: Support signature-driven post-call narrowing for constrained mutator overloads.
+- FR6: Support signature-driven post-call narrowing for constrained mutator overloads (Phase 2 implementation target).
 - FR7: Diagnose ambiguous multi-endpoint impact instead of silent precision downgrade.
 - FR8: Implement tiered heuristic mutator-impact inference with explicit confidence boundaries.
 - FR9: Provide diagnostics guiding authors to explicit contracts when heuristics are insufficient.
+
+Phase 1 readiness requirement:
+- FR10: Track constrained-overload explicit-contract behavior in Phase 1 planning artifacts with strict non-goals that prevent accidental broadening.
 
 ## 8. Core Semantics
 
@@ -130,6 +137,10 @@ interface WritableSignal<T> {
 If overload resolution selects constrained `U`, post-call endpoint type may narrow to `U`.
 No callback-body inspection is required; effect is signature-driven.
 
+Phase boundary:
+- This effect requires explicit contract resolution (`mutator`/`links`) and is therefore a Phase 2 behavior slice.
+- Phase 1 can only add readiness artifacts for this effect (tests/checklists/spec detail), not runtime checker behavior.
+
 ## 9. Parity Contract
 Getter/setter baseline:
 ```ts
@@ -163,6 +174,9 @@ Low-confidence heuristic diagnostic:
 Author guidance requirements:
 - Must suggest concrete remediation (`links`, declaration split, explicit mutator annotation).
 - Must avoid implying runtime behavior changes.
+
+Constrained-overload scope diagnostic rule:
+- If explicit contracts are unavailable in Phase 1, checker behavior must remain conservative and must not synthesize constrained post-call narrowing from heuristics alone.
 
 ## 11. Checker Algorithm Sketch
 ```text
@@ -235,6 +249,22 @@ Performance guardrails:
 - Stage 4: Explicit `mutator`/`links` fallback resolution + ambiguity diagnostics.
 - Stage 5: Constrained-overload post-call narrowing.
 - Stage 6: Parity sweep and perf validation on submodule suites.
+
+Phase 1 addition (planning only):
+- Stage 1.5: Constrained-overload readiness pack (docs + targeted red-test inventory only; no parser/checker behavior changes).
+  - Guardrails:
+    - No `mutator`/`links` semantic activation in checker.
+    - No constrained post-call narrowing unless Stage 4 explicit links resolution is present.
+    - No callback-body inspection.
+  - Minimal first implementation slice (for Stage 5):
+    - Single-endpoint explicit contract only.
+    - Single mutator with one constrained generic overload (for example `update<U extends T>`).
+    - Apply post-call narrowing only when that constrained overload is selected and link resolution is unambiguous.
+  - Explicit tests to add before Stage 5 implementation:
+    - Positive: constrained overload selected, endpoint narrows to `U`.
+    - Negative: unconstrained overload selected, no post-call narrowing.
+    - Negative: unresolved or ambiguous links, no post-call narrowing plus ambiguity diagnostic.
+    - Safety: callback body does not influence narrowing result.
 
 ## 15. Risks
 - Heuristic false positives/negatives if tier boundaries are underspecified.

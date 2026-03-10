@@ -7,6 +7,10 @@ Phase 1 focuses only on:
 - stronger heuristic invalidation
 - conservative behavior at uncertainty boundaries
 
+Constrained-overload scope decision:
+- Constrained-overload post-call narrowing from explicit contracts is not a Phase 1 implementation target.
+- Phase 1 carries readiness planning only (guardrails and test inventory) so the Phase 2 slice can land narrowly and safely.
+
 ## Goals
 - Achieve parity with property getter/setter CFA in common local-flow scenarios.
 - Improve narrowing for callable getter patterns without introducing unsoundness.
@@ -151,6 +155,34 @@ Benchmark evidence note:
 - diagnostics for heuristic limits are in place.
 - remaining hard cases are documented for Phase 2 (`mutator`/`links`).
 
+## Phase 1 Readiness Additions (Doc/Test Planning Only)
+
+### R1: Constrained-Overload Readiness Pack
+Why this is not Phase 1 behavior:
+- It depends on explicit `mutator`/`links` contracts, which are deferred to Phase 2.
+- Enabling post-call narrowing without explicit link resolution risks unsound endpoint selection.
+
+Strict guardrails:
+- Do not infer constrained post-call narrowing from heuristics alone.
+- Do not inspect callback bodies.
+- Do not narrow multiple endpoints unless explicit links resolve to a unique set.
+
+Minimal first implementation slice (Phase 2 Stage 5 target):
+- one identity endpoint
+- one explicit mutator linked to that endpoint
+- one constrained overload (`<U extends T>`) selected at call site
+- post-call type update only for the linked endpoint
+
+Explicit tests to add for that slice:
+- `identityModifierConstrainedOverloadExplicitContracts.ts` positive case: selected constrained overload narrows to `U`.
+- Negative control: unconstrained overload in same API does not narrow.
+- Negative control: unresolved/ambiguous links do not narrow and emit ambiguity diagnostic.
+- Safety control: callback body contents do not affect narrowing.
+
+### R2: Small High-Value Phase 1 Additions To Track Now
+- Add diagnostics wording stability baselines for uncertainty-boundary guidance (`TS100014`, `TS100015`).
+- Add Tier 2 negative-controls expansion for mutable helper alias chains and property-based helper references (conservative expected behavior).
+
 ## Required Validation Commands
 Before handoff, run:
 ```sh
@@ -266,11 +298,17 @@ Current status:
 - [x] Step 9: Performance guardrails/perf checks (micro-bench baseline)
   - Added deterministic checker micro-bench coverage for repeated reads and uncertainty boundaries in `internal/checker/identity_bench_test.go`.
   - Remaining: broaden perf corpus only after additional Phase 1 behavior slices land.
+- [ ] R1: Constrained-overload readiness pack (docs + explicit test inventory only)
+  - Decision captured: constrained post-call narrowing with explicit contracts remains Phase 2 behavior.
+  - Remaining: add targeted red-test scaffolding and entry criteria notes for Phase 2 Stage 5.
+- [ ] R2: Small high-value hardening slices
+  - Remaining: diagnostics wording stability baselines and Tier 2 negative-controls expansion.
 
 ### Next Focus (Immediate)
 1. Expand Tier 2 guarded precision beyond current strict trivial passthrough forms (initializer + expression-statement) while preserving soundness.
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
 3. Expand parity mapping from the getter corpus beyond currently covered source slices.
+4. Finalize constrained-overload readiness artifacts (R1) without enabling explicit-contract runtime behavior.
 
 ## Newly Found Remaining Gaps (Post-Latest Commit Audit)
 

@@ -4,6 +4,10 @@
 This PR covers Phase 1 only: `identity` support and heuristic uncertainty-boundary invalidation slices.
 It does not include Phase 2 explicit contracts (`mutator`/`links`).
 
+Decision for constrained-overload post-call narrowing:
+- Not part of Phase 1 runtime behavior.
+- Treated as Phase 2 behavior because it depends on explicit contract resolution (`mutator`/`links`) and unambiguous endpoint linkage.
+
 ## References
 - `docs/identity-modifier-spec.md`
 - `docs/identity-heuristic-tdd-plan.md`
@@ -711,10 +715,35 @@ if (model.user !== null) {
 - Additional Tier 1 write-form invalidation expansion beyond currently covered property/method/callable-hybrid local shapes.
 - Tier 2 guarded precision behavior itself (today's Tier 2 starter scenarios intentionally keep conservative invalidation expectations).
 
+## Constrained-Overload Scope Decision (Phase 1 vs Phase 2)
+Why this does not belong in Phase 1 behavior:
+- The effect is defined in terms of explicit contract metadata and endpoint links.
+- Without explicit link resolution, post-call narrowing can pick the wrong endpoint set and regress soundness/parity.
+
+Strict guardrails (effective now):
+- No constrained post-call narrowing from heuristics-only paths.
+- No callback-body analysis to infer post-call endpoint type.
+- No multi-endpoint post-call narrowing unless explicit links are unique.
+
+Minimal first implementation slice (Phase 2 Stage 5 target):
+- single identity endpoint + single explicit mutator link
+- one constrained overload (`<U extends T>`) selected by overload resolution
+- apply post-call narrowing only for the linked endpoint on that selected overload
+
+Explicit tests to add with that slice:
+- `identityModifierConstrainedOverloadExplicitContracts.ts` positive: constrained overload selected, endpoint narrows to `U`.
+- Negative: unconstrained overload selected, no post-call narrowing.
+- Negative: ambiguous/unresolved links, no narrowing and ambiguity diagnostic.
+- Safety: callback body changes do not affect narrowing result.
+
 ## Phase 2 Out of Scope
 - Explicit `mutator`/`links` fallback resolution.
 - Ambiguity diagnostics for unresolved multi-endpoint impact.
 - Constrained-overload post-call narrowing from explicit contracts.
+
+## Additional Phase 1 Tracking (Small, High-Value, Safe)
+- Add diagnostics wording stability baselines for uncertainty-boundary guidance (`TS100014`, `TS100015`).
+- Expand Tier 2 negative-controls matrix for mutable helper alias chains and property-based helper references (explicitly conservative expectations).
 
 ## Validation
 Latest tip validation is green:
