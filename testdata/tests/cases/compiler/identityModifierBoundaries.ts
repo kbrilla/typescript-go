@@ -35,6 +35,16 @@ if (read() !== undefined) {
     const afterAssignedCallbackCall: string = read(); // should error
 }
 
+let assignedCallbackResult: void;
+if (read() !== undefined) {
+    assignedCallbackResult = invoke(() => {
+        const callbackWrite = 1;
+        callbackWrite;
+    });
+    assignedCallbackResult;
+    const afterAssignmentExpressionCallbackCall: string = read(); // should error
+}
+
 if (read() !== undefined) {
     const indirectCallbackResult = invoke(pass(() => {
         const callbackWrite = 1;
@@ -56,6 +66,31 @@ if (read() !== undefined) {
         });
     conditionalCallbackResult;
     const afterConditionalCallbackCall: string = read(); // should error
+}
+
+if (read() !== undefined) {
+    const noopCallback = () => {};
+    invoke(noopCallback);
+    const afterConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
+}
+
+if (read() !== undefined) {
+    let mutableNoopCallback = () => {};
+    mutableNoopCallback = () => {
+        const callbackWrite = 1;
+        callbackWrite;
+    };
+    invoke(mutableNoopCallback);
+    const afterMutableNoopCallbackAlias: string = read(); // should error
+}
+
+if (read() !== undefined) {
+    const nonEmptyCallback = () => {
+        const callbackWrite = 1;
+        callbackWrite;
+    };
+    invoke(nonEmptyCallback);
+    const afterNonEmptyCallbackAlias: string = read(); // should error
 }
 
 if (read() !== undefined) {

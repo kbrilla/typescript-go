@@ -145,6 +145,10 @@ flowchart LR
 - Narrow await-boundary parity preservation slice:
   - `if (read() !== undefined) { await Promise.resolve(); const s: string = read(); }` preserves narrowing.
   - Broader await boundaries remain conservative (`await delay()`, `const x = await delay()`).
+- Expanded callback-boundary coverage slice:
+  - Assignment-expression callback boundary now invalidates (`assigned = invoke(() => { ... });` then `read()`).
+  - Narrow preserve rule now supports strict const no-op callback aliases (`const cb = () => {}; invoke(cb);`).
+  - Mutable callback aliases and non-empty callback aliases remain conservative by design.
 - Narrow unknown-call parity preservation slice:
   - `if (read().kind === "circle") { unknownMutate(); const r: number = read().radius; }` preserves narrowing for the strict guarded ambient no-arg `void` unknown-call shape.
   - Non-target unknown-call shapes remain conservative.
@@ -178,7 +182,7 @@ flowchart LR
 - [x] Narrow await parity slice: expression-statement `await Promise.resolve()` now preserves narrowing (`P4` in getter parity sweep).
 
 ### Left for Phase 1
-- [ ] Broaden nested/indirect callback boundary parity beyond currently covered forms (conditional initializer form now covered).
+- [ ] Broaden nested/indirect callback boundary parity beyond currently covered forms (statement, declaration-initializer, assignment-expression, conditional initializer, and strict const no-op alias forms are now covered).
 - [ ] Expand Tier 1 write-form matrix breadth beyond current local parity slices.
 - [ ] Extend Tier 2 guarded precision beyond trivial syntactic passthrough forms while preserving soundness.
 - [x] Add heuristic-limit diagnostics for uncertainty-boundary conservative invalidation (Step 7 narrow slice).
@@ -209,8 +213,12 @@ Parity score summary:
 | Unknown call | `unknownMutate();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback statement | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback assignment form | `const r = invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Callback assignment-expression form | `r = invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback conditional initializer form | `const r = cond ? invoke(() => {}) : invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback indirect helper argument | `const r = invoke(pass(() => {}));` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Callback const no-op alias preserve (narrow) | `const cb = () => {}; invoke(cb);` then `read()` | Implemented (strict guard) | `testdata/tests/cases/compiler/identityModifierBoundaries.ts`, `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Callback mutable alias | `let cb = () => {}; cb = (...) => {...}; invoke(cb);` then `read()` | Intentionally conservative (error) | `testdata/tests/cases/compiler/identityModifierBoundaries.ts`, `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Callback non-empty alias | `const cb = () => { ... }; invoke(cb);` then `read()` | Intentionally conservative (error) | `testdata/tests/cases/compiler/identityModifierBoundaries.ts`, `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Alias initializer | `const escaped = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Indirect alias passthrough | `const indirect = pass(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Alias reassignment | `alias = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
@@ -233,6 +241,7 @@ Parity score summary:
 | Basic repeated read parity | getter `model.value` vs identity `read()` | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Branch merge parity | post-merge `string` assignment | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Callback no-op statement parity | `invoke(() => {})` then read | Matched (narrow shape) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
+| Callback const no-op alias parity | `const cb = () => {}; invoke(cb);` then read | Matched (strict guard) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Await boundary parity (narrow safe shapes) | `await Promise.resolve()` then read; ambient no-arg `await delay()` with nullish identity read | Matched (narrow shapes) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`, `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts` |
 | Write invalidation parity (`set(non-nullish)` slice) | setter/write call then read | Matched | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Aliasing parity | alias/escape then read | Matched for direct const alias; indirect/reassigned escapes intentionally conservative | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |

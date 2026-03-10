@@ -171,12 +171,115 @@ if (identityBasic() !== undefined) {
 >identityAfterNoopCallback : Symbol(identityAfterNoopCallback, Decl(identityModifierGetterParitySweep.ts, 68, 9))
 }
 
+let assignedInvokeResult: void;
+>assignedInvokeResult : Symbol(assignedInvokeResult, Decl(identityModifierGetterParitySweep.ts, 72, 3))
+
+if (identityBasic() !== undefined) {
+>identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
+>undefined : Symbol(undefined)
+
+    assignedInvokeResult = invoke(() => {
+>assignedInvokeResult : Symbol(assignedInvokeResult, Decl(identityModifierGetterParitySweep.ts, 72, 3))
+>invoke : Symbol(invoke, Decl(identityModifierGetterParitySweep.ts, 0, 0))
+
+        const callbackWrite = 1;
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierGetterParitySweep.ts, 75, 13))
+
+        callbackWrite;
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierGetterParitySweep.ts, 75, 13))
+
+    });
+    assignedInvokeResult;
+>assignedInvokeResult : Symbol(assignedInvokeResult, Decl(identityModifierGetterParitySweep.ts, 72, 3))
+
+    const identityAfterAssignmentCallback: string = identityBasic(); // identity boundary target: error for assignment-expression callback form
+>identityAfterAssignmentCallback : Symbol(identityAfterAssignmentCallback, Decl(identityModifierGetterParitySweep.ts, 79, 9))
+>identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
+
+    identityAfterAssignmentCallback;
+>identityAfterAssignmentCallback : Symbol(identityAfterAssignmentCallback, Decl(identityModifierGetterParitySweep.ts, 79, 9))
+}
+
+if (identityBasic() !== undefined) {
+>identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
+>undefined : Symbol(undefined)
+
+    const cb = () => {};
+>cb : Symbol(cb, Decl(identityModifierGetterParitySweep.ts, 84, 9))
+
+    invoke(cb);
+>invoke : Symbol(invoke, Decl(identityModifierGetterParitySweep.ts, 0, 0))
+>cb : Symbol(cb, Decl(identityModifierGetterParitySweep.ts, 84, 9))
+
+    const identityAfterConstNoopCallbackAlias: string = identityBasic(); // identity precision target: OK under strict const no-op alias guard
+>identityAfterConstNoopCallbackAlias : Symbol(identityAfterConstNoopCallbackAlias, Decl(identityModifierGetterParitySweep.ts, 86, 9))
+>identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
+
+    identityAfterConstNoopCallbackAlias;
+>identityAfterConstNoopCallbackAlias : Symbol(identityAfterConstNoopCallbackAlias, Decl(identityModifierGetterParitySweep.ts, 86, 9))
+}
+
+if (identityBasic() !== undefined) {
+>identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
+>undefined : Symbol(undefined)
+
+    let cb = () => {};
+>cb : Symbol(cb, Decl(identityModifierGetterParitySweep.ts, 91, 7))
+
+    cb = () => {
+>cb : Symbol(cb, Decl(identityModifierGetterParitySweep.ts, 91, 7))
+
+        const callbackWrite = 1;
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierGetterParitySweep.ts, 93, 13))
+
+        callbackWrite;
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierGetterParitySweep.ts, 93, 13))
+
+    };
+    invoke(cb);
+>invoke : Symbol(invoke, Decl(identityModifierGetterParitySweep.ts, 0, 0))
+>cb : Symbol(cb, Decl(identityModifierGetterParitySweep.ts, 91, 7))
+
+    const identityAfterMutableCallbackAlias: string = identityBasic(); // identity boundary target: error (mutable alias remains conservative)
+>identityAfterMutableCallbackAlias : Symbol(identityAfterMutableCallbackAlias, Decl(identityModifierGetterParitySweep.ts, 97, 9))
+>identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
+
+    identityAfterMutableCallbackAlias;
+>identityAfterMutableCallbackAlias : Symbol(identityAfterMutableCallbackAlias, Decl(identityModifierGetterParitySweep.ts, 97, 9))
+}
+
+if (identityBasic() !== undefined) {
+>identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
+>undefined : Symbol(undefined)
+
+    const cb = () => {
+>cb : Symbol(cb, Decl(identityModifierGetterParitySweep.ts, 102, 9))
+
+        const callbackWrite = 1;
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierGetterParitySweep.ts, 103, 13))
+
+        callbackWrite;
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierGetterParitySweep.ts, 103, 13))
+
+    };
+    invoke(cb);
+>invoke : Symbol(invoke, Decl(identityModifierGetterParitySweep.ts, 0, 0))
+>cb : Symbol(cb, Decl(identityModifierGetterParitySweep.ts, 102, 9))
+
+    const identityAfterNonEmptyCallbackAlias: string = identityBasic(); // identity boundary target: error (non-empty alias remains conservative)
+>identityAfterNonEmptyCallbackAlias : Symbol(identityAfterNonEmptyCallbackAlias, Decl(identityModifierGetterParitySweep.ts, 107, 9))
+>identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
+
+    identityAfterNonEmptyCallbackAlias;
+>identityAfterNonEmptyCallbackAlias : Symbol(identityAfterNonEmptyCallbackAlias, Decl(identityModifierGetterParitySweep.ts, 107, 9))
+}
+
 // -----------------------------------------------------------------------------
 // [P4] Await boundary invalidation
 // -----------------------------------------------------------------------------
 
 async function parityAwaitBoundaries() {
->parityAwaitBoundaries : Symbol(parityAwaitBoundaries, Decl(identityModifierGetterParitySweep.ts, 70, 1))
+>parityAwaitBoundaries : Symbol(parityAwaitBoundaries, Decl(identityModifierGetterParitySweep.ts, 109, 1))
 
     if (getterBasic.value !== undefined) {
 >getterBasic.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
@@ -188,13 +291,13 @@ async function parityAwaitBoundaries() {
 >delay : Symbol(delay, Decl(identityModifierGetterParitySweep.ts, 4, 46))
 
         const getterAfterAwait: string = getterBasic.value; // getter observed: remains narrowed
->getterAfterAwait : Symbol(getterAfterAwait, Decl(identityModifierGetterParitySweep.ts, 79, 13))
+>getterAfterAwait : Symbol(getterAfterAwait, Decl(identityModifierGetterParitySweep.ts, 118, 13))
 >getterBasic.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
 >getterBasic : Symbol(getterBasic, Decl(identityModifierGetterParitySweep.ts, 13, 13))
 >value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
 
         getterAfterAwait;
->getterAfterAwait : Symbol(getterAfterAwait, Decl(identityModifierGetterParitySweep.ts, 79, 13))
+>getterAfterAwait : Symbol(getterAfterAwait, Decl(identityModifierGetterParitySweep.ts, 118, 13))
     }
 
     if (identityBasic() !== undefined) {
@@ -205,11 +308,11 @@ async function parityAwaitBoundaries() {
 >delay : Symbol(delay, Decl(identityModifierGetterParitySweep.ts, 4, 46))
 
         const identityAfterAwait: string = identityBasic(); // identity observed: error (conservative boundary)
->identityAfterAwait : Symbol(identityAfterAwait, Decl(identityModifierGetterParitySweep.ts, 85, 13))
+>identityAfterAwait : Symbol(identityAfterAwait, Decl(identityModifierGetterParitySweep.ts, 124, 13))
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 
         identityAfterAwait;
->identityAfterAwait : Symbol(identityAfterAwait, Decl(identityModifierGetterParitySweep.ts, 85, 13))
+>identityAfterAwait : Symbol(identityAfterAwait, Decl(identityModifierGetterParitySweep.ts, 124, 13))
     }
 
     if (identityBasic() !== undefined) {
@@ -222,11 +325,11 @@ async function parityAwaitBoundaries() {
 >resolve : Symbol(PromiseConstructor.resolve, Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --))
 
         const identityAfterSafeAwait: string = identityBasic(); // parity target: OK for narrow safe await shape
->identityAfterSafeAwait : Symbol(identityAfterSafeAwait, Decl(identityModifierGetterParitySweep.ts, 91, 13))
+>identityAfterSafeAwait : Symbol(identityAfterSafeAwait, Decl(identityModifierGetterParitySweep.ts, 130, 13))
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 
         identityAfterSafeAwait;
->identityAfterSafeAwait : Symbol(identityAfterSafeAwait, Decl(identityModifierGetterParitySweep.ts, 91, 13))
+>identityAfterSafeAwait : Symbol(identityAfterSafeAwait, Decl(identityModifierGetterParitySweep.ts, 130, 13))
     }
 }
 
@@ -246,46 +349,46 @@ if (getterBasic.value !== undefined) {
 >value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
 
     const getterAfterWrite: string = getterBasic.value; // getter observed: remains narrowed
->getterAfterWrite : Symbol(getterAfterWrite, Decl(identityModifierGetterParitySweep.ts, 102, 9))
+>getterAfterWrite : Symbol(getterAfterWrite, Decl(identityModifierGetterParitySweep.ts, 141, 9))
 >getterBasic.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
 >getterBasic : Symbol(getterBasic, Decl(identityModifierGetterParitySweep.ts, 13, 13))
 >value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
 
     getterAfterWrite;
->getterAfterWrite : Symbol(getterAfterWrite, Decl(identityModifierGetterParitySweep.ts, 102, 9))
+>getterAfterWrite : Symbol(getterAfterWrite, Decl(identityModifierGetterParitySweep.ts, 141, 9))
 }
 
 declare const identityStore: {
->identityStore : Symbol(identityStore, Decl(identityModifierGetterParitySweep.ts, 106, 13))
+>identityStore : Symbol(identityStore, Decl(identityModifierGetterParitySweep.ts, 145, 13))
 
     read: identity () => string | undefined;
->read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 106, 30))
+>read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 145, 30))
 
     set(v: string | undefined): void;
->set : Symbol(set, Decl(identityModifierGetterParitySweep.ts, 107, 44))
->v : Symbol(v, Decl(identityModifierGetterParitySweep.ts, 108, 8))
+>set : Symbol(set, Decl(identityModifierGetterParitySweep.ts, 146, 44))
+>v : Symbol(v, Decl(identityModifierGetterParitySweep.ts, 147, 8))
 
 };
 
 if (identityStore.read() !== undefined) {
->identityStore.read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 106, 30))
->identityStore : Symbol(identityStore, Decl(identityModifierGetterParitySweep.ts, 106, 13))
->read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 106, 30))
+>identityStore.read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 145, 30))
+>identityStore : Symbol(identityStore, Decl(identityModifierGetterParitySweep.ts, 145, 13))
+>read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 145, 30))
 >undefined : Symbol(undefined)
 
     identityStore.set("next");
->identityStore.set : Symbol(set, Decl(identityModifierGetterParitySweep.ts, 107, 44))
->identityStore : Symbol(identityStore, Decl(identityModifierGetterParitySweep.ts, 106, 13))
->set : Symbol(set, Decl(identityModifierGetterParitySweep.ts, 107, 44))
+>identityStore.set : Symbol(set, Decl(identityModifierGetterParitySweep.ts, 146, 44))
+>identityStore : Symbol(identityStore, Decl(identityModifierGetterParitySweep.ts, 145, 13))
+>set : Symbol(set, Decl(identityModifierGetterParitySweep.ts, 146, 44))
 
     const identityAfterWrite: string = identityStore.read(); // identity parity target: OK
->identityAfterWrite : Symbol(identityAfterWrite, Decl(identityModifierGetterParitySweep.ts, 113, 9))
->identityStore.read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 106, 30))
->identityStore : Symbol(identityStore, Decl(identityModifierGetterParitySweep.ts, 106, 13))
->read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 106, 30))
+>identityAfterWrite : Symbol(identityAfterWrite, Decl(identityModifierGetterParitySweep.ts, 152, 9))
+>identityStore.read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 145, 30))
+>identityStore : Symbol(identityStore, Decl(identityModifierGetterParitySweep.ts, 145, 13))
+>read : Symbol(read, Decl(identityModifierGetterParitySweep.ts, 145, 30))
 
     identityAfterWrite;
->identityAfterWrite : Symbol(identityAfterWrite, Decl(identityModifierGetterParitySweep.ts, 113, 9))
+>identityAfterWrite : Symbol(identityAfterWrite, Decl(identityModifierGetterParitySweep.ts, 152, 9))
 }
 
 // -----------------------------------------------------------------------------
@@ -299,20 +402,20 @@ if (getterBasic.value !== undefined) {
 >undefined : Symbol(undefined)
 
     const getterAlias = getterBasic;
->getterAlias : Symbol(getterAlias, Decl(identityModifierGetterParitySweep.ts, 122, 9))
+>getterAlias : Symbol(getterAlias, Decl(identityModifierGetterParitySweep.ts, 161, 9))
 >getterBasic : Symbol(getterBasic, Decl(identityModifierGetterParitySweep.ts, 13, 13))
 
     getterAlias;
->getterAlias : Symbol(getterAlias, Decl(identityModifierGetterParitySweep.ts, 122, 9))
+>getterAlias : Symbol(getterAlias, Decl(identityModifierGetterParitySweep.ts, 161, 9))
 
     const getterAfterAlias: string = getterBasic.value; // getter baseline target: OK
->getterAfterAlias : Symbol(getterAfterAlias, Decl(identityModifierGetterParitySweep.ts, 124, 9))
+>getterAfterAlias : Symbol(getterAfterAlias, Decl(identityModifierGetterParitySweep.ts, 163, 9))
 >getterBasic.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
 >getterBasic : Symbol(getterBasic, Decl(identityModifierGetterParitySweep.ts, 13, 13))
 >value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
 
     getterAfterAlias;
->getterAfterAlias : Symbol(getterAfterAlias, Decl(identityModifierGetterParitySweep.ts, 124, 9))
+>getterAfterAlias : Symbol(getterAfterAlias, Decl(identityModifierGetterParitySweep.ts, 163, 9))
 }
 
 if (identityBasic() !== undefined) {
@@ -320,18 +423,18 @@ if (identityBasic() !== undefined) {
 >undefined : Symbol(undefined)
 
     const identityAlias = identityBasic;
->identityAlias : Symbol(identityAlias, Decl(identityModifierGetterParitySweep.ts, 129, 9))
+>identityAlias : Symbol(identityAlias, Decl(identityModifierGetterParitySweep.ts, 168, 9))
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 
     identityAlias;
->identityAlias : Symbol(identityAlias, Decl(identityModifierGetterParitySweep.ts, 129, 9))
+>identityAlias : Symbol(identityAlias, Decl(identityModifierGetterParitySweep.ts, 168, 9))
 
     const identityAfterAlias: string = identityBasic(); // identity parity target: OK for direct const alias
->identityAfterAlias : Symbol(identityAfterAlias, Decl(identityModifierGetterParitySweep.ts, 131, 9))
+>identityAfterAlias : Symbol(identityAfterAlias, Decl(identityModifierGetterParitySweep.ts, 170, 9))
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 
     identityAfterAlias;
->identityAfterAlias : Symbol(identityAfterAlias, Decl(identityModifierGetterParitySweep.ts, 131, 9))
+>identityAfterAlias : Symbol(identityAfterAlias, Decl(identityModifierGetterParitySweep.ts, 170, 9))
 }
 
 if (identityBasic() !== undefined) {
@@ -339,19 +442,19 @@ if (identityBasic() !== undefined) {
 >undefined : Symbol(undefined)
 
     const identityIndirectAlias = pass(identityBasic);
->identityIndirectAlias : Symbol(identityIndirectAlias, Decl(identityModifierGetterParitySweep.ts, 136, 9))
+>identityIndirectAlias : Symbol(identityIndirectAlias, Decl(identityModifierGetterParitySweep.ts, 175, 9))
 >pass : Symbol(pass, Decl(identityModifierGetterParitySweep.ts, 6, 39))
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 
     identityIndirectAlias;
->identityIndirectAlias : Symbol(identityIndirectAlias, Decl(identityModifierGetterParitySweep.ts, 136, 9))
+>identityIndirectAlias : Symbol(identityIndirectAlias, Decl(identityModifierGetterParitySweep.ts, 175, 9))
 
     const identityAfterIndirectAlias: string = identityBasic(); // identity observed: error (indirect alias escape)
->identityAfterIndirectAlias : Symbol(identityAfterIndirectAlias, Decl(identityModifierGetterParitySweep.ts, 138, 9))
+>identityAfterIndirectAlias : Symbol(identityAfterIndirectAlias, Decl(identityModifierGetterParitySweep.ts, 177, 9))
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 
     identityAfterIndirectAlias;
->identityAfterIndirectAlias : Symbol(identityAfterIndirectAlias, Decl(identityModifierGetterParitySweep.ts, 138, 9))
+>identityAfterIndirectAlias : Symbol(identityAfterIndirectAlias, Decl(identityModifierGetterParitySweep.ts, 177, 9))
 }
 
 // -----------------------------------------------------------------------------
@@ -359,7 +462,7 @@ if (identityBasic() !== undefined) {
 // -----------------------------------------------------------------------------
 
 const getterTernary: string = getterBasic.value !== undefined ? getterBasic.value : "fallback"; // getter baseline: OK
->getterTernary : Symbol(getterTernary, Decl(identityModifierGetterParitySweep.ts, 146, 5))
+>getterTernary : Symbol(getterTernary, Decl(identityModifierGetterParitySweep.ts, 185, 5))
 >getterBasic.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
 >getterBasic : Symbol(getterBasic, Decl(identityModifierGetterParitySweep.ts, 13, 13))
 >value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
@@ -369,121 +472,121 @@ const getterTernary: string = getterBasic.value !== undefined ? getterBasic.valu
 >value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 13, 28), Decl(identityModifierGetterParitySweep.ts, 14, 36))
 
 getterTernary;
->getterTernary : Symbol(getterTernary, Decl(identityModifierGetterParitySweep.ts, 146, 5))
+>getterTernary : Symbol(getterTernary, Decl(identityModifierGetterParitySweep.ts, 185, 5))
 
 const identityTernary: string = identityBasic() !== undefined ? identityBasic() : "fallback"; // identity parity target: OK
->identityTernary : Symbol(identityTernary, Decl(identityModifierGetterParitySweep.ts, 149, 5))
+>identityTernary : Symbol(identityTernary, Decl(identityModifierGetterParitySweep.ts, 188, 5))
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 >undefined : Symbol(undefined)
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 
 identityTernary;
->identityTernary : Symbol(identityTernary, Decl(identityModifierGetterParitySweep.ts, 149, 5))
+>identityTernary : Symbol(identityTernary, Decl(identityModifierGetterParitySweep.ts, 188, 5))
 
 // -----------------------------------------------------------------------------
 // [P8] Nested access (discriminated union)
 // -----------------------------------------------------------------------------
 
 type Shape =
->Shape : Symbol(Shape, Decl(identityModifierGetterParitySweep.ts, 150, 16))
+>Shape : Symbol(Shape, Decl(identityModifierGetterParitySweep.ts, 189, 16))
 
     | { kind: "circle"; radius: number }
->kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 157, 7))
->radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
+>kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 196, 7))
+>radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 196, 23))
 
     | { kind: "square"; size: number };
->kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 158, 7))
->size : Symbol(size, Decl(identityModifierGetterParitySweep.ts, 158, 23))
+>kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 197, 7))
+>size : Symbol(size, Decl(identityModifierGetterParitySweep.ts, 197, 23))
 
 declare const getterNested: {
->getterNested : Symbol(getterNested, Decl(identityModifierGetterParitySweep.ts, 160, 13))
+>getterNested : Symbol(getterNested, Decl(identityModifierGetterParitySweep.ts, 199, 13))
 
     get value(): Shape;
->value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 160, 29), Decl(identityModifierGetterParitySweep.ts, 161, 23))
->Shape : Symbol(Shape, Decl(identityModifierGetterParitySweep.ts, 150, 16))
+>value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 199, 29), Decl(identityModifierGetterParitySweep.ts, 200, 23))
+>Shape : Symbol(Shape, Decl(identityModifierGetterParitySweep.ts, 189, 16))
 
     set value(v: Shape);
->value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 160, 29), Decl(identityModifierGetterParitySweep.ts, 161, 23))
->v : Symbol(v, Decl(identityModifierGetterParitySweep.ts, 162, 14))
->Shape : Symbol(Shape, Decl(identityModifierGetterParitySweep.ts, 150, 16))
+>value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 199, 29), Decl(identityModifierGetterParitySweep.ts, 200, 23))
+>v : Symbol(v, Decl(identityModifierGetterParitySweep.ts, 201, 14))
+>Shape : Symbol(Shape, Decl(identityModifierGetterParitySweep.ts, 189, 16))
 
 };
 
 declare const identityNested: identity () => Shape;
->identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 165, 13))
->Shape : Symbol(Shape, Decl(identityModifierGetterParitySweep.ts, 150, 16))
+>identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 204, 13))
+>Shape : Symbol(Shape, Decl(identityModifierGetterParitySweep.ts, 189, 16))
 
 if (getterNested.value.kind === "circle") {
->getterNested.value.kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 157, 7), Decl(identityModifierGetterParitySweep.ts, 158, 7))
->getterNested.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 160, 29), Decl(identityModifierGetterParitySweep.ts, 161, 23))
->getterNested : Symbol(getterNested, Decl(identityModifierGetterParitySweep.ts, 160, 13))
->value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 160, 29), Decl(identityModifierGetterParitySweep.ts, 161, 23))
->kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 157, 7), Decl(identityModifierGetterParitySweep.ts, 158, 7))
+>getterNested.value.kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 196, 7), Decl(identityModifierGetterParitySweep.ts, 197, 7))
+>getterNested.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 199, 29), Decl(identityModifierGetterParitySweep.ts, 200, 23))
+>getterNested : Symbol(getterNested, Decl(identityModifierGetterParitySweep.ts, 199, 13))
+>value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 199, 29), Decl(identityModifierGetterParitySweep.ts, 200, 23))
+>kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 196, 7), Decl(identityModifierGetterParitySweep.ts, 197, 7))
 
     const getterRadius: number = getterNested.value.radius; // getter baseline: OK
->getterRadius : Symbol(getterRadius, Decl(identityModifierGetterParitySweep.ts, 168, 9))
->getterNested.value.radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
->getterNested.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 160, 29), Decl(identityModifierGetterParitySweep.ts, 161, 23))
->getterNested : Symbol(getterNested, Decl(identityModifierGetterParitySweep.ts, 160, 13))
->value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 160, 29), Decl(identityModifierGetterParitySweep.ts, 161, 23))
->radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
+>getterRadius : Symbol(getterRadius, Decl(identityModifierGetterParitySweep.ts, 207, 9))
+>getterNested.value.radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 196, 23))
+>getterNested.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 199, 29), Decl(identityModifierGetterParitySweep.ts, 200, 23))
+>getterNested : Symbol(getterNested, Decl(identityModifierGetterParitySweep.ts, 199, 13))
+>value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 199, 29), Decl(identityModifierGetterParitySweep.ts, 200, 23))
+>radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 196, 23))
 
     getterRadius;
->getterRadius : Symbol(getterRadius, Decl(identityModifierGetterParitySweep.ts, 168, 9))
+>getterRadius : Symbol(getterRadius, Decl(identityModifierGetterParitySweep.ts, 207, 9))
 }
 
 if (identityNested().kind === "circle") {
->identityNested().kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 157, 7), Decl(identityModifierGetterParitySweep.ts, 158, 7))
->identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 165, 13))
->kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 157, 7), Decl(identityModifierGetterParitySweep.ts, 158, 7))
+>identityNested().kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 196, 7), Decl(identityModifierGetterParitySweep.ts, 197, 7))
+>identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 204, 13))
+>kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 196, 7), Decl(identityModifierGetterParitySweep.ts, 197, 7))
 
     const identityRadius: number = identityNested().radius; // identity parity target: OK
->identityRadius : Symbol(identityRadius, Decl(identityModifierGetterParitySweep.ts, 173, 9))
->identityNested().radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
->identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 165, 13))
->radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
+>identityRadius : Symbol(identityRadius, Decl(identityModifierGetterParitySweep.ts, 212, 9))
+>identityNested().radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 196, 23))
+>identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 204, 13))
+>radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 196, 23))
 
     identityRadius;
->identityRadius : Symbol(identityRadius, Decl(identityModifierGetterParitySweep.ts, 173, 9))
+>identityRadius : Symbol(identityRadius, Decl(identityModifierGetterParitySweep.ts, 212, 9))
 }
 
 if (getterNested.value.kind === "circle") {
->getterNested.value.kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 157, 7), Decl(identityModifierGetterParitySweep.ts, 158, 7))
->getterNested.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 160, 29), Decl(identityModifierGetterParitySweep.ts, 161, 23))
->getterNested : Symbol(getterNested, Decl(identityModifierGetterParitySweep.ts, 160, 13))
->value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 160, 29), Decl(identityModifierGetterParitySweep.ts, 161, 23))
->kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 157, 7), Decl(identityModifierGetterParitySweep.ts, 158, 7))
+>getterNested.value.kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 196, 7), Decl(identityModifierGetterParitySweep.ts, 197, 7))
+>getterNested.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 199, 29), Decl(identityModifierGetterParitySweep.ts, 200, 23))
+>getterNested : Symbol(getterNested, Decl(identityModifierGetterParitySweep.ts, 199, 13))
+>value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 199, 29), Decl(identityModifierGetterParitySweep.ts, 200, 23))
+>kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 196, 7), Decl(identityModifierGetterParitySweep.ts, 197, 7))
 
     unknownMutate();
 >unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterParitySweep.ts, 5, 40))
 
     const getterAfterUnknown: number = getterNested.value.radius; // getter observed: remains narrowed
->getterAfterUnknown : Symbol(getterAfterUnknown, Decl(identityModifierGetterParitySweep.ts, 179, 9))
->getterNested.value.radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
->getterNested.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 160, 29), Decl(identityModifierGetterParitySweep.ts, 161, 23))
->getterNested : Symbol(getterNested, Decl(identityModifierGetterParitySweep.ts, 160, 13))
->value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 160, 29), Decl(identityModifierGetterParitySweep.ts, 161, 23))
->radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
+>getterAfterUnknown : Symbol(getterAfterUnknown, Decl(identityModifierGetterParitySweep.ts, 218, 9))
+>getterNested.value.radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 196, 23))
+>getterNested.value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 199, 29), Decl(identityModifierGetterParitySweep.ts, 200, 23))
+>getterNested : Symbol(getterNested, Decl(identityModifierGetterParitySweep.ts, 199, 13))
+>value : Symbol(value, Decl(identityModifierGetterParitySweep.ts, 199, 29), Decl(identityModifierGetterParitySweep.ts, 200, 23))
+>radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 196, 23))
 
     getterAfterUnknown;
->getterAfterUnknown : Symbol(getterAfterUnknown, Decl(identityModifierGetterParitySweep.ts, 179, 9))
+>getterAfterUnknown : Symbol(getterAfterUnknown, Decl(identityModifierGetterParitySweep.ts, 218, 9))
 }
 
 if (identityNested().kind === "circle") {
->identityNested().kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 157, 7), Decl(identityModifierGetterParitySweep.ts, 158, 7))
->identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 165, 13))
->kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 157, 7), Decl(identityModifierGetterParitySweep.ts, 158, 7))
+>identityNested().kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 196, 7), Decl(identityModifierGetterParitySweep.ts, 197, 7))
+>identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 204, 13))
+>kind : Symbol(kind, Decl(identityModifierGetterParitySweep.ts, 196, 7), Decl(identityModifierGetterParitySweep.ts, 197, 7))
 
     unknownMutate();
 >unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterParitySweep.ts, 5, 40))
 
     const identityAfterUnknown: number = identityNested().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
->identityAfterUnknown : Symbol(identityAfterUnknown, Decl(identityModifierGetterParitySweep.ts, 185, 9))
->identityNested().radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
->identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 165, 13))
->radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 157, 23))
+>identityAfterUnknown : Symbol(identityAfterUnknown, Decl(identityModifierGetterParitySweep.ts, 224, 9))
+>identityNested().radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 196, 23))
+>identityNested : Symbol(identityNested, Decl(identityModifierGetterParitySweep.ts, 204, 13))
+>radius : Symbol(radius, Decl(identityModifierGetterParitySweep.ts, 196, 23))
 
     identityAfterUnknown;
->identityAfterUnknown : Symbol(identityAfterUnknown, Decl(identityModifierGetterParitySweep.ts, 185, 9))
+>identityAfterUnknown : Symbol(identityAfterUnknown, Decl(identityModifierGetterParitySweep.ts, 224, 9))
 }
 

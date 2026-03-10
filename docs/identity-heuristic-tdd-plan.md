@@ -246,8 +246,9 @@ Current status:
   - Added narrow positive precision slices for trivial local passthrough helper forms.
   - Remaining: implement guarded precision preservation when receiver identity and non-mutating forwarding can be proven.
 - [x] Step 6: Uncertainty boundaries (covered slices)
-  - Covered in local tests: unknown direct call, callback invocation boundary (statement + assignment-form), await suspension boundary, assignment-based alias-escape, and indirect alias escape via helper passthrough.
-  - Remaining: broader boundary parity coverage (more nested callback/escape forms and additional write-shape interactions).
+  - Covered in local tests: unknown direct call; callback invocation boundaries (statement, declaration-initializer assignment, assignment-expression assignment, conditional initializer, indirect callback argument); await suspension boundary; assignment-based alias-escape; and indirect alias escape via helper passthrough.
+  - Added strict callback preserve slice: `const cb = () => {}; invoke(cb);` preserves narrowing, while mutable or non-empty callback aliases remain conservative.
+  - Remaining: broader boundary parity coverage (deeper nested/indirect callback alias chains and additional write-shape interactions).
 - [x] Step 7: Diagnostics for heuristic limits (narrow boundary slice)
   - Added boundary guidance diagnostic emitted when identity narrowing is conservatively dropped at uncertainty boundaries.
   - Covered by `identityModifierHeuristicDiagnostics.ts` for unknown call, callback, await, and alias-escape shapes.
@@ -269,6 +270,21 @@ Current status:
 1. Expand Tier 2 guarded precision beyond trivial local passthrough forms while preserving soundness.
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
 3. Expand parity mapping from the getter corpus beyond currently covered source slices.
+
+### Latest Increment (Nested/Indirect Callback Forms)
+- Added red tests in `identityModifierBoundaries.ts` and `identityModifierGetterParitySweep.ts` for:
+  - assignment-expression callback boundary (`x = invoke(() => { ... });`)
+  - strict const no-op callback alias preserve (`const cb = () => {}; invoke(cb);`)
+  - conservative controls for mutable/non-empty callback aliases.
+- Binder change (`internal/binder/binder.go`): assignment `=` expressions now create flow-call boundaries when RHS is a callback boundary call.
+- Checker change (`internal/checker/flow.go`): no-op callback preserve rule now accepts strict const alias chains that resolve to a zero-arg empty callback body.
+- Guardrails retained:
+  - mutable callback aliases remain conservative,
+  - non-empty callback aliases remain conservative,
+  - broader callback alias/indirect forms remain open.
+- Red->green evidence:
+  - red: `go test -run='TestLocal/(identityModifierBoundaries|identityModifierGetterParitySweep)\.ts' ./internal/testrunner`
+  - green: `npx hereby baseline-accept` then same targeted rerun.
 
 ### Latest Increment (X3/P8 Guarded Unknown-Call Closure)
 - Closed the remaining sweep/corpus overlap mismatch (`P8`/`X3`) with a strict preserve rule in `internal/checker/flow.go`.

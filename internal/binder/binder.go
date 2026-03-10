@@ -2195,6 +2195,9 @@ func (b *Binder) bindBinaryExpressionFlow(node *ast.Node) {
 		}
 		b.bind(expr.OperatorToken)
 		b.bind(expr.Right)
+		if ast.IsAssignmentOperator(operator) && operator == ast.KindEqualsToken && isCallbackBoundaryCallExpression(expr.Right) {
+			b.currentFlow = b.createFlowCall(b.currentFlow, ast.SkipParentheses(expr.Right))
+		}
 		if operator == ast.KindCommaToken {
 			b.maybeBindExpressionFlowIfCall(expr.Right)
 		}

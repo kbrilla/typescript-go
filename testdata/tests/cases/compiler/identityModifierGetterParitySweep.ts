@@ -73,6 +73,45 @@ if (identityBasic() !== undefined) {
     identityAfterNoopCallback;
 }
 
+let assignedInvokeResult: void;
+if (identityBasic() !== undefined) {
+    assignedInvokeResult = invoke(() => {
+        const callbackWrite = 1;
+        callbackWrite;
+    });
+    assignedInvokeResult;
+    const identityAfterAssignmentCallback: string = identityBasic(); // identity boundary target: error for assignment-expression callback form
+    identityAfterAssignmentCallback;
+}
+
+if (identityBasic() !== undefined) {
+    const cb = () => {};
+    invoke(cb);
+    const identityAfterConstNoopCallbackAlias: string = identityBasic(); // identity precision target: OK under strict const no-op alias guard
+    identityAfterConstNoopCallbackAlias;
+}
+
+if (identityBasic() !== undefined) {
+    let cb = () => {};
+    cb = () => {
+        const callbackWrite = 1;
+        callbackWrite;
+    };
+    invoke(cb);
+    const identityAfterMutableCallbackAlias: string = identityBasic(); // identity boundary target: error (mutable alias remains conservative)
+    identityAfterMutableCallbackAlias;
+}
+
+if (identityBasic() !== undefined) {
+    const cb = () => {
+        const callbackWrite = 1;
+        callbackWrite;
+    };
+    invoke(cb);
+    const identityAfterNonEmptyCallbackAlias: string = identityBasic(); // identity boundary target: error (non-empty alias remains conservative)
+    identityAfterNonEmptyCallbackAlias;
+}
+
 // -----------------------------------------------------------------------------
 // [P4] Await boundary invalidation
 // -----------------------------------------------------------------------------

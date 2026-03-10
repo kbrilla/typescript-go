@@ -748,6 +748,64 @@ func (c *Checker) shouldPreserveNoopCallbackCallNarrowing(reference *ast.Node, c
 		return body != nil && len(body.Statements()) == 0
 	}
 
+	if ast.IsIdentifier(callback) {
+		return c.isConstNoopCallbackAlias(callback)
+	}
+
+	return false
+}
+
+func (c *Checker) isConstNoopCallbackAlias(callback *ast.Node) bool {
+	const maxAliasChainSteps = 5
+	seen := map[*ast.Symbol]bool{}
+	current := callback
+
+	for range maxAliasChainSteps {
+		if !ast.IsIdentifier(current) {
+			return false
+		}
+
+		symbol := c.getResolvedSymbol(current)
+		if symbol == nil || symbol == c.unknownSymbol || seen[symbol] {
+			return false
+		}
+		seen[symbol] = true
+
+		declaration := symbol.ValueDeclaration
+		if declaration == nil || !c.isConstantVariable(symbol) || !ast.IsVariableDeclaration(declaration) {
+			return false
+		}
+
+		initializer := declaration.Initializer()
+		if initializer == nil {
+			return false
+		}
+
+		resolved := ast.SkipParentheses(initializer)
+		if ast.IsArrowFunction(resolved) {
+			if len(resolved.Parameters()) != 0 {
+				return false
+			}
+			body := resolved.Body()
+			return ast.IsBlock(body) && len(body.Statements()) == 0
+		}
+
+		if ast.IsFunctionExpression(resolved) {
+			if len(resolved.Parameters()) != 0 {
+				return false
+			}
+			body := resolved.Body()
+			return body != nil && len(body.Statements()) == 0
+		}
+
+		if ast.IsIdentifier(resolved) {
+			current = resolved
+			continue
+		}
+
+		return false
+	}
+
 	return false
 }
 
