@@ -28,6 +28,7 @@ Multi-perspective design re-review outcome:
 Dual parity metrics (reported separately):
 - Implemented-shape parity metric: `9/9` categories matched in `identityModifierGetterParitySweep.ts` for currently implemented guarded shapes.
 - Corpus parity and refactor-stability metric: broad corpus remains visibility-first; residual conservative deltas are allowed while preserving checker stability and avoiding broad unsound relaxations.
+- Missing getter-origin matrix metric: `5/6` matched in `identityModifierGetterMissingMatrix.ts`; the remaining `M6` conformance-style unknown-call boundary contrast is retained as an explicit conservative delta (`TS100015` + assignment error on identity path).
 
 Known heuristic preserves (currently retained):
 - Same-receiver `read()` then `set(non-nullish)` narrow write-preserve slice.
@@ -45,6 +46,7 @@ Soundness-risk preserves kept conservative or deferred:
 
 ## Phase 1 Design Modifications
 - [x] Reframe parity reporting into two independent metrics: implemented-shape parity and corpus parity/refactor-stability.
+- [x] Add explicit missing-matrix reporting (`5/6` matched, `M6` residual) so parity interpretation does not hide conformance-style unknown-call boundary deltas.
 - [x] Preserve strict uncertainty-boundary defaults; only keep narrow preserves with explicit guard conditions.
 - [x] Document retained preserves vs intentionally conservative non-goals in this PR description.
 - [x] Align SDD with explicit normative split between conservative core and guarded parity-preserve layer.
@@ -378,6 +380,10 @@ Missing getter-origin matrix summary (this run):
   - mismatched: `1`
 - Newly discovered remaining gap from this run:
   - `M6` unknown-call boundary contrast in conformance-style guard/accessor shape remains conservative for identity endpoints (`TS100015`, then `string | undefined` not assignable to `string`).
+
+Roadmap alignment from missing-matrix results:
+- `M6` is treated as a guardrail-driven follow-up item, not a silent parity regression.
+- Any relaxation for this shape must satisfy existing Phase 1 preserve gates (negative controls, bounded matching, and perf evidence) and will be staged in next-phase slices rather than broadening defaults.
 
 ## Examples and Parity
 
