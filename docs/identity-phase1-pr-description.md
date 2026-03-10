@@ -52,48 +52,48 @@ Simplification landed (this update, low risk, semantics-preserving):
 ### Getter Flow Graph
 ```mermaid
 flowchart TD
-  G1[Property access read: model.value] --> G2[Binder: setFlowNode on narrowable property access]
-  G2 --> G3[Binder: bindCondition creates FlowCondition]
-  G3 --> G4[Checker: getTypeAtFlowCondition]
-  G4 --> G5[Checker: narrowType -> narrowTypeByTruthiness]
-  G5 --> G6[Re-read model.value uses narrowed flow type]
+  G1["Property access read model.value"] --> G2["Binder setFlowNode on narrowable property access"]
+  G2 --> G3["Binder bindCondition creates FlowCondition"]
+  G3 --> G4["Checker getTypeAtFlowCondition"]
+  G4 --> G5["Checker narrowType then narrowTypeByTruthiness"]
+  G5 --> G6["Re-read model.value uses narrowed flow type"]
 ```
 
 ### Identity Flow Graph
 ```mermaid
 flowchart TD
-  I1[Identity call read: read()] --> I2[Binder: hasNarrowableArgument/setFlowNode on call]
-  I2 --> I3[Binder: bindCondition creates FlowCondition]
-  I3 --> I4[Checker: checkCallExpression sees SignatureFlagsIdentity]
-  I4 --> I5[Checker: getFlowTypeOfReference(call, returnType)]
-  I5 --> I6[Checker: getTypeAtFlowCondition -> narrowTypeByTruthiness fallback]
-  I6 --> I7[FlowCall boundary: getTypeAtFlowCall may invalidate + TS100014/TS100015]
+  I1["Identity call read read()"] --> I2["Binder hasNarrowableArgument and setFlowNode on call"]
+  I2 --> I3["Binder bindCondition creates FlowCondition"]
+  I3 --> I4["Checker checkCallExpression sees SignatureFlagsIdentity"]
+  I4 --> I5["Checker getFlowTypeOfReference call returnType"]
+  I5 --> I6["Checker getTypeAtFlowCondition then narrowTypeByTruthiness fallback"]
+  I6 --> I7["FlowCall boundary getTypeAtFlowCall may invalidate plus TS100014 or TS100015"]
 ```
 
 ### Divergence Overlay
 ```mermaid
 flowchart LR
-  subgraph Shared[Shared]
-    S1[bindCondition -> FlowCondition]
-    S2[getTypeAtFlowCondition]
-    S3[narrowTypeByTruthiness]
-    S4[Shared reference-candidate normalization in flow.go]
-    S5[Shared call-boundary preconditions in flow.go]
-    S6[Shared boundary diagnostic selection + dedupe in checker.go]
+  subgraph Shared["Shared"]
+    S1["bindCondition then FlowCondition"]
+    S2["getTypeAtFlowCondition"]
+    S3["narrowTypeByTruthiness"]
+    S4["Shared reference candidate normalization in flow.go"]
+    S5["Shared call boundary preconditions in flow.go"]
+    S6["Shared boundary diagnostic selection and dedupe in checker.go"]
     S1 --> S2 --> S3 --> S4 --> S5 --> S6
   end
 
-  subgraph GetterOnly[Getter-specific]
-    G1[property access reference]
-    G2[no identity-specific FlowCall invalidation branch]
+  subgraph GetterOnly["Getter specific"]
+    G1["property access reference"]
+    G2["no identity specific FlowCall invalidation branch"]
     G1 --> S1
     S3 --> G2
   end
 
-  subgraph IdentityOnly[Identity-specific]
-    I1[call expression reference]
-    I2[checkCallExpression identity hook]
-    I3[getTypeAtFlowCall identity invalidation]
+  subgraph IdentityOnly["Identity specific"]
+    I1["call expression reference"]
+    I2["checkCallExpression identity hook"]
+    I3["getTypeAtFlowCall identity invalidation"]
     I1 --> I2 --> S1
     S5 --> I3 --> S6
   end
