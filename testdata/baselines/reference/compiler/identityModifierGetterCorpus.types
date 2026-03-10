@@ -344,12 +344,12 @@ function qn5Identity<PetType extends Pet>(pet: { value: identity () => PetType }
         const qn5a: true = pet.value().saysWoof; // identity parity target: OK
 >qn5a : true
 >true : true
->pet.value().saysWoof : any
+>pet.value().saysWoof : true
 >pet.value() : PetType
 >pet.value : () => PetType
 >pet : { value: () => PetType; }
 >value : () => PetType
->saysWoof : any
+>saysWoof : true
 
         qn5a;
 >qn5a : true

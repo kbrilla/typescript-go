@@ -1,4 +1,3 @@
-identityModifierGetterCorpus.ts(102,40): error TS2339: Property 'saysWoof' does not exist on type 'PetType'.
 identityModifierGetterCorpus.ts(281,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierGetterCorpus.ts(282,30): error TS2531: Object is possibly 'null'.
 identityModifierGetterCorpus.ts(302,7): error TS2322: Type 'string | false' is not assignable to type 'string | number'.
@@ -13,7 +12,7 @@ identityModifierGetterCorpus.ts(375,46): error TS2339: Property 'radius' does no
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierGetterCorpus.ts (9 errors) ====
+==== identityModifierGetterCorpus.ts (8 errors) ====
     // Broad getter -> identity parity corpus.
     // Visibility-focused: intentional parity gaps are kept to track divergence.
     
@@ -116,8 +115,6 @@ identityModifierGetterCorpus.ts(375,46): error TS2339: Property 'radius' does no
     function qn5Identity<PetType extends Pet>(pet: { value: identity () => PetType }) {
         if (pet.value().type === "dog") {
             const qn5a: true = pet.value().saysWoof; // identity parity target: OK
-                                           ~~~~~~~~
-!!! error TS2339: Property 'saysWoof' does not exist on type 'PetType'.
             qn5a;
         }
     }

@@ -135,6 +135,11 @@ Remaining visible gaps from getter-to-identity sweep:
 - Corpus intent: maximize parity visibility, not immediate all-green parity.
 - Failing identity-side parity cases are expected and intentionally baseline-accepted.
 - This corpus is now part of local parity evidence and should be used to track gap closure slices in subsequent PRs.
+- Closed mismatch `QN5` (generic discriminant narrowing over `PetType extends Pet`) by enabling identity-call flow to use narrowable return types.
+- Corpus mismatch movement in this slice:
+  - mismatch cases: `4 -> 3` (`QN5`, `GC3`, `X1`, `X3` -> `GC3`, `X1`, `X3`)
+  - corpus error count: `9 -> 8`
+  - getter parity sweep score movement: no change (`7/9`, `2` remaining sweep gaps)
 
 ## Examples and Parity
 

@@ -8112,8 +8112,9 @@ func (c *Checker) checkCallExpression(node *ast.Node, checkMode CheckMode) *Type
 	// Identity functions guarantee that parameterless calls return a stable value, so we can track
 	// the call expression as a reference through the control flow graph for type narrowing.
 	if signature.flags&SignatureFlagsIdentity != 0 && ast.IsCallExpression(node) && len(node.Arguments()) == 0 {
-		flowType := c.getFlowTypeOfReference(node, returnType)
-		if flowType != returnType {
+		narrowableReturnType := c.getNarrowableTypeForReference(returnType, node, checkMode)
+		flowType := c.getFlowTypeOfReference(node, narrowableReturnType)
+		if flowType != narrowableReturnType {
 			return flowType
 		}
 	}

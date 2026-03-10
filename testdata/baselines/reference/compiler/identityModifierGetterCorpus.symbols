@@ -334,9 +334,11 @@ function qn5Identity<PetType extends Pet>(pet: { value: identity () => PetType }
 
         const qn5a: true = pet.value().saysWoof; // identity parity target: OK
 >qn5a : Symbol(qn5a, Decl(identityModifierGetterCorpus.ts, 101, 13))
+>pet.value().saysWoof : Symbol(saysWoof, Decl(identityModifierGetterCorpus.ts, 87, 25))
 >pet.value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 99, 48))
 >pet : Symbol(pet, Decl(identityModifierGetterCorpus.ts, 99, 42))
 >value : Symbol(value, Decl(identityModifierGetterCorpus.ts, 99, 48))
+>saysWoof : Symbol(saysWoof, Decl(identityModifierGetterCorpus.ts, 87, 25))
 
         qn5a;
 >qn5a : Symbol(qn5a, Decl(identityModifierGetterCorpus.ts, 101, 13))
