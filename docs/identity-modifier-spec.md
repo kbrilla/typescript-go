@@ -21,6 +21,11 @@ Phase boundary decision:
 - Constrained-overload post-call narrowing that depends on explicit contracts remains out of Phase 1 implementation scope.
 - Phase 1 may include readiness-only slices (tests/spec/checklist) that do not require parsing or checking `mutator`/`links` semantics.
 
+Normative phase split:
+- Phase 1 conservative core is mandatory and is the default behavior contract.
+- Phase 1 heuristic parity preserves are optional, shape-guarded refinements that must not weaken conservative safety boundaries.
+- Any preserve that does not satisfy guardrails must fall back to conservative invalidation.
+
 ## 3. Problem Statement
 ```ts
 declare const value: () => string | undefined;
@@ -41,6 +46,19 @@ if (value() !== undefined) {
 - No runtime/emit semantics changes.
 
 ## 6. Architecture
+
+### 6.0 Normative Split: Conservative Core vs Heuristic Preserves
+Phase 1 conservative core (normative, required):
+- Repeated-read narrowing for stable `identity` reads in local flow.
+- Invalidation at uncertainty boundaries (unknown calls, callbacks, async suspension, alias escape) unless a preserve rule explicitly applies.
+- No callback-body introspection.
+- No contract-dependent behavior (`mutator`/`links`) in Phase 1 runtime checker decisions.
+
+Phase 1 heuristic parity-preserve layer (normative constraints):
+- Preserves may be applied only when the shape is fully recognized and guarded.
+- Preserves must have mandatory negative controls demonstrating conservative fallback.
+- Preserves must be locally bounded; no global dependency tracking or broad interprocedural assumptions.
+- When guards do not hold, checker must conservatively invalidate.
 
 ### 6.1 Identity Contract (Required)
 `identity` is the declaration-site anchor for stable callable read endpoints.
@@ -127,6 +145,11 @@ Checker must invalidate endpoint facts on:
 - Async suspension points (`await`, task scheduling boundaries) when receiver can be observed externally.
 - Alias escape of receiver or mutator function where write capability becomes non-local.
 
+Uncertainty-boundary policy:
+- Conservative invalidation is the default at uncertainty boundaries.
+- A boundary preserve is permitted only for explicitly listed, shape-guarded cases validated by dedicated positive and negative-control baselines.
+- Preserve rules must not be generalized by analogy; unlisted variants remain conservative until separately validated.
+
 ### 8.4 Constrained Overload Effects
 ```ts
 interface WritableSignal<T> {
@@ -140,6 +163,10 @@ No callback-body inspection is required; effect is signature-driven.
 Phase boundary:
 - This effect requires explicit contract resolution (`mutator`/`links`) and is therefore a Phase 2 behavior slice.
 - Phase 1 can only add readiness artifacts for this effect (tests/checklists/spec detail), not runtime checker behavior.
+
+Contract-dependency boundary:
+- Heuristics alone must not synthesize contract-dependent post-call endpoint narrowing.
+- Any narrowing effect that requires endpoint linkage provenance is contract-dependent and deferred until explicit `mutator`/`links` resolution is active.
 
 ## 9. Parity Contract
 Getter/setter baseline:
@@ -177,6 +204,9 @@ Author guidance requirements:
 
 Constrained-overload scope diagnostic rule:
 - If explicit contracts are unavailable in Phase 1, checker behavior must remain conservative and must not synthesize constrained post-call narrowing from heuristics alone.
+
+Conservative fallback diagnostic rule:
+- When a preserve candidate fails guards or confidence requirements, checker must fall back conservatively and may emit guidance diagnostics without implying runtime semantics changes.
 
 ## 11. Checker Algorithm Sketch
 ```text
@@ -271,13 +301,21 @@ Phase 1 addition (planning only):
 - Performance regressions from unbounded Tier 2 matching.
 - Over-diagnostic noise if thresholds are too strict.
 
-## 16. Alternatives Considered
+## 16. Design Decision Record
+DDR-2026-03-10: Multi-perspective Phase 1 re-review.
+- Decision: retain strict conservative core as normative baseline and treat parity preserves as guarded overlays.
+- Decision: report progress using dual metrics: implemented-shape parity and corpus parity/refactor-stability.
+- Decision: freeze broad carveout expansion unless invariant gates, mandatory negative controls, and perf guardrails are satisfied.
+- Rationale: maximize soundness and refactor stability while permitting narrowly proven parity wins.
+- Consequence: some getter-like shapes intentionally remain conservative in Phase 1 until additional evidence lands.
+
+## 17. Alternatives Considered
 - Status quo + temporaries: poor DX.
 - Full effect system first: too broad.
 - Dependency-graph CFA for computed: out of scope.
 - Structural tree-following as sole mechanism: feasible with Go performance, but high complexity and parity risk as primary mechanism; better as heuristic layer reinforced by explicit contracts.
 
-## 17. Related Issues
+## 18. Related Issues
 - https://github.com/microsoft/TypeScript/issues/60948
 - https://github.com/microsoft/TypeScript/issues/57725
 - https://github.com/microsoft/TypeScript/issues/9998
@@ -286,7 +324,7 @@ Phase 1 addition (planning only):
 - https://github.com/angular/angular/issues/49161
 - https://github.com/angular/angular/issues/62181
 
-## 18. References
+## 19. References
 - docs/identity-modifier-research.md
 - docs/identity-phase1-pr-description.md
 - docs/identity-heuristic-tdd-plan.md
@@ -295,7 +333,7 @@ Phase 1 addition (planning only):
 - https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/attributes/nullable-analysis
 - https://github.com/google/closure-compiler/wiki/Annotating-JavaScript-for-the-Closure-Compiler
 
-## 19. Forward Roadmap Alignment
+## 20. Forward Roadmap Alignment
 Roadmap source of truth:
 - The forward candidate list and parity matrices are maintained in `docs/identity-phase1-pr-description.md`.
 

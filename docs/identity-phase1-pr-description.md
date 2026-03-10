@@ -18,6 +18,39 @@ Decision for constrained-overload post-call narrowing:
 - `testdata/tests/cases/compiler/identityModifierHeuristicDiagnostics.ts`
 - `testdata/tests/cases/compiler/identityModifierP8Conservative.ts`
 
+## Design Re-Review Outcome
+Multi-perspective design re-review outcome:
+- Keep the Phase 1 conservative core unchanged as the default safety contract.
+- Keep only strict, shape-guarded heuristic parity preserves already supported by tests.
+- Freeze broad new carveouts until negative controls and perf evidence are present.
+
+Dual parity metrics (reported separately):
+- Implemented-shape parity metric: `9/9` categories matched in `identityModifierGetterParitySweep.ts` for currently implemented guarded shapes.
+- Corpus parity and refactor-stability metric: broad corpus remains visibility-first; residual conservative deltas are allowed while preserving checker stability and avoiding broad unsound relaxations.
+
+Known heuristic preserves (currently retained):
+- Same-receiver `read()` then `set(non-nullish)` narrow write-preserve slice.
+- Narrow unknown-call preserve for guarded ambient no-arg `void` expression-statement calls.
+- Narrow await preserve for expression-statement `await Promise.resolve()` and ambient no-arg await nullish-read slice.
+- Narrow Tier 2 local trivial passthrough preserves (inline passthrough, local const/function helper passthrough, strict local alias chain passthrough).
+- Direct const alias preserve (`const alias = read`).
+
+Soundness-risk preserves kept conservative or deferred:
+- Callback alias preserve (`const cb = () => {}; invoke(cb);`) remains conservative in current baselines.
+- Mutable/reassigned helper identifiers and mutable alias-chain forwarding remain conservative.
+- Consumer-style forwarding (`useReader(pass(read))`) remains conservative.
+- Non-trivial helper bodies remain conservative.
+- Dynamic/non-literal write shapes and broader receiver-alias write paths remain conservative.
+
+## Phase 1 Design Modifications
+- [x] Reframe parity reporting into two independent metrics: implemented-shape parity and corpus parity/refactor-stability.
+- [x] Preserve strict uncertainty-boundary defaults; only keep narrow preserves with explicit guard conditions.
+- [x] Document retained preserves vs intentionally conservative non-goals in this PR description.
+- [x] Align SDD with explicit normative split between conservative core and guarded parity-preserve layer.
+- [x] Align TDD plan with invariant ledger and gate criteria for future carveouts.
+- [ ] Expand callback alias parity only after mandatory negative controls and perf checks pass.
+- [ ] Expand Tier 2 beyond trivial passthrough only behind invariant and gate compliance.
+
 ## Can identity use getter flow line directly?
 - Short answer: no, not fully in current architecture.
 - Why: both paths share CFA infrastructure (same flow graph, same `getTypeAtFlowCondition` narrowing engine), but they enter it through different reference shapes and boundary handling.

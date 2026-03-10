@@ -16,6 +16,22 @@ Constrained-overload scope decision:
 - Improve narrowing for callable getter patterns without introducing unsoundness.
 - Use strict TDD: write failing tests first, then implement minimal behavior to pass.
 
+## Invariant Ledger (INV-01..INV-07)
+- INV-01 Conservative default: uncertainty boundaries invalidate unless a preserve guard explicitly matches.
+- INV-02 No body introspection: callback/mutator function bodies are never required for narrowing decisions.
+- INV-03 Local boundedness: preserve/invalidation checks stay local and syntactic/flow-bounded in hot paths.
+- INV-04 Contract dependency boundary: contract-dependent effects (`mutator`/`links`, constrained post-call narrowing) are out of Phase 1 runtime behavior.
+- INV-05 Mandatory negative controls: every new preserve rule ships with at least one explicit conservative counter-example baseline.
+- INV-06 Refactor stability: preserves must be shape-guarded so small code motion/refactors do not silently broaden behavior.
+- INV-07 Dual-metric reporting: implemented-shape parity and corpus parity/refactor-stability are tracked separately.
+
+## Gate Criteria For New Preserves
+- Gate A: Invariant compliance check against INV-01..INV-07.
+- Gate B: One positive preserve baseline and one mandatory negative-control baseline in the same slice.
+- Gate C: Complexity guardrail review (bounded matcher logic, no broad symbol-graph exploration).
+- Gate D: Perf guardrail check (targeted micro-bench or equivalent hot-path evidence).
+- Gate E: Scope-freeze check: no new carveout if unresolved preserve debt exists in the same boundary family.
+
 ## TDD Workflow Rules
 - For each feature slice: Red -> Green -> Refactor.
 - Keep commits small and reviewable:
@@ -128,6 +144,14 @@ During implementation and refactors:
 - keep heuristic checks local and bounded
 - avoid global graph traversal in hot checker paths
 - cache reusable symbol/endpoint lookup results where safe
+
+Complexity guardrail expansion:
+- New preserve matching logic must be expressible as fixed-shape predicates over existing flow/reference data.
+- Reject preserve proposals requiring open-ended helper graph walking or unbounded alias-chain exploration.
+
+Perf guardrail expansion:
+- For each new preserve family, add or update at least one targeted micro-bench or runtime evidence point.
+- Preserve expansions that regress hot-path trend beyond review threshold must be rolled back or further narrowed.
 
 Micro-bench guardrail (Phase 1 narrow slice):
 - Added checker micro-bench coverage in `internal/checker/identity_bench_test.go`.
@@ -315,6 +339,20 @@ Current status:
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
 3. Expand parity mapping from the getter corpus beyond currently covered source slices.
 4. Finalize constrained-overload readiness artifacts (R1) without enabling explicit-contract runtime behavior.
+
+## Implementation Checklist Updates From Re-Review
+- [x] Added complexity guardrail requirements for preserve matcher design.
+- [x] Expanded perf guardrail requirements for preserve-family changes.
+- [x] Made negative controls mandatory for each preserve rule.
+- [x] Added scope-freeze criterion for new carveout admission.
+- [x] Aligned TDD invariants with SDD normative split and PR dual-metric reporting.
+
+## Design Modifications Applied
+- [x] Re-review invariants codified (INV-01..INV-07).
+- [x] New preserve gate criteria codified (Gate A..E).
+- [x] Conservative-core-first policy restated as normative Phase 1 behavior.
+- [x] Dual-metric parity reporting aligned with PR description.
+- [~] Preserve family debt reduction in progress: callback alias parity and broader Tier 2 non-trivial forms remain intentionally conservative.
 
 ## Newly Found Remaining Gaps (Post-Latest Commit Audit)
 
