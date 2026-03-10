@@ -125,6 +125,10 @@ Verification:
 - compare test runtime before/after each major step
 - inspect hot paths if checker regressions appear
 
+Benchmark evidence note:
+- See `docs/identity-phase1-pr-description.md` section `TypeScript-main Benchmark Snapshot`.
+- Current snapshot shows `tsgo` at about `5.9x` faster wall time with about `5%` lower max RSS on the measured TypeScript-main workload, which supports keeping conservative uncertainty boundaries during ongoing Phase 1 correctness iterations.
+
 ## Exit Criteria (Phase 1 Done)
 - `identity` narrowing works in targeted local-flow scenarios.
 - Tier 1 and guarded Tier 2 invalidation are test-backed.

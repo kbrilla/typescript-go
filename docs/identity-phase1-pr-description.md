@@ -437,3 +437,37 @@ Latest tip validation is green:
 - `npx hereby test`
 - `npx hereby lint`
 - `npx hereby format`
+
+## TypeScript-main Benchmark Snapshot
+
+### Environment and workload
+- Date: 2026-03-10
+- Workload: TypeScript-main compile workload, same checkout and same input set for both runners
+- Host: local macOS machine
+- Measurement set: 3 wall-time runs each, plus max RSS sampling
+
+### Comparable commands
+```sh
+# Upstream tsc (TypeScript main)
+node ./_submodules/TypeScript/built/local/tsc.js -p ./_submodules/TypeScript/src/tsconfig.json --noEmit
+
+# tsgo (same project/workload)
+./tsgo -p ./_submodules/TypeScript/src/tsconfig.json --noEmit
+```
+
+### Results
+| Runner | Wall times (s) | Avg wall (s) | Avg max RSS (MB) |
+| --- | --- | --- | --- |
+| upstream `tsc` | 8.86, 7.86, 7.84 | 8.19 | 708.3 |
+| `tsgo` | 1.60, 1.29, 1.27 | 1.39 | 672.1 |
+
+- Speedup: `8.19 / 1.39 ~= 5.9x`
+- Memory: `672.1 MB` vs `708.3 MB` (`~5%` lower max RSS for `tsgo`)
+
+### Caveats
+- This is a single-machine snapshot, not a cross-hardware benchmark campaign.
+- Results are for this TypeScript-main workload shape and current checkout state.
+- Wall time and max RSS are coarse indicators; they do not isolate all phase-level costs.
+
+### Phase 1 implication
+These numbers support continuing Phase 1 with conservative boundary invalidation while iterating on correctness and parity slices, with less pressure to prematurely relax soundness guards for performance.
