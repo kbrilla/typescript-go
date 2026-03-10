@@ -168,6 +168,148 @@ if (read() !== undefined) {
 }
 ```
 
+## Issue-Driven Example Matrix
+
+Where narrowing works today in this PR:
+- Repeated `identity` reads narrow in the same guarded local-flow region.
+- Narrowing is intentionally invalidated at implemented uncertainty boundaries (unknown calls, callback invocation shapes covered in tests, alias escape, `await`).
+
+### TS #60948: repeated read after guard (main case)
+Status: implemented in this PR
+
+```ts
+declare const value: identity () => string | undefined;
+
+if (value() !== undefined) {
+  value().toUpperCase(); // OK in this PR
+}
+```
+
+Getter/setter parity:
+```ts
+declare const model: {
+  get value(): string | undefined;
+  set value(v: string | undefined);
+};
+
+if (model.value !== undefined) {
+  model.value.toUpperCase(); // OK
+}
+```
+
+### TS #60948: callback boundary invalidation (`setTimeout` / `invoke`)
+Status: implemented in this PR (for covered callback call shapes)
+
+```ts
+declare const value: identity () => string | undefined;
+declare function invoke(cb: () => void): void;
+
+if (value() !== undefined) {
+  invoke(() => {});
+  const s: string = value(); // error after boundary
+  s;
+}
+```
+
+`setTimeout` shape:
+```ts
+declare const value: identity () => string | undefined;
+
+if (value() !== undefined) {
+  setTimeout(() => {});
+  const s: string = value(); // expected error by same boundary intent
+  s;
+}
+```
+
+Getter/setter parity:
+```ts
+declare const model: {
+  get value(): string | undefined;
+  set value(v: string | undefined);
+};
+
+if (model.value !== undefined) {
+  setTimeout(() => {});
+  const s: string = model.value; // error
+  s;
+}
+```
+
+### Angular #49161: ternary/computed one-liner (`count() !== null ? count() : 0`)
+Status: partially covered
+
+```ts
+declare const count: identity () => number | null;
+
+const x = count() !== null ? count() : 0; // parity target: second count() narrows to number
+x;
+```
+
+Getter/setter parity:
+```ts
+declare const model: {
+  get count(): number | null;
+  set count(v: number | null);
+};
+
+const x = model.count !== null ? model.count : 0; // property-style baseline
+x;
+```
+
+### Angular #49161: discriminated-union shape-kind narrowing style
+Status: partially covered
+
+```ts
+type Shape =
+  | { kind: "circle"; radius: number }
+  | { kind: "square"; size: number };
+
+declare const shape: identity () => Shape;
+
+if (shape().kind === "circle") {
+  shape().radius; // parity target: OK
+}
+```
+
+Getter/setter parity:
+```ts
+declare const model: {
+  get shape(): Shape;
+  set shape(v: Shape);
+};
+
+if (model.shape.kind === "circle") {
+  model.shape.radius; // property-style baseline
+}
+```
+
+### Angular #62181: template-like guard pattern translated to TS
+Status: implemented in this PR for plain TypeScript guard shape (template integration remains outside this compiler PR)
+
+```ts
+type User = { name: string };
+declare const user: identity () => User | null;
+
+if (user() !== null) {
+  const nameUpper = user().name.toUpperCase(); // template-like repeated access shape
+  nameUpper;
+}
+```
+
+Getter/setter parity:
+```ts
+declare const model: {
+  get user(): User | null;
+  set user(v: User | null);
+};
+
+if (model.user !== null) {
+  const nameUpper = model.user.name.toUpperCase();
+  nameUpper;
+}
+```
+
 ## Not Yet Working (Phase 1)
 - Broader nested/indirect callback boundary forms.
 - Additional Tier 1 write-form invalidation expansion.
