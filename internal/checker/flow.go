@@ -20,6 +20,17 @@ type FlowType struct {
 	incomplete bool
 }
 
+type identityBoundaryKind int8
+
+const (
+	identityBoundaryKindNone identityBoundaryKind = iota
+	identityBoundaryKindUnknownCall
+	identityBoundaryKindCallbackCall
+	identityBoundaryKindAwaitBoundary
+	identityBoundaryKindAliasEscape
+	identityBoundaryKindOther
+)
+
 func (ft *FlowType) isNil() bool {
 	return ft.t == nil
 }
@@ -255,7 +266,8 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 		return FlowType{t: f.declaredType}
 	}
 
-	if c.isAliasEscapeAssignmentForCallReference(f.reference, node) {
+	boundaryKind := c.classifyIdentityBoundary(f.reference, node)
+	if boundaryKind == identityBoundaryKindAliasEscape {
 		if !c.isReachableFlowNode(flow) {
 			return FlowType{t: c.unreachableNeverType}
 		}
@@ -263,7 +275,7 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 		return FlowType{t: f.declaredType}
 	}
 
-	if c.isAwaitAssignmentBoundaryForCallReference(f.reference, node) {
+	if boundaryKind == identityBoundaryKindAwaitBoundary {
 		if !c.isReachableFlowNode(flow) {
 			return FlowType{t: c.unreachableNeverType}
 		}
@@ -509,11 +521,9 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 		}
 	}
 
-	if c.isNonMatchingCallBoundary(f.reference, flow.Node) {
-		if c.shouldPreserveReadSetCallNarrowing(f.reference, flow.Node) ||
-			c.shouldPreserveNoopCallbackCallNarrowing(f.reference, flow.Node) ||
-			c.shouldPreservePromiseResolveAwaitCallNarrowing(f.reference, flow.Node) ||
-			c.shouldPreserveAmbientNoArgAwaitCallNarrowing(f.reference, flow.Node) {
+	boundaryKind := c.classifyIdentityBoundary(f.reference, flow.Node)
+	if boundaryKind != identityBoundaryKindNone {
+		if c.shouldPreserveIdentityBoundaryNarrowing(f.reference, flow.Node, boundaryKind) {
 			return FlowType{}
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
@@ -536,6 +546,58 @@ func (c *Checker) isNonMatchingCallBoundary(reference *ast.Node, boundary *ast.N
 
 func (c *Checker) isUnknownCallBoundaryForIdentityReference(reference *ast.Node, boundary *ast.Node) bool {
 	return isNoArgCallExpression(reference) && isNoArgCallExpression(boundary) && !c.isMatchingReference(reference, boundary)
+}
+
+func (c *Checker) classifyIdentityBoundary(reference *ast.Node, boundary *ast.Node) identityBoundaryKind {
+	if !c.isIdentityCallReference(reference) {
+		return identityBoundaryKindNone
+	}
+
+	if c.isAliasEscapeAssignmentForCallReference(reference, boundary) {
+		return identityBoundaryKindAliasEscape
+	}
+
+	if c.isAwaitAssignmentBoundaryForCallReference(reference, boundary) {
+		return identityBoundaryKindAwaitBoundary
+	}
+
+	if c.isNonMatchingCallBoundary(reference, boundary) {
+		if ast.IsAwaitExpression(boundary) {
+			return identityBoundaryKindAwaitBoundary
+		}
+
+		if ast.IsCallExpression(boundary) && len(boundary.Arguments()) == 1 {
+			callback := ast.SkipParentheses(boundary.Arguments()[0])
+			if ast.IsFunctionExpression(callback) || ast.IsArrowFunction(callback) {
+				return identityBoundaryKindCallbackCall
+			}
+		}
+
+		if c.isUnknownCallBoundaryForIdentityReference(reference, boundary) {
+			return identityBoundaryKindUnknownCall
+		}
+
+		return identityBoundaryKindOther
+	}
+
+	return identityBoundaryKindNone
+}
+
+func (c *Checker) shouldPreserveIdentityBoundaryNarrowing(reference *ast.Node, boundary *ast.Node, kind identityBoundaryKind) bool {
+	if c.shouldPreserveReadSetCallNarrowing(reference, boundary) {
+		return true
+	}
+
+	if kind == identityBoundaryKindCallbackCall && c.shouldPreserveNoopCallbackCallNarrowing(reference, boundary) {
+		return true
+	}
+
+	if kind == identityBoundaryKindAwaitBoundary {
+		return c.shouldPreservePromiseResolveAwaitCallNarrowing(reference, boundary) ||
+			c.shouldPreserveAmbientNoArgAwaitCallNarrowing(reference, boundary)
+	}
+
+	return false
 }
 
 func (c *Checker) isIdentityCallReference(reference *ast.Node) bool {

@@ -47,6 +47,12 @@ Simplification landed (this update, low risk, semantics-preserving):
 - `TS100014` (generic uncertainty boundary) vs `TS100015` (unknown-call boundary) selection conditions are unchanged.
 - Deduping remains boundary-node keyed using `reportedIdentityBoundaryDiagnostics` and is unchanged in behavior.
 
+Simplification landed (boundary classification centralization, semantics-preserving):
+- Introduced a single identity boundary-kind classifier in `internal/checker/flow.go` used by both invalidation/preserve checks and diagnostic message selection.
+- Boundary kinds currently include unknown call, callback call, await boundary, alias escape, and generic other call boundary.
+- Existing preserve carveouts (`read/set`, no-op callback, `Promise.resolve` await, ambient no-arg await) are now dispatched through the classifier without changing outcomes.
+- Flow graph node shape is unchanged in this refactor; this is classification-only restructuring on existing flow nodes.
+
 ## Flow Graphs
 
 ### Getter Flow Graph

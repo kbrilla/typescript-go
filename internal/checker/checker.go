@@ -19863,7 +19863,7 @@ func (c *Checker) shouldReportIdentityBoundaryInvalidationDiagnostic(reference *
 }
 
 func (c *Checker) identityBoundaryInvalidationDiagnosticMessage(reference *ast.Node, boundary *ast.Node) *diagnostics.Message {
-	if c.isUnknownCallBoundaryForIdentityReference(reference, boundary) {
+	if c.classifyIdentityBoundary(reference, boundary) == identityBoundaryKindUnknownCall {
 		return diagnostics.Identity_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_temporary_before_the_call_to_preserve_precision
 	}
 
