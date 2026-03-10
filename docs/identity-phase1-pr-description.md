@@ -14,6 +14,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - Parser lookahead fix so `identity<...>` type references are not misparsed as identity function-type starts.
 - Repeated-read narrowing for covered local-flow identity call patterns.
 - Conservative invalidation for currently implemented uncertainty boundaries.
+- Conditional-expression callback initializer boundary invalidation (`const x = cond ? invoke(() => {}) : invoke(() => {})`).
 - Tier 1 write-form parity expansion in local parity tests (property assignment and callable hybrid setter-style calls).
 - Tier 2 starter test coverage for candidate forwarding/passthrough shapes with current conservative expectations in `testdata/tests/cases/compiler/identityModifierTier2.ts`.
 - Narrow Tier 2 precision slice for inline trivial passthrough forwarding:
@@ -41,7 +42,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - [x] Tier 2 narrow precision for trivial local passthrough helper shapes.
 
 ### Left for Phase 1
-- [ ] Broaden nested/indirect callback boundary parity beyond currently covered forms.
+- [ ] Broaden nested/indirect callback boundary parity beyond currently covered forms (conditional initializer form now covered).
 - [ ] Expand Tier 1 write-form matrix breadth beyond current local parity slices.
 - [ ] Extend Tier 2 guarded precision beyond trivial syntactic passthrough forms while preserving soundness.
 - [ ] Add diagnostics for heuristic-limit/low-confidence cases (Step 7 in plan).
@@ -71,6 +72,7 @@ Parity score summary:
 | Unknown call | `unknownMutate();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback statement | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback assignment form | `const r = invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Callback conditional initializer form | `const r = cond ? invoke(() => {}) : invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback indirect helper argument | `const r = invoke(pass(() => {}));` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Alias initializer | `const escaped = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Indirect alias passthrough | `const indirect = pass(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |

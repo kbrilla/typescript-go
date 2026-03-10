@@ -298,6 +298,16 @@ Current status:
 - Checker change (`internal/checker/flow.go`): conservative invalidation of identity-call narrowing across non-matching flow-call boundaries.
 - This narrow boundary slice is green in local tests and remains green in full `hereby` validation.
 
+### Latest Increment (Boundaries - Conditional Initializer Callback Form)
+- Extended `testdata/tests/cases/compiler/identityModifierBoundaries.ts` with a conditional initializer callback-boundary case:
+  - `const conditionalCallbackResult = true ? invoke(() => {}) : invoke(() => {});`
+  - post-boundary read now widens as expected (`const afterConditionalCallbackCall: string = read();` reports error)
+- Binder change (`internal/binder/binder.go`): `bindConditionalExpressionFlow` now invokes `maybeBindExpressionFlowIfCall` on both `whenTrue` and `whenFalse` branches, ensuring branch call boundaries participate in flow.
+- `maybeBindInitializerFlowIfCallbackCall` remains conservative and call-expression scoped; conditional branch coverage is handled in conditional flow binding.
+- Targeted red/green evidence:
+  - red: `go test -run='TestLocal/identityModifierBoundaries\.ts' ./internal/testrunner`
+  - green: `npx hereby baseline-accept` then re-run targeted identity local suite
+
 ### Latest Increment (Parser Disambiguation Stability)
 - Fixed a parser ambiguity where `identity<...>` in type-reference positions was being misclassified as the start of an identity function type.
 - Parser change (`internal/parser/parser.go`): `nextTokenStartsIdentityFunctionOrConstructorType` now requires an unambiguous function-type parameter list before accepting `identity` + `<...>` as function-type syntax.

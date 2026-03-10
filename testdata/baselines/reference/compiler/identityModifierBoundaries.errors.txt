@@ -6,17 +6,19 @@ identityModifierBoundaries.ts(30,11): error TS2322: Type 'string | undefined' is
   Type 'undefined' is not assignable to type 'string'.
 identityModifierBoundaries.ts(38,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(43,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
 identityModifierBoundaries.ts(50,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(65,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(55,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(73,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(62,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(77,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(85,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierBoundaries.ts (8 errors) ====
+==== identityModifierBoundaries.ts (9 errors) ====
     declare const read: identity () => string | undefined;
     
     if (read() !== undefined) {
@@ -65,6 +67,21 @@ identityModifierBoundaries.ts(73,15): error TS2322: Type 'string | undefined' is
         indirectCallbackResult;
         const afterIndirectCallbackCall: string = read(); // should error
               ~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    }
+    
+    if (read() !== undefined) {
+        const conditionalCallbackResult = true
+            ? invoke(() => {
+                // conditional true branch callback boundary
+            })
+            : invoke(() => {
+                // conditional false branch callback boundary
+            });
+        conditionalCallbackResult;
+        const afterConditionalCallbackCall: string = read(); // should error
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
 !!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
     }

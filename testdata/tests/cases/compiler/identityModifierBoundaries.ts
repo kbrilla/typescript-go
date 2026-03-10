@@ -42,6 +42,18 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
+    const conditionalCallbackResult = true
+        ? invoke(() => {
+            // conditional true branch callback boundary
+        })
+        : invoke(() => {
+            // conditional false branch callback boundary
+        });
+    conditionalCallbackResult;
+    const afterConditionalCallbackCall: string = read(); // should error
+}
+
+if (read() !== undefined) {
     const escapedRead = read;
     const afterAliasEscape: string = read(); // should error
     escapedRead;

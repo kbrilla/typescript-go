@@ -2250,10 +2250,12 @@ func (b *Binder) bindConditionalExpressionFlow(node *ast.Node) {
 	b.currentFlow = b.finishFlowLabel(trueLabel)
 	b.bind(expr.QuestionToken)
 	b.bind(expr.WhenTrue)
+	b.maybeBindExpressionFlowIfCall(expr.WhenTrue)
 	b.addAntecedent(postExpressionLabel, b.currentFlow)
 	b.currentFlow = b.finishFlowLabel(falseLabel)
 	b.bind(expr.ColonToken)
 	b.bind(expr.WhenFalse)
+	b.maybeBindExpressionFlowIfCall(expr.WhenFalse)
 	b.addAntecedent(postExpressionLabel, b.currentFlow)
 	if b.hasFlowEffects {
 		b.currentFlow = b.finishFlowLabel(postExpressionLabel)
@@ -2273,14 +2275,23 @@ func (b *Binder) bindVariableDeclarationFlow(node *ast.Node) {
 
 func (b *Binder) maybeBindInitializerFlowIfCallbackCall(node *ast.Node) {
 	initializer := node.Initializer()
-	if initializer == nil || !ast.IsCallExpression(initializer) {
+	if initializer == nil {
 		return
 	}
 
-	if slices.ContainsFunc(initializer.Arguments(), containsCallbackArgumentExpression) {
+	if isCallbackBoundaryCallExpression(initializer) {
 		b.currentFlow = b.createFlowCall(b.currentFlow, initializer)
 		return
 	}
+}
+
+func isCallbackBoundaryCallExpression(node *ast.Node) bool {
+	node = ast.SkipParentheses(node)
+	if !ast.IsCallExpression(node) {
+		return false
+	}
+
+	return slices.ContainsFunc(node.Arguments(), containsCallbackArgumentExpression)
 }
 
 func containsCallbackArgumentExpression(node *ast.Node) bool {

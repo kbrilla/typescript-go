@@ -119,6 +119,40 @@ if (read() !== undefined) {
 >read : () => string | undefined
 >undefined : undefined
 
+    const conditionalCallbackResult = true
+>conditionalCallbackResult : void
+>true        ? invoke(() => {            // conditional true branch callback boundary        })        : invoke(() => {            // conditional false branch callback boundary        }) : void
+>true : true
+
+        ? invoke(() => {
+>invoke(() => {            // conditional true branch callback boundary        }) : void
+>invoke : (cb: () => void) => void
+>() => {            // conditional true branch callback boundary        } : () => void
+
+            // conditional true branch callback boundary
+        })
+        : invoke(() => {
+>invoke(() => {            // conditional false branch callback boundary        }) : void
+>invoke : (cb: () => void) => void
+>() => {            // conditional false branch callback boundary        } : () => void
+
+            // conditional false branch callback boundary
+        });
+    conditionalCallbackResult;
+>conditionalCallbackResult : void
+
+    const afterConditionalCallbackCall: string = read(); // should error
+>afterConditionalCallbackCall : string
+>read() : string | undefined
+>read : () => string | undefined
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
     const escapedRead = read;
 >escapedRead : () => string | undefined
 >read : () => string | undefined
