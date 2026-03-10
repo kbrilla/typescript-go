@@ -22,6 +22,8 @@ type FlowType struct {
 
 type identityBoundaryKind int8
 
+type identityBoundaryPreserveRuleID int8
+
 const (
 	identityBoundaryKindNone identityBoundaryKind = iota
 	identityBoundaryKindUnknownCall
@@ -30,6 +32,22 @@ const (
 	identityBoundaryKindAliasEscape
 	identityBoundaryKindOther
 )
+
+const (
+	identityBoundaryPreserveRuleNoopCallback identityBoundaryPreserveRuleID = iota + 1
+	identityBoundaryPreserveRulePromiseResolveAwait
+	identityBoundaryPreserveRuleAmbientNoArgAwait
+)
+
+var identityBoundaryPreserveRulesByKind = map[identityBoundaryKind][]identityBoundaryPreserveRuleID{
+	identityBoundaryKindCallbackCall: {
+		identityBoundaryPreserveRuleNoopCallback,
+	},
+	identityBoundaryKindAwaitBoundary: {
+		identityBoundaryPreserveRulePromiseResolveAwait,
+		identityBoundaryPreserveRuleAmbientNoArgAwait,
+	},
+}
 
 func (ft *FlowType) isNil() bool {
 	return ft.t == nil
@@ -588,16 +606,26 @@ func (c *Checker) shouldPreserveIdentityBoundaryNarrowing(reference *ast.Node, b
 		return true
 	}
 
-	if kind == identityBoundaryKindCallbackCall && c.shouldPreserveNoopCallbackCallNarrowing(reference, boundary) {
-		return true
-	}
-
-	if kind == identityBoundaryKindAwaitBoundary {
-		return c.shouldPreservePromiseResolveAwaitCallNarrowing(reference, boundary) ||
-			c.shouldPreserveAmbientNoArgAwaitCallNarrowing(reference, boundary)
+	for _, preserveRule := range identityBoundaryPreserveRulesByKind[kind] {
+		if c.shouldPreserveIdentityBoundaryByRule(reference, boundary, preserveRule) {
+			return true
+		}
 	}
 
 	return false
+}
+
+func (c *Checker) shouldPreserveIdentityBoundaryByRule(reference *ast.Node, boundary *ast.Node, rule identityBoundaryPreserveRuleID) bool {
+	switch rule {
+	case identityBoundaryPreserveRuleNoopCallback:
+		return c.shouldPreserveNoopCallbackCallNarrowing(reference, boundary)
+	case identityBoundaryPreserveRulePromiseResolveAwait:
+		return c.shouldPreservePromiseResolveAwaitCallNarrowing(reference, boundary)
+	case identityBoundaryPreserveRuleAmbientNoArgAwait:
+		return c.shouldPreserveAmbientNoArgAwaitCallNarrowing(reference, boundary)
+	default:
+		return false
+	}
 }
 
 func (c *Checker) isIdentityCallReference(reference *ast.Node) bool {

@@ -50,7 +50,7 @@ Simplification landed (this update, low risk, semantics-preserving):
 Simplification landed (boundary classification centralization, semantics-preserving):
 - Introduced a single identity boundary-kind classifier in `internal/checker/flow.go` used by both invalidation/preserve checks and diagnostic message selection.
 - Boundary kinds currently include unknown call, callback call, await boundary, alias escape, and generic other call boundary.
-- Existing preserve carveouts (`read/set`, no-op callback, `Promise.resolve` await, ambient no-arg await) are now dispatched through the classifier without changing outcomes.
+- Existing preserve carveouts (`read/set`, no-op callback, `Promise.resolve` await, ambient no-arg await) are now dispatched through a compact table keyed by `identityBoundaryKind`, without changing outcomes.
 - Flow graph node shape is unchanged in this refactor; this is classification-only restructuring on existing flow nodes.
 
 ## Flow Graphs
@@ -73,7 +73,7 @@ flowchart TD
   I3 --> I4["Checker checkCallExpression sees SignatureFlagsIdentity"]
   I4 --> I5["Checker getFlowTypeOfReference call returnType"]
   I5 --> I6["Checker getTypeAtFlowCondition then narrowTypeByTruthiness fallback"]
-  I6 --> I7["FlowCall boundary getTypeAtFlowCall may invalidate plus TS100014 or TS100015"]
+  I6 --> I7["FlowCall boundary classify kind then table-dispatch preserve rules then may invalidate plus TS100014 or TS100015"]
 ```
 
 ### Divergence Overlay
@@ -84,7 +84,7 @@ flowchart LR
     S2["getTypeAtFlowCondition"]
     S3["narrowTypeByTruthiness"]
     S4["Shared reference candidate normalization in flow.go"]
-    S5["Shared call boundary preconditions in flow.go"]
+    S5["Shared call boundary classification plus table-driven preserve dispatch in flow.go"]
     S6["Shared boundary diagnostic selection and dedupe in checker.go"]
     S1 --> S2 --> S3 --> S4 --> S5 --> S6
   end
