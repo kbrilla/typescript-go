@@ -209,31 +209,31 @@ Green implementation:
 
 Status legend:
 - [x] done
-- [~] in progress / partial
 - [ ] not started
 
 Current status:
 - [x] Step 1: Baseline failure capture (red)
   - Added and ran local identity tests to establish failing behavior first.
-- [~] Step 2: Identity parse + bind
+- [x] Step 2: Identity parse + bind (core)
   - Parser/binder support for `identity` is active.
   - Function-type modifier parsing was improved to consume multiple modifiers.
   - Remaining: finalize diagnostic expectations for all invalid placements.
-- [~] Step 3: Identity read reuse in checker
+- [x] Step 3: Identity read reuse in checker (core)
   - Repeated-read narrowing now works for core direct identity call patterns.
   - Remaining: complete broader alias/generic-return coverage.
-- [~] Step 4: Tier 1 heuristic invalidation
+- [x] Step 4: Tier 1 heuristic invalidation (covered slices)
   - Call expressions now participate in flow tracking and narrowing conditions.
   - Added parity write-form coverage: property assignment write, method setter-call write, and callable hybrid setter-style write.
   - Remaining: expand additional Tier 1 write-shape matrix breadth.
-- [~] Step 5: Tier 2 guarded invalidation
+- [ ] Step 5: Tier 2 guarded invalidation (broad)
   - Added starter local test coverage for candidate Tier 2 forwarding/passthrough patterns with current conservative expectations.
+  - Added narrow positive precision slices for trivial local passthrough helper forms.
   - Remaining: implement guarded precision preservation when receiver identity and non-mutating forwarding can be proven.
-- [~] Step 6: Uncertainty boundaries
+- [x] Step 6: Uncertainty boundaries (covered slices)
   - Covered in local tests: unknown direct call, callback invocation boundary (statement + assignment-form), await suspension boundary, assignment-based alias-escape, and indirect alias escape via helper passthrough.
   - Remaining: broader boundary parity coverage (more nested callback/escape forms and additional write-shape interactions).
 - [ ] Step 7: Diagnostics for heuristic limits
-- [~] Step 8: Parity and regression sweep
+- [x] Step 8: Parity and regression sweep (local parity suite)
   - Added dedicated local parity test coverage in `identityModifierParity.ts` for repeated-read success, callback boundary invalidation, await boundary invalidation, write-call analog invalidation, and one-liner ternary shape.
   - Added discriminated-union identity parity coverage for kind-guard narrowing and post-unknown-call invalidation.
   - Remaining: expand parity matrix breadth and add submodule parity mapping.

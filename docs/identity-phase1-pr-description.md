@@ -29,6 +29,42 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - Mutable/reassigned helper alias chains remain conservative by design (`let maybeAlias = localId; maybeAlias = pass;`).
 - Non-trivial local function helper bodies remain conservative by design (`function localFnWrap<T>(x: T) { return () => x; }`).
 
+## Phase 1 Checklist
+
+### Working Now
+- [x] `identity` parsing and binding in declaration type contexts.
+- [x] Repeated-read narrowing for guarded local flow (`if (read() !== undefined) { read(); }`).
+- [x] Implemented uncertainty boundaries invalidate prior narrowing for covered shapes (unknown call, callback forms, alias escape, `await`).
+- [x] Parser disambiguation for `identity<...>` type references.
+- [x] Dedicated local parity suite exists and is green (`identityModifierParity.ts`).
+- [x] Tier 1 parity slice coverage for property assignment and callable hybrid setter-style writes in local tests.
+- [x] Tier 2 narrow precision for trivial local passthrough helper shapes.
+
+### Left for Phase 1
+- [ ] Broaden nested/indirect callback boundary parity beyond currently covered forms.
+- [ ] Expand Tier 1 write-form matrix breadth beyond current local parity slices.
+- [ ] Extend Tier 2 guarded precision beyond trivial syntactic passthrough forms while preserving soundness.
+- [ ] Add diagnostics for heuristic-limit/low-confidence cases (Step 7 in plan).
+- [ ] Expand parity mapping against submodule scenarios where practical.
+
+## Getter vs Identity Parity Matrix
+| Behavior category | Getter | Identity | Parity |
+| --- | --- | --- | --- |
+| Guarded repeated read reuse | Implemented | Implemented | Full |
+| Unknown-call boundary invalidation | Implemented | Implemented | Full |
+| Callback boundary invalidation (covered forms) | Implemented | Implemented | Full (covered forms) |
+| Await boundary invalidation (statement + assignment forms) | Implemented | Implemented | Full |
+| Alias-escape invalidation (initializer + reassignment + indirect passthrough) | Implemented | Implemented | Full |
+| Discriminated-union kind narrowing reuse | Implemented | Implemented | Full |
+| Property/callable setter-style invalidation slice | Implemented | Implemented | Full (covered slice) |
+| One-liner ternary repeated-read shape | Implemented | Implemented | Full |
+| Tier 2 forwarding precision (non-trivial helpers) | N/A | Partial | Gap |
+| Heuristic-limit diagnostics | N/A | Not implemented | Gap |
+
+Parity score summary:
+- `8/10` categories are fully matched for the scoped Phase 1 matrix above.
+- Remaining gaps are concentrated in Tier 2 broader forwarding precision and diagnostics coverage.
+
 ## Boundary Coverage Matrix
 | Boundary | Example shape | Status | Test source |
 | --- | --- | --- | --- |
@@ -421,7 +457,7 @@ if (model.user !== null) {
 }
 ```
 
-## Not Yet Working (Phase 1)
+## Detailed Remaining Scope (Phase 1)
 - Broader nested/indirect callback boundary forms.
 - Additional Tier 1 write-form invalidation expansion beyond currently covered property/method/callable-hybrid local shapes.
 - Tier 2 guarded precision behavior itself (today's Tier 2 starter scenarios intentionally keep conservative invalidation expectations).
