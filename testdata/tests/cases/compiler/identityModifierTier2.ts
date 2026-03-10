@@ -31,6 +31,17 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
+    // Tier 2 precision target: const alias-chain to trivial passthrough helper should preserve narrowing.
+    const localId = <T>(x: T) => x;
+    const localId2 = localId;
+    const forwarded = localId2(read);
+    forwarded;
+
+    const afterConstHelperAliasChain: string = read(); // should stay narrowed
+    afterConstHelperAliasChain;
+}
+
+if (read() !== undefined) {
     // Tier 2 precision target: local function declaration helper with trivial passthrough body.
     function localFnId<T>(x: T) {
         return x;
@@ -63,6 +74,18 @@ if (read() !== undefined) {
 
     const afterMutableHelperPassthrough: string = read(); // current conservative: error
     afterMutableHelperPassthrough;
+}
+
+if (read() !== undefined) {
+    // Conservative boundary: mutable alias chain remains invalidating after reassignment.
+    const localId = <T>(x: T) => x;
+    let maybeAlias = localId;
+    maybeAlias = pass;
+    const forwarded = maybeAlias(read);
+    forwarded;
+
+    const afterMutableAliasChain: string = read(); // current conservative: error
+    afterMutableAliasChain;
 }
 
 if (read() !== undefined) {
