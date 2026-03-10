@@ -689,6 +689,9 @@ func (b *Binder) bind(node *ast.Node) bool {
 	case ast.KindInterfaceDeclaration:
 		b.bindBlockScopedDeclaration(node, ast.SymbolFlagsInterface, ast.SymbolFlagsInterfaceExcludes)
 	case ast.KindCallExpression:
+		if b.currentFlow != nil && hasNarrowableArgument(node) {
+			setFlowNode(node, b.currentFlow)
+		}
 		switch ast.GetAssignmentDeclarationKind(node) {
 		case ast.JSDeclarationKindObjectDefinePropertyValue:
 			b.bindExpandoPropertyAssignment(node)
@@ -2089,12 +2092,13 @@ func (b *Binder) bindExpressionStatement(node *ast.Node) {
 }
 
 func (b *Binder) maybeBindExpressionFlowIfCall(node *ast.Node) {
-	// A top level or comma expression call expression with a dotted function name and at least one argument
-	// is potentially an assertion and is therefore included in the control flow.
-	if ast.IsCallExpression(node) {
-		if node.Expression().Kind != ast.KindSuperKeyword && ast.IsDottedName(node.Expression()) {
-			b.currentFlow = b.createFlowCall(b.currentFlow, node)
-		}
+	if ast.IsCallExpression(node) && node.Expression().Kind != ast.KindSuperKeyword {
+		b.currentFlow = b.createFlowCall(b.currentFlow, node)
+		return
+	}
+
+	if ast.IsAwaitExpression(node) {
+		b.currentFlow = b.createFlowCall(b.currentFlow, node)
 	}
 }
 
@@ -2588,6 +2592,8 @@ func isNarrowableReference(node *ast.Node) bool {
 		expr := node.AsElementAccessExpression()
 		return ast.IsStringOrNumericLiteralLike(expr.ArgumentExpression) ||
 			ast.IsEntityNameExpression(expr.ArgumentExpression) && isNarrowableReference(expr.Expression)
+	case ast.KindCallExpression:
+		return hasNarrowableArgument(node)
 	case ast.KindBinaryExpression:
 		expr := node.AsBinaryExpression()
 		return expr.OperatorToken.Kind == ast.KindCommaToken && isNarrowableReference(expr.Right) ||
@@ -2603,6 +2609,11 @@ func hasNarrowableArgument(expr *ast.Node) bool {
 			return true
 		}
 	}
+
+	if len(call.Arguments.Nodes) == 0 && containsNarrowableReference(call.Expression) {
+		return true
+	}
+
 	if ast.IsPropertyAccessExpression(call.Expression) {
 		if containsNarrowableReference(call.Expression.Expression()) {
 			return true

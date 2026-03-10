@@ -1,0 +1,31 @@
+//// [tests/cases/compiler/identityModifierErrors.ts] ////
+
+=== identityModifierErrors.ts ===
+// Error: identity modifier on function with parameters
+declare const fn1: identity (x: string) => number; // should error
+>fn1 : Symbol(fn1, Decl(identityModifierErrors.ts, 1, 13))
+>x : Symbol(x, Decl(identityModifierErrors.ts, 1, 29))
+
+// Valid: identity modifier on parameterless function type
+declare const fn3: identity () => string | undefined; // OK
+>fn3 : Symbol(fn3, Decl(identityModifierErrors.ts, 4, 13))
+
+// Identity modifier in a type alias
+type Getter<T> = identity () => T; // OK
+>Getter : Symbol(Getter, Decl(identityModifierErrors.ts, 4, 53))
+>T : Symbol(T, Decl(identityModifierErrors.ts, 7, 12))
+>T : Symbol(T, Decl(identityModifierErrors.ts, 7, 12))
+
+// Using 'identity' as a variable name should still work (contextual keyword)
+const identity = <T>(x: T): T => x; // OK - 'identity' used as identifier
+>identity : Symbol(identity, Decl(identityModifierErrors.ts, 10, 5))
+>T : Symbol(T, Decl(identityModifierErrors.ts, 10, 18))
+>x : Symbol(x, Decl(identityModifierErrors.ts, 10, 21))
+>T : Symbol(T, Decl(identityModifierErrors.ts, 10, 18))
+>T : Symbol(T, Decl(identityModifierErrors.ts, 10, 18))
+>x : Symbol(x, Decl(identityModifierErrors.ts, 10, 21))
+
+const result = identity("hello");
+>result : Symbol(result, Decl(identityModifierErrors.ts, 11, 5))
+>identity : Symbol(identity, Decl(identityModifierErrors.ts, 10, 5))
+

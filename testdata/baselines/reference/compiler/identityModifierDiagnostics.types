@@ -1,0 +1,20 @@
+//// [tests/cases/compiler/identityModifierDiagnostics.ts] ////
+
+=== identityModifierDiagnostics.ts ===
+// Error: identity modifier on function type with parameters
+declare const badWithParams: identity (x: string) => string;
+>badWithParams : (x: string) => string
+>x : string
+
+// Error: duplicate identity modifier
+declare const badDuplicate: identity identity () => string;
+>badDuplicate : () => string
+
+// Error: identity modifier cannot appear on constructor type
+declare const badConstructor: identity new () => object;
+>badConstructor : new () => object
+
+// Valid: identity on parameterless function type
+declare const good: identity () => string | undefined;
+>good : () => string | undefined
+

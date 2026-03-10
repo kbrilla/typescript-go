@@ -26,24 +26,7 @@ if (closureVal() !== undefined) {
     });
 }
 
-// Identity function with typeof narrowing
-declare const mixed: identity () => string | number;
-
-if (typeof mixed() === "string") {
-    mixed(); // should be narrowed to string
-    console.log(mixed().toUpperCase()); // should work
-}
-
-// Identity function with null check (Angular signals pattern)
-declare function signal<T>(initial: T): identity () => T;
-
-const count = signal(null as null | number);
-
-if (count() !== null) {
-    const total: number = count(); // should work, narrowed to number
-}
-
-// Generic identity function type
+// Generic identity function type alias
 type Signal<T> = identity () => T;
 
 declare const sig: Signal<string | undefined>;

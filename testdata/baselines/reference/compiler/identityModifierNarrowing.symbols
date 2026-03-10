@@ -1,0 +1,97 @@
+//// [tests/cases/compiler/identityModifierNarrowing.ts] ////
+
+=== identityModifierNarrowing.ts ===
+// Basic identity function type narrowing
+declare const value: identity () => string | undefined;
+>value : Symbol(value, Decl(identityModifierNarrowing.ts, 1, 13))
+
+if (value() !== undefined) {
+>value : Symbol(value, Decl(identityModifierNarrowing.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    value(); // should be narrowed to string
+>value : Symbol(value, Decl(identityModifierNarrowing.ts, 1, 13))
+
+    console.log(value().toUpperCase()); // should work, no error
+>console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>console : Symbol(console, Decl(lib.dom.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>value : Symbol(value, Decl(identityModifierNarrowing.ts, 1, 13))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+
+// Identity function with truthiness check
+declare const flag: identity () => string | null;
+>flag : Symbol(flag, Decl(identityModifierNarrowing.ts, 9, 13))
+
+if (flag()) {
+>flag : Symbol(flag, Decl(identityModifierNarrowing.ts, 9, 13))
+
+    flag(); // should be narrowed to string (truthy)
+>flag : Symbol(flag, Decl(identityModifierNarrowing.ts, 9, 13))
+
+    console.log(flag().length); // should work
+>console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>console : Symbol(console, Decl(lib.dom.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>flag().length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>flag : Symbol(flag, Decl(identityModifierNarrowing.ts, 9, 13))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+}
+
+// Identity function narrowing cleared in closures
+declare const closureVal: identity () => string | undefined;
+>closureVal : Symbol(closureVal, Decl(identityModifierNarrowing.ts, 17, 13))
+
+if (closureVal() !== undefined) {
+>closureVal : Symbol(closureVal, Decl(identityModifierNarrowing.ts, 17, 13))
+>undefined : Symbol(undefined)
+
+    setTimeout(() => {
+>setTimeout : Symbol(setTimeout, Decl(lib.dom.d.ts, --, --))
+
+        closureVal(); // should be string | undefined (narrowing lost in closure)
+>closureVal : Symbol(closureVal, Decl(identityModifierNarrowing.ts, 17, 13))
+
+    });
+}
+
+// Generic identity function type alias
+type Signal<T> = identity () => T;
+>Signal : Symbol(Signal, Decl(identityModifierNarrowing.ts, 23, 1))
+>T : Symbol(T, Decl(identityModifierNarrowing.ts, 26, 12))
+>T : Symbol(T, Decl(identityModifierNarrowing.ts, 26, 12))
+
+declare const sig: Signal<string | undefined>;
+>sig : Symbol(sig, Decl(identityModifierNarrowing.ts, 28, 13))
+>Signal : Symbol(Signal, Decl(identityModifierNarrowing.ts, 23, 1))
+
+if (sig() !== undefined) {
+>sig : Symbol(sig, Decl(identityModifierNarrowing.ts, 28, 13))
+>undefined : Symbol(undefined)
+
+    sig(); // should be narrowed to string
+>sig : Symbol(sig, Decl(identityModifierNarrowing.ts, 28, 13))
+}
+
+// Multiple identity functions - independent narrowing
+declare const a: identity () => string | undefined;
+>a : Symbol(a, Decl(identityModifierNarrowing.ts, 35, 13))
+
+declare const b: identity () => number | undefined;
+>b : Symbol(b, Decl(identityModifierNarrowing.ts, 36, 13))
+
+if (a() !== undefined && b() !== undefined) {
+>a : Symbol(a, Decl(identityModifierNarrowing.ts, 35, 13))
+>undefined : Symbol(undefined)
+>b : Symbol(b, Decl(identityModifierNarrowing.ts, 36, 13))
+>undefined : Symbol(undefined)
+
+    a(); // should be string
+>a : Symbol(a, Decl(identityModifierNarrowing.ts, 35, 13))
+
+    b(); // should be number
+>b : Symbol(b, Decl(identityModifierNarrowing.ts, 36, 13))
+}
+

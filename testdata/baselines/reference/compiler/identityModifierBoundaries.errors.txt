@@ -1,0 +1,48 @@
+identityModifierBoundaries.ts(14,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(21,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(27,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+
+==== identityModifierBoundaries.ts (3 errors) ====
+    declare const read: identity () => string | undefined;
+    
+    if (read() !== undefined) {
+        const stable: string = read(); // OK
+    }
+    
+    declare function unknownMutate(): void;
+    
+    declare function invoke(cb: () => void): void;
+    declare function delay(): Promise<void>;
+    
+    if (read() !== undefined) {
+        unknownMutate();
+        const afterUnknownCall: string = read(); // should error
+              ~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    }
+    
+    if (read() !== undefined) {
+        invoke(() => {
+            // unknown callback boundary
+        });
+        const afterCallbackCall: string = read(); // should error
+              ~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    }
+    
+    async function testAwaitBoundary() {
+        if (read() !== undefined) {
+            await delay();
+            const afterAwait: string = read(); // should error
+                  ~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        }
+    }
+    

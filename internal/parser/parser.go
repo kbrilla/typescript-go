@@ -3126,6 +3126,26 @@ func (p *Parser) nextTokenIsOpenParenOrLessThan() bool {
 	return p.token == ast.KindOpenParenToken || p.token == ast.KindLessThanToken
 }
 
+func (p *Parser) nextTokenStartsIdentityFunctionOrConstructorType() bool {
+	p.nextToken()
+	for p.token == ast.KindIdentityKeyword || p.token == ast.KindAbstractKeyword {
+		p.nextToken()
+	}
+	if p.token == ast.KindNewKeyword {
+		return true
+	}
+	if p.token == ast.KindOpenParenToken {
+		return p.nextIsUnambiguouslyStartOfFunctionType()
+	}
+	if p.token == ast.KindLessThanToken {
+		if p.parseTypeParameters() == nil || p.token != ast.KindOpenParenToken {
+			return false
+		}
+		return p.nextIsUnambiguouslyStartOfFunctionType()
+	}
+	return false
+}
+
 func (p *Parser) parseSignatureMember(kind ast.Kind) *ast.Node {
 	pos := p.nodePos()
 	jsdoc := p.jsdocScannerInfo()
@@ -3700,7 +3720,7 @@ func (p *Parser) isStartOfFunctionTypeOrConstructorType() bool {
 		p.token == ast.KindOpenParenToken && p.lookAhead((*Parser).nextIsUnambiguouslyStartOfFunctionType) ||
 		p.token == ast.KindNewKeyword ||
 		p.token == ast.KindAbstractKeyword && p.lookAhead((*Parser).nextTokenIsNewKeyword) ||
-		p.token == ast.KindIdentityKeyword && p.lookAhead((*Parser).nextTokenIsOpenParenOrLessThan)
+		p.token == ast.KindIdentityKeyword && p.lookAhead((*Parser).nextTokenStartsIdentityFunctionOrConstructorType)
 }
 
 func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
@@ -3724,21 +3744,21 @@ func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 }
 
 func (p *Parser) parseModifiersForFunctionOrConstructorType() *ast.ModifierList {
-	if p.token == ast.KindIdentityKeyword {
-		pos := p.nodePos()
+	if p.token != ast.KindIdentityKeyword && p.token != ast.KindAbstractKeyword {
+		return nil
+	}
+
+	pos := p.nodePos()
+	list := make([]*ast.Node, 0, 2)
+	for p.token == ast.KindIdentityKeyword || p.token == ast.KindAbstractKeyword {
+		modifierPos := p.nodePos()
 		modifier := p.factory.NewModifier(p.token)
 		p.nextToken()
-		p.finishNode(modifier, pos)
-		return p.newModifierList(modifier.Loc, p.nodeSlicePool.NewSlice1(modifier))
+		p.finishNode(modifier, modifierPos)
+		list = append(list, modifier)
 	}
-	if p.token == ast.KindAbstractKeyword {
-		pos := p.nodePos()
-		modifier := p.factory.NewModifier(p.token)
-		p.nextToken()
-		p.finishNode(modifier, pos)
-		return p.newModifierList(modifier.Loc, p.nodeSlicePool.NewSlice1(modifier))
-	}
-	return nil
+
+	return p.newModifierList(core.NewTextRange(pos, p.nodePos()), p.nodeSlicePool.Clone(list))
 }
 
 func (p *Parser) hasIdentityModifier(modifiers *ast.ModifierList) bool {

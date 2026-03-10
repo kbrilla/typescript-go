@@ -1,0 +1,68 @@
+//// [tests/cases/compiler/identityModifierBoundaries.ts] ////
+
+=== identityModifierBoundaries.ts ===
+declare const read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    const stable: string = read(); // OK
+>stable : Symbol(stable, Decl(identityModifierBoundaries.ts, 3, 9))
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+}
+
+declare function unknownMutate(): void;
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierBoundaries.ts, 4, 1))
+
+declare function invoke(cb: () => void): void;
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 6, 39))
+>cb : Symbol(cb, Decl(identityModifierBoundaries.ts, 8, 24))
+
+declare function delay(): Promise<void>;
+>delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 8, 46))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    unknownMutate();
+>unknownMutate : Symbol(unknownMutate, Decl(identityModifierBoundaries.ts, 4, 1))
+
+    const afterUnknownCall: string = read(); // should error
+>afterUnknownCall : Symbol(afterUnknownCall, Decl(identityModifierBoundaries.ts, 13, 9))
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    invoke(() => {
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 6, 39))
+
+        // unknown callback boundary
+    });
+    const afterCallbackCall: string = read(); // should error
+>afterCallbackCall : Symbol(afterCallbackCall, Decl(identityModifierBoundaries.ts, 20, 9))
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+}
+
+async function testAwaitBoundary() {
+>testAwaitBoundary : Symbol(testAwaitBoundary, Decl(identityModifierBoundaries.ts, 21, 1))
+
+    if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+        await delay();
+>delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 8, 46))
+
+        const afterAwait: string = read(); // should error
+>afterAwait : Symbol(afterAwait, Decl(identityModifierBoundaries.ts, 26, 13))
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+    }
+}
+

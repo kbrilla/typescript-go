@@ -6938,6 +6938,7 @@ func IsElementAccessExpression(node *Node) bool {
 
 type CallExpression struct {
 	ExpressionBase
+	FlowNodeBase
 	DeclarationBase
 	compositeNodeBase
 	Expression       *Expression // Expression

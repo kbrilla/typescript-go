@@ -1,0 +1,119 @@
+//// [tests/cases/compiler/identityModifierNarrowing.ts] ////
+
+=== identityModifierNarrowing.ts ===
+// Basic identity function type narrowing
+declare const value: identity () => string | undefined;
+>value : () => string | undefined
+
+if (value() !== undefined) {
+>value() !== undefined : boolean
+>value() : string | undefined
+>value : () => string | undefined
+>undefined : undefined
+
+    value(); // should be narrowed to string
+>value() : string | undefined
+>value : () => string | undefined
+
+    console.log(value().toUpperCase()); // should work, no error
+>console.log(value().toUpperCase()) : void
+>console.log : (...data: any[]) => void
+>console : Console
+>log : (...data: any[]) => void
+>value().toUpperCase() : string
+>value().toUpperCase : () => string
+>value() : string | undefined
+>value : () => string | undefined
+>toUpperCase : () => string
+}
+
+// Identity function with truthiness check
+declare const flag: identity () => string | null;
+>flag : () => string | null
+
+if (flag()) {
+>flag() : string | null
+>flag : () => string | null
+
+    flag(); // should be narrowed to string (truthy)
+>flag() : string | null
+>flag : () => string | null
+
+    console.log(flag().length); // should work
+>console.log(flag().length) : void
+>console.log : (...data: any[]) => void
+>console : Console
+>log : (...data: any[]) => void
+>flag().length : number
+>flag() : string | null
+>flag : () => string | null
+>length : number
+}
+
+// Identity function narrowing cleared in closures
+declare const closureVal: identity () => string | undefined;
+>closureVal : () => string | undefined
+
+if (closureVal() !== undefined) {
+>closureVal() !== undefined : boolean
+>closureVal() : string | undefined
+>closureVal : () => string | undefined
+>undefined : undefined
+
+    setTimeout(() => {
+>setTimeout(() => {        closureVal(); // should be string | undefined (narrowing lost in closure)    }) : number
+>setTimeout : (handler: TimerHandler, timeout?: number | undefined, ...arguments: any[]) => number
+>() => {        closureVal(); // should be string | undefined (narrowing lost in closure)    } : () => void
+
+        closureVal(); // should be string | undefined (narrowing lost in closure)
+>closureVal() : string | undefined
+>closureVal : () => string | undefined
+
+    });
+}
+
+// Generic identity function type alias
+type Signal<T> = identity () => T;
+>Signal : Signal<T>
+
+declare const sig: Signal<string | undefined>;
+>sig : Signal<string | undefined>
+
+if (sig() !== undefined) {
+>sig() !== undefined : boolean
+>sig() : string | undefined
+>sig : Signal<string | undefined>
+>undefined : undefined
+
+    sig(); // should be narrowed to string
+>sig() : string | undefined
+>sig : Signal<string | undefined>
+}
+
+// Multiple identity functions - independent narrowing
+declare const a: identity () => string | undefined;
+>a : () => string | undefined
+
+declare const b: identity () => number | undefined;
+>b : () => number | undefined
+
+if (a() !== undefined && b() !== undefined) {
+>a() !== undefined && b() !== undefined : boolean
+>a() !== undefined : boolean
+>a() : string | undefined
+>a : () => string | undefined
+>undefined : undefined
+>b() !== undefined : boolean
+>b() : number | undefined
+>b : () => number | undefined
+>undefined : undefined
+
+    a(); // should be string
+>a() : string | undefined
+>a : () => string | undefined
+
+    b(); // should be number
+>b() : number | undefined
+>b : () => number | undefined
+}
+

@@ -299,6 +299,14 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 			return FlowType{t: c.unreachableNeverType}
 		}
 	}
+
+	if ast.IsCallExpression(f.reference) && !c.isMatchingReference(f.reference, flow.Node) {
+		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
+		if flowType.t != f.declaredType {
+			return c.newFlowType(f.declaredType, flowType.incomplete)
+		}
+	}
+
 	return FlowType{}
 }
 
@@ -388,7 +396,10 @@ func (c *Checker) narrowType(f *FlowState, t *Type, expr *ast.Node, assumeTrue b
 	case ast.KindThisKeyword, ast.KindSuperKeyword, ast.KindPropertyAccessExpression, ast.KindElementAccessExpression:
 		return c.narrowTypeByTruthiness(f, t, expr, assumeTrue)
 	case ast.KindCallExpression:
-		return c.narrowTypeByCallExpression(f, t, expr, assumeTrue)
+		if narrowed := c.narrowTypeByCallExpression(f, t, expr, assumeTrue); narrowed != t {
+			return narrowed
+		}
+		return c.narrowTypeByTruthiness(f, t, expr, assumeTrue)
 	case ast.KindParenthesizedExpression, ast.KindNonNullExpression, ast.KindSatisfiesExpression:
 		return c.narrowType(f, t, expr.Expression(), assumeTrue)
 	case ast.KindBinaryExpression:

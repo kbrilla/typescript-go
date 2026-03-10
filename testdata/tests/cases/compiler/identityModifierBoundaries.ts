@@ -1,0 +1,32 @@
+// @strict: true
+// @noEmit: true
+
+declare const read: identity () => string | undefined;
+
+if (read() !== undefined) {
+    const stable: string = read(); // OK
+}
+
+declare function unknownMutate(): void;
+
+declare function invoke(cb: () => void): void;
+declare function delay(): Promise<void>;
+
+if (read() !== undefined) {
+    unknownMutate();
+    const afterUnknownCall: string = read(); // should error
+}
+
+if (read() !== undefined) {
+    invoke(() => {
+        // unknown callback boundary
+    });
+    const afterCallbackCall: string = read(); // should error
+}
+
+async function testAwaitBoundary() {
+    if (read() !== undefined) {
+        await delay();
+        const afterAwait: string = read(); // should error
+    }
+}
