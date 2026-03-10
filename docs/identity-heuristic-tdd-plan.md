@@ -264,13 +264,17 @@ Current status:
   - `const fwd = ((x) => x)(read);` does not invalidate prior `identity` narrowing.
 - Extended Tier 2 positive coverage to local const helper identifiers with trivial passthrough bodies:
   - `const localId = <T>(x: T) => x; const forwarded = localId(read);` preserves narrowing.
+- Extended Tier 2 positive coverage to local function declaration helpers with trivial passthrough bodies:
+  - `function localFnId<T>(x: T) { return x; } const forwarded = localFnId(read);` preserves narrowing.
 - Kept conservative invalidation for non-inline helper passthrough patterns:
   - `const forwarded = pass(read);`
   - `useReader(pass(read));`
 - Kept mutable/reassigned local helpers conservative by design:
   - `let localMaybeId = <T>(x: T) => x; localMaybeId = pass; localMaybeId(read);` invalidates prior narrowing.
+- Kept non-trivial local function helper bodies conservative by design:
+  - `function localFnWrap<T>(x: T) { return () => x; } localFnWrap(read);` invalidates prior narrowing.
 - Checker change is intentionally narrow and syntactic in `internal/checker/flow.go`:
-  - exempt only call initializers that are inline trivial passthrough function values, or identifier callees that resolve to `const` locals initialized with trivial passthrough function-like values
+  - exempt only call initializers that are inline trivial passthrough function values, identifier callees that resolve to `const` locals initialized with trivial passthrough function-like values, or identifier callees that resolve to trivial local function declarations
   - accepted forms: single parameter, body is parameter expression or single `return` of parameter
 - Remaining Tier 2 gaps:
   - no precision preservation yet for mutable/reassigned helper identifiers even when their initial value is trivial passthrough

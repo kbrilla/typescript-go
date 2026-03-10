@@ -31,6 +31,30 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
+    // Tier 2 precision target: local function declaration helper with trivial passthrough body.
+    function localFnId<T>(x: T) {
+        return x;
+    }
+    const forwarded = localFnId(read);
+    forwarded;
+
+    const stillString: string = read(); // should stay narrowed
+    stillString;
+}
+
+if (read() !== undefined) {
+    // Conservative boundary: non-trivial helper body should still invalidate prior narrowing.
+    function localFnWrap<T>(x: T) {
+        return () => x;
+    }
+    const forwarded = localFnWrap(read);
+    forwarded;
+
+    const afterNonTrivialFnHelper: string = read(); // current conservative: error
+    afterNonTrivialFnHelper;
+}
+
+if (read() !== undefined) {
     // Conservative boundary: mutable helper can be reassigned and must invalidate prior narrowing.
     let localMaybeId = <T>(x: T) => x;
     localMaybeId = pass;

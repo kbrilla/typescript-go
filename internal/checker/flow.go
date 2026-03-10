@@ -342,12 +342,20 @@ func (c *Checker) isInlineTrivialPassthroughCallForCallReference(callee *ast.Nod
 
 	if ast.IsIdentifier(invoked) {
 		symbol := c.getResolvedSymbol(invoked)
-		if symbol == c.unknownSymbol || !c.isConstantVariable(symbol) {
+		if symbol == c.unknownSymbol {
 			return false
 		}
 
 		declaration := symbol.ValueDeclaration
-		if declaration == nil || !ast.IsVariableDeclaration(declaration) {
+		if declaration == nil {
+			return false
+		}
+
+		if ast.IsFunctionDeclaration(declaration) {
+			return c.isTrivialPassthroughFunctionLike(declaration)
+		}
+
+		if !c.isConstantVariable(symbol) || !ast.IsVariableDeclaration(declaration) {
 			return false
 		}
 

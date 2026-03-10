@@ -1,12 +1,14 @@
-identityModifierTier2.ts(37,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(50,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(46,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(61,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(56,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(70,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(80,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierTier2.ts (3 errors) ====
+==== identityModifierTier2.ts (4 errors) ====
     // Candidate Tier 2 patterns: local alias-preserving forwarding and helper passthrough.
     declare const read: identity () => string | undefined;
     declare function pass<T>(x: T): T;
@@ -34,6 +36,33 @@ identityModifierTier2.ts(56,11): error TS2322: Type 'string | undefined' is not 
     
         const afterConstHelperPassthrough: string = read(); // should stay narrowed
         afterConstHelperPassthrough;
+    }
+    
+    if (read() !== undefined) {
+        // Tier 2 precision target: local function declaration helper with trivial passthrough body.
+        function localFnId<T>(x: T) {
+            return x;
+        }
+        const forwarded = localFnId(read);
+        forwarded;
+    
+        const stillString: string = read(); // should stay narrowed
+        stillString;
+    }
+    
+    if (read() !== undefined) {
+        // Conservative boundary: non-trivial helper body should still invalidate prior narrowing.
+        function localFnWrap<T>(x: T) {
+            return () => x;
+        }
+        const forwarded = localFnWrap(read);
+        forwarded;
+    
+        const afterNonTrivialFnHelper: string = read(); // current conservative: error
+              ~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterNonTrivialFnHelper;
     }
     
     if (read() !== undefined) {
