@@ -251,6 +251,12 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 	// Assignments only narrow the computed type if the declared type is a union type. Thus, we
 	// only need to evaluate the assigned type if the declared type is a union type.
 	if c.isMatchingReference(f.reference, node) {
+		if c.shouldInvalidateTier1WriteForm(f.reference, node) {
+			if !c.isReachableFlowNode(flow) {
+				return FlowType{t: c.unreachableNeverType}
+			}
+			return FlowType{t: f.declaredType}
+		}
 		if !c.isReachableFlowNode(flow) {
 			return FlowType{t: c.unreachableNeverType}
 		}
@@ -314,6 +320,35 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 	}
 	// Assignment doesn't affect reference
 	return FlowType{}
+}
+
+func (c *Checker) shouldInvalidateTier1WriteForm(reference *ast.Node, assignmentTargetNode *ast.Node) bool {
+	if !(ast.IsPropertyAccessExpression(reference) || ast.IsElementAccessExpression(reference)) {
+		return false
+	}
+
+	if !(ast.IsPropertyAccessExpression(assignmentTargetNode) || ast.IsElementAccessExpression(assignmentTargetNode)) {
+		return false
+	}
+
+	assignmentTarget := ast.GetAssignmentTarget(assignmentTargetNode)
+	if assignmentTarget == nil {
+		return false
+	}
+
+	switch assignmentTarget.Kind {
+	case ast.KindBinaryExpression:
+		operator := assignmentTarget.AsBinaryExpression().OperatorToken.Kind
+		return operator != ast.KindEqualsToken && ast.IsAssignmentOperator(operator)
+	case ast.KindPrefixUnaryExpression:
+		operator := assignmentTarget.AsPrefixUnaryExpression().Operator
+		return operator == ast.KindPlusPlusToken || operator == ast.KindMinusMinusToken
+	case ast.KindPostfixUnaryExpression:
+		operator := assignmentTarget.AsPostfixUnaryExpression().Operator
+		return operator == ast.KindPlusPlusToken || operator == ast.KindMinusMinusToken
+	default:
+		return false
+	}
 }
 
 func (c *Checker) getInitialOrAssignedType(f *FlowState, flow *ast.FlowNode) *Type {
@@ -696,11 +731,13 @@ func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *
 
 	readAccess := ast.SkipParentheses(reference.Expression())
 	setAccess := ast.SkipParentheses(call.Expression())
-	if !ast.IsPropertyAccessExpression(readAccess) || !ast.IsPropertyAccessExpression(setAccess) {
+	readReceiver, readName, readOk := c.getLiteralNamedAccessReceiverAndName(readAccess)
+	setReceiver, setName, setOk := c.getLiteralNamedAccessReceiverAndName(setAccess)
+	if !readOk || !setOk {
 		return false
 	}
 
-	if readAccess.Name().Text() != "read" || setAccess.Name().Text() != "set" {
+	if readName != "read" || setName != "set" {
 		return false
 	}
 
@@ -708,12 +745,26 @@ func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *
 		return false
 	}
 
-	if !c.isMatchingReference(c.getNormalizedReferenceCandidate(readAccess.Expression()), c.getNormalizedReferenceCandidate(setAccess.Expression())) {
+	if !c.isMatchingReference(c.getNormalizedReferenceCandidate(readReceiver), c.getNormalizedReferenceCandidate(setReceiver)) {
 		return false
 	}
 
 	argType := c.getTypeOfExpression(call.Arguments()[0])
 	return argType.flags&(TypeFlagsUndefined|TypeFlagsNull) == 0
+}
+
+func (c *Checker) getLiteralNamedAccessReceiverAndName(access *ast.Node) (*ast.Node, string, bool) {
+	switch {
+	case ast.IsPropertyAccessExpression(access):
+		return access.Expression(), access.Name().Text(), true
+	case ast.IsElementAccessExpression(access):
+		arg := ast.SkipParentheses(access.AsElementAccessExpression().ArgumentExpression)
+		if arg != nil && ast.IsStringLiteralLike(arg) {
+			return access.Expression(), arg.Text(), true
+		}
+	}
+
+	return nil, "", false
 }
 
 func (c *Checker) shouldPreserveNoopCallbackCallNarrowing(reference *ast.Node, call *ast.Node) bool {

@@ -240,7 +240,8 @@ Current status:
   - Call expressions now participate in flow tracking and narrowing conditions.
   - Added parity write-form coverage: property assignment write, method setter-call write, and callable hybrid setter-style write.
   - Closed the P5 getter-vs-identity write parity slice for same-receiver `read()` then `set(non-nullish)` shape.
-  - Remaining: expand additional Tier 1 write-shape matrix breadth.
+  - Added Tier 1 write-form expansion slice for matching endpoint property/element compound and unary writes, plus safe bracket mutator parity (`identityModifierTier1Writes.ts`).
+  - Remaining: broaden write-form coverage to additional operators/shapes beyond the current narrow local matrix.
 - [ ] Step 5: Tier 2 guarded invalidation (broad)
   - Added starter local test coverage for candidate Tier 2 forwarding/passthrough patterns with current conservative expectations.
   - Added narrow positive precision slices for trivial local passthrough helper forms.
@@ -270,6 +271,22 @@ Current status:
 1. Expand Tier 2 guarded precision beyond trivial local passthrough forms while preserving soundness.
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
 3. Expand parity mapping from the getter corpus beyond currently covered source slices.
+
+## Tier 1 Write-Form Matrix (Current Local Slice)
+| Write form | Example shape | Status | Test source |
+| --- | --- | --- | --- |
+| Compound assignment (dot) invalidation | `if (model.value !== undefined) { model.value += "!"; const s: string = model.value; }` | Implemented (invalidates) | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Logical assignment (dot) invalidation | `??=`, `||=`, `&&=` on `model.value` after guard | Implemented (invalidates) | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Logical assignment (bracket-literal) invalidation | `model["value"] ||= ...` after guard | Implemented (invalidates) | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Unary mutation (dot) invalidation | `model.value++`, `--model.value` after guard | Implemented (invalidates) | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Unary mutation (bracket-literal) invalidation | `model["value"]++` after guard | Implemented (invalidates) | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Bracket-literal mutator parity with dot-form | `store["set"]("next")` vs `store.set("next")` | Implemented (preserve parity in narrow `read`/`set(non-nullish)` slice) | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Bracket-literal simple assignment parity with dot-form | `model["value"] = ...` vs `model.value = ...` | Covered parity check (current behavior preserved) | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+
+Tier 1 write-form gaps still open:
+- Non-literal/bracket-dynamic property names are intentionally out of scope for this slice.
+- Additional compound operators beyond currently exercised local cases need explicit parity tests.
+- Multi-hop receiver alias write interactions (write through aliases then read) need dedicated red/green slices.
 
 ### Latest Increment (Nested/Indirect Callback Forms)
 - Added red tests in `identityModifierBoundaries.ts` and `identityModifierGetterParitySweep.ts` for:

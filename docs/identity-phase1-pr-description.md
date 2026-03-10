@@ -8,6 +8,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - `docs/identity-modifier-spec.md`
 - `docs/identity-heuristic-tdd-plan.md`
 - `testdata/tests/cases/compiler/identityModifierParity.ts`
+- `testdata/tests/cases/compiler/identityModifierTier1Writes.ts`
 - `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`
 - `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts`
 - `testdata/tests/cases/compiler/identityModifierHeuristicDiagnostics.ts`
@@ -132,6 +133,11 @@ flowchart LR
   - Generic boundary diagnostic text (TS100014): `Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.`
 - Conditional-expression callback initializer boundary invalidation (`const x = cond ? invoke(() => {}) : invoke(() => {})`).
 - Tier 1 write-form parity expansion in local parity tests (property assignment and callable hybrid setter-style calls).
+- Tier 1 write-form invalidation expansion for matching property/element endpoint writes:
+  - compound and logical assignments on matched endpoint references now conservatively invalidate prior narrowing
+  - unary mutations (`++`/`--`) on matched endpoint references now conservatively invalidate prior narrowing
+- Safe bracket-literal parity expansion for read/set mutator carveout:
+  - `store["set"](...)` now aligns with `store.set(...)` for the existing narrow same-receiver read/set(non-nullish) preserve slice.
 - Tier 2 starter test coverage for candidate forwarding/passthrough shapes with current conservative expectations in `testdata/tests/cases/compiler/identityModifierTier2.ts`.
 - Narrow Tier 2 precision slice for inline trivial passthrough forwarding:
   - `const fwd = ((x) => x)(read);` preserves prior narrowing.
@@ -183,10 +189,26 @@ flowchart LR
 
 ### Left for Phase 1
 - [ ] Broaden nested/indirect callback boundary parity beyond currently covered forms (statement, declaration-initializer, assignment-expression, conditional initializer, and strict const no-op alias forms are now covered).
-- [ ] Expand Tier 1 write-form matrix breadth beyond current local parity slices.
+- [ ] Expand Tier 1 write-form matrix breadth beyond the current compound/logical/unary local endpoint slice.
 - [ ] Extend Tier 2 guarded precision beyond trivial syntactic passthrough forms while preserving soundness.
 - [x] Add heuristic-limit diagnostics for uncertainty-boundary conservative invalidation (Step 7 narrow slice).
 - [ ] Expand parity mapping against submodule scenarios where practical.
+
+## Tier 1 Write-Form Matrix (This PR Slice)
+| Write form | Example shape | Status | Test source |
+| --- | --- | --- | --- |
+| Compound assignment (dot) invalidation | `model.value += ...` after guard | Implemented | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Logical assignment (dot) invalidation | `model.value ??= / ||= / &&= ...` after guard | Implemented | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Logical assignment (bracket-literal) invalidation | `model["value"] ||= ...` after guard | Implemented | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Unary mutation (dot) invalidation | `model.value++`, `--model.value` after guard | Implemented | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Unary mutation (bracket-literal) invalidation | `model["value"]++` after guard | Implemented | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Bracket-literal mutator parity | `store["set"]("next")` vs `store.set("next")` | Implemented | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+| Bracket-literal simple write parity | `model["value"] = ...` vs `model.value = ...` | Covered parity check (current behavior unchanged) | `testdata/tests/cases/compiler/identityModifierTier1Writes.ts` |
+
+Remaining Tier 1 write-form gaps:
+- dynamic/non-literal element access writes
+- broader operator matrix and alias-forwarded write shapes
+- deeper parity mapping to additional submodule getter/write scenarios
 
 ## Getter vs Identity Parity Matrix
 | Behavior category | Getter | Identity | Parity |
