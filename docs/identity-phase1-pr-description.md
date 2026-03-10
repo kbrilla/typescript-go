@@ -18,7 +18,7 @@ This PR intentionally excludes explicit `mutator`/`links` contract behavior (Pha
 - FR4 (uncertainty boundaries, partial):
   - Unknown call boundary invalidation (narrow slice).
   - Callback invocation boundary invalidation (narrow slice).
-  - Await suspension boundary invalidation for statement-form `await` (latest slice).
+  - Await suspension boundary invalidation for both statement-form `await` and assignment-form `const x = await ...` (latest slice).
   - Assignment-based alias-escape invalidation (narrow slice), including variable initializer and binary reassignment forms.
 - Diagnostics slice (partial FR9 groundwork):
   - Stable grammar/placement diagnostics for identity modifier misuse.
@@ -27,7 +27,7 @@ This PR intentionally excludes explicit `mutator`/`links` contract behavior (Pha
 
 ### In Progress
 - FR4 uncertainty matrix completion:
-  - Broader alias-escape parity matrix (non-trivial escapes/indirect forms) and wider await/callback parity coverage still pending.
+  - Broader alias-escape parity matrix (non-trivial escapes/indirect forms) and wider callback parity coverage still pending.
 - Step 4 Tier 1 invalidation hardening:
   - Additional explicit write-form invalidation tests pending.
 
@@ -60,7 +60,7 @@ Most recent full required run is green:
 - `npx hereby format`
 
 ## Remaining Work (Next Slices)
-1. Expand Step 6 with alias-escape and wider await/callback boundary coverage.
+1. Expand Step 6 with alias-escape and wider callback boundary coverage.
 2. Expand alias-escape coverage beyond direct assignment forms while preserving narrow blast radius.
 3. Start Tier 2 guarded invalidation tests as red-first slices.
 

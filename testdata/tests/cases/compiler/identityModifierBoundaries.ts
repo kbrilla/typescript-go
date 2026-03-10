@@ -45,3 +45,11 @@ async function testAwaitBoundary() {
         const afterAwait: string = read(); // should error
     }
 }
+
+async function testAwaitAssignmentBoundary() {
+    if (read() !== undefined) {
+        const x = await delay();
+        x;
+        const afterAwaitAssignment: string = read(); // should error
+    }
+}

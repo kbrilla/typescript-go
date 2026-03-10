@@ -102,3 +102,23 @@ async function testAwaitBoundary() {
     }
 }
 
+async function testAwaitAssignmentBoundary() {
+>testAwaitAssignmentBoundary : Symbol(testAwaitAssignmentBoundary, Decl(identityModifierBoundaries.ts, 43, 1))
+
+    if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+        const x = await delay();
+>x : Symbol(x, Decl(identityModifierBoundaries.ts, 47, 13))
+>delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 8, 46))
+
+        x;
+>x : Symbol(x, Decl(identityModifierBoundaries.ts, 47, 13))
+
+        const afterAwaitAssignment: string = read(); // should error
+>afterAwaitAssignment : Symbol(afterAwaitAssignment, Decl(identityModifierBoundaries.ts, 49, 13))
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+    }
+}
+

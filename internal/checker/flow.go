@@ -262,6 +262,16 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 		return FlowType{t: f.declaredType}
 	}
 
+	if c.isAwaitAssignmentBoundaryForCallReference(f.reference, node) {
+		if !c.isReachableFlowNode(flow) {
+			return FlowType{t: c.unreachableNeverType}
+		}
+		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
+		if flowType.t != f.declaredType {
+			return c.newFlowType(f.declaredType, flowType.incomplete)
+		}
+	}
+
 	// for (const _ in ref) acts as a nonnull on ref
 	if ast.IsVariableDeclaration(node) && ast.IsForInStatement(node.Parent.Parent) && (c.isMatchingReference(f.reference, node.Parent.Parent.Expression()) || c.optionalChainContainsReference(node.Parent.Parent.Expression(), f.reference)) {
 		return FlowType{t: c.getNonNullableTypeIfNeeded(c.finalizeEvolvingArrayType(c.getTypeAtFlowNode(f, flow.Antecedent).t))}
@@ -293,6 +303,24 @@ func (c *Checker) isAliasEscapeAssignmentForCallReference(reference *ast.Node, a
 	}
 
 	return false
+}
+
+func (c *Checker) isAwaitAssignmentBoundaryForCallReference(reference *ast.Node, assignment *ast.Node) bool {
+	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 {
+		return false
+	}
+
+	var initializer *ast.Node
+	switch {
+	case ast.IsVariableDeclaration(assignment):
+		initializer = assignment.Initializer()
+	case ast.IsBindingElement(assignment):
+		initializer = assignment.Initializer()
+	default:
+		return false
+	}
+
+	return initializer != nil && ast.IsAwaitExpression(initializer)
 }
 
 func (c *Checker) isEmptyArrayAssignment(node *ast.Node) bool {

@@ -297,3 +297,14 @@ Current status:
   - `identityModifierNarrowing.ts`
   - `identityModifierDiagnostics.ts`
   - `identityModifierBoundaries.ts`
+
+### Latest Increment (Boundaries - Await Assignment Slice)
+- Extended `testdata/tests/cases/compiler/identityModifierBoundaries.ts` with `const x = await delay()` and a post-await read assertion.
+- Red phase confirmed mismatch with targeted run:
+  - `go test -run='TestLocal/identityModifierBoundaries\.ts' ./internal/testrunner`
+- Green phase binder change (`internal/binder/binder.go`): `bindVariableDeclarationFlow` now emits a flow-call boundary when a declaration initializer is an `AwaitExpression`.
+- Checker behavior remained unchanged in this slice and reused existing conservative call-boundary invalidation in `getTypeAtFlowCall` (`internal/checker/flow.go`).
+- Accepted only relevant boundary baselines:
+  - `testdata/baselines/reference/compiler/identityModifierBoundaries.errors.txt`
+  - `testdata/baselines/reference/compiler/identityModifierBoundaries.symbols`
+  - `testdata/baselines/reference/compiler/identityModifierBoundaries.types`

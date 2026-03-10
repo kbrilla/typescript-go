@@ -125,3 +125,28 @@ async function testAwaitBoundary() {
     }
 }
 
+async function testAwaitAssignmentBoundary() {
+>testAwaitAssignmentBoundary : () => Promise<void>
+
+    if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+        const x = await delay();
+>x : void
+>await delay() : void
+>delay() : Promise<void>
+>delay : () => Promise<void>
+
+        x;
+>x : void
+
+        const afterAwaitAssignment: string = read(); // should error
+>afterAwaitAssignment : string
+>read() : string | undefined
+>read : () => string | undefined
+    }
+}
+
