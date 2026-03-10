@@ -1,14 +1,20 @@
-identityModifierParity.ts(31,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierParity.ts(37,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierParity.ts(41,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierParity.ts(47,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierParity.ts(54,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierParity.ts(60,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierParity.ts(75,51): error TS2339: Property 'radius' does not exist on type 'Shape'.
+identityModifierParity.ts(72,5): error TS2554: Expected 1 arguments, but got 0.
+identityModifierParity.ts(74,11): error TS2322: Type 'void' is not assignable to type 'string'.
+identityModifierParity.ts(74,40): error TS2554: Expected 1 arguments, but got 0.
+identityModifierParity.ts(79,5): error TS2554: Expected 1 arguments, but got 0.
+identityModifierParity.ts(81,11): error TS2322: Type 'void' is not assignable to type 'string'.
+identityModifierParity.ts(81,47): error TS2554: Expected 1 arguments, but got 0.
+identityModifierParity.ts(102,51): error TS2339: Property 'radius' does not exist on type 'Shape'.
   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierParity.ts (4 errors) ====
+==== identityModifierParity.ts (10 errors) ====
     // Parity baseline: property getter/setter repeated read narrowing.
     declare const propertyModel: {
         get value(): string | undefined;
@@ -18,6 +24,12 @@ identityModifierParity.ts(75,51): error TS2339: Property 'radius' does not exist
     if (propertyModel.value !== undefined) {
         const propertyStable: string = propertyModel.value; // OK
         propertyStable;
+    }
+    
+    if (propertyModel.value !== undefined) {
+        propertyModel.value = "next";
+        const propertyAfterSet: string = propertyModel.value; // should error
+        propertyAfterSet;
     }
     
     // Identity parity: repeated-read stable narrowing success.
@@ -73,6 +85,43 @@ identityModifierParity.ts(75,51): error TS2339: Property 'radius' does not exist
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
 !!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         afterSetCall;
+    }
+    
+    // Callable hybrid parity: same callable symbol used as getter and setter-style write.
+    interface HybridSignal {
+        identity (): string | undefined;
+        (v: string | undefined): void;
+    }
+    
+    declare const hybrid: HybridSignal;
+    
+    if (hybrid() !== undefined) {
+        ~~~~~~
+!!! error TS2554: Expected 1 arguments, but got 0.
+!!! related TS6210 identityModifierParity.ts:67:6: An argument for 'v' was not provided.
+        hybrid("next");
+        const afterHybridSetCall: string = hybrid(); // should error
+              ~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'void' is not assignable to type 'string'.
+                                           ~~~~~~
+!!! error TS2554: Expected 1 arguments, but got 0.
+!!! related TS6210 identityModifierParity.ts:67:6: An argument for 'v' was not provided.
+        afterHybridSetCall;
+    }
+    
+    // Callable hybrid direct undefined write should also invalidate prior narrowing.
+    if (hybrid() !== undefined) {
+        ~~~~~~
+!!! error TS2554: Expected 1 arguments, but got 0.
+!!! related TS6210 identityModifierParity.ts:67:6: An argument for 'v' was not provided.
+        hybrid(undefined);
+        const afterHybridUndefinedWrite: string = hybrid(); // should error
+              ~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'void' is not assignable to type 'string'.
+                                                  ~~~~~~
+!!! error TS2554: Expected 1 arguments, but got 0.
+!!! related TS6210 identityModifierParity.ts:67:6: An argument for 'v' was not provided.
+        afterHybridUndefinedWrite;
     }
     
     // Discriminated-union parity: repeated identity reads should narrow by kind.

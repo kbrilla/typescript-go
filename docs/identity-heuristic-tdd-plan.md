@@ -220,7 +220,8 @@ Current status:
   - Remaining: complete broader alias/generic-return coverage.
 - [~] Step 4: Tier 1 heuristic invalidation
   - Call expressions now participate in flow tracking and narrowing conditions.
-  - Remaining: add explicit write-invalidation tests and verify all Tier 1 write forms.
+  - Added parity write-form coverage: property assignment write, method setter-call write, and callable hybrid setter-style write.
+  - Remaining: expand additional Tier 1 write-shape matrix breadth.
 - [ ] Step 5: Tier 2 guarded invalidation
 - [~] Step 6: Uncertainty boundaries
   - Covered in local tests: unknown direct call, callback invocation boundary (statement + assignment-form), await suspension boundary, assignment-based alias-escape, and indirect alias escape via helper passthrough.
@@ -318,6 +319,19 @@ Current status:
 
 ### Latest Increment (Boundaries - Alias Escape Reassignment Case)
 - Extended `identityModifierBoundaries.ts` with a second alias-escape form using binary assignment (`reassignedRead = read`).
+
+### Latest Increment (Tier 1 Write-Form Parity Expansion)
+- Extended `testdata/tests/cases/compiler/identityModifierParity.ts` with small write-form parity scenarios:
+  - property setter assignment invalidation (`propertyModel.value = ...`)
+  - callable setter-style invalidation on same callable symbol (`hybrid("next")`)
+  - callable direct `undefined` write invalidation (`hybrid(undefined)`)
+- Red phase executed first via:
+  - `go test -run='TestLocal/identityModifierParity\.ts' ./internal/testrunner`
+- Green result required baseline updates only; no parser/binder/checker code changes were needed for this narrow slice.
+- Accepted only relevant parity baselines:
+  - `testdata/baselines/reference/compiler/identityModifierParity.errors.txt`
+  - `testdata/baselines/reference/compiler/identityModifierParity.symbols`
+  - `testdata/baselines/reference/compiler/identityModifierParity.types`
 - Existing alias-escape invalidation logic in `getTypeAtFlowAssignment` correctly widens `read()` after reassignment escape, so no additional checker changes were required for this slice.
 - Accepted updated boundary baselines and re-verified the focused identity local suite:
   - `identityModifierErrors.ts`

@@ -31,6 +31,30 @@ if (propertyModel.value !== undefined) {
 >propertyStable : string
 }
 
+if (propertyModel.value !== undefined) {
+>propertyModel.value !== undefined : boolean
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    propertyModel.value = "next";
+>propertyModel.value = "next" : "next"
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>"next" : "next"
+
+    const propertyAfterSet: string = propertyModel.value; // should error
+>propertyAfterSet : string
+>propertyModel.value : string
+>propertyModel : { value: string | undefined; }
+>value : string
+
+    propertyAfterSet;
+>propertyAfterSet : string
+}
+
 // Identity parity: repeated-read stable narrowing success.
 declare const identityRead: identity () => string | undefined;
 >identityRead : () => string | undefined
@@ -157,6 +181,59 @@ if (store.read() !== undefined) {
 
     afterSetCall;
 >afterSetCall : string
+}
+
+// Callable hybrid parity: same callable symbol used as getter and setter-style write.
+interface HybridSignal {
+    identity (): string | undefined;
+>identity : () => string | undefined
+
+    (v: string | undefined): void;
+>v : string | undefined
+}
+
+declare const hybrid: HybridSignal;
+>hybrid : HybridSignal
+
+if (hybrid() !== undefined) {
+>hybrid() !== undefined : boolean
+>hybrid() : void
+>hybrid : HybridSignal
+>undefined : undefined
+
+    hybrid("next");
+>hybrid("next") : void
+>hybrid : HybridSignal
+>"next" : "next"
+
+    const afterHybridSetCall: string = hybrid(); // should error
+>afterHybridSetCall : string
+>hybrid() : void
+>hybrid : HybridSignal
+
+    afterHybridSetCall;
+>afterHybridSetCall : string
+}
+
+// Callable hybrid direct undefined write should also invalidate prior narrowing.
+if (hybrid() !== undefined) {
+>hybrid() !== undefined : boolean
+>hybrid() : void
+>hybrid : HybridSignal
+>undefined : undefined
+
+    hybrid(undefined);
+>hybrid(undefined) : void
+>hybrid : HybridSignal
+>undefined : undefined
+
+    const afterHybridUndefinedWrite: string = hybrid(); // should error
+>afterHybridUndefinedWrite : string
+>hybrid() : void
+>hybrid : HybridSignal
+
+    afterHybridUndefinedWrite;
+>afterHybridUndefinedWrite : string
 }
 
 // Discriminated-union parity: repeated identity reads should narrow by kind.

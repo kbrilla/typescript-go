@@ -12,6 +12,12 @@ if (propertyModel.value !== undefined) {
     propertyStable;
 }
 
+if (propertyModel.value !== undefined) {
+    propertyModel.value = "next";
+    const propertyAfterSet: string = propertyModel.value; // should error
+    propertyAfterSet;
+}
+
 // Identity parity: repeated-read stable narrowing success.
 declare const identityRead: identity () => string | undefined;
 
@@ -56,6 +62,27 @@ if (store.read() !== undefined) {
     store.set("next");
     const afterSetCall: string = store.read(); // should error
     afterSetCall;
+}
+
+// Callable hybrid parity: same callable symbol used as getter and setter-style write.
+interface HybridSignal {
+    identity (): string | undefined;
+    (v: string | undefined): void;
+}
+
+declare const hybrid: HybridSignal;
+
+if (hybrid() !== undefined) {
+    hybrid("next");
+    const afterHybridSetCall: string = hybrid(); // should error
+    afterHybridSetCall;
+}
+
+// Callable hybrid direct undefined write should also invalidate prior narrowing.
+if (hybrid() !== undefined) {
+    hybrid(undefined);
+    const afterHybridUndefinedWrite: string = hybrid(); // should error
+    afterHybridUndefinedWrite;
 }
 
 // Discriminated-union parity: repeated identity reads should narrow by kind.

@@ -14,6 +14,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - Parser lookahead fix so `identity<...>` type references are not misparsed as identity function-type starts.
 - Repeated-read narrowing for covered local-flow identity call patterns.
 - Conservative invalidation for currently implemented uncertainty boundaries.
+- Tier 1 write-form parity expansion in local parity tests (property assignment and callable hybrid setter-style calls).
 
 ## Boundary Coverage Matrix
 | Boundary | Example shape | Status | Test source |
@@ -37,6 +38,9 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Callback invalidation | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 | Await invalidation | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 | Write-call analog invalidation | `store.set(...)` then `store.read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| Property setter assignment invalidation | `model.value = ...` then `model.value` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| Callable hybrid setter-style invalidation | `hybrid("next")` then `hybrid()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| Callable hybrid undefined-write invalidation | `hybrid(undefined)` then `hybrid()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 | One-liner ternary | `read() !== undefined ? read() : "fallback"` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 
 ## Examples and Parity
@@ -397,7 +401,7 @@ if (model.user !== null) {
 
 ## Not Yet Working (Phase 1)
 - Broader nested/indirect callback boundary forms.
-- Additional Tier 1 write-form invalidation expansion.
+- Additional Tier 1 write-form invalidation expansion beyond currently covered property/method/callable-hybrid local shapes.
 - Tier 2 guarded invalidation slices.
 
 ## Phase 2 Out of Scope
