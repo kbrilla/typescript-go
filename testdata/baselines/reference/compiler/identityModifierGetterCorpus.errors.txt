@@ -392,7 +392,7 @@ identityModifierGetterCorpus.ts(377,46): error TS2339: Property 'radius' does no
         unknownMutate();
         ~~~~~~~~~~~~~~~
 !!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-        const x3IdentityB: number = identityX3().radius; // intentional gap visibility candidate
+        const x3IdentityB: number = identityX3().radius; // intentional open mismatch: unknown-call boundary remains conservative
                                                  ~~~~~~
 !!! error TS2339: Property 'radius' does not exist on type 'Shape'.
 !!! error TS2339:   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.

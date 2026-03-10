@@ -330,6 +330,14 @@ Current status:
   - `identityModifierNarrowing.ts`
   - `identityModifierDiagnostics.ts`
 
+### Latest Increment (Getter Corpus X3 Assessment)
+- Inspected `X3` exact shape in `identityModifierGetterCorpus.ts` and confirmed baseline diagnostics remain:
+  - `TS100014` boundary-conservative invalidation note at the unknown call site
+  - downstream `TS2339` on `identityX3().radius` after the boundary
+- Evaluated a candidate narrow preserve rule for unknown-call boundaries and rejected it.
+- Rejection rationale: no rule was found that is both narrow enough and safety-provable for unknown calls without introducing broad unsound relaxation for uncertainty boundaries.
+- Outcome: keep `X3` intentionally open in Phase 1, with explicit corpus/test comments and docs rationale.
+
 ### Latest Increment (Boundaries - Narrow Slice)
 - Added `testdata/tests/cases/compiler/identityModifierBoundaries.ts` for expression-statement call boundaries.
 - Binder change (`internal/binder/binder.go`): expression-statement calls now create flow-call nodes (`maybeBindExpressionFlowIfCall`).

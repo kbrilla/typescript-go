@@ -142,6 +142,10 @@ Remaining visible gaps from getter-to-identity sweep:
   - mismatch cases: `2 -> 1` (`GC3`, `X3` -> `X3`)
   - corpus error count: `6 -> 4`
   - getter parity sweep score movement: no change (`7/9`, `2` remaining sweep gaps)
+- Final X3 safety assessment (this update):
+  - attempted to define a minimal unknown-call preserve carveout for `X3`
+  - rejected as not safely provable without broadening unsound behavior at uncertainty boundaries
+  - corpus remains at `1` broad getter mismatch (`X3`) and `4` total corpus errors
 
 ## Examples and Parity
 

@@ -1093,7 +1093,7 @@ if (identityX3().kind === "circle") {
     unknownMutate();
 >unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterCorpus.ts, 3, 46))
 
-    const x3IdentityB: number = identityX3().radius; // intentional gap visibility candidate
+    const x3IdentityB: number = identityX3().radius; // intentional open mismatch: unknown-call boundary remains conservative
 >x3IdentityB : Symbol(x3IdentityB, Decl(identityModifierGetterCorpus.ts, 376, 9))
 >identityX3 : Symbol(identityX3, Decl(identityModifierGetterCorpus.ts, 356, 13))
 
