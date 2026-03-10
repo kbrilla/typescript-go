@@ -226,7 +226,9 @@ Current status:
   - Covered in local tests: unknown direct call, callback invocation boundary (statement + assignment-form), await suspension boundary, assignment-based alias-escape, and indirect alias escape via helper passthrough.
   - Remaining: broader boundary parity coverage (more nested callback/escape forms and additional write-shape interactions).
 - [ ] Step 7: Diagnostics for heuristic limits
-- [ ] Step 8: Parity and regression sweep
+- [~] Step 8: Parity and regression sweep
+  - Added dedicated local parity test coverage in `identityModifierParity.ts` for repeated-read success, callback boundary invalidation, await boundary invalidation, write-call analog invalidation, and one-liner ternary shape.
+  - Remaining: expand parity matrix breadth and add submodule parity mapping.
 - [ ] Step 9: Performance guardrails/perf checks
 
 ### Next Focus (Immediate)
@@ -271,6 +273,18 @@ Current status:
   - `npx hereby test`
   - `npx hereby lint`
   - `npx hereby format`
+
+### Latest Increment (Parity Test Slice)
+- Added `testdata/tests/cases/compiler/identityModifierParity.ts` as a dedicated local parity test for issue-family patterns.
+- Covered scenarios in a single focused test:
+  - repeated-read stable narrowing success
+  - callback uncertainty-boundary invalidation
+  - await uncertainty-boundary invalidation
+  - setter/write-call analog invalidation (`store.read()` + `store.set(...)`)
+  - one-liner ternary shape (`read() !== undefined ? read() : fallback`)
+- Red/green completed with targeted run:
+  - red: `go test -run='TestLocal/identityModifierParity\.ts' ./internal/testrunner`
+  - green: accepted only `identityModifierParity` baselines and re-ran targeted identity suite
 
 ### Latest Increment (Boundaries - Await Slice)
 - Extended `testdata/tests/cases/compiler/identityModifierBoundaries.ts` with an `await` uncertainty-boundary scenario.

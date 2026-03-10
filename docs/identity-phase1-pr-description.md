@@ -7,6 +7,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 ## References
 - `docs/identity-modifier-spec.md`
 - `docs/identity-heuristic-tdd-plan.md`
+- `testdata/tests/cases/compiler/identityModifierParity.ts`
 
 ## Implemented So Far
 - Parser and binder support for `identity` function-type modifier usage in declaration type positions.
@@ -26,6 +27,15 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Alias reassignment | `alias = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await statement | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await assignment | `const x = await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+
+## Parity Coverage Matrix (New Local Slice)
+| Parity pattern | Example shape | Status | Test source |
+| --- | --- | --- | --- |
+| Stable repeated read | `if (read() !== undefined) { read(); }` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| Callback invalidation | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| Await invalidation | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| Write-call analog invalidation | `store.set(...)` then `store.read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| One-liner ternary | `read() !== undefined ? read() : "fallback"` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 
 ## Examples and Parity
 

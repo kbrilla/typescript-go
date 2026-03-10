@@ -1,0 +1,137 @@
+//// [tests/cases/compiler/identityModifierParity.ts] ////
+
+=== identityModifierParity.ts ===
+// Parity baseline: property getter/setter repeated read narrowing.
+declare const propertyModel: {
+>propertyModel : Symbol(propertyModel, Decl(identityModifierParity.ts, 1, 13))
+
+    get value(): string | undefined;
+>value : Symbol(value, Decl(identityModifierParity.ts, 1, 30), Decl(identityModifierParity.ts, 2, 36))
+
+    set value(v: string | undefined);
+>value : Symbol(value, Decl(identityModifierParity.ts, 1, 30), Decl(identityModifierParity.ts, 2, 36))
+>v : Symbol(v, Decl(identityModifierParity.ts, 3, 14))
+
+};
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value : Symbol(value, Decl(identityModifierParity.ts, 1, 30), Decl(identityModifierParity.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(identityModifierParity.ts, 1, 13))
+>value : Symbol(value, Decl(identityModifierParity.ts, 1, 30), Decl(identityModifierParity.ts, 2, 36))
+>undefined : Symbol(undefined)
+
+    const propertyStable: string = propertyModel.value; // OK
+>propertyStable : Symbol(propertyStable, Decl(identityModifierParity.ts, 7, 9))
+>propertyModel.value : Symbol(value, Decl(identityModifierParity.ts, 1, 30), Decl(identityModifierParity.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(identityModifierParity.ts, 1, 13))
+>value : Symbol(value, Decl(identityModifierParity.ts, 1, 30), Decl(identityModifierParity.ts, 2, 36))
+
+    propertyStable;
+>propertyStable : Symbol(propertyStable, Decl(identityModifierParity.ts, 7, 9))
+}
+
+// Identity parity: repeated-read stable narrowing success.
+declare const identityRead: identity () => string | undefined;
+>identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 12, 13))
+
+if (identityRead() !== undefined) {
+>identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 12, 13))
+>undefined : Symbol(undefined)
+
+    const identityStable: string = identityRead(); // OK
+>identityStable : Symbol(identityStable, Decl(identityModifierParity.ts, 15, 9))
+>identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 12, 13))
+
+    identityStable;
+>identityStable : Symbol(identityStable, Decl(identityModifierParity.ts, 15, 9))
+}
+
+// One-liner ternary parity shape from issue families.
+const ternaryStable: string = identityRead() !== undefined ? identityRead() : "fallback"; // OK
+>ternaryStable : Symbol(ternaryStable, Decl(identityModifierParity.ts, 20, 5))
+>identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 12, 13))
+>undefined : Symbol(undefined)
+>identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 12, 13))
+
+ternaryStable;
+>ternaryStable : Symbol(ternaryStable, Decl(identityModifierParity.ts, 20, 5))
+
+// Callback boundary parity: prior narrowing should invalidate.
+declare function invoke(cb: () => void): void;
+>invoke : Symbol(invoke, Decl(identityModifierParity.ts, 21, 14))
+>cb : Symbol(cb, Decl(identityModifierParity.ts, 24, 24))
+
+if (identityRead() !== undefined) {
+>identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 12, 13))
+>undefined : Symbol(undefined)
+
+    invoke(() => {
+>invoke : Symbol(invoke, Decl(identityModifierParity.ts, 21, 14))
+
+        // callback boundary
+    });
+    const afterCallback: string = identityRead(); // should error
+>afterCallback : Symbol(afterCallback, Decl(identityModifierParity.ts, 30, 9))
+>identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 12, 13))
+
+    afterCallback;
+>afterCallback : Symbol(afterCallback, Decl(identityModifierParity.ts, 30, 9))
+}
+
+// Await boundary parity: prior narrowing should invalidate.
+declare function delay(): Promise<void>;
+>delay : Symbol(delay, Decl(identityModifierParity.ts, 32, 1))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+
+async function testAwaitParity() {
+>testAwaitParity : Symbol(testAwaitParity, Decl(identityModifierParity.ts, 35, 40))
+
+    if (identityRead() !== undefined) {
+>identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 12, 13))
+>undefined : Symbol(undefined)
+
+        await delay();
+>delay : Symbol(delay, Decl(identityModifierParity.ts, 32, 1))
+
+        const afterAwait: string = identityRead(); // should error
+>afterAwait : Symbol(afterAwait, Decl(identityModifierParity.ts, 40, 13))
+>identityRead : Symbol(identityRead, Decl(identityModifierParity.ts, 12, 13))
+
+        afterAwait;
+>afterAwait : Symbol(afterAwait, Decl(identityModifierParity.ts, 40, 13))
+    }
+}
+
+// Setter/write-call analog shape: object identity getter + mutating method call.
+declare const store: {
+>store : Symbol(store, Decl(identityModifierParity.ts, 46, 13))
+
+    read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierParity.ts, 46, 22))
+
+    set(v: string | undefined): void;
+>set : Symbol(set, Decl(identityModifierParity.ts, 47, 44))
+>v : Symbol(v, Decl(identityModifierParity.ts, 48, 8))
+
+};
+
+if (store.read() !== undefined) {
+>store.read : Symbol(read, Decl(identityModifierParity.ts, 46, 22))
+>store : Symbol(store, Decl(identityModifierParity.ts, 46, 13))
+>read : Symbol(read, Decl(identityModifierParity.ts, 46, 22))
+>undefined : Symbol(undefined)
+
+    store.set("next");
+>store.set : Symbol(set, Decl(identityModifierParity.ts, 47, 44))
+>store : Symbol(store, Decl(identityModifierParity.ts, 46, 13))
+>set : Symbol(set, Decl(identityModifierParity.ts, 47, 44))
+
+    const afterSetCall: string = store.read(); // should error
+>afterSetCall : Symbol(afterSetCall, Decl(identityModifierParity.ts, 53, 9))
+>store.read : Symbol(read, Decl(identityModifierParity.ts, 46, 22))
+>store : Symbol(store, Decl(identityModifierParity.ts, 46, 13))
+>read : Symbol(read, Decl(identityModifierParity.ts, 46, 22))
+
+    afterSetCall;
+>afterSetCall : Symbol(afterSetCall, Decl(identityModifierParity.ts, 53, 9))
+}

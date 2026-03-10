@@ -1,0 +1,160 @@
+//// [tests/cases/compiler/identityModifierParity.ts] ////
+
+=== identityModifierParity.ts ===
+// Parity baseline: property getter/setter repeated read narrowing.
+declare const propertyModel: {
+>propertyModel : { value: string | undefined; }
+
+    get value(): string | undefined;
+>value : string | undefined
+
+    set value(v: string | undefined);
+>value : string | undefined
+>v : string | undefined
+
+};
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value !== undefined : boolean
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    const propertyStable: string = propertyModel.value; // OK
+>propertyStable : string
+>propertyModel.value : string
+>propertyModel : { value: string | undefined; }
+>value : string
+
+    propertyStable;
+>propertyStable : string
+}
+
+// Identity parity: repeated-read stable narrowing success.
+declare const identityRead: identity () => string | undefined;
+>identityRead : () => string | undefined
+
+if (identityRead() !== undefined) {
+>identityRead() !== undefined : boolean
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+>undefined : undefined
+
+    const identityStable: string = identityRead(); // OK
+>identityStable : string
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+
+    identityStable;
+>identityStable : string
+}
+
+// One-liner ternary parity shape from issue families.
+const ternaryStable: string = identityRead() !== undefined ? identityRead() : "fallback"; // OK
+>ternaryStable : string
+>identityRead() !== undefined ? identityRead() : "fallback" : string
+>identityRead() !== undefined : boolean
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+>undefined : undefined
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+>"fallback" : "fallback"
+
+ternaryStable;
+>ternaryStable : string
+
+// Callback boundary parity: prior narrowing should invalidate.
+declare function invoke(cb: () => void): void;
+>invoke : (cb: () => void) => void
+>cb : () => void
+
+if (identityRead() !== undefined) {
+>identityRead() !== undefined : boolean
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+>undefined : undefined
+
+    invoke(() => {
+>invoke(() => {        // callback boundary    }) : void
+>invoke : (cb: () => void) => void
+>() => {        // callback boundary    } : () => void
+
+        // callback boundary
+    });
+    const afterCallback: string = identityRead(); // should error
+>afterCallback : string
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+
+    afterCallback;
+>afterCallback : string
+}
+
+// Await boundary parity: prior narrowing should invalidate.
+declare function delay(): Promise<void>;
+>delay : () => Promise<void>
+
+async function testAwaitParity() {
+>testAwaitParity : () => Promise<void>
+
+    if (identityRead() !== undefined) {
+>identityRead() !== undefined : boolean
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+>undefined : undefined
+
+        await delay();
+>await delay() : void
+>delay() : Promise<void>
+>delay : () => Promise<void>
+
+        const afterAwait: string = identityRead(); // should error
+>afterAwait : string
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+
+        afterAwait;
+>afterAwait : string
+    }
+}
+
+// Setter/write-call analog shape: object identity getter + mutating method call.
+declare const store: {
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+
+    read: identity () => string | undefined;
+>read : () => string | undefined
+
+    set(v: string | undefined): void;
+>set : (v: string | undefined) => void
+>v : string | undefined
+
+};
+
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    store.set("next");
+>store.set("next") : void
+>store.set : (v: string | undefined) => void
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>set : (v: string | undefined) => void
+>"next" : "next"
+
+    const afterSetCall: string = store.read(); // should error
+>afterSetCall : string
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+
+    afterSetCall;
+>afterSetCall : string
+}
