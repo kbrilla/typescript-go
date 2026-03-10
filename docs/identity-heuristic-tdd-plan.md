@@ -377,6 +377,18 @@ Current status:
 - Newly observed gap to track:
   - conformance-style unknown-call boundary contrast (`M6`) remains conservative for identity reads.
 
+### Latest Increment (M6 Closure Attempt, Not Landed)
+- Objective: close `M6` with the narrowest possible unknown-call preserve rule.
+- Red evidence captured:
+  - after checker experiment, `go test -run='TestLocal/identityModifierGetterMissingMatrix\.ts' ./internal/testrunner` failed with baseline drift (`identityModifierGetterMissingMatrix.errors.txt`), indicating the target mismatch was removed.
+- Safety check outcome:
+  - running adjacent boundary coverage showed non-target conservative drift:
+    - `go test -run='TestLocal/(identityModifierGetterMissingMatrix|identityModifierParity|identityModifierBoundaries)\.ts' ./internal/testrunner`
+    - drift appeared in `identityModifierBoundaries.ts`.
+- Decision:
+  - reverted the checker experiment and retained conservative behavior outside the target shape.
+  - matrix remains `5/6` matched with `M6` as explicit residual for Phase 1.
+
 ## Implementation Checklist Updates From Re-Review
 - [x] Added complexity guardrail requirements for preserve matcher design.
 - [x] Expanded perf guardrail requirements for preserve-family changes.

@@ -18,6 +18,11 @@ Out of scope now:
 - Missing getter-origin matrix: `5/6` matched (`M6` remains conservative)
 - Latest full validation: green (`npx hereby build`, `npx hereby test`, `npx hereby lint`, `npx hereby format`)
 
+M6 closure attempt status (2026-03-10):
+- Attempted narrow checker preserve for ambient no-arg unknown calls crossing ambient nullable identity reads.
+- Result: `M6` closes locally, but non-target conservative boundary behavior regressed (`identityModifierBoundaries.ts` baseline drift).
+- Decision: do not ship this rule in Phase 1; keep `M6` as the explicit residual mismatch.
+
 High-signal delivered slices:
 - parser/binder support for `identity` in declaration type positions
 - repeated-read identity narrowing in covered local-flow patterns
@@ -145,6 +150,7 @@ Dual parity metrics (reported separately):
 - Implemented-shape parity metric: `9/9` categories matched in `identityModifierGetterParitySweep.ts` for currently implemented guarded shapes.
 - Corpus parity and refactor-stability metric: broad corpus remains visibility-first; residual conservative deltas are allowed while preserving checker stability and avoiding broad unsound relaxations.
 - Missing getter-origin matrix metric: `5/6` matched in `identityModifierGetterMissingMatrix.ts`; the remaining `M6` conformance-style unknown-call boundary contrast is retained as an explicit conservative delta (`TS100015` + assignment error on identity path).
+- Latest M6 attempt outcome: an ambient nullable unknown-call preserve candidate was evaluated and rejected because it changed non-target conservative behavior; matrix remains `5/6` until a stricter isolating rule is proven.
 
 Known heuristic preserves (currently retained):
 - Same-receiver `read()` then `set(non-nullish)` narrow write-preserve slice.
