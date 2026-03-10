@@ -58,8 +58,8 @@ Top divergences to track:
 ## Benchmarks / Perf
 - checker microbench harness: `internal/checker/identity_bench_test.go`
 - benchmark command: `go test ./internal/checker -run '^$' -bench BenchmarkIdentityCFAFlow -benchmem -count=1`
-- TS-main snapshot (2026-03-10): `tsgo` ~`5.9x` faster wall-time than upstream `tsc`, ~`5%` lower max RSS
-- branch-vs-main snapshot: wall `+4.51%`, RSS `-2.24%`
+- TS-main snapshot: historical only (2026-03-10); see latest benchmark section below
+- branch-vs-main latest snapshot (2026-03-10 refresh): wall `+1.81%`, RSS `+5.43%`
 
 ## Design Decisions And Re-review Outcomes
 - naming: keep `identity` for continuity in Phase 1; revisit at explicit upstream checkpoint
@@ -1108,45 +1108,63 @@ go test ./internal/checker -run '^$' -bench BenchmarkIdentityCFAFlow -benchmem -
 ## TypeScript-main Benchmark Snapshot
 
 ### Setup
-- Date: 2026-03-10
-- Workload: TypeScript-main compile workload on one local macOS host
-- Measurement set: 3 wall-time runs each, plus max RSS sampling
+- Latest run date: 2026-03-10
+- Host: local macOS machine
+- Workload: TypeScript-main solution compile (`src/tsconfig.json`) on clean outputs per iteration
+- Methodology: 3 iterations per runner, cold run each iteration (`rm -rf _submodules/TypeScript/built/local`), capture wall time and max RSS with `/usr/bin/time -l`
 
 ### Comparable commands
 ```sh
-node ./_submodules/TypeScript/built/local/tsc.js -p ./_submodules/TypeScript/src/tsconfig.json --noEmit
-./tsgo -p ./_submodules/TypeScript/src/tsconfig.json --noEmit
+rm -rf ./_submodules/TypeScript/built/local
+./built/local/tsgo -b ./_submodules/TypeScript/src/tsconfig.json --noEmit
+
+# optional upstream tsc baseline (only if built/local tsc entrypoint is available)
+node ./_submodules/TypeScript/built/local/tsc.js -b ./_submodules/TypeScript/src/tsconfig.json --noEmit
 ```
 
-### Results
-| Runner | Wall times (s) | Avg wall (s) | Avg max RSS (MB) |
+### Latest results
+| Runner | Wall times (s) | Avg wall (s) | Avg max RSS (MiB) |
+| --- | --- | --- | --- |
+| `tsgo` (this branch) | 1.41, 1.40, 1.69 | 1.50 | 549.9 |
+| `tsgo` (main `4a59cd7`) | 1.69, 1.41, 1.32 | 1.47 | 521.6 |
+
+### Previous snapshot (historical)
+| Runner | Wall times (s) | Avg wall (s) | Avg max RSS (MiB) |
 | --- | --- | --- | --- |
 | upstream `tsc` | 8.86, 7.86, 7.84 | 8.19 | 708.3 |
 | `tsgo` | 1.60, 1.29, 1.27 | 1.39 | 672.1 |
 
-- Throughput snapshot: `~5.9x` faster wall time for `tsgo` on this workload.
-- Memory snapshot: `~5%` lower max RSS for `tsgo`.
+Historical delta note (latest `tsgo` branch vs previous `tsgo` snapshot):
+- Wall: `+7.91%` (1.39s -> 1.50s)
+- RSS: `-18.18%` (672.1 MiB -> 549.9 MiB)
+
+Optional `tsc` baseline for this latest refresh was skipped because `./_submodules/TypeScript/built/local/tsc.js` was not present in the current local checkout state.
 
 ## Benchmark: tsgo main vs this branch
 
 ### Setup
-- Date: 2026-03-10
+- Date: 2026-03-10 (refresh)
 - Workload baseline commit: TypeScript main `c9e7428bb76f0543a3555d0af87777e7db3a41e6`
 - Compared tsgo commits:
   - main: `4a59cd78390d5789f547db8af35b43be2f829719`
-  - feature: `0bb576a859097252b54e1165bb88b84cf073f06d`
-- Measurement set: 3 wall-time runs per commit and average RSS comparison
+  - feature: `4728d1f47`
+- Measurement set: 3 wall-time runs per commit with clean outputs each iteration; average max RSS comparison
 
 ### Results
 | Build | Runs (s) | Avg wall (s) | Avg RSS (MiB) |
 | --- | --- | --- | --- |
-| tsgo main (`4a59cd7`) | 1.34, 1.33, 1.32 | 1.33 | 650.8 |
-| this branch (`0bb576a`) | 1.37, 1.31, 1.49 | 1.39 | 636.2 |
+| tsgo main (`4a59cd7`) | 1.69, 1.41, 1.32 | 1.47 | 521.6 |
+| this branch (`4728d1f`) | 1.41, 1.40, 1.69 | 1.50 | 549.9 |
 
 ### Interpretation
-- Wall time delta: `+4.51%` (this branch is slower).
-- RSS delta: `-2.24%` (this branch uses less memory).
-- Net: current Phase 1 behavior trades a small wall-time regression for a modest RSS improvement on this workload.
+- Wall time delta: `+1.81%` (this branch is slower).
+- RSS delta: `+5.43%` (this branch uses more memory).
+- Net: current Phase 1 behavior remains close to main on wall time, with a small RSS regression in this refresh sample.
+
+### Delta vs previous reported branch-vs-main snapshot
+- Previous reported delta: wall `+4.51%`, RSS `-2.24%`
+- Latest delta: wall `+1.81%`, RSS `+5.43%`
+- Movement: wall regression improved by `2.70` percentage points; RSS moved by `+7.67` percentage points (from branch-better to branch-worse)
 
 ### Caveat
 - This is a small sample size on one machine. Additional runs may reduce noise and tighten the wall-time delta estimate.
