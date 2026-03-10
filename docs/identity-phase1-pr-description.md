@@ -383,15 +383,22 @@ declare function invoke(cb: () => void): void;
 
 if (read() !== undefined) {
   invoke(() => {});
-  const s: string = read(); // OK in this narrow no-op statement shape
+  const s: string = read(); // OK in this narrow no-op callback statement shape
   s;
 }
 ```
 
-Non-no-op callback bodies remain conservative in current Phase 1:
+Const callback aliases and non-no-op callback bodies remain conservative in current Phase 1:
 ```ts
 declare const read: identity () => string | undefined;
 declare function invoke(cb: () => void): void;
+
+if (read() !== undefined) {
+  const cb = () => {};
+  invoke(cb);
+  const s: string = read(); // error
+  s;
+}
 
 if (read() !== undefined) {
   invoke(() => { const callbackWrite = 1; callbackWrite; });
@@ -475,7 +482,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
   const escapedRead = read;
   escapedRead;
-  const afterAliasInit: string = read(); // error
+  const afterAliasInit: string = read(); // OK for direct const alias initializer
   afterAliasInit;
 }
 
@@ -746,6 +753,101 @@ Explicit tests to add with that slice:
 - Expand Tier 2 negative-controls matrix for mutable helper alias chains and property-based helper references (explicitly conservative expectations).
 
 ## Next Phases: Narrowing Expansion Roadmap
+
+### Directional future examples (planned, not implemented yet)
+
+### `Phase 2` examples
+These are directional targets only. They are not implemented in this PR.
+
+```ts
+// Planned Phase 2 target: explicit mutator/links drives selective invalidation.
+interface Store {
+  identity user(): { name: string } | undefined;
+  identity settings(): { theme: string } | undefined;
+
+  mutator setUser(v: { name: string } | undefined) links user;
+}
+
+declare const store: Store;
+
+if (store.user() !== undefined) {
+  const u1: { name: string } = store.user(); // planned OK
+  store.setUser(undefined);
+  const u2: { name: string } = store.user(); // planned error after linked invalidation
+  u1;
+  u2;
+}
+```
+
+```ts
+// Planned Phase 2 target: constrained-overload post-call narrowing with explicit links.
+interface WritableSignal<T> {
+  identity (): T;
+  mutator update<U extends T>(fn: (value: T) => U) links this;
+}
+
+declare const sig: WritableSignal<string | number>;
+
+sig.update(() => "x");
+const narrowed: string = sig(); // planned OK when constrained overload + unique link are resolved
+narrowed;
+```
+
+### `Phase 3` examples
+These are directional targets only. They are not implemented in this PR.
+
+```ts
+// Planned Phase 3 target: strict const no-op callback alias preserve.
+declare const read: identity () => string | undefined;
+declare function invoke(cb: () => void): void;
+
+if (read() !== undefined) {
+  const cb = () => {};
+  invoke(cb);
+  const s: string = read(); // planned OK under strict alias proof
+  s;
+}
+```
+
+```ts
+// Planned Phase 3 target: guarded dynamic element-write precision.
+declare const model: {
+  read: identity () => string | undefined;
+  value: string | undefined;
+};
+declare const key: "value";
+
+if (model.read() !== undefined) {
+  model[key] = "next";
+  const s: string = model.read(); // planned behavior to be defined by proven-key guardrails
+  s;
+}
+```
+
+### `Phase X` examples
+`Phase X` denotes exploratory/post-Phase-3 work. These examples are directional only.
+
+```ts
+// Planned Phase X exploration: cross-file helper summary for safe passthrough.
+declare const read: identity () => string | undefined;
+declare function identityHelper<T>(x: T): T;
+
+if (read() !== undefined) {
+  identityHelper(read);
+  const s: string = read(); // exploratory target: preserve when helper summary proves passthrough
+  s;
+}
+```
+
+```ts
+// Planned Phase X exploration: equality-chain reuse across repeated reads.
+declare const tag: identity () => "a" | "b" | "c";
+
+if (tag() === "a" || tag() === "b") {
+  const narrowed: "a" | "b" = tag(); // exploratory target
+  narrowed;
+}
+```
 
 ### Phase 2 candidates
 | Feature | Guardrails | Risk | Short implementation note | Parity impact |

@@ -196,6 +196,7 @@ npx hereby format
 - Detailed Phase 2/3 candidate features and parity matrices are tracked in `docs/identity-phase1-pr-description.md` under next-phase roadmap sections.
 - This Phase 1 plan remains implementation-focused; roadmap entries are planning guidance until promoted into explicit red/green slices.
 - Value-type invalidation relaxation ideas are Phase 2/3 candidates only and must ship behind strict shape guardrails with conservative defaults.
+- `Phase X` labels in the PR description denote exploratory post-Phase-3 ideas and are intentionally non-committal until converted into concrete TDD slices.
 
 ## Phase 2 (Prepared, Deferred): Explicit `mutator`/`links`
 
