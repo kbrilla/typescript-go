@@ -254,6 +254,14 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 		}
 		return FlowType{t: f.declaredType}
 	}
+
+	if c.isAliasEscapeAssignmentForCallReference(f.reference, node) {
+		if !c.isReachableFlowNode(flow) {
+			return FlowType{t: c.unreachableNeverType}
+		}
+		return FlowType{t: f.declaredType}
+	}
+
 	// for (const _ in ref) acts as a nonnull on ref
 	if ast.IsVariableDeclaration(node) && ast.IsForInStatement(node.Parent.Parent) && (c.isMatchingReference(f.reference, node.Parent.Parent.Expression()) || c.optionalChainContainsReference(node.Parent.Parent.Expression(), f.reference)) {
 		return FlowType{t: c.getNonNullableTypeIfNeeded(c.finalizeEvolvingArrayType(c.getTypeAtFlowNode(f, flow.Antecedent).t))}
@@ -267,6 +275,24 @@ func (c *Checker) getInitialOrAssignedType(f *FlowState, flow *ast.FlowNode) *Ty
 		return c.getNarrowableTypeForReference(c.getInitialType(flow.Node), f.reference, CheckModeNormal)
 	}
 	return c.getNarrowableTypeForReference(c.getAssignedType(flow.Node), f.reference, CheckModeNormal)
+}
+
+func (c *Checker) isAliasEscapeAssignmentForCallReference(reference *ast.Node, assignment *ast.Node) bool {
+	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 {
+		return false
+	}
+
+	callee := c.getReferenceCandidate(reference.Expression())
+	switch {
+	case ast.IsVariableDeclaration(assignment):
+		initializer := assignment.Initializer()
+		return initializer != nil && c.isMatchingReference(callee, c.getReferenceCandidate(initializer))
+	case ast.IsBinaryExpression(assignment):
+		binary := assignment.AsBinaryExpression()
+		return ast.IsAssignmentOperator(binary.OperatorToken.Kind) && c.isMatchingReference(callee, c.getReferenceCandidate(binary.Right))
+	}
+
+	return false
 }
 
 func (c *Checker) isEmptyArrayAssignment(node *ast.Node) bool {

@@ -61,6 +61,25 @@ if (read() !== undefined) {
 >read : () => string | undefined
 }
 
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const escapedRead = read;
+>escapedRead : () => string | undefined
+>read : () => string | undefined
+
+    const afterAliasEscape: string = read(); // should error
+>afterAliasEscape : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    escapedRead;
+>escapedRead : () => string | undefined
+}
+
 async function testAwaitBoundary() {
 >testAwaitBoundary : () => Promise<void>
 

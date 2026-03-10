@@ -223,8 +223,8 @@ Current status:
   - Remaining: add explicit write-invalidation tests and verify all Tier 1 write forms.
 - [ ] Step 5: Tier 2 guarded invalidation
 - [~] Step 6: Uncertainty boundaries
-  - Covered in local tests: unknown direct call, callback invocation boundary, and await suspension boundary.
-  - Remaining: alias-escape boundary matrix and broader parity coverage.
+  - Covered in local tests: unknown direct call, callback invocation boundary, await suspension boundary, and assignment-based alias-escape.
+  - Remaining: broader alias-escape matrix/parity coverage (non-trivial escapes and additional forms).
 - [ ] Step 7: Diagnostics for heuristic limits
 - [ ] Step 8: Parity and regression sweep
 - [ ] Step 9: Performance guardrails/perf checks
@@ -281,3 +281,10 @@ Current status:
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.errors.txt`
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.symbols`
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.types`
+
+### Latest Increment (Boundaries - Alias Escape Slice)
+- Extended `testdata/tests/cases/compiler/identityModifierBoundaries.ts` with a minimal alias-escape scenario (`const escapedRead = read`).
+- Red phase: `go test -run='TestLocal/identityModifierBoundaries\.ts' ./internal/testrunner` failed with boundary baseline mismatch before checker updates.
+- Green phase checker change (`internal/checker/flow.go`): `getTypeAtFlowAssignment` now invalidates parameterless call-reference narrowing when the callee is assigned/aliased (variable declaration or assignment RHS).
+- Added helper: `isAliasEscapeAssignmentForCallReference` for narrow assignment-based alias-escape detection.
+- Accepted only relevant boundary baselines and revalidated the targeted identity suite.

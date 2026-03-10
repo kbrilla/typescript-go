@@ -24,6 +24,12 @@ if (read() !== undefined) {
     const afterCallbackCall: string = read(); // should error
 }
 
+if (read() !== undefined) {
+    const escapedRead = read;
+    const afterAliasEscape: string = read(); // should error
+    escapedRead;
+}
+
 async function testAwaitBoundary() {
     if (read() !== undefined) {
         await delay();
