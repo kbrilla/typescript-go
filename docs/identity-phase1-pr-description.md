@@ -13,6 +13,80 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - `testdata/tests/cases/compiler/identityModifierHeuristicDiagnostics.ts`
 - `testdata/tests/cases/compiler/identityModifierP8Conservative.ts`
 
+## Can identity use getter flow line directly?
+- Short answer: no, not fully in current architecture.
+- Why: both paths share CFA infrastructure (same flow graph, same `getTypeAtFlowCondition` narrowing engine), but they enter it through different reference shapes and boundary handling.
+
+Shared path (same line):
+- Binder emits flow conditions via `bindCondition` in `internal/binder/binder.go`.
+- Checker narrows in `getTypeAtFlowCondition` -> `narrowType` in `internal/checker/flow.go`.
+- Truthiness narrowing uses `narrowTypeByTruthiness` for both property and call-shaped references.
+
+Divergence points (current code):
+- Reference shape:
+  - Getter path is property/element access references via `isNarrowableReference` and `setFlowNode` on `KindPropertyAccessExpression`/`KindElementAccessExpression` (`internal/binder/binder.go`).
+  - Identity path is zero-arg call references enabled by `isNarrowableReference` -> `hasNarrowableArgument`, plus `setFlowNode` on `KindCallExpression` (`internal/binder/binder.go`).
+- Read typing entry:
+  - Getter path follows normal property access checking and then flow lookup for that access reference.
+  - Identity path has explicit call-site hook in `checkCallExpression` that checks `SignatureFlagsIdentity` and calls `getFlowTypeOfReference(node, narrowableReturnType)` (`internal/checker/checker.go`).
+- Boundary invalidation:
+  - Getter path has no identity-specific call-boundary diagnostic/invalidation branch.
+  - Identity path has dedicated `getTypeAtFlowCall` logic for non-matching call/await boundaries, preserve carveouts, and diagnostics (`TS100014`/`TS100015`) in `internal/checker/flow.go`.
+
+Simplification opportunities:
+- Extract a shared "stable read endpoint" abstraction so getter and identity use one boundary-invalidation policy function.
+- Consolidate preserve carveouts behind a single helper used by both reference kinds (instead of identity-specific checks in `getTypeAtFlowCall`).
+- Keep separate syntax/signature plumbing, but converge reference matching and invalidation decisions in checker flow.
+
+## Flow Graphs
+
+### Getter Flow Graph
+```mermaid
+flowchart TD
+  G1[Property access read: model.value] --> G2[Binder: setFlowNode on narrowable property access]
+  G2 --> G3[Binder: bindCondition creates FlowCondition]
+  G3 --> G4[Checker: getTypeAtFlowCondition]
+  G4 --> G5[Checker: narrowType -> narrowTypeByTruthiness]
+  G5 --> G6[Re-read model.value uses narrowed flow type]
+```
+
+### Identity Flow Graph
+```mermaid
+flowchart TD
+  I1[Identity call read: read()] --> I2[Binder: hasNarrowableArgument/setFlowNode on call]
+  I2 --> I3[Binder: bindCondition creates FlowCondition]
+  I3 --> I4[Checker: checkCallExpression sees SignatureFlagsIdentity]
+  I4 --> I5[Checker: getFlowTypeOfReference(call, returnType)]
+  I5 --> I6[Checker: getTypeAtFlowCondition -> narrowTypeByTruthiness fallback]
+  I6 --> I7[FlowCall boundary: getTypeAtFlowCall may invalidate + TS100014/TS100015]
+```
+
+### Divergence Overlay
+```mermaid
+flowchart LR
+  subgraph Shared[Shared]
+    S1[bindCondition -> FlowCondition]
+    S2[getTypeAtFlowCondition]
+    S3[narrowTypeByTruthiness]
+    S1 --> S2 --> S3
+  end
+
+  subgraph GetterOnly[Getter-specific]
+    G1[property access reference]
+    G2[no identity-specific FlowCall invalidation branch]
+    G1 --> S1
+    S3 --> G2
+  end
+
+  subgraph IdentityOnly[Identity-specific]
+    I1[call expression reference]
+    I2[checkCallExpression identity hook]
+    I3[getTypeAtFlowCall identity invalidation + diagnostics]
+    I1 --> I2 --> S1
+    S3 --> I3
+  end
+```
+
 ## Final Sweep Decision (P8)
 - Status: not closed in Phase 1.
 - Shape: `P8` in `identityModifierGetterParitySweep.ts`, overlapping with corpus `X3` in `identityModifierGetterCorpus.ts`.

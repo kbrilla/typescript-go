@@ -105,6 +105,10 @@ Expected result:
 ## Step 8: Parity and Regression Sweep
 Add parity-focused tests mirroring property getter/setter CFA scenarios.
 
+Documentation guardrail:
+- Maintain the getter-vs-identity flow graphs in `docs/identity-phase1-pr-description.md` as binder/checker flow logic changes.
+- Any PR that changes flow entry/invalidation for either path should update the Mermaid graphs and the "Can identity use getter flow line directly?" comparison section.
+
 Run:
 ```sh
 go test -run='TestLocal/<test name>' ./internal/testrunner
