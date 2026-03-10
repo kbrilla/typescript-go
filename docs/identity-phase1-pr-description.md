@@ -4,6 +4,31 @@
 This PR covers Phase 1 only: `identity` support and heuristic uncertainty-boundary invalidation slices.
 It does not include the final phase explicit contracts (`mutator`/`links`).
 
+## Naming Decision
+Decision applied from swarm review:
+- Keep `identity` for this proposal in Phase 1 and current upstream discussion continuity.
+- Defer rename debate to an explicit upstream naming checkpoint.
+
+Candidates considered:
+
+| Candidate | Pros | Cons |
+| --- | --- | --- |
+| `identity` | Already used by the active proposal/discussion; stable continuity across issues/docs/tests; minimizes churn during Phase 1 | Can be confused with the identity-function idiom (`x => x`); less immediately intuitive for some users |
+| `stable` | Intuitive for "repeated-read stability"; precedent in broader ecosystem terminology | Can imply stronger global immutability than intended local-flow guarantee; deviates from current proposal naming |
+| `getter` | Very direct to callable-getter mental model; easy onboarding | Overlaps with existing property-getter terminology and can blur callable-vs-property semantics |
+| `pure` | Familiar term in PL literature; suggests deterministic behavior | Semantically too strong for this feature (implies side-effect constraints beyond intended CFA contract) |
+| `readonly`/`const` | Familiar TypeScript keywords | Already heavily loaded with other meanings; high confusion risk |
+| `cached`/`memo` | Suggests repeated reads are stable | Implies runtime implementation details not required by this type-system feature |
+
+Timing rationale:
+- Phase 1 is focused on CFA behavior slices and parity/stability evidence.
+- Renaming now would create documentation/test churn without improving behavior correctness.
+- Keeping the existing token preserves comparability with upstream issue threads and interim baselines.
+
+Reevaluation trigger:
+- Revisit naming only at an explicit upstream checkpoint (design discussion or proposal advancement gate) after Phase 1 evidence is collected.
+- Trigger inputs should include: ambiguity reports from reviewers/users, diagnostic clarity feedback, and interoperability with final-phase explicit-contract terminology.
+
 Decision for constrained-overload post-call narrowing:
 - Not part of Phase 1 runtime behavior.
 - Treated as final-phase behavior because it depends on explicit contract resolution (`mutator`/`links`) and unambiguous endpoint linkage.

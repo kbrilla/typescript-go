@@ -5,6 +5,11 @@
 - Audience: TypeScript language/design contributors, checker implementers, framework authors
 - Scope: Checker behavior for callable getter narrowing and write invalidation
 
+Terminology lock (normative):
+- This document uses `identity` as the canonical modifier name for all normative statements in the current phase.
+- Alternative names are informative only and do not affect parser/checker requirements in this SDD.
+- Rename evaluation is deferred to a dedicated upstream naming checkpoint.
+
 ## 2. Executive Summary
 Primary path:
 - `identity` marks stable callable read endpoints.
@@ -338,6 +343,20 @@ DDR-2026-03-10: Multi-perspective Phase 1 re-review.
 - https://flow.org/en/docs/lang/refinements/
 - https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/attributes/nullable-analysis
 - https://github.com/google/closure-compiler/wiki/Annotating-JavaScript-for-the-Closure-Compiler
+
+## 19. Appendix: Naming Rationale (Informative)
+Applied decision:
+- Keep `identity` for proposal continuity in Phase 1 and current upstream discussion alignment.
+- Defer renaming to an explicit upstream checkpoint once Phase 1 evidence is available.
+
+Alternatives reviewed (informative):
+- `stable`: intuitive but risks over-reading as global immutability.
+- `getter`: approachable, but conflates callable endpoints with property getter semantics.
+- `pure`: recognized term, but stronger than required and suggests side-effect guarantees outside this feature.
+- `cached`/`memo`: communicate repeated-read behavior but imply runtime strategy not required by the type contract.
+
+Reevaluation trigger:
+- Revisit naming only when upstream proposal process explicitly opens naming review (for example at design sign-off/progression gate), informed by implementation evidence, diagnostic clarity feedback, and ecosystem ergonomics.
 
 ## 20. Forward Roadmap Alignment
 Roadmap source of truth:

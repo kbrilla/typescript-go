@@ -7,6 +7,11 @@ Phase 1 focuses only on:
 - stronger heuristic invalidation
 - conservative behavior at uncertainty boundaries
 
+Naming lock note:
+- Phase 1 uses `identity` as the fixed term for all implementation, tests, and diagnostics in this branch.
+- Renaming is intentionally deferred; do not churn token names during Phase 1 behavior work.
+- Revisit only at an explicit upstream naming checkpoint after Phase 1 evidence and feedback are consolidated.
+
 Constrained-overload scope decision:
 - Constrained-overload post-call narrowing from explicit contracts is not a Phase 1 implementation target.
 - Phase 1 carries readiness planning only (guardrails and test inventory) so the final-phase explicit-contract slice can land narrowly and safely.

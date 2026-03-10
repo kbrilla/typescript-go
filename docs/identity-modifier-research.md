@@ -139,6 +139,19 @@ We recommend **`stable`** over `identity` for these reasons:
 
 However, following the original proposal's terminology and avoiding bikeshedding, we'll use **`identity`** as proposed in the issue, since that's what the community is discussing.
 
+### Adjudicated Outcome (Current)
+Final decision for this proposal stage:
+- Keep `identity` now for proposal continuity and implementation/docs alignment.
+- Defer any rename decision to an explicit upstream naming checkpoint.
+
+Why this was adjudicated:
+- Upstream continuity: active issue/proposal discussion currently uses `identity`.
+- Delivery focus: Phase 1 goal is behavior parity and soundness evidence, not renaming churn.
+- Change-cost control: renaming now would create broad baseline/docs/tooling churn with limited immediate value.
+
+Reevaluation trigger:
+- Open naming reconsideration only when upstream process explicitly requests naming review (for example at design advancement/sign-off), informed by implementation feedback, diagnostics clarity, and ecosystem ergonomics.
+
 ---
 
 ## Edge Cases & Mutation Handling
