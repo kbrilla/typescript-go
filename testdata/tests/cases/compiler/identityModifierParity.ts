@@ -57,3 +57,24 @@ if (store.read() !== undefined) {
     const afterSetCall: string = store.read(); // should error
     afterSetCall;
 }
+
+// Discriminated-union parity: repeated identity reads should narrow by kind.
+type Shape =
+    | { kind: "circle"; radius: number }
+    | { kind: "square"; size: number };
+
+declare const shape: identity () => Shape;
+
+if (shape().kind === "circle") {
+    const circleRadius: number = shape().radius; // OK
+    circleRadius;
+}
+
+// Discriminated-union boundary parity: unknown call invalidates prior narrowing.
+declare function unknownShapeMutate(): void;
+
+if (shape().kind === "circle") {
+    unknownShapeMutate();
+    const afterUnknownShapeCall: number = shape().radius; // should error
+    afterUnknownShapeCall;
+}

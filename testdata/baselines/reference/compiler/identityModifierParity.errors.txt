@@ -4,9 +4,11 @@ identityModifierParity.ts(41,15): error TS2322: Type 'string | undefined' is not
   Type 'undefined' is not assignable to type 'string'.
 identityModifierParity.ts(54,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
+identityModifierParity.ts(75,51): error TS2339: Property 'radius' does not exist on type 'Shape'.
+  Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
 
 
-==== identityModifierParity.ts (3 errors) ====
+==== identityModifierParity.ts (4 errors) ====
     // Parity baseline: property getter/setter repeated read narrowing.
     declare const propertyModel: {
         get value(): string | undefined;
@@ -71,4 +73,28 @@ identityModifierParity.ts(54,11): error TS2322: Type 'string | undefined' is not
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
 !!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         afterSetCall;
+    }
+    
+    // Discriminated-union parity: repeated identity reads should narrow by kind.
+    type Shape =
+        | { kind: "circle"; radius: number }
+        | { kind: "square"; size: number };
+    
+    declare const shape: identity () => Shape;
+    
+    if (shape().kind === "circle") {
+        const circleRadius: number = shape().radius; // OK
+        circleRadius;
+    }
+    
+    // Discriminated-union boundary parity: unknown call invalidates prior narrowing.
+    declare function unknownShapeMutate(): void;
+    
+    if (shape().kind === "circle") {
+        unknownShapeMutate();
+        const afterUnknownShapeCall: number = shape().radius; // should error
+                                                      ~~~~~~
+!!! error TS2339: Property 'radius' does not exist on type 'Shape'.
+!!! error TS2339:   Property 'radius' does not exist on type '{ kind: "square"; size: number; }'.
+        afterUnknownShapeCall;
     }

@@ -135,3 +135,54 @@ if (store.read() !== undefined) {
     afterSetCall;
 >afterSetCall : Symbol(afterSetCall, Decl(identityModifierParity.ts, 53, 9))
 }
+
+// Discriminated-union parity: repeated identity reads should narrow by kind.
+type Shape =
+>Shape : Symbol(Shape, Decl(identityModifierParity.ts, 55, 1))
+
+    | { kind: "circle"; radius: number }
+>kind : Symbol(kind, Decl(identityModifierParity.ts, 59, 7))
+>radius : Symbol(radius, Decl(identityModifierParity.ts, 59, 23))
+
+    | { kind: "square"; size: number };
+>kind : Symbol(kind, Decl(identityModifierParity.ts, 60, 7))
+>size : Symbol(size, Decl(identityModifierParity.ts, 60, 23))
+
+declare const shape: identity () => Shape;
+>shape : Symbol(shape, Decl(identityModifierParity.ts, 62, 13))
+>Shape : Symbol(Shape, Decl(identityModifierParity.ts, 55, 1))
+
+if (shape().kind === "circle") {
+>shape().kind : Symbol(kind, Decl(identityModifierParity.ts, 59, 7), Decl(identityModifierParity.ts, 60, 7))
+>shape : Symbol(shape, Decl(identityModifierParity.ts, 62, 13))
+>kind : Symbol(kind, Decl(identityModifierParity.ts, 59, 7), Decl(identityModifierParity.ts, 60, 7))
+
+    const circleRadius: number = shape().radius; // OK
+>circleRadius : Symbol(circleRadius, Decl(identityModifierParity.ts, 65, 9))
+>shape().radius : Symbol(radius, Decl(identityModifierParity.ts, 59, 23))
+>shape : Symbol(shape, Decl(identityModifierParity.ts, 62, 13))
+>radius : Symbol(radius, Decl(identityModifierParity.ts, 59, 23))
+
+    circleRadius;
+>circleRadius : Symbol(circleRadius, Decl(identityModifierParity.ts, 65, 9))
+}
+
+// Discriminated-union boundary parity: unknown call invalidates prior narrowing.
+declare function unknownShapeMutate(): void;
+>unknownShapeMutate : Symbol(unknownShapeMutate, Decl(identityModifierParity.ts, 67, 1))
+
+if (shape().kind === "circle") {
+>shape().kind : Symbol(kind, Decl(identityModifierParity.ts, 59, 7), Decl(identityModifierParity.ts, 60, 7))
+>shape : Symbol(shape, Decl(identityModifierParity.ts, 62, 13))
+>kind : Symbol(kind, Decl(identityModifierParity.ts, 59, 7), Decl(identityModifierParity.ts, 60, 7))
+
+    unknownShapeMutate();
+>unknownShapeMutate : Symbol(unknownShapeMutate, Decl(identityModifierParity.ts, 67, 1))
+
+    const afterUnknownShapeCall: number = shape().radius; // should error
+>afterUnknownShapeCall : Symbol(afterUnknownShapeCall, Decl(identityModifierParity.ts, 74, 9))
+>shape : Symbol(shape, Decl(identityModifierParity.ts, 62, 13))
+
+    afterUnknownShapeCall;
+>afterUnknownShapeCall : Symbol(afterUnknownShapeCall, Decl(identityModifierParity.ts, 74, 9))
+}

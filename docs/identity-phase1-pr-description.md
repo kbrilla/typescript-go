@@ -32,6 +32,8 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Parity pattern | Example shape | Status | Test source |
 | --- | --- | --- | --- |
 | Stable repeated read | `if (read() !== undefined) { read(); }` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| Discriminant-kind parity | `if (shape().kind === "circle") { shape().radius }` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
+| Discriminant unknown-call boundary | `if (shape().kind === "circle") { unknownShapeMutate(); shape().radius }` | Implemented (error after boundary) | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 | Callback invalidation | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 | Await invalidation | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 | Write-call analog invalidation | `store.set(...)` then `store.read()` | Implemented | `testdata/tests/cases/compiler/identityModifierParity.ts` |
@@ -330,7 +332,7 @@ Scope note:
 - Angular template type-checking behavior is outside this compiler PR and is not claimed as changed here.
 
 ### Angular #49161: discriminated-union shape-kind narrowing style
-Status: partially covered
+Status: implemented in covered local parity shape
 
 ```ts
 type Shape =
@@ -341,6 +343,17 @@ declare const shape: identity () => Shape;
 
 if (shape().kind === "circle") {
   shape().radius; // parity target: OK
+}
+```
+
+Boundary invalidation still applies after uncertainty calls:
+```ts
+declare function unknownShapeMutate(): void;
+
+if (shape().kind === "circle") {
+  unknownShapeMutate();
+  const r: number = shape().radius; // error after boundary
+  r;
 }
 ```
 

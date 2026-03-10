@@ -228,6 +228,7 @@ Current status:
 - [ ] Step 7: Diagnostics for heuristic limits
 - [~] Step 8: Parity and regression sweep
   - Added dedicated local parity test coverage in `identityModifierParity.ts` for repeated-read success, callback boundary invalidation, await boundary invalidation, write-call analog invalidation, and one-liner ternary shape.
+  - Added discriminated-union identity parity coverage for kind-guard narrowing and post-unknown-call invalidation.
   - Remaining: expand parity matrix breadth and add submodule parity mapping.
 - [ ] Step 9: Performance guardrails/perf checks
 
@@ -285,6 +286,18 @@ Current status:
 - Red/green completed with targeted run:
   - red: `go test -run='TestLocal/identityModifierParity\.ts' ./internal/testrunner`
   - green: accepted only `identityModifierParity` baselines and re-ran targeted identity suite
+
+### Latest Increment (Discriminated-Union Identity Parity)
+- Extended `testdata/tests/cases/compiler/identityModifierParity.ts` with a discriminated-union shape:
+  - positive narrowing: `if (shape().kind === "circle") { const r: number = shape().radius; }`
+  - boundary invalidation: unknown call between guard and repeated read reports expected error
+- Red phase was run first:
+  - `go test -run='TestLocal/identityModifierParity\.ts' ./internal/testrunner`
+- Implementation result:
+  - no checker/binder/parser code changes were needed for this slice; existing Phase 1 behavior already satisfies the covered discriminant scenario.
+- Baseline + validation:
+  - accepted relevant parity baselines (`identityModifierParity.errors.txt`, `identityModifierParity.symbols`, `identityModifierParity.types`)
+  - re-ran targeted identity suite and required full `hereby` validation (`build`, `test`, `lint`, `format`)
 
 ### Latest Increment (Boundaries - Await Slice)
 - Extended `testdata/tests/cases/compiler/identityModifierBoundaries.ts` with an `await` uncertainty-boundary scenario.

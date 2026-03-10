@@ -158,3 +158,64 @@ if (store.read() !== undefined) {
     afterSetCall;
 >afterSetCall : string
 }
+
+// Discriminated-union parity: repeated identity reads should narrow by kind.
+type Shape =
+>Shape : Shape
+
+    | { kind: "circle"; radius: number }
+>kind : "circle"
+>radius : number
+
+    | { kind: "square"; size: number };
+>kind : "square"
+>size : number
+
+declare const shape: identity () => Shape;
+>shape : () => Shape
+
+if (shape().kind === "circle") {
+>shape().kind === "circle" : boolean
+>shape().kind : "circle" | "square"
+>shape() : Shape
+>shape : () => Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    const circleRadius: number = shape().radius; // OK
+>circleRadius : number
+>shape().radius : number
+>shape() : Shape
+>shape : () => Shape
+>radius : number
+
+    circleRadius;
+>circleRadius : number
+}
+
+// Discriminated-union boundary parity: unknown call invalidates prior narrowing.
+declare function unknownShapeMutate(): void;
+>unknownShapeMutate : () => void
+
+if (shape().kind === "circle") {
+>shape().kind === "circle" : boolean
+>shape().kind : "circle" | "square"
+>shape() : Shape
+>shape : () => Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    unknownShapeMutate();
+>unknownShapeMutate() : void
+>unknownShapeMutate : () => void
+
+    const afterUnknownShapeCall: number = shape().radius; // should error
+>afterUnknownShapeCall : number
+>shape().radius : any
+>shape() : Shape
+>shape : () => Shape
+>radius : any
+
+    afterUnknownShapeCall;
+>afterUnknownShapeCall : number
+}
