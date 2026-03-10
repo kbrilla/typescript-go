@@ -288,3 +288,12 @@ Current status:
 - Green phase checker change (`internal/checker/flow.go`): `getTypeAtFlowAssignment` now invalidates parameterless call-reference narrowing when the callee is assigned/aliased (variable declaration or assignment RHS).
 - Added helper: `isAliasEscapeAssignmentForCallReference` for narrow assignment-based alias-escape detection.
 - Accepted only relevant boundary baselines and revalidated the targeted identity suite.
+
+### Latest Increment (Boundaries - Alias Escape Reassignment Case)
+- Extended `identityModifierBoundaries.ts` with a second alias-escape form using binary assignment (`reassignedRead = read`).
+- Existing alias-escape invalidation logic in `getTypeAtFlowAssignment` correctly widens `read()` after reassignment escape, so no additional checker changes were required for this slice.
+- Accepted updated boundary baselines and re-verified the focused identity local suite:
+  - `identityModifierErrors.ts`
+  - `identityModifierNarrowing.ts`
+  - `identityModifierDiagnostics.ts`
+  - `identityModifierBoundaries.ts`

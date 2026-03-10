@@ -30,6 +30,15 @@ if (read() !== undefined) {
     escapedRead;
 }
 
+
+let reassignedRead: () => string | undefined;
+
+if (read() !== undefined) {
+    reassignedRead = read;
+    const afterReassignmentEscape: string = read(); // should error
+    reassignedRead;
+}
+
 async function testAwaitBoundary() {
     if (read() !== undefined) {
         await delay();

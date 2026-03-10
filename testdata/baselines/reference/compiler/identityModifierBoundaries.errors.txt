@@ -4,7 +4,7 @@ identityModifierBoundaries.ts(21,11): error TS2322: Type 'string | undefined' is
   Type 'undefined' is not assignable to type 'string'.
 identityModifierBoundaries.ts(26,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(33,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(42,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
@@ -45,6 +45,15 @@ identityModifierBoundaries.ts(33,15): error TS2322: Type 'string | undefined' is
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
 !!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         escapedRead;
+    }
+    
+    
+    let reassignedRead: () => string | undefined;
+    
+    if (read() !== undefined) {
+        reassignedRead = read;
+        const afterReassignmentEscape: string = read(); // should error
+        reassignedRead;
     }
     
     async function testAwaitBoundary() {

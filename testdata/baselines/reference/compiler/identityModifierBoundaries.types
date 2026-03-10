@@ -80,6 +80,30 @@ if (read() !== undefined) {
 >escapedRead : () => string | undefined
 }
 
+
+let reassignedRead: () => string | undefined;
+>reassignedRead : () => string | undefined
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    reassignedRead = read;
+>reassignedRead = read : () => string | undefined
+>reassignedRead : () => string | undefined
+>read : () => string | undefined
+
+    const afterReassignmentEscape: string = read(); // should error
+>afterReassignmentEscape : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    reassignedRead;
+>reassignedRead : () => string | undefined
+}
+
 async function testAwaitBoundary() {
 >testAwaitBoundary : () => Promise<void>
 

@@ -66,8 +66,28 @@ if (read() !== undefined) {
 >escapedRead : Symbol(escapedRead, Decl(identityModifierBoundaries.ts, 24, 9))
 }
 
+
+let reassignedRead: () => string | undefined;
+>reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 30, 3))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    reassignedRead = read;
+>reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 30, 3))
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+
+    const afterReassignmentEscape: string = read(); // should error
+>afterReassignmentEscape : Symbol(afterReassignmentEscape, Decl(identityModifierBoundaries.ts, 34, 9))
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+
+    reassignedRead;
+>reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 30, 3))
+}
+
 async function testAwaitBoundary() {
->testAwaitBoundary : Symbol(testAwaitBoundary, Decl(identityModifierBoundaries.ts, 27, 1))
+>testAwaitBoundary : Symbol(testAwaitBoundary, Decl(identityModifierBoundaries.ts, 36, 1))
 
     if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
@@ -77,7 +97,7 @@ async function testAwaitBoundary() {
 >delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 8, 46))
 
         const afterAwait: string = read(); // should error
->afterAwait : Symbol(afterAwait, Decl(identityModifierBoundaries.ts, 32, 13))
+>afterAwait : Symbol(afterAwait, Decl(identityModifierBoundaries.ts, 41, 13))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
     }
 }

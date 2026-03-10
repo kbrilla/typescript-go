@@ -19,7 +19,7 @@ This PR intentionally excludes explicit `mutator`/`links` contract behavior (Pha
   - Unknown call boundary invalidation (narrow slice).
   - Callback invocation boundary invalidation (narrow slice).
   - Await suspension boundary invalidation for statement-form `await` (latest slice).
-  - Assignment-based alias-escape invalidation (narrow slice).
+  - Assignment-based alias-escape invalidation (narrow slice), including variable initializer and binary reassignment forms.
 - Diagnostics slice (partial FR9 groundwork):
   - Stable grammar/placement diagnostics for identity modifier misuse.
 - Parser stability fix:
@@ -27,7 +27,7 @@ This PR intentionally excludes explicit `mutator`/`links` contract behavior (Pha
 
 ### In Progress
 - FR4 uncertainty matrix completion:
-  - Broader alias-escape parity matrix (non-trivial escapes/additional forms) and wider await/callback parity coverage still pending.
+  - Broader alias-escape parity matrix (non-trivial escapes/indirect forms) and wider await/callback parity coverage still pending.
 - Step 4 Tier 1 invalidation hardening:
   - Additional explicit write-form invalidation tests pending.
 
