@@ -336,11 +336,33 @@ func (c *Checker) isInlineTrivialPassthroughCallForCallReference(callee *ast.Nod
 	}
 
 	invoked := ast.SkipParentheses(initializer.Expression())
-	if !(ast.IsArrowFunction(invoked) || ast.IsFunctionExpression(invoked)) {
-		return false
+	if ast.IsArrowFunction(invoked) || ast.IsFunctionExpression(invoked) {
+		return c.isTrivialPassthroughFunctionLike(invoked)
 	}
 
-	return c.isTrivialPassthroughFunctionLike(invoked)
+	if ast.IsIdentifier(invoked) {
+		symbol := c.getResolvedSymbol(invoked)
+		if symbol == c.unknownSymbol || !c.isConstantVariable(symbol) {
+			return false
+		}
+
+		declaration := symbol.ValueDeclaration
+		if declaration == nil || !ast.IsVariableDeclaration(declaration) {
+			return false
+		}
+
+		helperInitializer := declaration.Initializer()
+		if helperInitializer == nil {
+			return false
+		}
+
+		helper := ast.SkipParentheses(helperInitializer)
+		if ast.IsArrowFunction(helper) || ast.IsFunctionExpression(helper) {
+			return c.isTrivialPassthroughFunctionLike(helper)
+		}
+	}
+
+	return false
 }
 
 func (c *Checker) isTrivialPassthroughFunctionLike(fn *ast.Node) bool {

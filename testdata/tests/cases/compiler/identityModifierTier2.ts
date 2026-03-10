@@ -21,6 +21,27 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
+    // Tier 2 precision target: local const helper identifier with trivial passthrough body.
+    const localId = <T>(x: T) => x;
+    const forwarded = localId(read);
+    forwarded;
+
+    const afterConstHelperPassthrough: string = read(); // should stay narrowed
+    afterConstHelperPassthrough;
+}
+
+if (read() !== undefined) {
+    // Conservative boundary: mutable helper can be reassigned and must invalidate prior narrowing.
+    let localMaybeId = <T>(x: T) => x;
+    localMaybeId = pass;
+    const forwarded = localMaybeId(read);
+    forwarded;
+
+    const afterMutableHelperPassthrough: string = read(); // current conservative: error
+    afterMutableHelperPassthrough;
+}
+
+if (read() !== undefined) {
     // current conservative: alias-preserving helper passthrough is treated as an uncertainty boundary
     const forwarded = pass(read);
     forwarded;

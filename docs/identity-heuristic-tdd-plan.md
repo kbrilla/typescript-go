@@ -262,14 +262,19 @@ Current status:
 ### Latest Increment (Tier 2 Narrow Precision)
 - Added a Tier 2 positive case in `testdata/tests/cases/compiler/identityModifierTier2.ts` for inline trivial passthrough forwarding:
   - `const fwd = ((x) => x)(read);` does not invalidate prior `identity` narrowing.
+- Extended Tier 2 positive coverage to local const helper identifiers with trivial passthrough bodies:
+  - `const localId = <T>(x: T) => x; const forwarded = localId(read);` preserves narrowing.
 - Kept conservative invalidation for non-inline helper passthrough patterns:
   - `const forwarded = pass(read);`
   - `useReader(pass(read));`
+- Kept mutable/reassigned local helpers conservative by design:
+  - `let localMaybeId = <T>(x: T) => x; localMaybeId = pass; localMaybeId(read);` invalidates prior narrowing.
 - Checker change is intentionally narrow and syntactic in `internal/checker/flow.go`:
-  - exempt only call initializers that are inline trivial passthrough function values
+  - exempt only call initializers that are inline trivial passthrough function values, or identifier callees that resolve to `const` locals initialized with trivial passthrough function-like values
   - accepted forms: single parameter, body is parameter expression or single `return` of parameter
 - Remaining Tier 2 gaps:
-  - no precision preservation yet for named/non-inline helpers even when alias-preserving
+  - no precision preservation yet for mutable/reassigned helper identifiers even when their initial value is trivial passthrough
+  - no precision preservation yet for broader named/non-inline helper shapes outside local `const` trivial passthrough
   - no deeper effect proof; fallback remains conservative by design outside this syntactic shape
   - `identityModifierErrors.ts`
   - `identityModifierNarrowing.ts`

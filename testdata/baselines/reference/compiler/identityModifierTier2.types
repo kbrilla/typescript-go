@@ -62,6 +62,73 @@ if (read() !== undefined) {
 >read : () => string | undefined
 >undefined : undefined
 
+    // Tier 2 precision target: local const helper identifier with trivial passthrough body.
+    const localId = <T>(x: T) => x;
+>localId : <T>(x: T) => T
+><T>(x: T) => x : <T>(x: T) => T
+>x : T
+>x : T
+
+    const forwarded = localId(read);
+>forwarded : () => string | undefined
+>localId(read) : () => string | undefined
+>localId : <T>(x: T) => T
+>read : () => string | undefined
+
+    forwarded;
+>forwarded : () => string | undefined
+
+    const afterConstHelperPassthrough: string = read(); // should stay narrowed
+>afterConstHelperPassthrough : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterConstHelperPassthrough;
+>afterConstHelperPassthrough : string
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    // Conservative boundary: mutable helper can be reassigned and must invalidate prior narrowing.
+    let localMaybeId = <T>(x: T) => x;
+>localMaybeId : <T>(x: T) => T
+><T>(x: T) => x : <T>(x: T) => T
+>x : T
+>x : T
+
+    localMaybeId = pass;
+>localMaybeId = pass : <T>(x: T) => T
+>localMaybeId : <T>(x: T) => T
+>pass : <T>(x: T) => T
+
+    const forwarded = localMaybeId(read);
+>forwarded : () => string | undefined
+>localMaybeId(read) : () => string | undefined
+>localMaybeId : <T>(x: T) => T
+>read : () => string | undefined
+
+    forwarded;
+>forwarded : () => string | undefined
+
+    const afterMutableHelperPassthrough: string = read(); // current conservative: error
+>afterMutableHelperPassthrough : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterMutableHelperPassthrough;
+>afterMutableHelperPassthrough : string
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
     // current conservative: alias-preserving helper passthrough is treated as an uncertainty boundary
     const forwarded = pass(read);
 >forwarded : () => string | undefined
