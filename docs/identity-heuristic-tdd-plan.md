@@ -318,6 +318,17 @@ Current status:
 - Checker behavior remained unchanged in this slice and reused existing conservative call-boundary invalidation in `getTypeAtFlowCall` (`internal/checker/flow.go`).
 - Accepted only relevant boundary baselines:
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.errors.txt`
+
+### Latest Increment (Boundaries - Indirect Callback Argument Slice)
+- Extended `testdata/tests/cases/compiler/identityModifierBoundaries.ts` with an indirect helper callback argument form:
+  - `const indirectCallbackResult = invoke(pass(() => {}));`
+- Red phase confirmed missing invalidation for this shape in targeted boundary tests.
+- Green phase binder change (`internal/binder/binder.go`): assignment-form callback boundary detection now recognizes helper-wrapped callback argument expressions, not only direct inline arrow/function arguments.
+- Checker behavior remained unchanged in this slice and reused existing conservative flow-call invalidation in `getTypeAtFlowCall` (`internal/checker/flow.go`).
+- Accepted only relevant boundary baselines:
+  - `testdata/baselines/reference/compiler/identityModifierBoundaries.errors.txt`
+  - `testdata/baselines/reference/compiler/identityModifierBoundaries.symbols`
+  - `testdata/baselines/reference/compiler/identityModifierBoundaries.types`
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.symbols`
 
 ### Latest Increment (Boundaries - Indirect Alias Passthrough Slice)

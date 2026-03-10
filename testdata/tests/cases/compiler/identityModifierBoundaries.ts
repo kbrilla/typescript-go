@@ -34,6 +34,14 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
+    const indirectCallbackResult = invoke(pass(() => {
+        // indirect helper-passed callback boundary
+    }));
+    indirectCallbackResult;
+    const afterIndirectCallbackCall: string = read(); // should error
+}
+
+if (read() !== undefined) {
     const escapedRead = read;
     const afterAliasEscape: string = read(); // should error
     escapedRead;

@@ -94,6 +94,31 @@ if (read() !== undefined) {
 >read : () => string | undefined
 >undefined : undefined
 
+    const indirectCallbackResult = invoke(pass(() => {
+>indirectCallbackResult : void
+>invoke(pass(() => {        // indirect helper-passed callback boundary    })) : void
+>invoke : (cb: () => void) => void
+>pass(() => {        // indirect helper-passed callback boundary    }) : () => void
+>pass : <T>(x: T) => T
+>() => {        // indirect helper-passed callback boundary    } : () => void
+
+        // indirect helper-passed callback boundary
+    }));
+    indirectCallbackResult;
+>indirectCallbackResult : void
+
+    const afterIndirectCallbackCall: string = read(); // should error
+>afterIndirectCallbackCall : string
+>read() : string | undefined
+>read : () => string | undefined
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
     const escapedRead = read;
 >escapedRead : () => string | undefined
 >read : () => string | undefined

@@ -20,6 +20,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Unknown call | `unknownMutate();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback statement | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback assignment form | `const r = invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Callback indirect helper argument | `const r = invoke(pass(() => {}));` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Alias initializer | `const escaped = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Indirect alias passthrough | `const indirect = pass(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Alias reassignment | `alias = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
@@ -129,6 +130,14 @@ async function identityAwaitBoundary() {
 declare const read: identity () => string | undefined;
 declare function unknownMutate(): void;
 declare function pass<T>(x: T): T;
+declare function invoke(cb: () => void): void;
+
+if (read() !== undefined) {
+  const viaHelper = invoke(pass(() => {}));
+  viaHelper;
+  const afterCallbackViaHelper: string = read(); // error
+  afterCallbackViaHelper;
+}
 
 if (read() !== undefined) {
   unknownMutate();

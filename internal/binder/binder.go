@@ -2277,13 +2277,23 @@ func (b *Binder) maybeBindInitializerFlowIfCallbackCall(node *ast.Node) {
 		return
 	}
 
-	for _, argument := range initializer.Arguments() {
-		argument = ast.SkipParentheses(argument)
-		if ast.IsFunctionExpression(argument) || ast.IsArrowFunction(argument) {
-			b.currentFlow = b.createFlowCall(b.currentFlow, initializer)
-			return
-		}
+	if slices.ContainsFunc(initializer.Arguments(), containsCallbackArgumentExpression) {
+		b.currentFlow = b.createFlowCall(b.currentFlow, initializer)
+		return
 	}
+}
+
+func containsCallbackArgumentExpression(node *ast.Node) bool {
+	node = ast.SkipParentheses(node)
+	if ast.IsFunctionExpression(node) || ast.IsArrowFunction(node) {
+		return true
+	}
+
+	if ast.IsCallExpression(node) {
+		return slices.ContainsFunc(node.Arguments(), containsCallbackArgumentExpression)
+	}
+
+	return false
 }
 
 func (b *Binder) bindInitializedVariableFlow(node *ast.Node) {
