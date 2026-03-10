@@ -21,6 +21,7 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Callback statement | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback assignment form | `const r = invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Alias initializer | `const escaped = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Indirect alias passthrough | `const indirect = pass(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Alias reassignment | `alias = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await statement | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await assignment | `const x = await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
@@ -31,6 +32,7 @@ declare const read: identity () => string | undefined;
 declare function unknownMutate(): void;
 declare function invoke(cb: () => void): void;
 declare function delay(): Promise<void>;
+declare function pass<T>(x: T): T;
 
 if (read() !== undefined) {
   const stable: string = read(); // OK
@@ -58,6 +60,12 @@ if (read() !== undefined) {
   const afterAliasInit: string = read(); // error
 }
 
+if (read() !== undefined) {
+  const indirect = pass(read);
+  indirect;
+  const afterIndirectAlias: string = read(); // error
+}
+
 let alias: () => string | undefined;
 if (read() !== undefined) {
   alias = read;
@@ -80,21 +88,9 @@ async function testAwaitBoundaries() {
 ```
 
 ## Not Yet Working (Phase 1)
-- Indirect alias escape and helper passthrough cases.
 - Broader nested/indirect callback boundary forms.
 - Additional Tier 1 write-form invalidation expansion.
 - Tier 2 guarded invalidation slices.
-
-```ts
-declare const read: identity () => string | undefined;
-declare function pass<T>(x: T): T;
-
-if (read() !== undefined) {
-  const indirect = pass(read);
-  indirect;
-  const stillNarrowed: string = read(); // should error after indirect alias escape is implemented
-}
-```
 
 ## Phase 2 Out of Scope
 - Explicit `mutator`/`links` fallback resolution.

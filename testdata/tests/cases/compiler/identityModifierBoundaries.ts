@@ -8,6 +8,7 @@ if (read() !== undefined) {
 }
 
 declare function unknownMutate(): void;
+declare function pass<T>(x: T): T;
 
 declare function invoke(cb: () => void): void;
 declare function delay(): Promise<void>;
@@ -36,6 +37,12 @@ if (read() !== undefined) {
     const escapedRead = read;
     const afterAliasEscape: string = read(); // should error
     escapedRead;
+}
+
+if (read() !== undefined) {
+    const indirect = pass(read);
+    indirect;
+    const afterIndirectAliasEscape: string = read(); // should error
 }
 
 

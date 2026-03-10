@@ -296,10 +296,26 @@ func (c *Checker) isAliasEscapeAssignmentForCallReference(reference *ast.Node, a
 	switch {
 	case ast.IsVariableDeclaration(assignment):
 		initializer := assignment.Initializer()
-		return initializer != nil && c.isMatchingReference(callee, c.getReferenceCandidate(initializer))
+		return initializer != nil && c.isAliasEscapeInitializerForCallReference(callee, initializer)
 	case ast.IsBinaryExpression(assignment):
 		binary := assignment.AsBinaryExpression()
-		return ast.IsAssignmentOperator(binary.OperatorToken.Kind) && c.isMatchingReference(callee, c.getReferenceCandidate(binary.Right))
+		return ast.IsAssignmentOperator(binary.OperatorToken.Kind) && c.isAliasEscapeInitializerForCallReference(callee, binary.Right)
+	}
+
+	return false
+}
+
+func (c *Checker) isAliasEscapeInitializerForCallReference(callee *ast.Node, initializer *ast.Node) bool {
+	if c.isMatchingReference(callee, c.getReferenceCandidate(initializer)) {
+		return true
+	}
+
+	if ast.IsCallExpression(initializer) {
+		for _, argument := range initializer.Arguments() {
+			if c.isMatchingReference(callee, c.getReferenceCandidate(argument)) {
+				return true
+			}
+		}
 	}
 
 	return false

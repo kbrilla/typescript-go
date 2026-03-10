@@ -223,8 +223,8 @@ Current status:
   - Remaining: add explicit write-invalidation tests and verify all Tier 1 write forms.
 - [ ] Step 5: Tier 2 guarded invalidation
 - [~] Step 6: Uncertainty boundaries
-  - Covered in local tests: unknown direct call, callback invocation boundary (statement + assignment-form), await suspension boundary, and assignment-based alias-escape.
-  - Remaining: broader alias-escape matrix/parity coverage (non-trivial escapes and additional forms).
+  - Covered in local tests: unknown direct call, callback invocation boundary (statement + assignment-form), await suspension boundary, assignment-based alias-escape, and indirect alias escape via helper passthrough.
+  - Remaining: broader boundary parity coverage (more nested callback/escape forms and additional write-shape interactions).
 - [ ] Step 7: Diagnostics for heuristic limits
 - [ ] Step 8: Parity and regression sweep
 - [ ] Step 9: Performance guardrails/perf checks
@@ -308,6 +308,7 @@ Current status:
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.errors.txt`
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.symbols`
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.types`
+  - `testdata/baselines/reference/compiler/identityModifierBoundaries.types`
 
 ### Latest Increment (Boundaries - Callback Assignment-Form Slice)
 - Extended `testdata/tests/cases/compiler/identityModifierBoundaries.ts` with `const result = invoke(() => {})` and a post-call read assertion.
@@ -318,4 +319,16 @@ Current status:
 - Accepted only relevant boundary baselines:
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.errors.txt`
   - `testdata/baselines/reference/compiler/identityModifierBoundaries.symbols`
-  - `testdata/baselines/reference/compiler/identityModifierBoundaries.types`
+
+### Latest Increment (Boundaries - Indirect Alias Passthrough Slice)
+- Extended `testdata/tests/cases/compiler/identityModifierBoundaries.ts` with helper passthrough alias escape:
+  - `const indirect = pass(read);`
+  - post-passthrough `read()` assignment to `string` now expected to error.
+- Red phase confirmed mismatch with targeted run:
+  - `go test -run='TestLocal/identityModifierBoundaries\.ts' ./internal/testrunner`
+- Green phase checker change (`internal/checker/flow.go`): alias-escape assignment detection now also treats initializer/assignment RHS call expressions that receive the endpoint reference as argument as escape boundaries.
+- Targeted identity suite is green after baseline acceptance:
+  - `identityModifierErrors.ts`
+  - `identityModifierNarrowing.ts`
+  - `identityModifierDiagnostics.ts`
+  - `identityModifierBoundaries.ts`
