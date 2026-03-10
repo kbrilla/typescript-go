@@ -152,7 +152,7 @@ if (read() !== undefined) {
 }
 ```
 
-### Parity 2: callback boundary invalidation (getter/setter vs identity)
+### Parity 2: callback boundary divergence (getter/setter vs identity)
 Getter/setter style:
 ```ts
 declare const model: {
@@ -163,7 +163,7 @@ declare function invoke(cb: () => void): void;
 
 if (model.value !== undefined) {
   invoke(() => {});
-  const s: string = model.value; // error
+  const s: string = model.value; // getter sweep observation: still OK
   s;
 }
 ```
@@ -180,7 +180,7 @@ if (read() !== undefined) {
 }
 ```
 
-### Parity 3: await boundary invalidation (getter/setter vs identity)
+### Parity 3: await boundary divergence (getter/setter vs identity)
 Getter/setter style:
 ```ts
 declare const model: {
@@ -192,7 +192,7 @@ declare function delay(): Promise<void>;
 async function getterAwaitBoundary() {
   if (model.value !== undefined) {
     await delay();
-    const s: string = model.value; // error
+    const s: string = model.value; // getter sweep observation: still OK
     s;
   }
 }
@@ -318,7 +318,7 @@ declare const model: {
 
 if (model.value !== undefined) {
   setTimeout(() => {});
-  const s: string = model.value; // error
+  const s: string = model.value; // getter sweep observation: still OK
   s;
 }
 ```
@@ -486,6 +486,28 @@ Latest tip validation is green:
 - `npx hereby test`
 - `npx hereby lint`
 - `npx hereby format`
+
+## TypeScript-main Benchmark Snapshot
+
+### Setup
+- Date: 2026-03-10
+- Workload: TypeScript-main compile workload on one local macOS host
+- Measurement set: 3 wall-time runs each, plus max RSS sampling
+
+### Comparable commands
+```sh
+node ./_submodules/TypeScript/built/local/tsc.js -p ./_submodules/TypeScript/src/tsconfig.json --noEmit
+./tsgo -p ./_submodules/TypeScript/src/tsconfig.json --noEmit
+```
+
+### Results
+| Runner | Wall times (s) | Avg wall (s) | Avg max RSS (MB) |
+| --- | --- | --- | --- |
+| upstream `tsc` | 8.86, 7.86, 7.84 | 8.19 | 708.3 |
+| `tsgo` | 1.60, 1.29, 1.27 | 1.39 | 672.1 |
+
+- Throughput snapshot: `~5.9x` faster wall time for `tsgo` on this workload.
+- Memory snapshot: `~5%` lower max RSS for `tsgo`.
 
 ## Benchmark: tsgo main vs this branch
 

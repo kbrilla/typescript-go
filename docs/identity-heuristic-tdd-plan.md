@@ -225,6 +225,7 @@ Current status:
 - [x] Step 4: Tier 1 heuristic invalidation (covered slices)
   - Call expressions now participate in flow tracking and narrowing conditions.
   - Added parity write-form coverage: property assignment write, method setter-call write, and callable hybrid setter-style write.
+  - Closed the P5 getter-vs-identity write parity slice for same-receiver `read()` then `set(non-nullish)` shape.
   - Remaining: expand additional Tier 1 write-shape matrix breadth.
 - [ ] Step 5: Tier 2 guarded invalidation (broad)
   - Added starter local test coverage for candidate Tier 2 forwarding/passthrough patterns with current conservative expectations.
@@ -238,13 +239,14 @@ Current status:
   - Added dedicated local parity test coverage in `identityModifierParity.ts` for repeated-read success, callback boundary invalidation, await boundary invalidation, write-call analog invalidation, and one-liner ternary shape.
   - Added discriminated-union identity parity coverage for kind-guard narrowing and post-unknown-call invalidation.
   - Added comprehensive getter-to-identity parity visibility sweep in `identityModifierGetterParitySweep.ts` with categorized sections (repeated reads, branch merges, callback/await, write invalidation, aliasing, ternary, nested access).
+  - Current getter-comparable parity score in the sweep is `5/9` matched categories, with `4/9` conservative mismatches.
   - Remaining: expand parity mapping against additional submodule scenarios.
 - [ ] Step 9: Performance guardrails/perf checks
 
 ### Next Focus (Immediate)
-1. Expand Phase 1 tests for explicit write invalidation and boundary invalidation matrix.
-2. Re-introduce advanced cases incrementally (generic return/alias-heavy patterns) as red tests.
-3. Implement minimal checker changes per failing slice before moving to Tier 2.
+1. Expand Tier 2 guarded precision beyond trivial local passthrough forms while preserving soundness.
+2. Add diagnostics for heuristic-limit and low-confidence cases (Step 7).
+3. Continue parity-gap reductions from the sweep (`P3`, `P4`, `P6`, nested unknown-call in `P8`) in narrow red/green slices.
 
 ### Latest Increment
 - Advanced boundary invalidation experiment was prototyped and tested, but reverted due broad submodule baseline regressions.
