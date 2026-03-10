@@ -311,6 +311,10 @@ func (c *Checker) isAliasEscapeInitializerForCallReference(callee *ast.Node, ini
 	}
 
 	if ast.IsCallExpression(initializer) {
+		if c.isInlineTrivialPassthroughCallForCallReference(callee, initializer) {
+			return false
+		}
+
 		for _, argument := range initializer.Arguments() {
 			if c.isMatchingReference(callee, c.getReferenceCandidate(argument)) {
 				return true
@@ -319,6 +323,57 @@ func (c *Checker) isAliasEscapeInitializerForCallReference(callee *ast.Node, ini
 	}
 
 	return false
+}
+
+func (c *Checker) isInlineTrivialPassthroughCallForCallReference(callee *ast.Node, initializer *ast.Node) bool {
+	if len(initializer.Arguments()) != 1 {
+		return false
+	}
+
+	argument := initializer.Arguments()[0]
+	if !c.isMatchingReference(callee, c.getReferenceCandidate(argument)) {
+		return false
+	}
+
+	invoked := ast.SkipParentheses(initializer.Expression())
+	if !(ast.IsArrowFunction(invoked) || ast.IsFunctionExpression(invoked)) {
+		return false
+	}
+
+	return c.isTrivialPassthroughFunctionLike(invoked)
+}
+
+func (c *Checker) isTrivialPassthroughFunctionLike(fn *ast.Node) bool {
+	if len(fn.Parameters()) != 1 {
+		return false
+	}
+
+	parameter := fn.Parameters()[0].AsParameterDeclaration()
+	if parameter.DotDotDotToken != nil || parameter.Initializer != nil {
+		return false
+	}
+
+	parameterName := parameter.Name()
+	if parameterName == nil || !ast.IsIdentifier(parameterName) {
+		return false
+	}
+
+	body := fn.Body()
+	if body == nil {
+		return false
+	}
+
+	if ast.IsBlock(body) {
+		statements := body.Statements()
+		if len(statements) != 1 || !ast.IsReturnStatement(statements[0]) {
+			return false
+		}
+
+		retExpr := statements[0].AsReturnStatement().Expression
+		return retExpr != nil && c.isMatchingReference(parameterName, c.getReferenceCandidate(ast.SkipParentheses(retExpr)))
+	}
+
+	return c.isMatchingReference(parameterName, c.getReferenceCandidate(ast.SkipParentheses(body)))
 }
 
 func (c *Checker) isAwaitAssignmentBoundaryForCallReference(reference *ast.Node, assignment *ast.Node) bool {

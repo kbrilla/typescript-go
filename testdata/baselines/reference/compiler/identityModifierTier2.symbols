@@ -1,0 +1,95 @@
+//// [tests/cases/compiler/identityModifierTier2.ts] ////
+
+=== identityModifierTier2.ts ===
+// Candidate Tier 2 patterns: local alias-preserving forwarding and helper passthrough.
+declare const read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+declare function pass<T>(x: T): T;
+>pass : Symbol(pass, Decl(identityModifierTier2.ts, 1, 54))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 2, 22))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 2, 25))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 2, 22))
+>T : Symbol(T, Decl(identityModifierTier2.ts, 2, 22))
+
+declare function useReader(fn: () => string | undefined): void;
+>useReader : Symbol(useReader, Decl(identityModifierTier2.ts, 2, 34))
+>fn : Symbol(fn, Decl(identityModifierTier2.ts, 3, 27))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    const stable: string = read(); // baseline sanity check: still narrowed before boundaries
+>stable : Symbol(stable, Decl(identityModifierTier2.ts, 6, 9))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    stable;
+>stable : Symbol(stable, Decl(identityModifierTier2.ts, 6, 9))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    // Tier 2 precision target: inline trivial passthrough lambda should preserve narrowing.
+    const fwd = ((x) => x)(read);
+>fwd : Symbol(fwd, Decl(identityModifierTier2.ts, 12, 9))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 12, 18))
+>x : Symbol(x, Decl(identityModifierTier2.ts, 12, 18))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    fwd;
+>fwd : Symbol(fwd, Decl(identityModifierTier2.ts, 12, 9))
+
+    const afterInlinePassthrough: string = read(); // should stay narrowed
+>afterInlinePassthrough : Symbol(afterInlinePassthrough, Decl(identityModifierTier2.ts, 15, 9))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    afterInlinePassthrough;
+>afterInlinePassthrough : Symbol(afterInlinePassthrough, Decl(identityModifierTier2.ts, 15, 9))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    // current conservative: alias-preserving helper passthrough is treated as an uncertainty boundary
+    const forwarded = pass(read);
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 21, 9))
+>pass : Symbol(pass, Decl(identityModifierTier2.ts, 1, 54))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    forwarded;
+>forwarded : Symbol(forwarded, Decl(identityModifierTier2.ts, 21, 9))
+
+    const afterAliasPreservingPass: string = read(); // current conservative: error
+>afterAliasPreservingPass : Symbol(afterAliasPreservingPass, Decl(identityModifierTier2.ts, 24, 9))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    afterAliasPreservingPass;
+>afterAliasPreservingPass : Symbol(afterAliasPreservingPass, Decl(identityModifierTier2.ts, 24, 9))
+
+    // Tier 2 target: preserve narrowing when helper forwarding can be proven alias-preserving and non-mutating.
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    // current conservative: passing read endpoint through a helper call invalidates prior narrowing
+    useReader(pass(read));
+>useReader : Symbol(useReader, Decl(identityModifierTier2.ts, 2, 34))
+>pass : Symbol(pass, Decl(identityModifierTier2.ts, 1, 54))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    const afterHelperPassthrough: string = read(); // current conservative: error
+>afterHelperPassthrough : Symbol(afterHelperPassthrough, Decl(identityModifierTier2.ts, 34, 9))
+>read : Symbol(read, Decl(identityModifierTier2.ts, 1, 13))
+
+    afterHelperPassthrough;
+>afterHelperPassthrough : Symbol(afterHelperPassthrough, Decl(identityModifierTier2.ts, 34, 9))
+
+    // Tier 2 target: keep precision with guarded inference in provably stable local forwarding shapes.
+}
+

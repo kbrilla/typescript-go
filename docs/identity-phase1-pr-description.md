@@ -15,6 +15,10 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 - Repeated-read narrowing for covered local-flow identity call patterns.
 - Conservative invalidation for currently implemented uncertainty boundaries.
 - Tier 1 write-form parity expansion in local parity tests (property assignment and callable hybrid setter-style calls).
+- Tier 2 starter test coverage for candidate forwarding/passthrough shapes with current conservative expectations in `testdata/tests/cases/compiler/identityModifierTier2.ts`.
+- Narrow Tier 2 precision slice for inline trivial passthrough forwarding:
+  - `const fwd = ((x) => x)(read);` preserves prior narrowing.
+  - Non-inline helper passthrough remains conservative (`pass(read)`, `useReader(pass(read))`).
 
 ## Boundary Coverage Matrix
 | Boundary | Example shape | Status | Test source |
@@ -28,6 +32,9 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Alias reassignment | `alias = read;` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await statement | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await assignment | `const x = await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Tier 2 starter (alias-preserving forwarding) | `const forwarded = pass(read);` then `read()` | Starter coverage (current conservative) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
+| Tier 2 starter (helper passthrough) | `useReader(pass(read));` then `read()` | Starter coverage (current conservative) | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
+| Tier 2 narrow precision (inline passthrough lambda) | `const fwd = ((x) => x)(read);` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierTier2.ts` |
 
 ## Parity Coverage Matrix (New Local Slice)
 | Parity pattern | Example shape | Status | Test source |
@@ -402,7 +409,7 @@ if (model.user !== null) {
 ## Not Yet Working (Phase 1)
 - Broader nested/indirect callback boundary forms.
 - Additional Tier 1 write-form invalidation expansion beyond currently covered property/method/callable-hybrid local shapes.
-- Tier 2 guarded invalidation slices.
+- Tier 2 guarded precision behavior itself (today's Tier 2 starter scenarios intentionally keep conservative invalidation expectations).
 
 ## Phase 2 Out of Scope
 - Explicit `mutator`/`links` fallback resolution.

@@ -1,0 +1,110 @@
+//// [tests/cases/compiler/identityModifierTier2.ts] ////
+
+=== identityModifierTier2.ts ===
+// Candidate Tier 2 patterns: local alias-preserving forwarding and helper passthrough.
+declare const read: identity () => string | undefined;
+>read : () => string | undefined
+
+declare function pass<T>(x: T): T;
+>pass : <T>(x: T) => T
+>x : T
+
+declare function useReader(fn: () => string | undefined): void;
+>useReader : (fn: () => string | undefined) => void
+>fn : () => string | undefined
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const stable: string = read(); // baseline sanity check: still narrowed before boundaries
+>stable : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    stable;
+>stable : string
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    // Tier 2 precision target: inline trivial passthrough lambda should preserve narrowing.
+    const fwd = ((x) => x)(read);
+>fwd : () => string | undefined
+>((x) => x)(read) : () => string | undefined
+>((x) => x) : (x: () => string | undefined) => () => string | undefined
+>(x) => x : (x: () => string | undefined) => () => string | undefined
+>x : () => string | undefined
+>x : () => string | undefined
+>read : () => string | undefined
+
+    fwd;
+>fwd : () => string | undefined
+
+    const afterInlinePassthrough: string = read(); // should stay narrowed
+>afterInlinePassthrough : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterInlinePassthrough;
+>afterInlinePassthrough : string
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    // current conservative: alias-preserving helper passthrough is treated as an uncertainty boundary
+    const forwarded = pass(read);
+>forwarded : () => string | undefined
+>pass(read) : () => string | undefined
+>pass : <T>(x: T) => T
+>read : () => string | undefined
+
+    forwarded;
+>forwarded : () => string | undefined
+
+    const afterAliasPreservingPass: string = read(); // current conservative: error
+>afterAliasPreservingPass : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterAliasPreservingPass;
+>afterAliasPreservingPass : string
+
+    // Tier 2 target: preserve narrowing when helper forwarding can be proven alias-preserving and non-mutating.
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    // current conservative: passing read endpoint through a helper call invalidates prior narrowing
+    useReader(pass(read));
+>useReader(pass(read)) : void
+>useReader : (fn: () => string | undefined) => void
+>pass(read) : () => string | undefined
+>pass : <T>(x: T) => T
+>read : () => string | undefined
+
+    const afterHelperPassthrough: string = read(); // current conservative: error
+>afterHelperPassthrough : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterHelperPassthrough;
+>afterHelperPassthrough : string
+
+    // Tier 2 target: keep precision with guarded inference in provably stable local forwarding shapes.
+}
+

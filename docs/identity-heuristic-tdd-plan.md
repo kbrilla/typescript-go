@@ -222,7 +222,9 @@ Current status:
   - Call expressions now participate in flow tracking and narrowing conditions.
   - Added parity write-form coverage: property assignment write, method setter-call write, and callable hybrid setter-style write.
   - Remaining: expand additional Tier 1 write-shape matrix breadth.
-- [ ] Step 5: Tier 2 guarded invalidation
+- [~] Step 5: Tier 2 guarded invalidation
+  - Added starter local test coverage for candidate Tier 2 forwarding/passthrough patterns with current conservative expectations.
+  - Remaining: implement guarded precision preservation when receiver identity and non-mutating forwarding can be proven.
 - [~] Step 6: Uncertainty boundaries
   - Covered in local tests: unknown direct call, callback invocation boundary (statement + assignment-form), await suspension boundary, assignment-based alias-escape, and indirect alias escape via helper passthrough.
   - Remaining: broader boundary parity coverage (more nested callback/escape forms and additional write-shape interactions).
@@ -256,6 +258,19 @@ Current status:
   - identity modifier on constructor type position (TS1184)
 - Parser lookahead now recognizes identity-modifier trails for function/constructor type starts in declaration type positions.
 - Identity-focused local suite now green:
+
+### Latest Increment (Tier 2 Narrow Precision)
+- Added a Tier 2 positive case in `testdata/tests/cases/compiler/identityModifierTier2.ts` for inline trivial passthrough forwarding:
+  - `const fwd = ((x) => x)(read);` does not invalidate prior `identity` narrowing.
+- Kept conservative invalidation for non-inline helper passthrough patterns:
+  - `const forwarded = pass(read);`
+  - `useReader(pass(read));`
+- Checker change is intentionally narrow and syntactic in `internal/checker/flow.go`:
+  - exempt only call initializers that are inline trivial passthrough function values
+  - accepted forms: single parameter, body is parameter expression or single `return` of parameter
+- Remaining Tier 2 gaps:
+  - no precision preservation yet for named/non-inline helpers even when alias-preserving
+  - no deeper effect proof; fallback remains conservative by design outside this syntactic shape
   - `identityModifierErrors.ts`
   - `identityModifierNarrowing.ts`
   - `identityModifierDiagnostics.ts`
@@ -384,3 +399,16 @@ Current status:
   - `identityModifierNarrowing.ts`
   - `identityModifierDiagnostics.ts`
   - `identityModifierBoundaries.ts`
+
+### Latest Increment (Tier 2 Guarded Invalidation Starter Coverage)
+- Added `testdata/tests/cases/compiler/identityModifierTier2.ts` as a narrow starter test for candidate Tier 2 shapes:
+  - local alias-preserving forwarding (`const forwarded = pass(read)`)
+  - helper passthrough argument form (`useReader(pass(read))`)
+- Scenarios are explicitly labeled as:
+  - `current conservative`: narrowing is dropped and post-boundary reads are expected errors today
+  - `Tier 2 target`: future guarded precision preservation when forwarding is provably stable/non-mutating
+- TDD flow for this increment:
+  - red first: `go test -run='TestLocal/identityModifierTier2\.ts' ./internal/testrunner`
+  - accepted only `identityModifierTier2` baselines
+  - green rerun of the same test and targeted identity suite including the new file
+- No production parser/binder/checker changes were required for this starter coverage slice.
