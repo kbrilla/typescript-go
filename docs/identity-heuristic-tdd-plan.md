@@ -192,6 +192,11 @@ npx hereby lint
 npx hereby format
 ```
 
+## Forward Roadmap Alignment
+- Detailed Phase 2/3 candidate features and parity matrices are tracked in `docs/identity-phase1-pr-description.md` under next-phase roadmap sections.
+- This Phase 1 plan remains implementation-focused; roadmap entries are planning guidance until promoted into explicit red/green slices.
+- Value-type invalidation relaxation ideas are Phase 2/3 candidates only and must ship behind strict shape guardrails with conservative defaults.
+
 ## Phase 2 (Prepared, Deferred): Explicit `mutator`/`links`
 
 ### Why Phase 2 Exists

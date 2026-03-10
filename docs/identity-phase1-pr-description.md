@@ -745,6 +745,62 @@ Explicit tests to add with that slice:
 - Add diagnostics wording stability baselines for uncertainty-boundary guidance (`TS100014`, `TS100015`).
 - Expand Tier 2 negative-controls matrix for mutable helper alias chains and property-based helper references (explicitly conservative expectations).
 
+## Next Phases: Narrowing Expansion Roadmap
+
+### Phase 2 candidates
+| Feature | Guardrails | Risk | Short implementation note | Parity impact |
+| --- | --- | --- | --- | --- |
+| Explicit `mutator`/`links` fallback resolution | Require unambiguous endpoint set; no callback-body inspection; conservative fallback on unresolved links | Medium | Reuse existing Tier 1/2 pipeline, then add explicit-link resolver as deterministic fallback stage | Closes multi-endpoint getter/setter invalidation mismatches |
+| Ambiguity diagnostics for multi-endpoint impact | Emit only when multiple identity endpoints exist and impact is unresolved; dedupe per boundary node | Low | Add checker diagnostic emission after fallback resolution failure | Improves parity explainability where getter path appears more predictable |
+| Constrained-overload post-call narrowing (`U extends T`) with explicit links | Apply only when selected overload is constrained and link target is unique | Medium | Hook post-call narrowing after overload selection and explicit-link resolution | Can exceed getter/setter parity in safe linked cases |
+| Tier 2 guarded forwarding expansion (2-hop local helper chains) | Local symbol only; const-only alias chains; depth cap; no mutable/reassigned helpers | Medium | Extend current trivial passthrough matcher with bounded alias-chain support | Reduces conservative identity-only drops in helper-heavy code |
+
+### Phase 3 candidates
+| Feature | Guardrails | Risk | Short implementation note | Parity impact |
+| --- | --- | --- | --- | --- |
+| Dynamic element-write invalidation precision (`obj[key]`) | Literal-like key proofs only at first; conservative on unknown key identity | High | Add key-equivalence checks in write invalidation for endpoint mapping | Closes remaining getter/setter dynamic-write gaps |
+| Cross-file helper summary cache for safe passthrough | Summary must be declaration-only and side-effect free; cache invalidates on program update | High | Add lightweight helper summaries in checker cache, queried from Tier 2 path | Broadens parity in real codebases with shared helpers |
+| Value-aware boundary relaxations for primitives | Strict purity gate; ambient no-arg/no-op forms first; opt-out on any write-capable alias evidence | Medium | Introduce boundary-kind + return-type gate before invalidation | Reduces false invalidation for getter-equivalent primitive reads |
+
+## Deeper Narrowing Candidates
+| Candidate | Phase | Guardrails | Risk | Short implementation note | Parity impact |
+| --- | --- | --- | --- | --- | --- |
+| Equality-chain reuse (`if (read() === "a" || read() === "b")`) | Phase 2 | Same endpoint symbol and same flow region required | Medium | Extend read-fact merge logic for finite literal-union branches | Matches getter literal-union behavior more often |
+| Discriminant-preserving nested access (`read().kind` then `read().payload`) | Phase 2 | Preserve only when discriminant and payload reads resolve to same endpoint candidate | Medium | Reuse normalized reference candidate and discriminant cache for repeated calls | Closes nested discriminant parity gaps |
+| Exhaustive switch carryover on identity reads | Phase 3 | Enable only for exhaustive discriminant switches with no invalidating boundary inside cases | Medium | Thread endpoint-narrowed facts through switch case joins | Brings identity closer to mature getter switch CFA |
+| Guarded optional-chain carryover (`read()?.x`) | Phase 3 | Only for non-mutating expression-statement boundaries and stable endpoint symbol | High | Add optional-chain specific narrowing reuse gate | Expands parity in optional-chain-heavy code |
+
+## Value-Type Invalidation Relaxation Candidates
+Goal: identify invalidation points where narrowing may be preserved for value-like return types (`string`, `number`, `boolean`, literal unions) without relaxing soundness for object/reference-like values.
+
+| Boundary candidate | Phase | Relaxation target | Guardrails | Risk | Short implementation note | Parity impact |
+| --- | --- | --- | --- | --- | --- | --- |
+| Unknown ambient no-arg `void` call (expression statement) | Phase 2 | Preserve primitive/literal-union narrowing | Require ambient declaration, zero args/params, `void` return, and no endpoint alias escape in region | Medium | Extend existing unknown-call carveout with value-type gate | Aligns with getter behavior in narrow no-op call sites |
+| `await Promise.resolve()` expression-statement boundary | Phase 2 | Preserve primitive/literal-union narrowing | Exact await shape match, no assignments, no intervening writes | Low | Reuse existing await carveout and add explicit primitive-type predicate | Keeps current narrow parity and makes rule explicit |
+| Callback no-op alias (`const cb = () => {}; invoke(cb)`) | Phase 3 | Preserve primitive/literal-union narrowing | Callback symbol must be local const, zero params, empty body, non-reassigned | Medium | Add alias-resolution check to current callback preserve classifier | Closes open getter/identity parity item |
+| Alias initializer (`const alias = read`) with no use | Phase 3 | Preserve primitive/literal-union narrowing | Preserve only if alias is never called/passed/reassigned before next read | High | Add bounded local-use scan for alias symbol between guard and reread | Reduces over-invalidation in simple refactor patterns |
+
+## Feature Applicability Matrix (Identity / Getter / Broader)
+| Feature | Phase | Identity | Getter | Broader CFA | Notes |
+| --- | --- | --- | --- | --- | --- |
+| Explicit `mutator`/`links` fallback | 2 | Yes | No | Partial | Identity-specific contract path, but may inform broader effect metadata design |
+| Constrained-overload post-call narrowing | 2 | Yes | No | Partial | Primarily identity-contract feature; can inspire future call-effect CFA |
+| Tier 2 helper forwarding expansion | 2 | Yes | N/A | Yes | Generic narrowing infrastructure improvement with identity-first rollout |
+| Equality-chain literal-union reuse | 2 | Yes | Yes | Yes | Shared narrowing enhancement candidate |
+| Value-type boundary relaxations (guarded) | 2/3 | Yes | Yes | Yes | Boundary classifier can be shared once proven sound |
+| Dynamic element-write precision | 3 | Yes | Yes | Yes | Shared endpoint/reference matching improvement |
+| Cross-file helper summaries | 3 | Yes | N/A | Yes | Broader call-flow precision infrastructure |
+
+## Next-Phase Getter/Setter Pair Parity Matrix
+| Pair scenario | Getter/setter baseline expectation | Identity next-phase target | Phase | Risk | Guardrails | Parity impact note |
+| --- | --- | --- | --- | --- | --- | --- |
+| Multi-endpoint write (`setUser` invalidates `user`, not `settings`) | Selective invalidation | Match via explicit `links` | 2 | Medium | Require unique resolved endpoint set | Removes major multi-endpoint parity gap |
+| Callback no-op alias (`const cb = () => {}; invoke(cb)`) | Preserve narrowing | Preserve under strict alias proof | 3 | Medium | Local const/no-param/empty-body/non-reassigned only | Closes known open callback alias gap |
+| Await assignment forms (`const x = await delay()`) | Often preserved in getter path | Keep conservative in Phase 2, revisit with value-type gate | 3 | High | Require exact safe-shape + value-type proof | Prevents unsound broad async relaxation |
+| Dynamic key write (`model[key] = ...`) | Invalidate when key may target endpoint | Add proven-key selective handling, else conservative | 3 | High | Key equivalence proof required | Improves parity without global alias analysis |
+| Helper-forwarded read endpoint (`use(pass(read))`) | Getter path not call-forward dependent | Preserve only for proven non-mutating local helpers | 2 | Medium | Bounded local helper proof, no mutable aliases | Narrows identity-only conservative behavior |
+| Constrained mutator overload (`update<U extends T>`) | No direct getter equivalent | Add safe post-call narrowing when linked | 2 | Medium | Explicit contract + selected overload + unique link | Intentional parity-plus capability |
+
 ## Validation
 Latest tip validation is green:
 - `npx hereby build`

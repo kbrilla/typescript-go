@@ -288,7 +288,21 @@ Phase 1 addition (planning only):
 
 ## 18. References
 - docs/identity-modifier-research.md
+- docs/identity-phase1-pr-description.md
+- docs/identity-heuristic-tdd-plan.md
 - https://www.typescriptlang.org/docs/handbook/2/narrowing.html
 - https://flow.org/en/docs/lang/refinements/
 - https://learn.microsoft.com/en-us/dotnet/csharp/language-reference/attributes/nullable-analysis
 - https://github.com/google/closure-compiler/wiki/Annotating-JavaScript-for-the-Closure-Compiler
+
+## 19. Forward Roadmap Alignment
+Roadmap source of truth:
+- The forward candidate list and parity matrices are maintained in `docs/identity-phase1-pr-description.md`.
+
+Phase mapping:
+- Phase 2 targets: explicit `mutator`/`links` fallback, ambiguity diagnostics, constrained-overload post-call narrowing, and narrow Tier 2 guarded expansion.
+- Phase 3 targets: broader dynamic-write precision, deeper callback/alias relaxations, and larger-scope helper-summary precision.
+
+Guardrail alignment:
+- Value-type invalidation relaxations must stay shape-guarded and conservative by default.
+- Any relaxation beyond strict local proofs requires explicit parity tests against getter/setter baselines.
