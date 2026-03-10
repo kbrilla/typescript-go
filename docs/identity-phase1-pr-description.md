@@ -26,44 +26,128 @@ It does not include Phase 2 explicit contracts (`mutator`/`links`).
 | Await statement | `await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Await assignment | `const x = await delay();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 
-## Clean Working Examples
+## Examples and Parity
+
+### Works: identity narrowing after guard (before boundaries)
+```ts
+declare const read: identity () => string | undefined;
+
+if (read() !== undefined) {
+  const stable1: string = read(); // OK
+  const stable2 = read().toUpperCase(); // OK
+  stable1;
+  stable2;
+}
+```
+
+### Parity 1: stable read (getter/setter vs identity)
+Getter/setter style:
+```ts
+declare const model: {
+  get value(): string | undefined;
+  set value(v: string | undefined);
+};
+
+if (model.value !== undefined) {
+  const s: string = model.value; // OK
+  s;
+}
+```
+
+Identity style:
+```ts
+declare const read: identity () => string | undefined;
+
+if (read() !== undefined) {
+  const s: string = read(); // OK
+  s;
+}
+```
+
+### Parity 2: callback boundary invalidation (getter/setter vs identity)
+Getter/setter style:
+```ts
+declare const model: {
+  get value(): string | undefined;
+  set value(v: string | undefined);
+};
+declare function invoke(cb: () => void): void;
+
+if (model.value !== undefined) {
+  invoke(() => {});
+  const s: string = model.value; // error
+  s;
+}
+```
+
+Identity style:
+```ts
+declare const read: identity () => string | undefined;
+declare function invoke(cb: () => void): void;
+
+if (read() !== undefined) {
+  invoke(() => {});
+  const s: string = read(); // error
+  s;
+}
+```
+
+### Parity 3: await boundary invalidation (getter/setter vs identity)
+Getter/setter style:
+```ts
+declare const model: {
+  get value(): string | undefined;
+  set value(v: string | undefined);
+};
+declare function delay(): Promise<void>;
+
+async function getterAwaitBoundary() {
+  if (model.value !== undefined) {
+    await delay();
+    const s: string = model.value; // error
+    s;
+  }
+}
+```
+
+Identity style:
+```ts
+declare const read: identity () => string | undefined;
+declare function delay(): Promise<void>;
+
+async function identityAwaitBoundary() {
+  if (read() !== undefined) {
+    await delay();
+    const s: string = read(); // error
+    s;
+  }
+}
+```
+
+### Additional implemented boundary examples (identity)
 ```ts
 declare const read: identity () => string | undefined;
 declare function unknownMutate(): void;
-declare function invoke(cb: () => void): void;
-declare function delay(): Promise<void>;
 declare function pass<T>(x: T): T;
-
-if (read() !== undefined) {
-  const stable: string = read(); // OK
-}
 
 if (read() !== undefined) {
   unknownMutate();
   const afterUnknown: string = read(); // error
-}
-
-if (read() !== undefined) {
-  invoke(() => {});
-  const afterCallbackStmt: string = read(); // error
-}
-
-if (read() !== undefined) {
-  const callbackResult = invoke(() => {});
-  callbackResult;
-  const afterCallbackAssign: string = read(); // error
+  afterUnknown;
 }
 
 if (read() !== undefined) {
   const escapedRead = read;
   escapedRead;
   const afterAliasInit: string = read(); // error
+  afterAliasInit;
 }
 
 if (read() !== undefined) {
   const indirect = pass(read);
   indirect;
   const afterIndirectAlias: string = read(); // error
+  afterIndirectAlias;
 }
 
 let alias: () => string | undefined;
@@ -71,19 +155,7 @@ if (read() !== undefined) {
   alias = read;
   alias;
   const afterAliasReassign: string = read(); // error
-}
-
-async function testAwaitBoundaries() {
-  if (read() !== undefined) {
-    await delay();
-    const afterAwaitStmt: string = read(); // error
-  }
-
-  if (read() !== undefined) {
-    const awaited = await delay();
-    awaited;
-    const afterAwaitAssign: string = read(); // error
-  }
+  afterAliasReassign;
 }
 ```
 
