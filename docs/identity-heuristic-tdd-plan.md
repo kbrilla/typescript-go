@@ -248,7 +248,7 @@ Current status:
   - Remaining: implement guarded precision preservation for broader local consumer/passthrough forms when receiver identity and non-mutating forwarding can be proven.
 - [x] Step 6: Uncertainty boundaries (covered slices)
   - Covered in local tests: unknown direct call; callback invocation boundaries (statement, declaration-initializer assignment, assignment-expression assignment, conditional initializer, indirect callback argument); await suspension boundary; assignment-based alias-escape; and indirect alias escape via helper passthrough.
-  - Added strict callback preserve slice: `const cb = () => {}; invoke(cb);` preserves narrowing, while mutable or non-empty callback aliases remain conservative.
+  - Added strict callback alias parity test slice: `const cb = () => {}; invoke(cb);` is currently conservative in baselines; mutable or non-empty callback aliases are also conservative.
   - Remaining: broader boundary parity coverage (deeper nested/indirect callback alias chains and additional write-shape interactions).
 - [x] Step 7: Diagnostics for heuristic limits (narrow boundary slice)
   - Added boundary guidance diagnostic emitted when identity narrowing is conservatively dropped at uncertainty boundaries.
@@ -272,6 +272,30 @@ Current status:
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
 3. Expand parity mapping from the getter corpus beyond currently covered source slices.
 
+## Newly Found Remaining Gaps (Post-Latest Commit Audit)
+
+Audit basis (tests + current baselines):
+- `testdata/tests/cases/compiler/identityModifierBoundaries.ts`
+- `testdata/tests/cases/compiler/identityModifierTier1Writes.ts`
+- `testdata/tests/cases/compiler/identityModifierTier2.ts`
+- `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts`
+- `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts`
+
+1. Broader nested/indirect callback forms
+- `const cb = () => {}; invoke(cb);` remains conservative in current baselines; preserve parity for this alias form is still open.
+- Covered callback forms are still mostly direct/narrow. Deeper indirection remains open (multi-hop alias chains and non-direct callback references).
+- Additional nested forwarding shapes (callback wrapped/passed through helper chains) remain open beyond the currently exercised single-hop cases.
+
+2. Tier 1 write-form breadth
+- Covered Tier 1 matrix remains local and syntactic (compound/logical/unary endpoint writes plus literal bracket parity slices).
+- Open breadth includes dynamic/non-literal element access writes, receiver-alias write paths, and deeper nested write paths.
+- Additional parity slices for broader write operators/shapes are still needed to claim broad Tier 1 completeness.
+
+3. Tier 2 guarded precision breadth
+- Status correction: `const forwarded = pass(read);` currently preserves narrowing (docs previously described this as conservative).
+- Conservative behavior still applies to consumer forwarding (`useReader(pass(read))`), mutable/reassigned helpers, mutable alias chains, and non-trivial helper bodies.
+- Open breadth includes broader provably-safe local forwarding families and deeper helper indirection while retaining conservative fallbacks outside proven-safe shapes.
+
 ## Tier 1 Write-Form Matrix (Current Local Slice)
 | Write form | Example shape | Status | Test source |
 | --- | --- | --- | --- |
@@ -294,7 +318,7 @@ Tier 1 write-form gaps still open:
   - strict const no-op callback alias preserve (`const cb = () => {}; invoke(cb);`)
   - conservative controls for mutable/non-empty callback aliases.
 - Binder change (`internal/binder/binder.go`): assignment `=` expressions now create flow-call boundaries when RHS is a callback boundary call.
-- Checker change (`internal/checker/flow.go`): no-op callback preserve rule now accepts strict const alias chains that resolve to a zero-arg empty callback body.
+- Checker/workflow note: strict const no-op callback alias preserve was explored, but current baselines still classify this shape conservatively.
 - Guardrails retained:
   - mutable callback aliases remain conservative,
   - non-empty callback aliases remain conservative,
