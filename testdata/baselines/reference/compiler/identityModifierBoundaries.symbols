@@ -16,19 +16,23 @@ if (read() !== undefined) {
 declare function unknownMutate(): void;
 >unknownMutate : Symbol(unknownMutate, Decl(identityModifierBoundaries.ts, 4, 1))
 
+declare function unknownMutateWithArg(x: number): void;
+>unknownMutateWithArg : Symbol(unknownMutateWithArg, Decl(identityModifierBoundaries.ts, 6, 39))
+>x : Symbol(x, Decl(identityModifierBoundaries.ts, 7, 38))
+
 declare function pass<T>(x: T): T;
->pass : Symbol(pass, Decl(identityModifierBoundaries.ts, 6, 39))
->T : Symbol(T, Decl(identityModifierBoundaries.ts, 7, 22))
->x : Symbol(x, Decl(identityModifierBoundaries.ts, 7, 25))
->T : Symbol(T, Decl(identityModifierBoundaries.ts, 7, 22))
->T : Symbol(T, Decl(identityModifierBoundaries.ts, 7, 22))
+>pass : Symbol(pass, Decl(identityModifierBoundaries.ts, 7, 55))
+>T : Symbol(T, Decl(identityModifierBoundaries.ts, 8, 22))
+>x : Symbol(x, Decl(identityModifierBoundaries.ts, 8, 25))
+>T : Symbol(T, Decl(identityModifierBoundaries.ts, 8, 22))
+>T : Symbol(T, Decl(identityModifierBoundaries.ts, 8, 22))
 
 declare function invoke(cb: () => void): void;
->invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 7, 34))
->cb : Symbol(cb, Decl(identityModifierBoundaries.ts, 9, 24))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
+>cb : Symbol(cb, Decl(identityModifierBoundaries.ts, 10, 24))
 
 declare function delay(): Promise<void>;
->delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 9, 46))
+>delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 10, 46))
 >Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
 
 if (read() !== undefined) {
@@ -38,8 +42,20 @@ if (read() !== undefined) {
     unknownMutate();
 >unknownMutate : Symbol(unknownMutate, Decl(identityModifierBoundaries.ts, 4, 1))
 
-    const afterUnknownCall: string = read(); // should error
->afterUnknownCall : Symbol(afterUnknownCall, Decl(identityModifierBoundaries.ts, 14, 9))
+    const afterUnknownCall: string = read(); // preserved by ambient no-arg unknown-call rule
+>afterUnknownCall : Symbol(afterUnknownCall, Decl(identityModifierBoundaries.ts, 15, 9))
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    unknownMutateWithArg(1);
+>unknownMutateWithArg : Symbol(unknownMutateWithArg, Decl(identityModifierBoundaries.ts, 6, 39))
+
+    const afterUnknownCallWithArg: string = read(); // should error
+>afterUnknownCallWithArg : Symbol(afterUnknownCallWithArg, Decl(identityModifierBoundaries.ts, 20, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
@@ -48,17 +64,17 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     invoke(() => {
->invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 7, 34))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
 
         const callbackWrite = 1;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 19, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 25, 13))
 
         callbackWrite;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 19, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 25, 13))
 
     });
     const afterCallbackCall: string = read(); // should error
->afterCallbackCall : Symbol(afterCallbackCall, Decl(identityModifierBoundaries.ts, 22, 9))
+>afterCallbackCall : Symbol(afterCallbackCall, Decl(identityModifierBoundaries.ts, 28, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
@@ -67,47 +83,47 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const result = invoke(() => {
->result : Symbol(result, Decl(identityModifierBoundaries.ts, 26, 9))
->invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 7, 34))
+>result : Symbol(result, Decl(identityModifierBoundaries.ts, 32, 9))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
 
         const callbackWrite = 1;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 27, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 33, 13))
 
         callbackWrite;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 27, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 33, 13))
 
     });
     result;
->result : Symbol(result, Decl(identityModifierBoundaries.ts, 26, 9))
+>result : Symbol(result, Decl(identityModifierBoundaries.ts, 32, 9))
 
     const afterAssignedCallbackCall: string = read(); // should error
->afterAssignedCallbackCall : Symbol(afterAssignedCallbackCall, Decl(identityModifierBoundaries.ts, 31, 9))
+>afterAssignedCallbackCall : Symbol(afterAssignedCallbackCall, Decl(identityModifierBoundaries.ts, 37, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
 let assignedCallbackResult: void;
->assignedCallbackResult : Symbol(assignedCallbackResult, Decl(identityModifierBoundaries.ts, 34, 3))
+>assignedCallbackResult : Symbol(assignedCallbackResult, Decl(identityModifierBoundaries.ts, 40, 3))
 
 if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 >undefined : Symbol(undefined)
 
     assignedCallbackResult = invoke(() => {
->assignedCallbackResult : Symbol(assignedCallbackResult, Decl(identityModifierBoundaries.ts, 34, 3))
->invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 7, 34))
+>assignedCallbackResult : Symbol(assignedCallbackResult, Decl(identityModifierBoundaries.ts, 40, 3))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
 
         const callbackWrite = 1;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 37, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 43, 13))
 
         callbackWrite;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 37, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 43, 13))
 
     });
     assignedCallbackResult;
->assignedCallbackResult : Symbol(assignedCallbackResult, Decl(identityModifierBoundaries.ts, 34, 3))
+>assignedCallbackResult : Symbol(assignedCallbackResult, Decl(identityModifierBoundaries.ts, 40, 3))
 
     const afterAssignmentExpressionCallbackCall: string = read(); // should error
->afterAssignmentExpressionCallbackCall : Symbol(afterAssignmentExpressionCallbackCall, Decl(identityModifierBoundaries.ts, 41, 9))
+>afterAssignmentExpressionCallbackCall : Symbol(afterAssignmentExpressionCallbackCall, Decl(identityModifierBoundaries.ts, 47, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
@@ -116,22 +132,22 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const indirectCallbackResult = invoke(pass(() => {
->indirectCallbackResult : Symbol(indirectCallbackResult, Decl(identityModifierBoundaries.ts, 45, 9))
->invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 7, 34))
->pass : Symbol(pass, Decl(identityModifierBoundaries.ts, 6, 39))
+>indirectCallbackResult : Symbol(indirectCallbackResult, Decl(identityModifierBoundaries.ts, 51, 9))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
+>pass : Symbol(pass, Decl(identityModifierBoundaries.ts, 7, 55))
 
         const callbackWrite = 1;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 46, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 52, 13))
 
         callbackWrite;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 46, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 52, 13))
 
     }));
     indirectCallbackResult;
->indirectCallbackResult : Symbol(indirectCallbackResult, Decl(identityModifierBoundaries.ts, 45, 9))
+>indirectCallbackResult : Symbol(indirectCallbackResult, Decl(identityModifierBoundaries.ts, 51, 9))
 
     const afterIndirectCallbackCall: string = read(); // should error
->afterIndirectCallbackCall : Symbol(afterIndirectCallbackCall, Decl(identityModifierBoundaries.ts, 50, 9))
+>afterIndirectCallbackCall : Symbol(afterIndirectCallbackCall, Decl(identityModifierBoundaries.ts, 56, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
@@ -140,33 +156,33 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const conditionalCallbackResult = true
->conditionalCallbackResult : Symbol(conditionalCallbackResult, Decl(identityModifierBoundaries.ts, 54, 9))
+>conditionalCallbackResult : Symbol(conditionalCallbackResult, Decl(identityModifierBoundaries.ts, 60, 9))
 
         ? invoke(() => {
->invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 7, 34))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
 
             const callbackWrite = 1;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 56, 17))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 62, 17))
 
             callbackWrite;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 56, 17))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 62, 17))
 
         })
         : invoke(() => {
->invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 7, 34))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
 
             const callbackWrite = 1;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 60, 17))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 66, 17))
 
             callbackWrite;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 60, 17))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 66, 17))
 
         });
     conditionalCallbackResult;
->conditionalCallbackResult : Symbol(conditionalCallbackResult, Decl(identityModifierBoundaries.ts, 54, 9))
+>conditionalCallbackResult : Symbol(conditionalCallbackResult, Decl(identityModifierBoundaries.ts, 60, 9))
 
     const afterConditionalCallbackCall: string = read(); // should error
->afterConditionalCallbackCall : Symbol(afterConditionalCallbackCall, Decl(identityModifierBoundaries.ts, 64, 9))
+>afterConditionalCallbackCall : Symbol(afterConditionalCallbackCall, Decl(identityModifierBoundaries.ts, 70, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
@@ -175,14 +191,14 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const noopCallback = () => {};
->noopCallback : Symbol(noopCallback, Decl(identityModifierBoundaries.ts, 68, 9))
+>noopCallback : Symbol(noopCallback, Decl(identityModifierBoundaries.ts, 74, 9))
 
     invoke(noopCallback);
->invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 7, 34))
->noopCallback : Symbol(noopCallback, Decl(identityModifierBoundaries.ts, 68, 9))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
+>noopCallback : Symbol(noopCallback, Decl(identityModifierBoundaries.ts, 74, 9))
 
     const afterConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
->afterConstNoopCallbackAlias : Symbol(afterConstNoopCallbackAlias, Decl(identityModifierBoundaries.ts, 70, 9))
+>afterConstNoopCallbackAlias : Symbol(afterConstNoopCallbackAlias, Decl(identityModifierBoundaries.ts, 76, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
@@ -191,24 +207,24 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     let mutableNoopCallback = () => {};
->mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 74, 7))
+>mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 80, 7))
 
     mutableNoopCallback = () => {
->mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 74, 7))
+>mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 80, 7))
 
         const callbackWrite = 1;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 76, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 82, 13))
 
         callbackWrite;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 76, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 82, 13))
 
     };
     invoke(mutableNoopCallback);
->invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 7, 34))
->mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 74, 7))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
+>mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 80, 7))
 
     const afterMutableNoopCallbackAlias: string = read(); // should error
->afterMutableNoopCallbackAlias : Symbol(afterMutableNoopCallbackAlias, Decl(identityModifierBoundaries.ts, 80, 9))
+>afterMutableNoopCallbackAlias : Symbol(afterMutableNoopCallbackAlias, Decl(identityModifierBoundaries.ts, 86, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
@@ -217,21 +233,21 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const nonEmptyCallback = () => {
->nonEmptyCallback : Symbol(nonEmptyCallback, Decl(identityModifierBoundaries.ts, 84, 9))
+>nonEmptyCallback : Symbol(nonEmptyCallback, Decl(identityModifierBoundaries.ts, 90, 9))
 
         const callbackWrite = 1;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 85, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 91, 13))
 
         callbackWrite;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 85, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 91, 13))
 
     };
     invoke(nonEmptyCallback);
->invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 7, 34))
->nonEmptyCallback : Symbol(nonEmptyCallback, Decl(identityModifierBoundaries.ts, 84, 9))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
+>nonEmptyCallback : Symbol(nonEmptyCallback, Decl(identityModifierBoundaries.ts, 90, 9))
 
     const afterNonEmptyCallbackAlias: string = read(); // should error
->afterNonEmptyCallbackAlias : Symbol(afterNonEmptyCallbackAlias, Decl(identityModifierBoundaries.ts, 89, 9))
+>afterNonEmptyCallbackAlias : Symbol(afterNonEmptyCallbackAlias, Decl(identityModifierBoundaries.ts, 95, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
@@ -240,15 +256,15 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const escapedRead = read;
->escapedRead : Symbol(escapedRead, Decl(identityModifierBoundaries.ts, 93, 9))
+>escapedRead : Symbol(escapedRead, Decl(identityModifierBoundaries.ts, 99, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
     const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
->afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierBoundaries.ts, 94, 9))
+>afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierBoundaries.ts, 100, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
     escapedRead;
->escapedRead : Symbol(escapedRead, Decl(identityModifierBoundaries.ts, 93, 9))
+>escapedRead : Symbol(escapedRead, Decl(identityModifierBoundaries.ts, 99, 9))
 }
 
 if (read() !== undefined) {
@@ -256,70 +272,70 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const indirect = pass(read);
->indirect : Symbol(indirect, Decl(identityModifierBoundaries.ts, 99, 9))
->pass : Symbol(pass, Decl(identityModifierBoundaries.ts, 6, 39))
+>indirect : Symbol(indirect, Decl(identityModifierBoundaries.ts, 105, 9))
+>pass : Symbol(pass, Decl(identityModifierBoundaries.ts, 7, 55))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
     indirect;
->indirect : Symbol(indirect, Decl(identityModifierBoundaries.ts, 99, 9))
+>indirect : Symbol(indirect, Decl(identityModifierBoundaries.ts, 105, 9))
 
     const afterIndirectAliasEscape: string = read(); // should error
->afterIndirectAliasEscape : Symbol(afterIndirectAliasEscape, Decl(identityModifierBoundaries.ts, 101, 9))
+>afterIndirectAliasEscape : Symbol(afterIndirectAliasEscape, Decl(identityModifierBoundaries.ts, 107, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
 
 let reassignedRead: () => string | undefined;
->reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 105, 3))
+>reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 111, 3))
 
 if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 >undefined : Symbol(undefined)
 
     reassignedRead = read;
->reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 105, 3))
+>reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 111, 3))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
     const afterReassignmentEscape: string = read(); // should error
->afterReassignmentEscape : Symbol(afterReassignmentEscape, Decl(identityModifierBoundaries.ts, 109, 9))
+>afterReassignmentEscape : Symbol(afterReassignmentEscape, Decl(identityModifierBoundaries.ts, 115, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
     reassignedRead;
->reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 105, 3))
+>reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 111, 3))
 }
 
 async function testAwaitBoundary() {
->testAwaitBoundary : Symbol(testAwaitBoundary, Decl(identityModifierBoundaries.ts, 111, 1))
+>testAwaitBoundary : Symbol(testAwaitBoundary, Decl(identityModifierBoundaries.ts, 117, 1))
 
     if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 >undefined : Symbol(undefined)
 
         await delay();
->delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 9, 46))
+>delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 10, 46))
 
         const afterAwait: string = read(); // should error
->afterAwait : Symbol(afterAwait, Decl(identityModifierBoundaries.ts, 116, 13))
+>afterAwait : Symbol(afterAwait, Decl(identityModifierBoundaries.ts, 122, 13))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
     }
 }
 
 async function testAwaitAssignmentBoundary() {
->testAwaitAssignmentBoundary : Symbol(testAwaitAssignmentBoundary, Decl(identityModifierBoundaries.ts, 118, 1))
+>testAwaitAssignmentBoundary : Symbol(testAwaitAssignmentBoundary, Decl(identityModifierBoundaries.ts, 124, 1))
 
     if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 >undefined : Symbol(undefined)
 
         const x = await delay();
->x : Symbol(x, Decl(identityModifierBoundaries.ts, 122, 13))
->delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 9, 46))
+>x : Symbol(x, Decl(identityModifierBoundaries.ts, 128, 13))
+>delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 10, 46))
 
         x;
->x : Symbol(x, Decl(identityModifierBoundaries.ts, 122, 13))
+>x : Symbol(x, Decl(identityModifierBoundaries.ts, 128, 13))
 
         const afterAwaitAssignment: string = read(); // should error
->afterAwaitAssignment : Symbol(afterAwaitAssignment, Decl(identityModifierBoundaries.ts, 124, 13))
+>afterAwaitAssignment : Symbol(afterAwaitAssignment, Decl(identityModifierBoundaries.ts, 130, 13))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
     }
 }

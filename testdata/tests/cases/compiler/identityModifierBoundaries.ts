@@ -8,6 +8,7 @@ if (read() !== undefined) {
 }
 
 declare function unknownMutate(): void;
+declare function unknownMutateWithArg(x: number): void;
 declare function pass<T>(x: T): T;
 
 declare function invoke(cb: () => void): void;
@@ -15,7 +16,12 @@ declare function delay(): Promise<void>;
 
 if (read() !== undefined) {
     unknownMutate();
-    const afterUnknownCall: string = read(); // should error
+    const afterUnknownCall: string = read(); // preserved by ambient no-arg unknown-call rule
+}
+
+if (read() !== undefined) {
+    unknownMutateWithArg(1);
+    const afterUnknownCallWithArg: string = read(); // should error
 }
 
 if (read() !== undefined) {

@@ -19,6 +19,10 @@ if (read() !== undefined) {
 declare function unknownMutate(): void;
 >unknownMutate : () => void
 
+declare function unknownMutateWithArg(x: number): void;
+>unknownMutateWithArg : (x: number) => void
+>x : number
+
 declare function pass<T>(x: T): T;
 >pass : <T>(x: T) => T
 >x : T
@@ -40,8 +44,25 @@ if (read() !== undefined) {
 >unknownMutate() : void
 >unknownMutate : () => void
 
-    const afterUnknownCall: string = read(); // should error
+    const afterUnknownCall: string = read(); // preserved by ambient no-arg unknown-call rule
 >afterUnknownCall : string
+>read() : string | undefined
+>read : () => string | undefined
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    unknownMutateWithArg(1);
+>unknownMutateWithArg(1) : void
+>unknownMutateWithArg : (x: number) => void
+>1 : 1
+
+    const afterUnknownCallWithArg: string = read(); // should error
+>afterUnknownCallWithArg : string
 >read() : string | undefined
 >read : () => string | undefined
 }

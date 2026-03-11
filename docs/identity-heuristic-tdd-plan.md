@@ -384,7 +384,7 @@ Current status:
   - `go test -run='TestLocal/identityModifierBoundaries\.ts' ./internal/testrunner` remained intentionally conservative for non-ambient unknown-call and callback/await/alias boundaries.
 - Safety check outcome:
   - adjacent boundary coverage remains conservative for non-ambient unknown calls and callback/await/alias boundaries.
-  - explicit negative control added: unknown call with args still invalidates narrowing in `identityModifierHeuristicDiagnostics.ts`.
+  - explicit negative control added: unknown call with args still invalidates narrowing in `identityModifierBoundaries.ts`.
 - Decision:
   - landed the checker rule with bounded guards (ambient, no-arg, `void`, expression-statement call boundary, identity read with union return).
   - updated boundary matrix expectations to preserve narrowing only for this exact ambient no-arg shape while retaining conservative behavior for with-arg unknown calls and other uncertainty boundaries.

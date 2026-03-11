@@ -427,7 +427,8 @@ Missing getter-origin matrix summary (this run):
 ## Boundary Coverage Matrix
 | Boundary | Example shape | Status | Test source |
 | --- | --- | --- | --- |
-| Unknown call | `unknownMutate();` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Unknown call (ambient no-arg preserve) | `unknownMutate();` then `read()` | Implemented (narrow preserve) | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Unknown call (with-arg negative control) | `unknownMutateWithArg(1);` then `read()` | Intentionally conservative (error) | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback statement | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback assignment form | `const r = invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback assignment-expression form | `r = invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
