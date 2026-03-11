@@ -14,7 +14,7 @@ This document is the authoritative source of truth for the stable-call CFA featu
 - Ambiguity diagnostics for unresolved multi-endpoint impacts (Phase 5)
 - Constrained-overload post-call narrowing from explicit contracts (Phase 5)
 
-**Current status:** All 5 phases complete. Validation green.
+**Current status:** All 5 phases + P3 + Phase 7 complete. Validation green.
 
 ## 2. Problem Statement
 
@@ -57,6 +57,7 @@ For full problem analysis and language survey, see [docs/stable-modifier-researc
 | **4** | Stabilization + perf guardrails | Regression sweeps; perf trend checks; conservative-gap documentation refresh | Phase 1–3 feature set stabilized | Repeated green validation and stable perf envelope | No | **Complete** |
 | **5 (Final)** | Explicit-contract stage | `mutator`/`invalidates` fallback resolution; multi-endpoint ambiguity diagnostics; constrained-overload post-call narrowing with explicit unique invalidates | Prior phases stable; gaps justify explicit contracts | Explicit-contract tests green and soundness constraints met | **Yes** | **Complete** |
 | **P3** | Post-call narrowing | `set(42)` narrows `read()` to `number` via `getAssignmentReducedType`; `stableBoundaryKindMutatorCall` boundary kind | Phase 5 mutator/invalidates complete | P3 test green, no regressions, pipeline passes | **Yes** | **Complete** |
+| **7** | Linked type predicates | `this.method() is Type` guard predicates narrow linked stable methods; parser backtracking; `TypePredicateKindLinkedMethod` (value 4); checker validation (TS100023/TS100024); CFA `narrowTypeByLinkedMethodPredicate` | P3 complete, stable CFA infrastructure settled | Phase 7 test green with 0 errors on positive cases, 2 expected errors on negatives | No | **Complete** |
 
 ### Impact vs Effort Rationale
 
@@ -65,6 +66,7 @@ For full problem analysis and language survey, see [docs/stable-modifier-researc
 - **Phase 3 after parity core:** Tier 2 improvements are valuable but trickier; they build on proven conservative defaults.
 - **Phase 4 before contracts:** Lock in refactor stability and performance before adding metadata-driven complexity.
 - **Phase 5 last:** Explicit contracts solve remaining ambiguous/multi-endpoint cases, but require parser/binder/checker coordination and have the highest integration risk.
+- **Phase 7 after P3:** Linked type predicates build on the stable CFA, mutator, and invalidates infrastructure. Guard methods require settled CFA infrastructure for correct narrowing propagation and invalidation.
 
 ## 5. Phase 1: Current Implementation
 
@@ -202,6 +204,8 @@ For full problem analysis and language survey, see [docs/stable-modifier-researc
 | Invalidates target not found | `TS100020` | `'invalidates' target '{0}' does not exist on the containing type.` |
 | Ambiguous mutator invalidation | `TS100021` | `Cannot determine which stable endpoint(s) are invalidated by this mutator call...` |
 | Mutator on non-function-type | `TS100022` | `'mutator' modifier can only appear on a function type.` |
+| Linked predicate target not stable | `TS100023` | `Linked method predicate target '{0}' must reference a 'stable' method on the containing type.` |
+| Linked predicate type not assignable | `TS100024` | `Type '{0}' is not assignable to the return type '{1}' of method '{2}'.` |
 
 ### 5.8 Known Gaps and Remaining Work
 
@@ -398,6 +402,42 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 - `stableModifierMutatorLinks`: 12→6 errors
 - `stableModifierConstrainedOverload`: 4→3 errors
 - `stableModifierMutatorErrors`: 4→3 errors
+
+### §5.17 Phase 7: Linked Type Predicates
+
+**Feature:** Guard methods can narrow the return type of other stable methods on the same receiver using `this.method() is Type` predicates.
+
+**Syntax:** `this.method() is Type` in return type position
+
+**New AST infrastructure:**
+- `TypePredicateKindLinkedMethod` (value 4) — new type predicate kind for linked method predicates
+- Parser: mark/rewind backtracking to distinguish `this.method() is Type` from regular `this` type predicates
+
+**Checker integration:**
+- Validates linked predicate target is a `stable` endpoint on the containing type (TS100023)
+- Validates the narrowed type is assignable to the target method's return type (TS100024)
+
+**CFA integration:**
+- `narrowTypeByLinkedMethodPredicate` — matches guard call receiver to stable call receiver using `isMatchingReference`
+- When predicate matches, narrows the stable call result type to the predicate type
+- Natural integration with existing stable CFA: mutator invalidation resets linked predicate narrowing, uncertainty boundaries invalidate it, different receivers do not cross-narrow
+
+**NodeBuilder + Printer:**
+- Round-trip `this.method() is Type` syntax in declaration emit and display
+
+**Test file:** `stableModifierLinkedPredicates.ts` — 10 sections:
+1. Basic linked predicate
+2. Multiple guards on same target
+3. Guard + mutator invalidation
+4. Different receivers (no cross-narrowing)
+5. Guard + uncertainty boundary
+6. Optional container pattern (isDefined/isEmpty)
+7. Guard is not stable itself (still works)
+8. Negative: target not stable (TS100023)
+9. Negative: type not assignable (TS100024)
+10. Guard called outside condition (no narrowing)
+
+**Result:** 0 errors on 8 positive sections, 2 expected errors on 2 negative sections
 
 ## 6. Future Phases: Candidate Features
 
@@ -601,6 +641,7 @@ Latest tip validation is green:
 - `testdata/tests/cases/compiler/stableModifierConstrainedOverload.ts` — Phase 5 constrained generic patterns
 - `testdata/tests/cases/compiler/stableModifierMutatorErrors.ts` — Phase 5 validation diagnostics
 - `testdata/tests/cases/compiler/stableModifierPostCallNarrowing.ts` — P3 post-call narrowing (12 patterns, 0 errors)
+- `testdata/tests/cases/compiler/stableModifierLinkedPredicates.ts` — Phase 7 linked type predicates (10 sections, 0 errors on positives, 2 expected errors on negatives)
 
 ### Benchmark Files
 - `internal/checker/stable_bench_test.go` — Checker micro-bench harness
@@ -680,6 +721,19 @@ Delta (latest branch vs historical `tsgo`): Wall `+7.91%`, RSS `-18.18%`.
 - CFA: integration into `classifyStableBoundary` pipeline
 - 4 new test files, 25 total errors across Phase 5 tests
 - TDD evidence: red (test files first) → green (implementation) → baselines accepted
+
+### Phase 7: Linked Type Predicates (2026-03-XX)
+- **Syntax:** `this.method() is Type` in return type position of guard methods
+- **Purpose:** Boolean guard methods can narrow other stable methods' return types
+- **Parser:** `this.method() is T` parsed with mark/rewind backtracking to distinguish from regular `this` type predicates
+- **AST:** `TypePredicateKindLinkedMethod` (value 4) — new type predicate kind
+- **Checker:** Validates target is a `stable` endpoint on the containing type (TS100023), validates narrowed type is assignable to target return type (TS100024)
+- **CFA:** `narrowTypeByLinkedMethodPredicate` — matches guard receiver to stable receiver via `isMatchingReference`, applies narrowing to stable call result type
+- **NodeBuilder + Printer:** Round-trip `this.method() is Type` syntax in declaration emit and display
+- **Natural integration:** Mutator invalidation resets linked predicate narrowing; uncertainty boundaries invalidate it; different receivers do not cross-narrow
+- **Test file:** `stableModifierLinkedPredicates.ts` — 10 sections: basic guard, multiple guards on same target, guard + mutator invalidation, different receivers, guard + uncertainty boundary, optional container pattern, non-stable guard, negative (target not stable), negative (type not assignable), guard called outside condition
+- **Result:** 0 errors on 8 positive sections, 2 expected errors on 2 negative sections
+- Pipeline: build, test, lint, format all pass
 
 ### P3: Post-Call Narrowing (2026-03-XX)
 - Added `stableBoundaryKindMutatorCall` to boundary kind enum
@@ -845,6 +899,48 @@ declare const count: stable () => number | null;
 const value2 = count() !== null ? count() : 0; // parity with getter-style CFA
 if (count() !== null) {
   const n: number = count(); // OK
+}
+```
+
+### B.7 Linked Type Predicates
+```ts
+interface Resource<T> {
+    value: stable () => T;
+    hasValue(): this.value() is Exclude<T, undefined>;
+}
+
+const r: Resource<string | undefined> = getResource();
+if (r.hasValue()) {
+    r.value(); // string (narrowed from string | undefined)
+}
+
+// Multiple guards on same target
+interface TypedReader {
+    read: stable () => number | string | boolean;
+    isNumber(): this.read() is number;
+    isString(): this.read() is string;
+}
+
+const reader: TypedReader = getReader();
+if (reader.isNumber()) {
+    reader.read(); // number
+}
+if (reader.isString()) {
+    reader.read(); // string
+}
+
+// Guard + mutator invalidation
+interface WritableOption<T> {
+    get: stable () => T | undefined;
+    isDefined(): this.get() is T;
+    set: mutator (v: T | undefined) => void invalidates get;
+}
+
+const opt: WritableOption<number> = getOption();
+if (opt.isDefined()) {
+    opt.get(); // number (narrowed by linked predicate)
+    opt.set(undefined);
+    opt.get(); // number | undefined (back to full type after mutator)
 }
 ```
 
