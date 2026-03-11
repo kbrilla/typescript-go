@@ -1837,7 +1837,16 @@ func (p *Printer) emitTypePredicate(node *ast.TypePredicateNode) {
 		p.emitTokenNode(node.AssertsModifier)
 		p.writeSpace()
 	}
-	p.emitTypePredicateParameterName(node.ParameterName)
+	if ast.IsPropertyAccessExpression(node.ParameterName) {
+		// Linked method predicate: emit this.method()
+		p.writeKeyword("this")
+		p.writePunctuation(".")
+		p.emitIdentifierName(node.ParameterName.Name().AsIdentifier())
+		p.writePunctuation("(")
+		p.writePunctuation(")")
+	} else {
+		p.emitTypePredicateParameterName(node.ParameterName)
+	}
 	if node.Type != nil {
 		p.writeSpace()
 		p.writeKeyword("is")

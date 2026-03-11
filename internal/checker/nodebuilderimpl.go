@@ -1482,7 +1482,12 @@ func (b *NodeBuilderImpl) typePredicateToTypePredicateNode(predicate *TypePredic
 		assertsModifier = b.f.NewToken(ast.KindAssertsKeyword)
 	}
 	var parameterName *ast.Node
-	if predicate.kind == TypePredicateKindIdentifier || predicate.kind == TypePredicateKindAssertsIdentifier {
+	if predicate.kind == TypePredicateKindLinkedMethod {
+		thisType := b.f.NewThisTypeNode()
+		methodName := b.f.NewIdentifier(predicate.parameterName)
+		b.e.AddEmitFlags(methodName, printer.EFNoAsciiEscaping)
+		parameterName = b.f.NewPropertyAccessExpression(thisType, nil, methodName, ast.NodeFlagsNone)
+	} else if predicate.kind == TypePredicateKindIdentifier || predicate.kind == TypePredicateKindAssertsIdentifier {
 		parameterName = b.f.NewIdentifier(predicate.parameterName)
 		b.e.AddEmitFlags(parameterName, printer.EFNoAsciiEscaping)
 	} else {
@@ -1679,7 +1684,12 @@ func (b *NodeBuilderImpl) typePredicateToTypePredicateNodeHelper(typePredicate *
 		assertsModifier = nil
 	}
 	var parameterName *ast.Node
-	if typePredicate.kind == TypePredicateKindIdentifier || typePredicate.kind == TypePredicateKindAssertsIdentifier {
+	if typePredicate.kind == TypePredicateKindLinkedMethod {
+		thisType := b.f.NewThisTypeNode()
+		methodName := b.newIdentifier(typePredicate.parameterName, nil /*symbol*/)
+		b.e.SetEmitFlags(methodName, printer.EFNoAsciiEscaping)
+		parameterName = b.f.NewPropertyAccessExpression(thisType, nil, methodName, ast.NodeFlagsNone)
+	} else if typePredicate.kind == TypePredicateKindIdentifier || typePredicate.kind == TypePredicateKindAssertsIdentifier {
 		parameterName = b.newIdentifier(typePredicate.parameterName, nil /*symbol*/)
 		b.e.SetEmitFlags(parameterName, printer.EFNoAsciiEscaping)
 	} else {

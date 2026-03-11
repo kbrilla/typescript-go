@@ -1605,6 +1605,18 @@ func (c *Checker) narrowTypeByCallExpression(f *FlowState, t *Type, callExpressi
 			return c.narrowTypeByTypePredicate(f, t, predicate, callExpression, assumeTrue)
 		}
 	}
+	// Linked method predicates — narrow stable call references based on guard methods
+	if c.isStableCallReference(f.reference) && ast.IsCallExpression(callExpression) {
+		if assumeTrue || !isCallChain(callExpression) {
+			signature := c.getEffectsSignature(callExpression)
+			if signature != nil {
+				predicate := c.getTypePredicateOfSignature(signature)
+				if predicate != nil && predicate.kind == TypePredicateKindLinkedMethod {
+					return c.narrowTypeByLinkedMethodPredicate(f, t, predicate, callExpression, assumeTrue)
+				}
+			}
+		}
+	}
 	if c.containsMissingType(t) && ast.IsAccessExpression(f.reference) && ast.IsPropertyAccessExpression(callExpression.Expression()) {
 		callAccess := callExpression.Expression()
 		if c.isMatchingReference(f.reference.Expression(), c.getNormalizedReferenceCandidate(callAccess.Expression())) && ast.IsIdentifier(callAccess.Name()) && callAccess.Name().Text() == "hasOwnProperty" && len(callExpression.Arguments()) == 1 {
@@ -1615,6 +1627,43 @@ func (c *Checker) narrowTypeByCallExpression(f *FlowState, t *Type, callExpressi
 		}
 	}
 	return t
+}
+
+func (c *Checker) narrowTypeByLinkedMethodPredicate(f *FlowState, t *Type, predicate *TypePredicate, callExpression *ast.Node, assumeTrue bool) *Type {
+	if predicate.t == nil {
+		return t
+	}
+	// f.reference = obj.read() (the stable call being type-checked)
+	// callExpression = obj.hasValue() (the guard call in the condition)
+	// predicate = LinkedMethod{parameterName: "read", t: narrowedType}
+
+	// Get the guard call's receiver: for obj.hasValue(), get obj
+	guardCallee := ast.SkipParentheses(callExpression.Expression())
+	if !ast.IsPropertyAccessExpression(guardCallee) {
+		return t
+	}
+	guardReceiver := guardCallee.Expression()
+
+	// Get the stable call's callee info: for obj.read(), get obj and "read"
+	stableCallee := ast.SkipParentheses(f.reference.Expression())
+	if !ast.IsPropertyAccessExpression(stableCallee) {
+		return t
+	}
+	stableReceiver := stableCallee.Expression()
+	stableMethodName := stableCallee.Name().Text()
+
+	// Check: guard receiver matches stable receiver (same object)
+	if !c.isMatchingReference(guardReceiver, stableReceiver) {
+		return t
+	}
+
+	// Check: linked method name matches the stable call's method name
+	if predicate.parameterName != stableMethodName {
+		return t
+	}
+
+	// Apply narrowing using the same mechanism as existing type predicates
+	return c.getNarrowedType(t, predicate.t, assumeTrue, false /*checkDerived*/)
 }
 
 func (c *Checker) narrowTypeByBinaryExpression(f *FlowState, t *Type, expr *ast.BinaryExpression, assumeTrue bool) *Type {

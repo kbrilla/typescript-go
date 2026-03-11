@@ -2968,7 +2968,38 @@ func (c *Checker) checkTypePredicate(node *ast.Node) {
 	}
 	c.checkSourceElement(node.Type())
 	parameterName := node.AsTypePredicateNode().ParameterName
-	if typePredicate.kind != TypePredicateKindThis && typePredicate.kind != TypePredicateKindAssertsThis {
+	if typePredicate.kind == TypePredicateKindLinkedMethod {
+		// Validate linked method predicate: target must be stable and narrowed type must be assignable
+		methodDecl := node.Parent
+		if methodDecl != nil {
+			parentNode := methodDecl.Parent
+			if parentNode != nil {
+				parentSymbol := c.getSymbolOfNode(parentNode)
+				if parentSymbol != nil {
+					containerType := c.getDeclaredTypeOfSymbol(parentSymbol)
+					if containerType != nil {
+						targetPropSymbol := c.getPropertyOfType(containerType, typePredicate.parameterName)
+						if targetPropSymbol != nil {
+							targetType := c.getTypeOfSymbol(targetPropSymbol)
+							signatures := c.getSignaturesOfType(targetType, SignatureKindCall)
+							if len(signatures) > 0 {
+								sig := signatures[0]
+								if sig.flags&SignatureFlagsStable == 0 {
+									c.error(parameterName, diagnostics.Linked_predicate_target_0_must_be_a_stable_method, typePredicate.parameterName)
+								}
+								if typePredicate.t != nil {
+									returnType := c.getReturnTypeOfSignature(sig)
+									if !c.isTypeAssignableTo(typePredicate.t, returnType) {
+										c.error(node.Type(), diagnostics.Type_0_in_linked_predicate_is_not_assignable_to_return_type_of_method_1, c.typeToString(typePredicate.t, nil), typePredicate.parameterName)
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	} else if typePredicate.kind != TypePredicateKindThis && typePredicate.kind != TypePredicateKindAssertsThis {
 		if typePredicate.parameterIndex >= 0 {
 			if signatureHasRestParameter(signature) && int(typePredicate.parameterIndex) == len(signature.parameters)-1 {
 				c.error(parameterName, diagnostics.A_type_predicate_cannot_reference_a_rest_parameter)

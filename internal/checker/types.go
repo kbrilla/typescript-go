@@ -1192,6 +1192,7 @@ const (
 	TypePredicateKindIdentifier
 	TypePredicateKindAssertsThis
 	TypePredicateKindAssertsIdentifier
+	TypePredicateKindLinkedMethod
 )
 
 type TypePredicate struct {

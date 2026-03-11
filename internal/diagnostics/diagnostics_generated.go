@@ -4310,6 +4310,10 @@ var Cannot_determine_which_stable_endpoints_are_invalidated_by_this_mutator_call
 
 var X_mutator_modifier_can_only_appear_on_a_function_type = &Message{code: 100022, category: CategoryError, key: "mutator_modifier_can_only_appear_on_a_function_type_100022", text: "'mutator' modifier can only appear on a function type."}
 
+var Linked_predicate_target_0_must_be_a_stable_method = &Message{code: 100023, category: CategoryError, key: "Linked_predicate_target_0_must_be_a_stable_method_100023", text: "Linked predicate target '{0}' must be a 'stable' method."}
+
+var Type_0_in_linked_predicate_is_not_assignable_to_return_type_of_method_1 = &Message{code: 100024, category: CategoryError, key: "Type_0_in_linked_predicate_is_not_assignable_to_return_type_of_method_1_100024", text: "Type '{0}' in linked predicate is not assignable to return type of method '{1}'."}
+
 func keyToMessage(key Key) *Message {
 	switch key {
 	case "Unterminated_string_literal_1002":
@@ -8620,6 +8624,10 @@ func keyToMessage(key Key) *Message {
 		return Cannot_determine_which_stable_endpoints_are_invalidated_by_this_mutator_call_Add_explicit_invalidates_metadata_to_the_mutator_declaration
 	case "mutator_modifier_can_only_appear_on_a_function_type_100022":
 		return X_mutator_modifier_can_only_appear_on_a_function_type
+	case "Linked_predicate_target_0_must_be_a_stable_method_100023":
+		return Linked_predicate_target_0_must_be_a_stable_method
+	case "Type_0_in_linked_predicate_is_not_assignable_to_return_type_of_method_1_100024":
+		return Type_0_in_linked_predicate_is_not_assignable_to_return_type_of_method_1
 	default:
 		return nil
 	}

@@ -2717,9 +2717,29 @@ func (p *Parser) parseNonArrayType() *ast.Node {
 	case ast.KindVoidKeyword:
 		return p.parseKeywordTypeNode()
 	case ast.KindThisKeyword:
+		pos := p.nodePos()
 		thisKeyword := p.parseThisTypeNode()
 		if p.token == ast.KindIsKeyword && !p.hasPrecedingLineBreak() {
 			return p.parseThisTypePredicate(thisKeyword)
+		}
+		if p.token == ast.KindDotToken {
+			state := p.mark()
+			p.nextToken() // consume .
+			if p.isIdentifier() {
+				methodName := p.parseIdentifier()
+				if p.token == ast.KindOpenParenToken {
+					p.nextToken() // consume (
+					if p.token == ast.KindCloseParenToken {
+						p.nextToken() // consume )
+						if p.token == ast.KindIsKeyword && !p.hasPrecedingLineBreak() {
+							p.nextToken() // consume is
+							paramName := p.finishNode(p.factory.NewPropertyAccessExpression(thisKeyword, nil, methodName, ast.NodeFlagsNone), pos)
+							return p.finishNode(p.factory.NewTypePredicateNode(nil, paramName, p.parseType()), pos)
+						}
+					}
+				}
+			}
+			p.rewind(state)
 		}
 		return thisKeyword
 	case ast.KindTypeOfKeyword:
