@@ -1,0 +1,216 @@
+//// [tests/cases/compiler/identityModifierAdvancedOptionalChain.ts] ////
+
+=== identityModifierAdvancedOptionalChain.ts ===
+// Phase 3: Guarded optional-chain carryover and discriminant patterns.
+// Tests optional chaining as discriminant, with method calls, and
+// boundary interaction patterns with identity reads.
+
+type Animal = { kind: "cat"; meow: boolean } | { kind: "dog"; bark: boolean };
+>Animal : Animal
+>kind : "cat"
+>meow : boolean
+>kind : "dog"
+>bark : boolean
+
+declare const readAnimal: identity () => Animal | undefined;
+>readAnimal : () => Animal | undefined
+
+declare const read: identity () => string | undefined;
+>read : () => string | undefined
+
+// Optional chain as discriminant — should narrow.
+if (readAnimal()?.kind === "cat") {
+>readAnimal()?.kind === "cat" : boolean
+>readAnimal()?.kind : "cat" | "dog" | undefined
+>readAnimal() : Animal | undefined
+>readAnimal : () => Animal | undefined
+>kind : "cat" | "dog" | undefined
+>"cat" : "cat"
+
+    const cat = readAnimal();
+>cat : Animal | undefined
+>readAnimal() : Animal | undefined
+>readAnimal : () => Animal | undefined
+
+    cat;
+>cat : { kind: "cat"; meow: boolean; }
+}
+
+// Optional chain + typeof guard.
+if (typeof read() === "string") {
+>typeof read() === "string" : boolean
+>typeof read() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>read() : string | undefined
+>read : () => string | undefined
+>"string" : "string"
+
+    const str: string = read();
+>str : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    str;
+>str : string
+}
+
+// Optional chaining on identity result with method call.
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const upper = read()!.toUpperCase();
+>upper : string
+>read()!.toUpperCase() : string
+>read()!.toUpperCase : () => string
+>read()! : string
+>read() : string | undefined
+>read : () => string | undefined
+>toUpperCase : () => string
+
+    const result: string = upper;
+>result : string
+>upper : string
+
+    result;
+>result : string
+}
+
+// Nested optional chain on identity discriminant.
+declare const readNested: identity () => { inner?: Animal } | undefined;
+>readNested : () => { inner?: Animal | undefined; } | undefined
+>inner : Animal | undefined
+
+if (readNested()?.inner?.kind === "cat") {
+>readNested()?.inner?.kind === "cat" : boolean
+>readNested()?.inner?.kind : "cat" | "dog" | undefined
+>readNested()?.inner : Animal | undefined
+>readNested() : { inner?: Animal | undefined; } | undefined
+>readNested : () => { inner?: Animal | undefined; } | undefined
+>inner : Animal | undefined
+>kind : "cat" | "dog" | undefined
+>"cat" : "cat"
+
+    const nested = readNested();
+>nested : { inner?: Animal | undefined; } | undefined
+>readNested() : { inner?: Animal | undefined; } | undefined
+>readNested : () => { inner?: Animal | undefined; } | undefined
+
+    nested;
+>nested : { inner?: Animal | undefined; }
+}
+
+// Identity read after unrelated method call on result.
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const len = read()!.length;
+>len : number
+>read()!.length : number
+>read()! : string
+>read() : string | undefined
+>read : () => string | undefined
+>length : number
+
+    const n: number = len;
+>n : number
+>len : number
+
+    n;
+>n : number
+
+    const stillNarrowed: string = read();
+>stillNarrowed : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    stillNarrowed;
+>stillNarrowed : string
+}
+
+// Identity narrowing with template literal.
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const template = `value: ${read()}`;
+>template : string
+>`value: ${read()}` : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    const s: string = template;
+>s : string
+>template : string
+
+    s;
+>s : string
+}
+
+// Truthiness narrowing + identity.
+if (read()) {
+>read() : string | undefined
+>read : () => string | undefined
+
+    const truthy: string = read();
+>truthy : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    truthy;
+>truthy : string
+}
+
+// Double negation truthiness.
+if (!!read()) {
+>!!read() : boolean
+>!read() : boolean
+>read() : string | undefined
+>read : () => string | undefined
+
+    const doubleNeg: string = read();
+>doubleNeg : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    doubleNeg;
+>doubleNeg : string
+}
+
+// Inequality narrowing.
+if (read() != null) {
+>read() != null : boolean
+>read() : string | undefined
+>read : () => string | undefined
+
+    const notNull: string = read();
+>notNull : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    notNull;
+>notNull : string
+}
+
+// Strict equality to specific value.
+if (read() === "hello") {
+>read() === "hello" : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>"hello" : "hello"
+
+    const hello: "hello" = read();
+>hello : "hello"
+>read() : string | undefined
+>read : () => string | undefined
+
+    hello;
+>hello : "hello"
+}
+

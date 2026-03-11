@@ -1,0 +1,279 @@
+//// [tests/cases/compiler/identityModifierExhaustiveSwitch.ts] ////
+
+=== identityModifierExhaustiveSwitch.ts ===
+// Phase 3: Exhaustive switch carryover on identity reads.
+// Verifies that switch/case discriminant narrowing works with identity calls
+// and that exhaustiveness checking produces the expected `never` type.
+
+type Shape =
+>Shape : Shape
+
+    | { kind: "circle"; radius: number }
+>kind : "circle"
+>radius : number
+
+    | { kind: "square"; side: number }
+>kind : "square"
+>side : number
+
+    | { kind: "triangle"; base: number; height: number };
+>kind : "triangle"
+>base : number
+>height : number
+
+declare const readShape: identity () => Shape;
+>readShape : () => Shape
+
+// Exhaustive switch — each case should narrow the discriminant.
+function exhaustiveSwitch() {
+>exhaustiveSwitch : () => void
+
+    switch (readShape().kind) {
+>readShape().kind : "circle" | "square" | "triangle"
+>readShape() : Shape
+>readShape : () => Shape
+>kind : "circle" | "square" | "triangle"
+
+        case "circle":
+>"circle" : "circle"
+
+            const circleRadius: number = readShape().radius;
+>circleRadius : number
+>readShape().radius : number
+>readShape() : Shape
+>readShape : () => Shape
+>radius : number
+
+            circleRadius;
+>circleRadius : number
+
+            break;
+        case "square":
+>"square" : "square"
+
+            const squareSide: number = readShape().side;
+>squareSide : number
+>readShape().side : number
+>readShape() : Shape
+>readShape : () => Shape
+>side : number
+
+            squareSide;
+>squareSide : number
+
+            break;
+        case "triangle":
+>"triangle" : "triangle"
+
+            const triBase: number = readShape().base;
+>triBase : number
+>readShape().base : number
+>readShape() : Shape
+>readShape : () => Shape
+>base : number
+
+            triBase;
+>triBase : number
+
+            break;
+    }
+}
+
+// Exhaustive switch with default never — confirms exhaustiveness.
+function exhaustiveWithDefaultNever() {
+>exhaustiveWithDefaultNever : () => void
+
+    switch (readShape().kind) {
+>readShape().kind : "circle" | "square" | "triangle"
+>readShape() : Shape
+>readShape : () => Shape
+>kind : "circle" | "square" | "triangle"
+
+        case "circle":
+>"circle" : "circle"
+
+            const circleRadius: number = readShape().radius;
+>circleRadius : number
+>readShape().radius : number
+>readShape() : Shape
+>readShape : () => Shape
+>radius : number
+
+            circleRadius;
+>circleRadius : number
+
+            break;
+        case "square":
+>"square" : "square"
+
+            const squareSide: number = readShape().side;
+>squareSide : number
+>readShape().side : number
+>readShape() : Shape
+>readShape : () => Shape
+>side : number
+
+            squareSide;
+>squareSide : number
+
+            break;
+        case "triangle":
+>"triangle" : "triangle"
+
+            const triBase: number = readShape().base;
+>triBase : number
+>readShape().base : number
+>readShape() : Shape
+>readShape : () => Shape
+>base : number
+
+            triBase;
+>triBase : number
+
+            break;
+        default:
+            const _exhaustive: never = readShape();
+>_exhaustive : never
+>readShape() : Shape
+>readShape : () => Shape
+
+            _exhaustive;
+>_exhaustive : never
+    }
+}
+
+// typeof switch narrowing on identity calls.
+declare const readValue: identity () => string | number | boolean;
+>readValue : () => string | number | boolean
+
+function typeofSwitch() {
+>typeofSwitch : () => void
+
+    switch (typeof readValue()) {
+>typeof readValue() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>readValue() : string | number | boolean
+>readValue : () => string | number | boolean
+
+        case "string":
+>"string" : "string"
+
+            const str: string = readValue();
+>str : string
+>readValue() : string | number | boolean
+>readValue : () => string | number | boolean
+
+            str;
+>str : string
+
+            break;
+        case "number":
+>"number" : "number"
+
+            const num: number = readValue();
+>num : number
+>readValue() : string | number | boolean
+>readValue : () => string | number | boolean
+
+            num;
+>num : number
+
+            break;
+        case "boolean":
+>"boolean" : "boolean"
+
+            const bool: boolean = readValue();
+>bool : boolean
+>readValue() : string | number | boolean
+>readValue : () => string | number | boolean
+
+            bool;
+>bool : boolean
+
+            break;
+    }
+}
+
+// Switch with fall-through between cases (narrowing should widen).
+function switchFallthrough() {
+>switchFallthrough : () => void
+
+    switch (readShape().kind) {
+>readShape().kind : "circle" | "square" | "triangle"
+>readShape() : Shape
+>readShape : () => Shape
+>kind : "circle" | "square" | "triangle"
+
+        case "circle":
+>"circle" : "circle"
+
+        case "square":
+>"square" : "square"
+
+            // After fall-through, should be circle | square
+            const circleOrSquare: { kind: "circle"; radius: number } | { kind: "square"; side: number } = readShape();
+>circleOrSquare : { kind: "circle"; radius: number; } | { kind: "square"; side: number; }
+>kind : "circle"
+>radius : number
+>kind : "square"
+>side : number
+>readShape() : Shape
+>readShape : () => Shape
+
+            circleOrSquare;
+>circleOrSquare : { kind: "circle"; radius: number; } | { kind: "square"; side: number; }
+
+            break;
+        case "triangle":
+>"triangle" : "triangle"
+
+            const tri: { kind: "triangle"; base: number; height: number } = readShape();
+>tri : { kind: "triangle"; base: number; height: number; }
+>kind : "triangle"
+>base : number
+>height : number
+>readShape() : Shape
+>readShape : () => Shape
+
+            tri;
+>tri : { kind: "triangle"; base: number; height: number; }
+
+            break;
+    }
+}
+
+// Non-exhaustive switch — narrowing is not guaranteed after switch.
+function nonExhaustiveSwitch() {
+>nonExhaustiveSwitch : () => void
+
+    switch (readShape().kind) {
+>readShape().kind : "circle" | "square" | "triangle"
+>readShape() : Shape
+>readShape : () => Shape
+>kind : "circle" | "square" | "triangle"
+
+        case "circle":
+>"circle" : "circle"
+
+            const circleRadius: number = readShape().radius;
+>circleRadius : number
+>readShape().radius : number
+>readShape() : Shape
+>readShape : () => Shape
+>radius : number
+
+            circleRadius;
+>circleRadius : number
+
+            break;
+        // Missing square and triangle cases
+    }
+    // After non-exhaustive switch, type should be Shape (not narrowed).
+    const afterNonExhaustive: Shape = readShape();
+>afterNonExhaustive : Shape
+>readShape() : Shape
+>readShape : () => Shape
+
+    afterNonExhaustive;
+>afterNonExhaustive : Shape
+}
+

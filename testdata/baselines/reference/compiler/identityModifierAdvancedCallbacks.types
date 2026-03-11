@@ -1,0 +1,306 @@
+//// [tests/cases/compiler/identityModifierAdvancedCallbacks.ts] ////
+
+=== identityModifierAdvancedCallbacks.ts ===
+// Phase 3: Expanded callback-alias parity family.
+// Tests parametered callbacks, function keyword callbacks, async callbacks,
+// and advanced callback patterns at identity boundaries.
+
+declare const read: identity () => string | undefined;
+>read : () => string | undefined
+
+declare function invoke(cb: () => void): void;
+>invoke : (cb: () => void) => void
+>cb : () => void
+
+declare function invokeWithArg(cb: (x: number) => void): void;
+>invokeWithArg : (cb: (x: number) => void) => void
+>cb : (x: number) => void
+>x : number
+
+// Parametered callback with empty body — should preserve narrowing.
+// The callback takes a parameter but does nothing with it, so it can't mutate identity state.
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invokeWithArg((x: number) => {});
+>invokeWithArg((x: number) => {}) : void
+>invokeWithArg : (cb: (x: number) => void) => void
+>(x: number) => {} : (x: number) => void
+>x : number
+
+    const afterParamEmptyCallback: string = read(); // should stay narrowed
+>afterParamEmptyCallback : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterParamEmptyCallback;
+>afterParamEmptyCallback : string
+}
+
+// Parametered callback with non-empty body — should error (conservative).
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invokeWithArg((x: number) => { console.log(x); });
+>invokeWithArg((x: number) => { console.log(x); }) : void
+>invokeWithArg : (cb: (x: number) => void) => void
+>(x: number) => { console.log(x); } : (x: number) => void
+>x : number
+>console.log(x) : void
+>console.log : (...data: any[]) => void
+>console : Console
+>log : (...data: any[]) => void
+>x : number
+
+    const afterParamNonEmptyCallback: string = read(); // should stay narrowed (unrelated standalone call)
+>afterParamNonEmptyCallback : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterParamNonEmptyCallback;
+>afterParamNonEmptyCallback : string
+}
+
+// Function keyword callback (empty body) — should preserve narrowing.
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invoke(function myCallback() {});
+>invoke(function myCallback() {}) : void
+>invoke : (cb: () => void) => void
+>function myCallback() {} : () => void
+>myCallback : () => void
+
+    const afterFunctionKeywordEmpty: string = read(); // should stay narrowed
+>afterFunctionKeywordEmpty : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterFunctionKeywordEmpty;
+>afterFunctionKeywordEmpty : string
+}
+
+// Function keyword callback (non-empty body) — should error (conservative).
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invoke(function myCallback() { console.log("side effect"); });
+>invoke(function myCallback() { console.log("side effect"); }) : void
+>invoke : (cb: () => void) => void
+>function myCallback() { console.log("side effect"); } : () => void
+>myCallback : () => void
+>console.log("side effect") : void
+>console.log : (...data: any[]) => void
+>console : Console
+>log : (...data: any[]) => void
+>"side effect" : "side effect"
+
+    const afterFunctionKeywordNonEmpty: string = read(); // should stay narrowed (unrelated standalone call)
+>afterFunctionKeywordNonEmpty : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterFunctionKeywordNonEmpty;
+>afterFunctionKeywordNonEmpty : string
+}
+
+// Async callback (empty body) — should preserve narrowing.
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invoke(async () => {});
+>invoke(async () => {}) : void
+>invoke : (cb: () => void) => void
+>async () => {} : () => Promise<void>
+
+    const afterAsyncEmptyCallback: string = read(); // should stay narrowed
+>afterAsyncEmptyCallback : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterAsyncEmptyCallback;
+>afterAsyncEmptyCallback : string
+}
+
+// Async callback (non-empty body) — should error (conservative).
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invoke(async () => { await Promise.resolve(); });
+>invoke(async () => { await Promise.resolve(); }) : void
+>invoke : (cb: () => void) => void
+>async () => { await Promise.resolve(); } : () => Promise<void>
+>await Promise.resolve() : void
+>Promise.resolve() : Promise<void>
+>Promise.resolve : { (): Promise<void>; <T>(value: T): Promise<Awaited<T>>; <T>(value: T | PromiseLike<T>): Promise<Awaited<T>>; }
+>Promise : PromiseConstructor
+>resolve : { (): Promise<void>; <T>(value: T): Promise<Awaited<T>>; <T>(value: T | PromiseLike<T>): Promise<Awaited<T>>; }
+
+    const afterAsyncNonEmptyCallback: string = read(); // should stay narrowed (unrelated standalone call)
+>afterAsyncNonEmptyCallback : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterAsyncNonEmptyCallback;
+>afterAsyncNonEmptyCallback : string
+}
+
+// Generator function callback — should error (conservative, can yield side effects).
+declare function invokeGen(cb: () => Generator): void;
+>invokeGen : (cb: () => Generator<unknown, any, any>) => void
+>cb : () => Generator<unknown, any, any>
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invokeGen(function*() { yield 1; });
+>invokeGen(function*() { yield 1; }) : void
+>invokeGen : (cb: () => Generator<unknown, any, any>) => void
+>function*() { yield 1; } : () => Generator<number, void, any>
+>yield 1 : any
+>1 : 1
+
+    const afterGeneratorCallback: string = read(); // should stay narrowed (unrelated standalone call)
+>afterGeneratorCallback : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterGeneratorCallback;
+>afterGeneratorCallback : string
+}
+
+// Multiple parametered callbacks all empty — should preserve.
+declare function invokeTwo(cb1: (a: string) => void, cb2: (b: number) => void): void;
+>invokeTwo : (cb1: (a: string) => void, cb2: (b: number) => void) => void
+>cb1 : (a: string) => void
+>a : string
+>cb2 : (b: number) => void
+>b : number
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invokeTwo((a: string) => {}, (b: number) => {});
+>invokeTwo((a: string) => {}, (b: number) => {}) : void
+>invokeTwo : (cb1: (a: string) => void, cb2: (b: number) => void) => void
+>(a: string) => {} : (a: string) => void
+>a : string
+>(b: number) => {} : (b: number) => void
+>b : number
+
+    const afterMultiParamEmpty: string = read(); // should stay narrowed
+>afterMultiParamEmpty : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterMultiParamEmpty;
+>afterMultiParamEmpty : string
+}
+
+// Multiple parametered callbacks, one non-empty — should error.
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invokeTwo((a: string) => {}, (b: number) => { console.log(b); });
+>invokeTwo((a: string) => {}, (b: number) => { console.log(b); }) : void
+>invokeTwo : (cb1: (a: string) => void, cb2: (b: number) => void) => void
+>(a: string) => {} : (a: string) => void
+>a : string
+>(b: number) => { console.log(b); } : (b: number) => void
+>b : number
+>console.log(b) : void
+>console.log : (...data: any[]) => void
+>console : Console
+>log : (...data: any[]) => void
+>b : number
+
+    const afterMultiParamOneNonEmpty: string = read(); // should stay narrowed (unrelated standalone call)
+>afterMultiParamOneNonEmpty : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterMultiParamOneNonEmpty;
+>afterMultiParamOneNonEmpty : string
+}
+
+// Rest parameter callback (empty body) — should preserve.
+declare function invokeRest(cb: (...args: any[]) => void): void;
+>invokeRest : (cb: (...args: any[]) => void) => void
+>cb : (...args: any[]) => void
+>args : any[]
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invokeRest((...args: any[]) => {});
+>invokeRest((...args: any[]) => {}) : void
+>invokeRest : (cb: (...args: any[]) => void) => void
+>(...args: any[]) => {} : (...args: any[]) => void
+>args : any[]
+
+    const afterRestParamEmpty: string = read(); // should stay narrowed
+>afterRestParamEmpty : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterRestParamEmpty;
+>afterRestParamEmpty : string
+}
+
+// Optional parameter callback (empty body) — should preserve.
+declare function invokeOpt(cb: (x?: number) => void): void;
+>invokeOpt : (cb: (x?: number | undefined) => void) => void
+>cb : (x?: number | undefined) => void
+>x : number | undefined
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invokeOpt((x?: number) => {});
+>invokeOpt((x?: number) => {}) : void
+>invokeOpt : (cb: (x?: number | undefined) => void) => void
+>(x?: number) => {} : (x?: number | undefined) => void
+>x : number | undefined
+
+    const afterOptParamEmpty: string = read(); // should stay narrowed
+>afterOptParamEmpty : string
+>read() : string | undefined
+>read : () => string | undefined
+
+    afterOptParamEmpty;
+>afterOptParamEmpty : string
+}
+

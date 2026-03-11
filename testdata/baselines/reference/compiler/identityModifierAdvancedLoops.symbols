@@ -1,0 +1,151 @@
+//// [tests/cases/compiler/identityModifierAdvancedLoops.ts] ////
+
+=== identityModifierAdvancedLoops.ts ===
+// Phase 3: Advanced loop patterns with identity narrowing.
+// Verifies that for-in nonnull, for-of with narrowing, and loop body
+// boundaries interact correctly with identity CFA.
+
+declare const readObj: identity () => Record<string, number> | undefined;
+>readObj : Symbol(readObj, Decl(identityModifierAdvancedLoops.ts, 4, 13))
+>Record : Symbol(Record, Decl(lib.es5.d.ts, --, --))
+
+declare const readArr: identity () => number[] | undefined;
+>readArr : Symbol(readArr, Decl(identityModifierAdvancedLoops.ts, 5, 13))
+
+declare const read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierAdvancedLoops.ts, 6, 13))
+
+// For-in over identity read — should narrow to non-nullish.
+if (readObj() !== undefined) {
+>readObj : Symbol(readObj, Decl(identityModifierAdvancedLoops.ts, 4, 13))
+>undefined : Symbol(undefined)
+
+    for (const key in readObj()) {
+>key : Symbol(key, Decl(identityModifierAdvancedLoops.ts, 10, 14))
+>readObj : Symbol(readObj, Decl(identityModifierAdvancedLoops.ts, 4, 13))
+
+        const k: string = key;
+>k : Symbol(k, Decl(identityModifierAdvancedLoops.ts, 11, 13))
+>key : Symbol(key, Decl(identityModifierAdvancedLoops.ts, 10, 14))
+
+        k;
+>k : Symbol(k, Decl(identityModifierAdvancedLoops.ts, 11, 13))
+    }
+}
+
+// For-of over identity read — should work with narrowed array.
+if (readArr() !== undefined) {
+>readArr : Symbol(readArr, Decl(identityModifierAdvancedLoops.ts, 5, 13))
+>undefined : Symbol(undefined)
+
+    for (const item of readArr()) {
+>item : Symbol(item, Decl(identityModifierAdvancedLoops.ts, 18, 14))
+>readArr : Symbol(readArr, Decl(identityModifierAdvancedLoops.ts, 5, 13))
+
+        const n: number = item;
+>n : Symbol(n, Decl(identityModifierAdvancedLoops.ts, 19, 13))
+>item : Symbol(item, Decl(identityModifierAdvancedLoops.ts, 18, 14))
+
+        n;
+>n : Symbol(n, Decl(identityModifierAdvancedLoops.ts, 19, 13))
+    }
+}
+
+// For-of with destructuring from identity read.
+declare const readPairs: identity () => Array<{ a: string; b: number }>;
+>readPairs : Symbol(readPairs, Decl(identityModifierAdvancedLoops.ts, 25, 13))
+>Array : Symbol(Array, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --) ... and 4 more)
+>a : Symbol(a, Decl(identityModifierAdvancedLoops.ts, 25, 47))
+>b : Symbol(b, Decl(identityModifierAdvancedLoops.ts, 25, 58))
+
+for (const { a, b } of readPairs()) {
+>a : Symbol(a, Decl(identityModifierAdvancedLoops.ts, 27, 12))
+>b : Symbol(b, Decl(identityModifierAdvancedLoops.ts, 27, 15))
+>readPairs : Symbol(readPairs, Decl(identityModifierAdvancedLoops.ts, 25, 13))
+
+    const str: string = a;
+>str : Symbol(str, Decl(identityModifierAdvancedLoops.ts, 28, 9))
+>a : Symbol(a, Decl(identityModifierAdvancedLoops.ts, 27, 12))
+
+    const num: number = b;
+>num : Symbol(num, Decl(identityModifierAdvancedLoops.ts, 29, 9))
+>b : Symbol(b, Decl(identityModifierAdvancedLoops.ts, 27, 15))
+
+    str;
+>str : Symbol(str, Decl(identityModifierAdvancedLoops.ts, 28, 9))
+
+    num;
+>num : Symbol(num, Decl(identityModifierAdvancedLoops.ts, 29, 9))
+}
+
+// While loop with identity read condition.
+declare const readFlag: identity () => boolean;
+>readFlag : Symbol(readFlag, Decl(identityModifierAdvancedLoops.ts, 35, 13))
+
+while (readFlag()) {
+>readFlag : Symbol(readFlag, Decl(identityModifierAdvancedLoops.ts, 35, 13))
+
+    const flag: boolean = readFlag();
+>flag : Symbol(flag, Decl(identityModifierAdvancedLoops.ts, 38, 9))
+>readFlag : Symbol(readFlag, Decl(identityModifierAdvancedLoops.ts, 35, 13))
+
+    flag;
+>flag : Symbol(flag, Decl(identityModifierAdvancedLoops.ts, 38, 9))
+}
+
+// Do-while with identity read.
+do {
+    const val = read();
+>val : Symbol(val, Decl(identityModifierAdvancedLoops.ts, 44, 9))
+>read : Symbol(read, Decl(identityModifierAdvancedLoops.ts, 6, 13))
+
+    val;
+>val : Symbol(val, Decl(identityModifierAdvancedLoops.ts, 44, 9))
+
+} while (read() !== undefined);
+>read : Symbol(read, Decl(identityModifierAdvancedLoops.ts, 6, 13))
+>undefined : Symbol(undefined)
+
+// Nested for-of with identity.
+declare const readMatrix: identity () => number[][];
+>readMatrix : Symbol(readMatrix, Decl(identityModifierAdvancedLoops.ts, 49, 13))
+
+for (const row of readMatrix()) {
+>row : Symbol(row, Decl(identityModifierAdvancedLoops.ts, 51, 10))
+>readMatrix : Symbol(readMatrix, Decl(identityModifierAdvancedLoops.ts, 49, 13))
+
+    for (const cell of row) {
+>cell : Symbol(cell, Decl(identityModifierAdvancedLoops.ts, 52, 14))
+>row : Symbol(row, Decl(identityModifierAdvancedLoops.ts, 51, 10))
+
+        const n: number = cell;
+>n : Symbol(n, Decl(identityModifierAdvancedLoops.ts, 53, 13))
+>cell : Symbol(cell, Decl(identityModifierAdvancedLoops.ts, 52, 14))
+
+        n;
+>n : Symbol(n, Decl(identityModifierAdvancedLoops.ts, 53, 13))
+    }
+}
+
+// For-of with narrowing check inside loop body.
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierAdvancedLoops.ts, 6, 13))
+>undefined : Symbol(undefined)
+
+    for (const _ of [1, 2, 3]) {
+>_ : Symbol(_, Decl(identityModifierAdvancedLoops.ts, 60, 14))
+
+        if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierAdvancedLoops.ts, 6, 13))
+>undefined : Symbol(undefined)
+
+            const val: string = read();
+>val : Symbol(val, Decl(identityModifierAdvancedLoops.ts, 62, 17))
+>read : Symbol(read, Decl(identityModifierAdvancedLoops.ts, 6, 13))
+
+            val;
+>val : Symbol(val, Decl(identityModifierAdvancedLoops.ts, 62, 17))
+        }
+    }
+}
+
