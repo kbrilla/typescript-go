@@ -61,7 +61,7 @@ if (value() !== undefined) {
 >value : ReadonlySignal<string | undefined>
 
     afterWrite;
->afterWrite : string | undefined
+>afterWrite : string
 }
 
 // Destructured signal — truthiness check

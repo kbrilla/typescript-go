@@ -693,15 +693,15 @@ func (c *Checker) classifyIdentityBoundary(reference *ast.Node, boundary *ast.No
 			return identityBoundaryKindAwaitBoundary
 		}
 
-		if ast.IsCallExpression(boundary) && c.hasNoopCallbackArgument(boundary) {
-			return identityBoundaryKindCallbackCall
-		}
-
 		// Calls on objects/functions unrelated to the identity reference
 		// cannot affect the identity function's backing state. This matches
 		// getter behavior where function calls don't invalidate narrowing.
 		if c.isUnrelatedCallForIdentityReference(reference, boundary) {
 			return identityBoundaryKindNone
+		}
+
+		if ast.IsCallExpression(boundary) && c.hasNoopCallbackArgument(boundary) {
+			return identityBoundaryKindCallbackCall
 		}
 
 		if c.isUnknownCallBoundaryForIdentityReference(reference, boundary) {

@@ -1,8 +1,7 @@
-identityModifierSignalPatterns.ts(27,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierSignalPatterns.ts(76,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 
 
-==== identityModifierSignalPatterns.ts (2 errors) ====
+==== identityModifierSignalPatterns.ts (1 errors) ====
     // =============================================================================
     // Signal-pattern test coverage for identity modifier CFA parity.
     // Tests real-world signal patterns: destructuring, class members, typeof,
@@ -30,8 +29,6 @@ identityModifierSignalPatterns.ts(76,5): error TS100014: Identity narrowing was 
         // setValue is an independent variable, not linked in Phase 1.
         // Calling setValue should NOT invalidate identity narrowing on value.
         setValue(undefined);
-        ~~~~~~~~~~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterWrite: string | undefined = value(); // conservative: narrowing may persist since setValue is independent
         afterWrite;
     }

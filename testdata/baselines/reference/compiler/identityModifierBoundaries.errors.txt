@@ -1,27 +1,11 @@
-identityModifierBoundaries.ts(25,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierBoundaries.ts(29,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(33,20): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierBoundaries.ts(38,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(43,30): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierBoundaries.ts(48,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(62,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierBoundaries.ts(71,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(101,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierBoundaries.ts(102,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(110,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierBoundaries.ts(111,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 identityModifierBoundaries.ts(144,15): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierBoundaries.ts(146,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierBoundaries.ts (14 errors) ====
+==== identityModifierBoundaries.ts (3 errors) ====
     declare const read: identity () => string | undefined;
     
     if (read() !== undefined) {
@@ -47,53 +31,29 @@ identityModifierBoundaries.ts(146,15): error TS2322: Type 'string | undefined' i
     
     if (read() !== undefined) {
         invoke(() => {
-        ~~~~~~~~~~~~~~
             const callbackWrite = 1;
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             callbackWrite;
-    ~~~~~~~~~~~~~~~~~~~~~~
         });
-    ~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterCallbackCall: string = read(); // should error
-              ~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
     }
     
     if (read() !== undefined) {
         const result = invoke(() => {
-                       ~~~~~~~~~~~~~~
             const callbackWrite = 1;
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             callbackWrite;
-    ~~~~~~~~~~~~~~~~~~~~~~
         });
-    ~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         result;
         const afterAssignedCallbackCall: string = read(); // should error
-              ~~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
     }
     
     let assignedCallbackResult: void;
     if (read() !== undefined) {
         assignedCallbackResult = invoke(() => {
-                                 ~~~~~~~~~~~~~~
             const callbackWrite = 1;
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             callbackWrite;
-    ~~~~~~~~~~~~~~~~~~~~~~
         });
-    ~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         assignedCallbackResult;
         const afterAssignmentExpressionCallbackCall: string = read(); // should error
-              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
     }
     
     if (read() !== undefined) {
@@ -108,14 +68,9 @@ identityModifierBoundaries.ts(146,15): error TS2322: Type 'string | undefined' i
     if (read() !== undefined) {
         const conditionalCallbackResult = true
             ? invoke(() => {
-              ~~~~~~~~~~~~~~
                 const callbackWrite = 1;
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
                 callbackWrite;
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~
             })
-    ~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
             : invoke(() => {
                 const callbackWrite = 1;
                 callbackWrite;
@@ -155,12 +110,7 @@ identityModifierBoundaries.ts(146,15): error TS2322: Type 'string | undefined' i
             callbackWrite;
         };
         invoke(mutableNoopCallback);
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterMutableNoopCallbackAlias: string = read(); // should error
-              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
     }
     
     if (read() !== undefined) {
@@ -169,12 +119,7 @@ identityModifierBoundaries.ts(146,15): error TS2322: Type 'string | undefined' i
             callbackWrite;
         };
         invoke(nonEmptyCallback);
-        ~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterNonEmptyCallbackAlias: string = read(); // should error
-              ~~~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
     }
     
     if (read() !== undefined) {
