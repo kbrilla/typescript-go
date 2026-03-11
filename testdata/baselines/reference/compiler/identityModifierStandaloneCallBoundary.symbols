@@ -61,7 +61,7 @@ if (value() !== undefined) {
 >value : Symbol(value, Decl(identityModifierStandaloneCallBoundary.ts, 1, 13))
 }
 
-// === Section 2: Same-receiver method calls SHOULD invalidate ===
+// === Section 2: Same-receiver method calls are transparent (getter parity) ===
 declare const store: {
 >store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))
 
@@ -84,7 +84,7 @@ if (store.read() !== undefined) {
 >store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))
 >clear : Symbol(clear, Decl(identityModifierStandaloneCallBoundary.ts, 26, 44))
 
-    const s: string = store.read(); // Should error - same receiver
+    const s: string = store.read(); // Transparent - getter parity: method calls don't invalidate narrowing
 >s : Symbol(s, Decl(identityModifierStandaloneCallBoundary.ts, 32, 9))
 >store.read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
 >store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))

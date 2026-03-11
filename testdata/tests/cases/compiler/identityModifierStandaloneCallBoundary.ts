@@ -25,7 +25,7 @@ if (value() !== undefined) {
     const s: string = value(); // Should preserve - standalone call is unrelated
 }
 
-// === Section 2: Same-receiver method calls SHOULD invalidate ===
+// === Section 2: Same-receiver method calls are transparent (getter parity) ===
 declare const store: {
     read: identity () => string | undefined;
     clear(): void;
@@ -33,7 +33,7 @@ declare const store: {
 
 if (store.read() !== undefined) {
     store.clear();
-    const s: string = store.read(); // Should error - same receiver
+    const s: string = store.read(); // Transparent - getter parity: method calls don't invalidate narrowing
 }
 
 // === Section 3: Member identity with standalone call ===

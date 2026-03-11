@@ -76,7 +76,7 @@ if (store.user() !== undefined && store.count() !== null) {
 
 // Class member narrowing after unrelated method call
 if (store.user() !== undefined) {
-    store.setUser({ name: "new" }); // method call — potential invalidation boundary
+    store.setUser({ name: "new" }); // method call — transparent for getter parity
     const afterSet: { name: string } | undefined = store.user(); // expected: narrowing dropped
     afterSet;
 }

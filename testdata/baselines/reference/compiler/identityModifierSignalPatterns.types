@@ -204,7 +204,7 @@ if (store.user() !== undefined) {
 >user : () => { name: string; } | undefined
 >undefined : undefined
 
-    store.setUser({ name: "new" }); // method call — potential invalidation boundary
+    store.setUser({ name: "new" }); // method call — transparent for getter parity
 >store.setUser({ name: "new" }) : void
 >store.setUser : (v: { name: string; } | undefined) => void
 >store : ReactiveStore
@@ -222,7 +222,7 @@ if (store.user() !== undefined) {
 >user : () => { name: string; } | undefined
 
     afterSet;
->afterSet : { name: string; } | undefined
+>afterSet : { name: string; }
 }
 
 // -----------------------------------------------------------------------------

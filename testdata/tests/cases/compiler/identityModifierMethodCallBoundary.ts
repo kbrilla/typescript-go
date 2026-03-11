@@ -47,7 +47,7 @@ if (value() !== undefined) {
     const s: string = value(); // Method call on unrelated object
 }
 
-// === Section 4: Same-receiver method calls SHOULD invalidate ===
+// === Section 4: Same-receiver method calls are transparent (getter parity) ===
 declare const store: {
     read: identity () => string | undefined;
     clear(): void;
@@ -56,12 +56,12 @@ declare const store: {
 
 if (store.read() !== undefined) {
     store.clear();
-    const s: string = store.read(); // Should error - clear() could affect read()
+    const s: string = store.read(); // Transparent - getter parity: method calls don't invalidate narrowing
 }
 
 if (store.read() !== undefined) {
     store.reset("new");
-    const s: string = store.read(); // Should error - reset() could affect read()
+    const s: string = store.read(); // Transparent - getter parity: only property writes invalidate
 }
 
 // === Section 5: Method calls on different receiver ===

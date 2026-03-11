@@ -189,7 +189,7 @@ if (store.user() !== undefined) {
 >user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
 >undefined : Symbol(undefined)
 
-    store.setUser({ name: "new" }); // method call — potential invalidation boundary
+    store.setUser({ name: "new" }); // method call — transparent for getter parity
 >store.setUser : Symbol(ReactiveStore.setUser, Decl(identityModifierSignalPatterns.ts, 48, 40))
 >store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
 >setUser : Symbol(ReactiveStore.setUser, Decl(identityModifierSignalPatterns.ts, 48, 40))

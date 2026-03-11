@@ -637,19 +637,12 @@ func (c *Checker) isUnrelatedCallForIdentityReference(reference *ast.Node, bound
 	callee := ast.SkipParentheses(boundary.Expression())
 	referenceCallee := ast.SkipParentheses(reference.Expression())
 
-	// Method call (PropertyAccessExpression or ElementAccessExpression callee)
+	// Method call (PropertyAccessExpression or ElementAccessExpression callee).
+	// For getter parity: method calls on any receiver (including the same receiver)
+	// don't invalidate narrowing. Only property writes invalidate - matching how
+	// TypeScript treats getter narrowing after method calls.
 	if ast.IsAccessExpression(callee) {
-		methodReceiver := callee.Expression()
-		// If identity reference is a standalone call, any method call is unrelated.
-		if ast.IsIdentifier(referenceCallee) {
-			return true
-		}
-		// If identity reference is a member call, check if receivers match.
-		if ast.IsAccessExpression(referenceCallee) {
-			identityReceiver := referenceCallee.Expression()
-			return !c.isMatchingReference(identityReceiver, methodReceiver)
-		}
-		return false
+		return true
 	}
 
 	// Standalone call (Identifier callee)

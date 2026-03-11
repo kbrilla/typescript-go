@@ -73,7 +73,7 @@ if (value() !== undefined) {
 >value : Signal<string | undefined>
 }
 
-// === Section 2: Same-receiver method calls SHOULD invalidate ===
+// === Section 2: Same-receiver method calls are transparent (getter parity) ===
 declare const store: {
 >store : { read: () => string | undefined; clear(): void; }
 
@@ -99,7 +99,7 @@ if (store.read() !== undefined) {
 >store : { read: () => string | undefined; clear(): void; }
 >clear : () => void
 
-    const s: string = store.read(); // Should error - same receiver
+    const s: string = store.read(); // Transparent - getter parity: method calls don't invalidate narrowing
 >s : string
 >store.read() : string | undefined
 >store.read : () => string | undefined
