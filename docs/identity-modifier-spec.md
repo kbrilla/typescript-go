@@ -276,15 +276,13 @@ Performance guardrails:
 | Async boundary (`await`) after guard | Narrowing invalidated at boundary | Submodule/local CFA tests |
 | Getter/setter equivalence scenarios | Parity with property CFA | Submodule parity tests |
 | Heuristic low-confidence call | Diagnostic recommending explicit metadata | Local compiler baseline |
+| Independent identity endpoint non-interference | `b()` does not invalidate unrelated `a()` narrowing | Local compiler baseline |
+| HybridSignal overload resolution (`identity ()` + `(v): void`) | Identity overload selected on zero-arg call | Local compiler baseline |
+| Aliased discriminant destructuring (`const { data, isSuccess } = useQuery()`) | Narrowing via destructured discriminant | Local compiler baseline |
+| Class member `this.identity()` pattern | `this.read()` narrows in method body after guard | Local compiler baseline |
 
 ## 14. Rollout Plan (Impact Before Contracts)
-| Phase | Primary goals | Impact | Implementation complexity | Dependency on explicit contracts (yes/no) |
-| --- | --- | --- | --- | --- |
-| 1 | Identity read reuse, uncertainty-boundary conservatism, Tier 1 write invalidation core | High | Medium | No |
-| 2 | Getter/setter parity sweep and write-form parity expansion | High | Medium | No |
-| 3 | Tier 2 guarded inference expansion plus diagnostics hardening | Medium-High | High | No |
-| 4 | Stabilization: full regression sweep and perf guardrails | Medium | Medium | No |
-| 5 (Final) | Explicit `mutator`/`links` fallback, ambiguity diagnostics, constrained-overload post-call narrowing | High (targeted hard cases) | High | Yes |
+The single authoritative phase table is maintained in [docs/identity-phase1-pr-description.md](identity-phase1-pr-description.md) (Section 4). All phase assignments are governed by that table. Key invariant: `mutator`/`links` contracts appear **only** in Phase 5 (Final).
 
 Ordered rationale:
 - Phase 1 first captures largest practical value without new declaration contracts.
@@ -363,10 +361,10 @@ Roadmap source of truth:
 - The forward candidate list and parity matrices are maintained in `docs/identity-phase1-pr-description.md`.
 
 Phase mapping:
-- Phase 2 targets: write behavior and getter/setter parity expansion, plus bounded Tier 2 guarded improvements.
-- Phase 3 targets: broader guarded precision (callback/alias/write families) and diagnostics hardening.
-- Phase 4 targets: stabilization, regression closure, and perf evidence.
-- Phase 5 (final) targets: explicit `mutator`/`links` fallback, ambiguity diagnostics, and constrained-overload post-call narrowing.
+- Phase 2 targets: parity breadth expansion — callback breadth parity, write-form matrix breadth, Tier 2 guarded forwarding breadth, submodule parity expansion, equality-chain reuse, discriminant-preserving nested access.
+- Phase 3 targets: guarded precision hardening — deeper callback/forwarding families under strict proofs, expanded conservative/non-goal matrix, exhaustive switch carryover, optional-chain carryover, cross-file helper summaries.
+- Phase 4 targets: stabilization, regression sweeps, perf trend checks, and conservative-gap documentation refresh.
+- Phase 5 (final) targets: explicit `mutator`/`links` fallback resolution, multi-endpoint ambiguity diagnostics, and constrained-overload post-call narrowing with explicit unique links.
 
 Guardrail alignment:
 - Value-type invalidation relaxations must stay shape-guarded and conservative by default.

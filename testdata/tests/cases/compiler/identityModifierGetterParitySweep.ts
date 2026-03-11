@@ -63,7 +63,7 @@ if (getterBasic.value !== undefined) {
 
 if (identityBasic() !== undefined) {
     invoke(() => {});
-    const identityAfterCallback: string = identityBasic(); // identity observed: error (conservative boundary)
+    const identityAfterCallback: string = identityBasic(); // OK (empty callback preserves narrowing)
     identityAfterCallback;
 }
 
@@ -125,7 +125,7 @@ async function parityAwaitBoundaries() {
 
     if (identityBasic() !== undefined) {
         await delay();
-        const identityAfterAwait: string = identityBasic(); // identity observed: error (conservative boundary)
+        const identityAfterAwait: string = identityBasic(); // OK (ambient no-arg await preserves narrowing)
         identityAfterAwait;
     }
 

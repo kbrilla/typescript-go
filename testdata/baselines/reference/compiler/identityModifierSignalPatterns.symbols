@@ -1,0 +1,466 @@
+//// [tests/cases/compiler/identityModifierSignalPatterns.ts] ////
+
+=== identityModifierSignalPatterns.ts ===
+// =============================================================================
+// Signal-pattern test coverage for identity modifier CFA parity.
+// Tests real-world signal patterns: destructuring, class members, typeof,
+// non-null assertion, and Angular-style component signals.
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Section 1: Destructured identity signals (SolidJS-style)
+// -----------------------------------------------------------------------------
+
+// Signal-style tuple return
+type ReadonlySignal<T> = identity () => T;
+>ReadonlySignal : Symbol(ReadonlySignal, Decl(identityModifierSignalPatterns.ts, 0, 0))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 11, 20))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 11, 20))
+
+type WriteSignal<T> = (v: T) => void;
+>WriteSignal : Symbol(WriteSignal, Decl(identityModifierSignalPatterns.ts, 11, 42))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 12, 17))
+>v : Symbol(v, Decl(identityModifierSignalPatterns.ts, 12, 23))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 12, 17))
+
+type Signal<T> = [ReadonlySignal<T>, WriteSignal<T>];
+>Signal : Symbol(Signal, Decl(identityModifierSignalPatterns.ts, 12, 37))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 13, 12))
+>ReadonlySignal : Symbol(ReadonlySignal, Decl(identityModifierSignalPatterns.ts, 0, 0))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 13, 12))
+>WriteSignal : Symbol(WriteSignal, Decl(identityModifierSignalPatterns.ts, 11, 42))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 13, 12))
+
+declare function createSignal<T>(initial: T): Signal<T>;
+>createSignal : Symbol(createSignal, Decl(identityModifierSignalPatterns.ts, 13, 53))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 15, 30))
+>initial : Symbol(initial, Decl(identityModifierSignalPatterns.ts, 15, 33))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 15, 30))
+>Signal : Symbol(Signal, Decl(identityModifierSignalPatterns.ts, 12, 37))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 15, 30))
+
+const [value, setValue] = createSignal<string | undefined>("hello");
+>value : Symbol(value, Decl(identityModifierSignalPatterns.ts, 17, 7))
+>setValue : Symbol(setValue, Decl(identityModifierSignalPatterns.ts, 17, 13))
+>createSignal : Symbol(createSignal, Decl(identityModifierSignalPatterns.ts, 13, 53))
+
+// Narrowing after destructured identity call
+if (value() !== undefined) {
+>value : Symbol(value, Decl(identityModifierSignalPatterns.ts, 17, 7))
+>undefined : Symbol(undefined)
+
+    const s: string = value(); // should narrow to string
+>s : Symbol(s, Decl(identityModifierSignalPatterns.ts, 21, 9))
+>value : Symbol(value, Decl(identityModifierSignalPatterns.ts, 17, 7))
+
+    s;
+>s : Symbol(s, Decl(identityModifierSignalPatterns.ts, 21, 9))
+
+    // setValue is an independent variable, not linked in Phase 1.
+    // Calling setValue should NOT invalidate identity narrowing on value.
+    setValue(undefined);
+>setValue : Symbol(setValue, Decl(identityModifierSignalPatterns.ts, 17, 13))
+>undefined : Symbol(undefined)
+
+    const afterWrite: string | undefined = value(); // conservative: narrowing may persist since setValue is independent
+>afterWrite : Symbol(afterWrite, Decl(identityModifierSignalPatterns.ts, 27, 9))
+>value : Symbol(value, Decl(identityModifierSignalPatterns.ts, 17, 7))
+
+    afterWrite;
+>afterWrite : Symbol(afterWrite, Decl(identityModifierSignalPatterns.ts, 27, 9))
+}
+
+// Destructured signal — truthiness check
+if (value()) {
+>value : Symbol(value, Decl(identityModifierSignalPatterns.ts, 17, 7))
+
+    const truthy: string = value(); // should narrow to string (truthy)
+>truthy : Symbol(truthy, Decl(identityModifierSignalPatterns.ts, 33, 9))
+>value : Symbol(value, Decl(identityModifierSignalPatterns.ts, 17, 7))
+
+    truthy;
+>truthy : Symbol(truthy, Decl(identityModifierSignalPatterns.ts, 33, 9))
+}
+
+// Destructured signal — ternary pattern
+const ternary: string = value() !== undefined ? value() : "fallback";
+>ternary : Symbol(ternary, Decl(identityModifierSignalPatterns.ts, 38, 5))
+>value : Symbol(value, Decl(identityModifierSignalPatterns.ts, 17, 7))
+>undefined : Symbol(undefined)
+>value : Symbol(value, Decl(identityModifierSignalPatterns.ts, 17, 7))
+
+ternary;
+>ternary : Symbol(ternary, Decl(identityModifierSignalPatterns.ts, 38, 5))
+
+// -----------------------------------------------------------------------------
+// Section 2: Class member identity patterns
+// -----------------------------------------------------------------------------
+
+// Class with identity property-style members (supported in Phase 1)
+declare class ReactiveStore {
+>ReactiveStore : Symbol(ReactiveStore, Decl(identityModifierSignalPatterns.ts, 39, 8))
+
+    user: identity () => { name: string } | undefined;
+>user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 47, 26))
+
+    count: identity () => number | null;
+>count : Symbol(ReactiveStore.count, Decl(identityModifierSignalPatterns.ts, 47, 54))
+
+    setUser(v: { name: string } | undefined): void;
+>setUser : Symbol(ReactiveStore.setUser, Decl(identityModifierSignalPatterns.ts, 48, 40))
+>v : Symbol(v, Decl(identityModifierSignalPatterns.ts, 49, 12))
+>name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 49, 16))
+}
+
+declare const store: ReactiveStore;
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>ReactiveStore : Symbol(ReactiveStore, Decl(identityModifierSignalPatterns.ts, 39, 8))
+
+// Direct member call narrowing
+if (store.user() !== undefined) {
+>store.user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>undefined : Symbol(undefined)
+
+    const name: string = store.user().name; // should narrow
+>name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 56, 9))
+>store.user().name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 47, 26))
+>store.user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 47, 26))
+
+    name;
+>name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 56, 9))
+}
+
+if (store.count() !== null) {
+>store.count : Symbol(ReactiveStore.count, Decl(identityModifierSignalPatterns.ts, 47, 54))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>count : Symbol(ReactiveStore.count, Decl(identityModifierSignalPatterns.ts, 47, 54))
+
+    const n: number = store.count(); // should narrow
+>n : Symbol(n, Decl(identityModifierSignalPatterns.ts, 61, 9))
+>store.count : Symbol(ReactiveStore.count, Decl(identityModifierSignalPatterns.ts, 47, 54))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>count : Symbol(ReactiveStore.count, Decl(identityModifierSignalPatterns.ts, 47, 54))
+
+    n;
+>n : Symbol(n, Decl(identityModifierSignalPatterns.ts, 61, 9))
+}
+
+// Cross-member independence
+if (store.user() !== undefined && store.count() !== null) {
+>store.user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>undefined : Symbol(undefined)
+>store.count : Symbol(ReactiveStore.count, Decl(identityModifierSignalPatterns.ts, 47, 54))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>count : Symbol(ReactiveStore.count, Decl(identityModifierSignalPatterns.ts, 47, 54))
+
+    const name: string = store.user().name; // should still be narrowed
+>name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 67, 9))
+>store.user().name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 47, 26))
+>store.user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 47, 26))
+
+    const n: number = store.count(); // should still be narrowed
+>n : Symbol(n, Decl(identityModifierSignalPatterns.ts, 68, 9))
+>store.count : Symbol(ReactiveStore.count, Decl(identityModifierSignalPatterns.ts, 47, 54))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>count : Symbol(ReactiveStore.count, Decl(identityModifierSignalPatterns.ts, 47, 54))
+
+    name;
+>name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 67, 9))
+
+    n;
+>n : Symbol(n, Decl(identityModifierSignalPatterns.ts, 68, 9))
+}
+
+// Class member narrowing after unrelated method call
+if (store.user() !== undefined) {
+>store.user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>undefined : Symbol(undefined)
+
+    store.setUser({ name: "new" }); // method call — potential invalidation boundary
+>store.setUser : Symbol(ReactiveStore.setUser, Decl(identityModifierSignalPatterns.ts, 48, 40))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>setUser : Symbol(ReactiveStore.setUser, Decl(identityModifierSignalPatterns.ts, 48, 40))
+>name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 75, 19))
+
+    const afterSet: { name: string } | undefined = store.user(); // expected: narrowing dropped
+>afterSet : Symbol(afterSet, Decl(identityModifierSignalPatterns.ts, 76, 9))
+>name : Symbol(name, Decl(identityModifierSignalPatterns.ts, 76, 21))
+>store.user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+>store : Symbol(store, Decl(identityModifierSignalPatterns.ts, 52, 13))
+>user : Symbol(ReactiveStore.user, Decl(identityModifierSignalPatterns.ts, 46, 29))
+
+    afterSet;
+>afterSet : Symbol(afterSet, Decl(identityModifierSignalPatterns.ts, 76, 9))
+}
+
+// -----------------------------------------------------------------------------
+// Section 3: typeof identity() patterns
+// -----------------------------------------------------------------------------
+
+declare const mixed: identity () => string | number;
+>mixed : Symbol(mixed, Decl(identityModifierSignalPatterns.ts, 84, 13))
+
+if (typeof mixed() === "string") {
+>mixed : Symbol(mixed, Decl(identityModifierSignalPatterns.ts, 84, 13))
+
+    const s: string = mixed(); // should narrow to string
+>s : Symbol(s, Decl(identityModifierSignalPatterns.ts, 87, 9))
+>mixed : Symbol(mixed, Decl(identityModifierSignalPatterns.ts, 84, 13))
+
+    s;
+>s : Symbol(s, Decl(identityModifierSignalPatterns.ts, 87, 9))
+}
+
+if (typeof mixed() === "number") {
+>mixed : Symbol(mixed, Decl(identityModifierSignalPatterns.ts, 84, 13))
+
+    const n: number = mixed(); // should narrow to number
+>n : Symbol(n, Decl(identityModifierSignalPatterns.ts, 92, 9))
+>mixed : Symbol(mixed, Decl(identityModifierSignalPatterns.ts, 84, 13))
+
+    n;
+>n : Symbol(n, Decl(identityModifierSignalPatterns.ts, 92, 9))
+}
+
+// typeof with union including undefined
+declare const mixedUndef: identity () => string | number | undefined;
+>mixedUndef : Symbol(mixedUndef, Decl(identityModifierSignalPatterns.ts, 97, 13))
+
+if (typeof mixedUndef() === "string") {
+>mixedUndef : Symbol(mixedUndef, Decl(identityModifierSignalPatterns.ts, 97, 13))
+
+    const s: string = mixedUndef(); // should narrow to string
+>s : Symbol(s, Decl(identityModifierSignalPatterns.ts, 100, 9))
+>mixedUndef : Symbol(mixedUndef, Decl(identityModifierSignalPatterns.ts, 97, 13))
+
+    s;
+>s : Symbol(s, Decl(identityModifierSignalPatterns.ts, 100, 9))
+}
+
+if (typeof mixedUndef() === "undefined") {
+>mixedUndef : Symbol(mixedUndef, Decl(identityModifierSignalPatterns.ts, 97, 13))
+
+    const u: undefined = mixedUndef(); // should narrow to undefined
+>u : Symbol(u, Decl(identityModifierSignalPatterns.ts, 105, 9))
+>mixedUndef : Symbol(mixedUndef, Decl(identityModifierSignalPatterns.ts, 97, 13))
+
+    u;
+>u : Symbol(u, Decl(identityModifierSignalPatterns.ts, 105, 9))
+}
+
+// typeof combined with truthiness
+if (typeof mixed() === "string" && mixed().length > 0) {
+>mixed : Symbol(mixed, Decl(identityModifierSignalPatterns.ts, 84, 13))
+>mixed().length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>mixed : Symbol(mixed, Decl(identityModifierSignalPatterns.ts, 84, 13))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+    const s: string = mixed(); // should narrow to string
+>s : Symbol(s, Decl(identityModifierSignalPatterns.ts, 111, 9))
+>mixed : Symbol(mixed, Decl(identityModifierSignalPatterns.ts, 84, 13))
+
+    s;
+>s : Symbol(s, Decl(identityModifierSignalPatterns.ts, 111, 9))
+}
+
+// -----------------------------------------------------------------------------
+// Section 4: Non-null assertion identity()! patterns
+// -----------------------------------------------------------------------------
+
+declare const maybe: identity () => string | undefined;
+>maybe : Symbol(maybe, Decl(identityModifierSignalPatterns.ts, 119, 13))
+
+const definite = maybe()!; // should be string
+>definite : Symbol(definite, Decl(identityModifierSignalPatterns.ts, 121, 5))
+>maybe : Symbol(maybe, Decl(identityModifierSignalPatterns.ts, 119, 13))
+
+const definiteLen = maybe()!.length; // should work
+>definiteLen : Symbol(definiteLen, Decl(identityModifierSignalPatterns.ts, 122, 5))
+>maybe()!.length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>maybe : Symbol(maybe, Decl(identityModifierSignalPatterns.ts, 119, 13))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+declare const maybeNum: identity () => number | null;
+>maybeNum : Symbol(maybeNum, Decl(identityModifierSignalPatterns.ts, 124, 13))
+
+const definiteNum = maybeNum()!; // should be number
+>definiteNum : Symbol(definiteNum, Decl(identityModifierSignalPatterns.ts, 126, 5))
+>maybeNum : Symbol(maybeNum, Decl(identityModifierSignalPatterns.ts, 124, 13))
+
+const definiteNumPlus = maybeNum()! + 1; // should work
+>definiteNumPlus : Symbol(definiteNumPlus, Decl(identityModifierSignalPatterns.ts, 127, 5))
+>maybeNum : Symbol(maybeNum, Decl(identityModifierSignalPatterns.ts, 124, 13))
+
+// Non-null assertion after guard (redundant but should still work)
+if (maybe() !== undefined) {
+>maybe : Symbol(maybe, Decl(identityModifierSignalPatterns.ts, 119, 13))
+>undefined : Symbol(undefined)
+
+    const alsoDefinite = maybe()!; // should be string (already narrowed)
+>alsoDefinite : Symbol(alsoDefinite, Decl(identityModifierSignalPatterns.ts, 131, 9))
+>maybe : Symbol(maybe, Decl(identityModifierSignalPatterns.ts, 119, 13))
+
+    alsoDefinite;
+>alsoDefinite : Symbol(alsoDefinite, Decl(identityModifierSignalPatterns.ts, 131, 9))
+}
+
+// -----------------------------------------------------------------------------
+// Section 5: Angular-style component signal pattern
+// -----------------------------------------------------------------------------
+
+// Angular-style input signal type alias
+type InputSignal<T> = identity () => T;
+>InputSignal : Symbol(InputSignal, Decl(identityModifierSignalPatterns.ts, 133, 1))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 140, 17))
+>T : Symbol(T, Decl(identityModifierSignalPatterns.ts, 140, 17))
+
+declare class MyComponent {
+>MyComponent : Symbol(MyComponent, Decl(identityModifierSignalPatterns.ts, 140, 39))
+
+    name: InputSignal<string | undefined>;
+>name : Symbol(MyComponent.name, Decl(identityModifierSignalPatterns.ts, 142, 27))
+>InputSignal : Symbol(InputSignal, Decl(identityModifierSignalPatterns.ts, 133, 1))
+
+    items: InputSignal<readonly string[]>;
+>items : Symbol(MyComponent.items, Decl(identityModifierSignalPatterns.ts, 143, 42))
+>InputSignal : Symbol(InputSignal, Decl(identityModifierSignalPatterns.ts, 133, 1))
+}
+
+declare const comp: MyComponent;
+>comp : Symbol(comp, Decl(identityModifierSignalPatterns.ts, 147, 13))
+>MyComponent : Symbol(MyComponent, Decl(identityModifierSignalPatterns.ts, 140, 39))
+
+// Guard + repeated access (common in Angular templates translated to TS)
+if (comp.name() !== undefined) {
+>comp.name : Symbol(MyComponent.name, Decl(identityModifierSignalPatterns.ts, 142, 27))
+>comp : Symbol(comp, Decl(identityModifierSignalPatterns.ts, 147, 13))
+>name : Symbol(MyComponent.name, Decl(identityModifierSignalPatterns.ts, 142, 27))
+>undefined : Symbol(undefined)
+
+    const greeting = `Hello ${comp.name()}`; // should narrow
+>greeting : Symbol(greeting, Decl(identityModifierSignalPatterns.ts, 151, 9))
+>comp.name : Symbol(MyComponent.name, Decl(identityModifierSignalPatterns.ts, 142, 27))
+>comp : Symbol(comp, Decl(identityModifierSignalPatterns.ts, 147, 13))
+>name : Symbol(MyComponent.name, Decl(identityModifierSignalPatterns.ts, 142, 27))
+
+    const upper = comp.name().toUpperCase(); // should narrow
+>upper : Symbol(upper, Decl(identityModifierSignalPatterns.ts, 152, 9))
+>comp.name().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>comp.name : Symbol(MyComponent.name, Decl(identityModifierSignalPatterns.ts, 142, 27))
+>comp : Symbol(comp, Decl(identityModifierSignalPatterns.ts, 147, 13))
+>name : Symbol(MyComponent.name, Decl(identityModifierSignalPatterns.ts, 142, 27))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    greeting;
+>greeting : Symbol(greeting, Decl(identityModifierSignalPatterns.ts, 151, 9))
+
+    upper;
+>upper : Symbol(upper, Decl(identityModifierSignalPatterns.ts, 152, 9))
+}
+
+// Array identity — no narrowing needed, just type correctness
+comp.items().forEach(item => {
+>comp.items().forEach : Symbol(ReadonlyArray.forEach, Decl(lib.es5.d.ts, --, --))
+>comp.items : Symbol(MyComponent.items, Decl(identityModifierSignalPatterns.ts, 143, 42))
+>comp : Symbol(comp, Decl(identityModifierSignalPatterns.ts, 147, 13))
+>items : Symbol(MyComponent.items, Decl(identityModifierSignalPatterns.ts, 143, 42))
+>forEach : Symbol(ReadonlyArray.forEach, Decl(lib.es5.d.ts, --, --))
+>item : Symbol(item, Decl(identityModifierSignalPatterns.ts, 158, 21))
+
+    item.toUpperCase(); // should work — items() returns readonly string[]
+>item.toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>item : Symbol(item, Decl(identityModifierSignalPatterns.ts, 158, 21))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+});
+
+// Array identity — length check
+if (comp.items().length > 0) {
+>comp.items().length : Symbol(ReadonlyArray.length, Decl(lib.es5.d.ts, --, --))
+>comp.items : Symbol(MyComponent.items, Decl(identityModifierSignalPatterns.ts, 143, 42))
+>comp : Symbol(comp, Decl(identityModifierSignalPatterns.ts, 147, 13))
+>items : Symbol(MyComponent.items, Decl(identityModifierSignalPatterns.ts, 143, 42))
+>length : Symbol(ReadonlyArray.length, Decl(lib.es5.d.ts, --, --))
+
+    const first = comp.items()[0]; // should work
+>first : Symbol(first, Decl(identityModifierSignalPatterns.ts, 164, 9))
+>comp.items : Symbol(MyComponent.items, Decl(identityModifierSignalPatterns.ts, 143, 42))
+>comp : Symbol(comp, Decl(identityModifierSignalPatterns.ts, 147, 13))
+>items : Symbol(MyComponent.items, Decl(identityModifierSignalPatterns.ts, 143, 42))
+
+    first;
+>first : Symbol(first, Decl(identityModifierSignalPatterns.ts, 164, 9))
+}
+
+// Multiple component signals with independent narrowing
+declare class FormComponent {
+>FormComponent : Symbol(FormComponent, Decl(identityModifierSignalPatterns.ts, 166, 1))
+
+    firstName: InputSignal<string | undefined>;
+>firstName : Symbol(FormComponent.firstName, Decl(identityModifierSignalPatterns.ts, 169, 29))
+>InputSignal : Symbol(InputSignal, Decl(identityModifierSignalPatterns.ts, 133, 1))
+
+    lastName: InputSignal<string | undefined>;
+>lastName : Symbol(FormComponent.lastName, Decl(identityModifierSignalPatterns.ts, 170, 47))
+>InputSignal : Symbol(InputSignal, Decl(identityModifierSignalPatterns.ts, 133, 1))
+
+    age: InputSignal<number | null>;
+>age : Symbol(FormComponent.age, Decl(identityModifierSignalPatterns.ts, 171, 46))
+>InputSignal : Symbol(InputSignal, Decl(identityModifierSignalPatterns.ts, 133, 1))
+}
+
+declare const form: FormComponent;
+>form : Symbol(form, Decl(identityModifierSignalPatterns.ts, 175, 13))
+>FormComponent : Symbol(FormComponent, Decl(identityModifierSignalPatterns.ts, 166, 1))
+
+if (form.firstName() !== undefined && form.lastName() !== undefined) {
+>form.firstName : Symbol(FormComponent.firstName, Decl(identityModifierSignalPatterns.ts, 169, 29))
+>form : Symbol(form, Decl(identityModifierSignalPatterns.ts, 175, 13))
+>firstName : Symbol(FormComponent.firstName, Decl(identityModifierSignalPatterns.ts, 169, 29))
+>undefined : Symbol(undefined)
+>form.lastName : Symbol(FormComponent.lastName, Decl(identityModifierSignalPatterns.ts, 170, 47))
+>form : Symbol(form, Decl(identityModifierSignalPatterns.ts, 175, 13))
+>lastName : Symbol(FormComponent.lastName, Decl(identityModifierSignalPatterns.ts, 170, 47))
+>undefined : Symbol(undefined)
+
+    const full = `${form.firstName()} ${form.lastName()}`; // both should narrow
+>full : Symbol(full, Decl(identityModifierSignalPatterns.ts, 178, 9))
+>form.firstName : Symbol(FormComponent.firstName, Decl(identityModifierSignalPatterns.ts, 169, 29))
+>form : Symbol(form, Decl(identityModifierSignalPatterns.ts, 175, 13))
+>firstName : Symbol(FormComponent.firstName, Decl(identityModifierSignalPatterns.ts, 169, 29))
+>form.lastName : Symbol(FormComponent.lastName, Decl(identityModifierSignalPatterns.ts, 170, 47))
+>form : Symbol(form, Decl(identityModifierSignalPatterns.ts, 175, 13))
+>lastName : Symbol(FormComponent.lastName, Decl(identityModifierSignalPatterns.ts, 170, 47))
+
+    full;
+>full : Symbol(full, Decl(identityModifierSignalPatterns.ts, 178, 9))
+}
+
+if (form.age() !== null) {
+>form.age : Symbol(FormComponent.age, Decl(identityModifierSignalPatterns.ts, 171, 46))
+>form : Symbol(form, Decl(identityModifierSignalPatterns.ts, 175, 13))
+>age : Symbol(FormComponent.age, Decl(identityModifierSignalPatterns.ts, 171, 46))
+
+    const nextYear = form.age() + 1; // should narrow to number
+>nextYear : Symbol(nextYear, Decl(identityModifierSignalPatterns.ts, 183, 9))
+>form.age : Symbol(FormComponent.age, Decl(identityModifierSignalPatterns.ts, 171, 46))
+>form : Symbol(form, Decl(identityModifierSignalPatterns.ts, 175, 13))
+>age : Symbol(FormComponent.age, Decl(identityModifierSignalPatterns.ts, 171, 46))
+
+    nextYear;
+>nextYear : Symbol(nextYear, Decl(identityModifierSignalPatterns.ts, 183, 9))
+}
+

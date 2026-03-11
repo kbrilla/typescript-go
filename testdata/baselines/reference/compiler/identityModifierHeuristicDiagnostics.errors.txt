@@ -9,12 +9,9 @@ identityModifierHeuristicDiagnostics.ts(16,11): error TS2322: Type 'string | und
 identityModifierHeuristicDiagnostics.ts(22,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierHeuristicDiagnostics.ts(26,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierHeuristicDiagnostics.ts(39,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierHeuristicDiagnostics.ts(40,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierHeuristicDiagnostics.ts (9 errors) ====
+==== identityModifierHeuristicDiagnostics.ts (7 errors) ====
     declare const read: identity () => string | undefined;
     declare function unknownMutate(): void;
     declare function unknownMutateWithArg(x: number): void;
@@ -75,12 +72,7 @@ identityModifierHeuristicDiagnostics.ts(40,15): error TS2322: Type 'string | und
     async function testAwaitBoundary() {
         if (read() !== undefined) {
             await delay();
-            ~~~~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-            const afterAwait: string = read(); // should error + generic uncertainty-boundary diagnostic
-                  ~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+            const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
             afterAwait;
         }
     }

@@ -148,7 +148,7 @@ if (identityBasic() !== undefined) {
     invoke(() => {});
 >invoke : Symbol(invoke, Decl(identityModifierGetterParitySweep.ts, 0, 0))
 
-    const identityAfterCallback: string = identityBasic(); // identity observed: error (conservative boundary)
+    const identityAfterCallback: string = identityBasic(); // OK (empty callback preserves narrowing)
 >identityAfterCallback : Symbol(identityAfterCallback, Decl(identityModifierGetterParitySweep.ts, 62, 9))
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 
@@ -307,7 +307,7 @@ async function parityAwaitBoundaries() {
         await delay();
 >delay : Symbol(delay, Decl(identityModifierGetterParitySweep.ts, 4, 46))
 
-        const identityAfterAwait: string = identityBasic(); // identity observed: error (conservative boundary)
+        const identityAfterAwait: string = identityBasic(); // OK (ambient no-arg await preserves narrowing)
 >identityAfterAwait : Symbol(identityAfterAwait, Decl(identityModifierGetterParitySweep.ts, 124, 13))
 >identityBasic : Symbol(identityBasic, Decl(identityModifierGetterParitySweep.ts, 18, 13))
 

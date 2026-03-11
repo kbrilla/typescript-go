@@ -1,0 +1,548 @@
+//// [tests/cases/compiler/identityModifierSignalPatterns.ts] ////
+
+=== identityModifierSignalPatterns.ts ===
+// =============================================================================
+// Signal-pattern test coverage for identity modifier CFA parity.
+// Tests real-world signal patterns: destructuring, class members, typeof,
+// non-null assertion, and Angular-style component signals.
+// =============================================================================
+
+// -----------------------------------------------------------------------------
+// Section 1: Destructured identity signals (SolidJS-style)
+// -----------------------------------------------------------------------------
+
+// Signal-style tuple return
+type ReadonlySignal<T> = identity () => T;
+>ReadonlySignal : ReadonlySignal<T>
+
+type WriteSignal<T> = (v: T) => void;
+>WriteSignal : WriteSignal<T>
+>v : T
+
+type Signal<T> = [ReadonlySignal<T>, WriteSignal<T>];
+>Signal : Signal<T>
+
+declare function createSignal<T>(initial: T): Signal<T>;
+>createSignal : <T>(initial: T) => Signal<T>
+>initial : T
+
+const [value, setValue] = createSignal<string | undefined>("hello");
+>value : ReadonlySignal<string | undefined>
+>setValue : WriteSignal<string | undefined>
+>createSignal<string | undefined>("hello") : Signal<string | undefined>
+>createSignal : <T>(initial: T) => Signal<T>
+>"hello" : "hello"
+
+// Narrowing after destructured identity call
+if (value() !== undefined) {
+>value() !== undefined : boolean
+>value() : string | undefined
+>value : ReadonlySignal<string | undefined>
+>undefined : undefined
+
+    const s: string = value(); // should narrow to string
+>s : string
+>value() : string | undefined
+>value : ReadonlySignal<string | undefined>
+
+    s;
+>s : string
+
+    // setValue is an independent variable, not linked in Phase 1.
+    // Calling setValue should NOT invalidate identity narrowing on value.
+    setValue(undefined);
+>setValue(undefined) : void
+>setValue : WriteSignal<string | undefined>
+>undefined : undefined
+
+    const afterWrite: string | undefined = value(); // conservative: narrowing may persist since setValue is independent
+>afterWrite : string | undefined
+>value() : string | undefined
+>value : ReadonlySignal<string | undefined>
+
+    afterWrite;
+>afterWrite : string | undefined
+}
+
+// Destructured signal — truthiness check
+if (value()) {
+>value() : string | undefined
+>value : ReadonlySignal<string | undefined>
+
+    const truthy: string = value(); // should narrow to string (truthy)
+>truthy : string
+>value() : string | undefined
+>value : ReadonlySignal<string | undefined>
+
+    truthy;
+>truthy : string
+}
+
+// Destructured signal — ternary pattern
+const ternary: string = value() !== undefined ? value() : "fallback";
+>ternary : string
+>value() !== undefined ? value() : "fallback" : string
+>value() !== undefined : boolean
+>value() : string | undefined
+>value : ReadonlySignal<string | undefined>
+>undefined : undefined
+>value() : string | undefined
+>value : ReadonlySignal<string | undefined>
+>"fallback" : "fallback"
+
+ternary;
+>ternary : string
+
+// -----------------------------------------------------------------------------
+// Section 2: Class member identity patterns
+// -----------------------------------------------------------------------------
+
+// Class with identity property-style members (supported in Phase 1)
+declare class ReactiveStore {
+>ReactiveStore : ReactiveStore
+
+    user: identity () => { name: string } | undefined;
+>user : () => { name: string; } | undefined
+>name : string
+
+    count: identity () => number | null;
+>count : () => number | null
+
+    setUser(v: { name: string } | undefined): void;
+>setUser : (v: { name: string; } | undefined) => void
+>v : { name: string; } | undefined
+>name : string
+}
+
+declare const store: ReactiveStore;
+>store : ReactiveStore
+
+// Direct member call narrowing
+if (store.user() !== undefined) {
+>store.user() !== undefined : boolean
+>store.user() : { name: string; } | undefined
+>store.user : () => { name: string; } | undefined
+>store : ReactiveStore
+>user : () => { name: string; } | undefined
+>undefined : undefined
+
+    const name: string = store.user().name; // should narrow
+>name : string
+>store.user().name : string
+>store.user() : { name: string; } | undefined
+>store.user : () => { name: string; } | undefined
+>store : ReactiveStore
+>user : () => { name: string; } | undefined
+>name : string
+
+    name;
+>name : string
+}
+
+if (store.count() !== null) {
+>store.count() !== null : boolean
+>store.count() : number | null
+>store.count : () => number | null
+>store : ReactiveStore
+>count : () => number | null
+
+    const n: number = store.count(); // should narrow
+>n : number
+>store.count() : number | null
+>store.count : () => number | null
+>store : ReactiveStore
+>count : () => number | null
+
+    n;
+>n : number
+}
+
+// Cross-member independence
+if (store.user() !== undefined && store.count() !== null) {
+>store.user() !== undefined && store.count() !== null : boolean
+>store.user() !== undefined : boolean
+>store.user() : { name: string; } | undefined
+>store.user : () => { name: string; } | undefined
+>store : ReactiveStore
+>user : () => { name: string; } | undefined
+>undefined : undefined
+>store.count() !== null : boolean
+>store.count() : number | null
+>store.count : () => number | null
+>store : ReactiveStore
+>count : () => number | null
+
+    const name: string = store.user().name; // should still be narrowed
+>name : string
+>store.user().name : string
+>store.user() : { name: string; } | undefined
+>store.user : () => { name: string; } | undefined
+>store : ReactiveStore
+>user : () => { name: string; } | undefined
+>name : string
+
+    const n: number = store.count(); // should still be narrowed
+>n : number
+>store.count() : number | null
+>store.count : () => number | null
+>store : ReactiveStore
+>count : () => number | null
+
+    name;
+>name : string
+
+    n;
+>n : number
+}
+
+// Class member narrowing after unrelated method call
+if (store.user() !== undefined) {
+>store.user() !== undefined : boolean
+>store.user() : { name: string; } | undefined
+>store.user : () => { name: string; } | undefined
+>store : ReactiveStore
+>user : () => { name: string; } | undefined
+>undefined : undefined
+
+    store.setUser({ name: "new" }); // method call — potential invalidation boundary
+>store.setUser({ name: "new" }) : void
+>store.setUser : (v: { name: string; } | undefined) => void
+>store : ReactiveStore
+>setUser : (v: { name: string; } | undefined) => void
+>{ name: "new" } : { name: string; }
+>name : string
+>"new" : "new"
+
+    const afterSet: { name: string } | undefined = store.user(); // expected: narrowing dropped
+>afterSet : { name: string; } | undefined
+>name : string
+>store.user() : { name: string; } | undefined
+>store.user : () => { name: string; } | undefined
+>store : ReactiveStore
+>user : () => { name: string; } | undefined
+
+    afterSet;
+>afterSet : { name: string; } | undefined
+}
+
+// -----------------------------------------------------------------------------
+// Section 3: typeof identity() patterns
+// -----------------------------------------------------------------------------
+
+declare const mixed: identity () => string | number;
+>mixed : () => string | number
+
+if (typeof mixed() === "string") {
+>typeof mixed() === "string" : boolean
+>typeof mixed() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>mixed() : string | number
+>mixed : () => string | number
+>"string" : "string"
+
+    const s: string = mixed(); // should narrow to string
+>s : string
+>mixed() : string | number
+>mixed : () => string | number
+
+    s;
+>s : string
+}
+
+if (typeof mixed() === "number") {
+>typeof mixed() === "number" : boolean
+>typeof mixed() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>mixed() : string | number
+>mixed : () => string | number
+>"number" : "number"
+
+    const n: number = mixed(); // should narrow to number
+>n : number
+>mixed() : string | number
+>mixed : () => string | number
+
+    n;
+>n : number
+}
+
+// typeof with union including undefined
+declare const mixedUndef: identity () => string | number | undefined;
+>mixedUndef : () => string | number | undefined
+
+if (typeof mixedUndef() === "string") {
+>typeof mixedUndef() === "string" : boolean
+>typeof mixedUndef() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>mixedUndef() : string | number | undefined
+>mixedUndef : () => string | number | undefined
+>"string" : "string"
+
+    const s: string = mixedUndef(); // should narrow to string
+>s : string
+>mixedUndef() : string | number | undefined
+>mixedUndef : () => string | number | undefined
+
+    s;
+>s : string
+}
+
+if (typeof mixedUndef() === "undefined") {
+>typeof mixedUndef() === "undefined" : boolean
+>typeof mixedUndef() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>mixedUndef() : string | number | undefined
+>mixedUndef : () => string | number | undefined
+>"undefined" : "undefined"
+
+    const u: undefined = mixedUndef(); // should narrow to undefined
+>u : undefined
+>mixedUndef() : string | number | undefined
+>mixedUndef : () => string | number | undefined
+
+    u;
+>u : undefined
+}
+
+// typeof combined with truthiness
+if (typeof mixed() === "string" && mixed().length > 0) {
+>typeof mixed() === "string" && mixed().length > 0 : boolean
+>typeof mixed() === "string" : boolean
+>typeof mixed() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>mixed() : string | number
+>mixed : () => string | number
+>"string" : "string"
+>mixed().length > 0 : boolean
+>mixed().length : number
+>mixed() : string | number
+>mixed : () => string | number
+>length : number
+>0 : 0
+
+    const s: string = mixed(); // should narrow to string
+>s : string
+>mixed() : string | number
+>mixed : () => string | number
+
+    s;
+>s : string
+}
+
+// -----------------------------------------------------------------------------
+// Section 4: Non-null assertion identity()! patterns
+// -----------------------------------------------------------------------------
+
+declare const maybe: identity () => string | undefined;
+>maybe : () => string | undefined
+
+const definite = maybe()!; // should be string
+>definite : string
+>maybe()! : string
+>maybe() : string | undefined
+>maybe : () => string | undefined
+
+const definiteLen = maybe()!.length; // should work
+>definiteLen : number
+>maybe()!.length : number
+>maybe()! : string
+>maybe() : string | undefined
+>maybe : () => string | undefined
+>length : number
+
+declare const maybeNum: identity () => number | null;
+>maybeNum : () => number | null
+
+const definiteNum = maybeNum()!; // should be number
+>definiteNum : number
+>maybeNum()! : number
+>maybeNum() : number | null
+>maybeNum : () => number | null
+
+const definiteNumPlus = maybeNum()! + 1; // should work
+>definiteNumPlus : number
+>maybeNum()! + 1 : number
+>maybeNum()! : number
+>maybeNum() : number | null
+>maybeNum : () => number | null
+>1 : 1
+
+// Non-null assertion after guard (redundant but should still work)
+if (maybe() !== undefined) {
+>maybe() !== undefined : boolean
+>maybe() : string | undefined
+>maybe : () => string | undefined
+>undefined : undefined
+
+    const alsoDefinite = maybe()!; // should be string (already narrowed)
+>alsoDefinite : string
+>maybe()! : string
+>maybe() : string | undefined
+>maybe : () => string | undefined
+
+    alsoDefinite;
+>alsoDefinite : string
+}
+
+// -----------------------------------------------------------------------------
+// Section 5: Angular-style component signal pattern
+// -----------------------------------------------------------------------------
+
+// Angular-style input signal type alias
+type InputSignal<T> = identity () => T;
+>InputSignal : InputSignal<T>
+
+declare class MyComponent {
+>MyComponent : MyComponent
+
+    name: InputSignal<string | undefined>;
+>name : InputSignal<string | undefined>
+
+    items: InputSignal<readonly string[]>;
+>items : InputSignal<readonly string[]>
+}
+
+declare const comp: MyComponent;
+>comp : MyComponent
+
+// Guard + repeated access (common in Angular templates translated to TS)
+if (comp.name() !== undefined) {
+>comp.name() !== undefined : boolean
+>comp.name() : string | undefined
+>comp.name : InputSignal<string | undefined>
+>comp : MyComponent
+>name : InputSignal<string | undefined>
+>undefined : undefined
+
+    const greeting = `Hello ${comp.name()}`; // should narrow
+>greeting : string
+>`Hello ${comp.name()}` : string
+>comp.name() : string | undefined
+>comp.name : InputSignal<string | undefined>
+>comp : MyComponent
+>name : InputSignal<string | undefined>
+
+    const upper = comp.name().toUpperCase(); // should narrow
+>upper : string
+>comp.name().toUpperCase() : string
+>comp.name().toUpperCase : () => string
+>comp.name() : string | undefined
+>comp.name : InputSignal<string | undefined>
+>comp : MyComponent
+>name : InputSignal<string | undefined>
+>toUpperCase : () => string
+
+    greeting;
+>greeting : string
+
+    upper;
+>upper : string
+}
+
+// Array identity — no narrowing needed, just type correctness
+comp.items().forEach(item => {
+>comp.items().forEach(item => {    item.toUpperCase(); // should work — items() returns readonly string[]}) : void
+>comp.items().forEach : (callbackfn: (value: string, index: number, array: readonly string[]) => void, thisArg?: any) => void
+>comp.items() : readonly string[]
+>comp.items : InputSignal<readonly string[]>
+>comp : MyComponent
+>items : InputSignal<readonly string[]>
+>forEach : (callbackfn: (value: string, index: number, array: readonly string[]) => void, thisArg?: any) => void
+>item => {    item.toUpperCase(); // should work — items() returns readonly string[]} : (item: string) => void
+>item : string
+
+    item.toUpperCase(); // should work — items() returns readonly string[]
+>item.toUpperCase() : string
+>item.toUpperCase : () => string
+>item : string
+>toUpperCase : () => string
+
+});
+
+// Array identity — length check
+if (comp.items().length > 0) {
+>comp.items().length > 0 : boolean
+>comp.items().length : number
+>comp.items() : readonly string[]
+>comp.items : InputSignal<readonly string[]>
+>comp : MyComponent
+>items : InputSignal<readonly string[]>
+>length : number
+>0 : 0
+
+    const first = comp.items()[0]; // should work
+>first : string
+>comp.items()[0] : string
+>comp.items() : readonly string[]
+>comp.items : InputSignal<readonly string[]>
+>comp : MyComponent
+>items : InputSignal<readonly string[]>
+>0 : 0
+
+    first;
+>first : string
+}
+
+// Multiple component signals with independent narrowing
+declare class FormComponent {
+>FormComponent : FormComponent
+
+    firstName: InputSignal<string | undefined>;
+>firstName : InputSignal<string | undefined>
+
+    lastName: InputSignal<string | undefined>;
+>lastName : InputSignal<string | undefined>
+
+    age: InputSignal<number | null>;
+>age : InputSignal<number | null>
+}
+
+declare const form: FormComponent;
+>form : FormComponent
+
+if (form.firstName() !== undefined && form.lastName() !== undefined) {
+>form.firstName() !== undefined && form.lastName() !== undefined : boolean
+>form.firstName() !== undefined : boolean
+>form.firstName() : string | undefined
+>form.firstName : InputSignal<string | undefined>
+>form : FormComponent
+>firstName : InputSignal<string | undefined>
+>undefined : undefined
+>form.lastName() !== undefined : boolean
+>form.lastName() : string | undefined
+>form.lastName : InputSignal<string | undefined>
+>form : FormComponent
+>lastName : InputSignal<string | undefined>
+>undefined : undefined
+
+    const full = `${form.firstName()} ${form.lastName()}`; // both should narrow
+>full : string
+>`${form.firstName()} ${form.lastName()}` : string
+>form.firstName() : string | undefined
+>form.firstName : InputSignal<string | undefined>
+>form : FormComponent
+>firstName : InputSignal<string | undefined>
+>form.lastName() : string | undefined
+>form.lastName : InputSignal<string | undefined>
+>form : FormComponent
+>lastName : InputSignal<string | undefined>
+
+    full;
+>full : string
+}
+
+if (form.age() !== null) {
+>form.age() !== null : boolean
+>form.age() : number | null
+>form.age : InputSignal<number | null>
+>form : FormComponent
+>age : InputSignal<number | null>
+
+    const nextYear = form.age() + 1; // should narrow to number
+>nextYear : number
+>form.age() + 1 : number
+>form.age() : number | null
+>form.age : InputSignal<number | null>
+>form : FormComponent
+>age : InputSignal<number | null>
+>1 : 1
+
+    nextYear;
+>nextYear : number
+}
+

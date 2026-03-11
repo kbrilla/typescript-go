@@ -40,7 +40,7 @@ if (read() !== undefined) {
 async function testAwaitBoundary() {
     if (read() !== undefined) {
         await delay();
-        const afterAwait: string = read(); // should error + generic uncertainty-boundary diagnostic
+        const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
         afterAwait;
     }
 }

@@ -614,6 +614,13 @@ func (c *Checker) classifyIdentityBoundary(reference *ast.Node, boundary *ast.No
 		return identityBoundaryKindNone
 	}
 
+	// Identity calls are pure reads by contract — they cannot mutate state
+	// that would affect other identity references. This matches how
+	// independent property getters narrow independently.
+	if c.isIdentityCallReference(boundary) {
+		return identityBoundaryKindNone
+	}
+
 	if c.isAliasEscapeAssignmentForCallReference(reference, boundary) {
 		return identityBoundaryKindAliasEscape
 	}
@@ -629,7 +636,7 @@ func (c *Checker) classifyIdentityBoundary(reference *ast.Node, boundary *ast.No
 
 		if ast.IsCallExpression(boundary) && len(boundary.Arguments()) == 1 {
 			callback := ast.SkipParentheses(boundary.Arguments()[0])
-			if ast.IsFunctionExpression(callback) || ast.IsArrowFunction(callback) {
+			if ast.IsFunctionExpression(callback) || ast.IsArrowFunction(callback) || ast.IsIdentifier(callback) {
 				return identityBoundaryKindCallbackCall
 			}
 		}
@@ -801,7 +808,7 @@ func (c *Checker) shouldPreserveNoopCallbackCallNarrowing(reference *ast.Node, c
 		return false
 	}
 
-	if call.Parent == nil || !ast.IsExpressionStatement(call.Parent) {
+	if !c.isNoopCallbackBoundaryCallSite(call) {
 		return false
 	}
 
@@ -830,6 +837,27 @@ func (c *Checker) shouldPreserveNoopCallbackCallNarrowing(reference *ast.Node, c
 
 	if ast.IsIdentifier(callback) {
 		return c.isConstNoopCallbackAlias(callback)
+	}
+
+	return false
+}
+
+func (c *Checker) isNoopCallbackBoundaryCallSite(call *ast.Node) bool {
+	if call.Parent == nil {
+		return false
+	}
+
+	if ast.IsExpressionStatement(call.Parent) {
+		return true
+	}
+
+	if ast.IsVariableDeclaration(call.Parent) {
+		return call.Parent.Initializer() == call
+	}
+
+	if ast.IsBinaryExpression(call.Parent) {
+		binary := call.Parent.AsBinaryExpression()
+		return ast.IsAssignmentOperator(binary.OperatorToken.Kind) && binary.Right == call
 	}
 
 	return false
@@ -927,7 +955,7 @@ func (c *Checker) shouldPreserveAmbientNoArgAwaitCallNarrowing(reference *ast.No
 	}
 
 	readReturnType := c.getReturnTypeOfSignature(readSignature)
-	if !c.maybeTypeOfKind(readReturnType, TypeFlagsNull) || c.maybeTypeOfKind(readReturnType, TypeFlagsUndefined) {
+	if readReturnType.flags&TypeFlagsUnion == 0 {
 		return false
 	}
 

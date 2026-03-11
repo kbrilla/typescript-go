@@ -17,13 +17,7 @@ Constrained-overload scope decision:
 - Phase 1 carries readiness planning only (guardrails and test inventory) so the final-phase explicit-contract slice can land narrowly and safely.
 
 ## Reordered Phase Sequence (Impact Before Contracts)
-| Phase | Primary goals | Impact | Implementation complexity | Dependency on explicit contracts (yes/no) |
-| --- | --- | --- | --- | --- |
-| 1 | Identity read reuse + Tier 1 write invalidation + uncertainty-boundary baseline | High | Medium | No |
-| 2 | Getter/setter parity and write-form parity expansion | High | Medium | No |
-| 3 | Tier 2 guarded precision expansion and heuristic diagnostics hardening | Medium-High | High | No |
-| 4 | Stabilization: broad regression sweep and perf guardrails | Medium | Medium | No |
-| 5 (Final) | Explicit `mutator`/`links`, ambiguity diagnostics, constrained-overload post-call narrowing | High (targeted hard cases) | High | Yes |
+The single authoritative phase table is maintained in [docs/identity-phase1-pr-description.md](identity-phase1-pr-description.md) (Section 4). All phase assignments are governed by that table. Key invariant: `mutator`/`links` contracts appear **only** in Phase 5 (Final).
 
 Ordering rationale:
 - Lead with write and parity behavior that delivers immediate user impact and does not require contracts.
@@ -358,6 +352,32 @@ Current status:
 2. Expand diagnostics coverage beyond current uncertainty-boundary slice.
 3. Expand parity mapping from the getter corpus beyond currently covered source slices.
 4. Finalize constrained-overload readiness artifacts (R1) without enabling explicit-contract runtime behavior.
+
+### Phase 1 Bug Fix (from baseline parity analysis)
+
+**HybridSignal overload resolution:**
+- Bug: When an interface has both `identity (): T` and `(v: T): void` overloads, calling with zero args selects the setter overload instead of the identity overload. Produces 6 spurious errors in `identityModifierParity.ts` (lines 73, 75, 80, 82).
+- Action: Write a red test demonstrating the overload selection bug (zero-arg call on hybrid interface resolves to setter instead of identity overload), then fix checker overload resolution to prefer the identity signature for zero-arg calls.
+
+### Phase 1 Parity Gap Closure Candidates (from baseline parity analysis)
+
+- ~~*Independent identity endpoints:*~~ **Done.** Identity calls are now recognized as pure reads — `b()` no longer invalidates unrelated `a()` narrowing.
+- *Await boundary (`await delay()`) and assignment-expression callback boundary:* Document as Phase 2 parity targets. Getter survives `await delay()` and assignment-expression callbacks; identity does not. Only `await Promise.resolve()` is currently preserved.
+
+### New Test Coverage To Add (from baseline parity analysis)
+
+| Pattern | Priority | Description |
+|---|---|---|
+| Destructured identity signals | HIGH | `const [value, setValue] = createSignal()` and `const { data, isSuccess } = useQuery()` — aliased discriminant narrowing via destructuring |
+| Class member identity | HIGH | `this.read()` in class methods where `read` is an identity member — common Angular signal pattern |
+| `typeof identity().kind` discriminant | MEDIUM | `typeof obj.kind === "string"` pattern and optional chain variant `typeof obj?.kind` |
+| Closure past last assignment | MEDIUM | After last assignment, closures should see narrowed type from identity read |
+| `identity()!` non-null assertion | LOW | `identity()!` should narrow like `getter!` |
+
+### Stale Comments Found (minor cleanup)
+
+- `identityModifierParity.ts` ~line 95: comment says "should error" after `unknownShapeMutate()` but baseline shows NO error (correct preserve).
+- `identityModifierGetterParitySweep.ts` ~line 69: comment says "error (conservative boundary)" for empty callback `invoke(() => {})` but baseline shows NO error (correct preserve).
 
 ### Latest Increment (Missing Getter-Origin Matrix)
 - Added `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts` to cover missing getter-origin parity scenarios requested by sweep/swarm:

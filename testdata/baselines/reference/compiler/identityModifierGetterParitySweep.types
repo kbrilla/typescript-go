@@ -161,7 +161,7 @@ if (identityBasic() !== undefined) {
 >invoke : (cb: () => void) => void
 >() => {} : () => void
 
-    const identityAfterCallback: string = identityBasic(); // identity observed: error (conservative boundary)
+    const identityAfterCallback: string = identityBasic(); // OK (empty callback preserves narrowing)
 >identityAfterCallback : string
 >identityBasic() : string | undefined
 >identityBasic : () => string | undefined
@@ -359,7 +359,7 @@ async function parityAwaitBoundaries() {
 >delay() : Promise<void>
 >delay : () => Promise<void>
 
-        const identityAfterAwait: string = identityBasic(); // identity observed: error (conservative boundary)
+        const identityAfterAwait: string = identityBasic(); // OK (ambient no-arg await preserves narrowing)
 >identityAfterAwait : string
 >identityBasic() : string | undefined
 >identityBasic : () => string | undefined

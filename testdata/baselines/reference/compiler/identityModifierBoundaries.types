@@ -447,7 +447,7 @@ async function testAwaitBoundary() {
 >delay() : Promise<void>
 >delay : () => Promise<void>
 
-        const afterAwait: string = read(); // should error
+        const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
 >afterAwait : string
 >read() : string | undefined
 >read : () => string | undefined

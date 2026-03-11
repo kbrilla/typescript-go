@@ -107,7 +107,7 @@ async function testAwaitBoundary() {
         await delay();
 >delay : Symbol(delay, Decl(identityModifierHeuristicDiagnostics.ts, 3, 46))
 
-        const afterAwait: string = read(); // should error + generic uncertainty-boundary diagnostic
+        const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
 >afterAwait : Symbol(afterAwait, Decl(identityModifierHeuristicDiagnostics.ts, 39, 13))
 >read : Symbol(read, Decl(identityModifierHeuristicDiagnostics.ts, 0, 13))
 

@@ -138,7 +138,7 @@ if (read() !== undefined) {
 async function testAwaitBoundary() {
     if (read() !== undefined) {
         await delay();
-        const afterAwait: string = read(); // should error
+        const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
     }
 }
 

@@ -1,0 +1,150 @@
+//// [tests/cases/compiler/identityModifierClosures.ts] ////
+
+=== identityModifierClosures.ts ===
+// Identity modifier: closure and callback scope tests.
+// Tests that identity call narrowing behaves correctly inside closures,
+// after last assignment, and across callback boundaries.
+
+declare const read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierClosures.ts, 4, 13))
+
+// --- 1. Basic closure captures narrowed identity type ---
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierClosures.ts, 4, 13))
+>undefined : Symbol(undefined)
+
+    const captured = read();
+>captured : Symbol(captured, Decl(identityModifierClosures.ts, 9, 9))
+>read : Symbol(read, Decl(identityModifierClosures.ts, 4, 13))
+
+    const fn = () => {
+>fn : Symbol(fn, Decl(identityModifierClosures.ts, 10, 9))
+
+        const v: string = captured; // OK — captured const preserves narrowing
+>v : Symbol(v, Decl(identityModifierClosures.ts, 11, 13))
+>captured : Symbol(captured, Decl(identityModifierClosures.ts, 9, 9))
+
+        v;
+>v : Symbol(v, Decl(identityModifierClosures.ts, 11, 13))
+
+    };
+    fn();
+>fn : Symbol(fn, Decl(identityModifierClosures.ts, 10, 9))
+}
+
+// --- 2. Identity call inside closure re-evaluates (no stale narrowing) ---
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierClosures.ts, 4, 13))
+>undefined : Symbol(undefined)
+
+    const fn = () => {
+>fn : Symbol(fn, Decl(identityModifierClosures.ts, 20, 9))
+
+        // Identity narrowing from outer scope propagates into closures,
+        // matching getter behavior. The call is narrowed by the outer guard.
+        const v: string = read(); // OK — identity narrowing propagates into closure (getter parity)
+>v : Symbol(v, Decl(identityModifierClosures.ts, 23, 13))
+>read : Symbol(read, Decl(identityModifierClosures.ts, 4, 13))
+
+        v;
+>v : Symbol(v, Decl(identityModifierClosures.ts, 23, 13))
+
+    };
+    fn();
+>fn : Symbol(fn, Decl(identityModifierClosures.ts, 20, 9))
+}
+
+// --- 3. Closure after trivial passthrough preserves narrowing ---
+
+declare function passthrough<T>(x: T): T;
+>passthrough : Symbol(passthrough, Decl(identityModifierClosures.ts, 27, 1))
+>T : Symbol(T, Decl(identityModifierClosures.ts, 31, 29))
+>x : Symbol(x, Decl(identityModifierClosures.ts, 31, 32))
+>T : Symbol(T, Decl(identityModifierClosures.ts, 31, 29))
+>T : Symbol(T, Decl(identityModifierClosures.ts, 31, 29))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierClosures.ts, 4, 13))
+>undefined : Symbol(undefined)
+
+    passthrough(read());
+>passthrough : Symbol(passthrough, Decl(identityModifierClosures.ts, 27, 1))
+>read : Symbol(read, Decl(identityModifierClosures.ts, 4, 13))
+
+    const fn = () => {
+>fn : Symbol(fn, Decl(identityModifierClosures.ts, 35, 9))
+
+        const v: string = read(); // should error — closure re-evaluates identity call
+>v : Symbol(v, Decl(identityModifierClosures.ts, 36, 13))
+>read : Symbol(read, Decl(identityModifierClosures.ts, 4, 13))
+
+        v;
+>v : Symbol(v, Decl(identityModifierClosures.ts, 36, 13))
+
+    };
+    fn();
+>fn : Symbol(fn, Decl(identityModifierClosures.ts, 35, 9))
+}
+
+// --- 4. Identity narrowing in immediately invoked closure ---
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierClosures.ts, 4, 13))
+>undefined : Symbol(undefined)
+
+    const result = (() => {
+>result : Symbol(result, Decl(identityModifierClosures.ts, 45, 9))
+
+        return read(); // string — IIFE preserves identity narrowing (getter parity)
+>read : Symbol(read, Decl(identityModifierClosures.ts, 4, 13))
+
+    })();
+    result;
+>result : Symbol(result, Decl(identityModifierClosures.ts, 45, 9))
+}
+
+// --- 5. Multiple identity endpoints in closures ---
+
+declare const readA: identity () => number | null;
+>readA : Symbol(readA, Decl(identityModifierClosures.ts, 53, 13))
+
+declare const readB: identity () => boolean | undefined;
+>readB : Symbol(readB, Decl(identityModifierClosures.ts, 54, 13))
+
+if (readA() !== null && readB() !== undefined) {
+>readA : Symbol(readA, Decl(identityModifierClosures.ts, 53, 13))
+>readB : Symbol(readB, Decl(identityModifierClosures.ts, 54, 13))
+>undefined : Symbol(undefined)
+
+    const a = readA(); // narrowed to number
+>a : Symbol(a, Decl(identityModifierClosures.ts, 57, 9))
+>readA : Symbol(readA, Decl(identityModifierClosures.ts, 53, 13))
+
+    const b = readB(); // narrowed to boolean
+>b : Symbol(b, Decl(identityModifierClosures.ts, 58, 9))
+>readB : Symbol(readB, Decl(identityModifierClosures.ts, 54, 13))
+
+    const fn = () => {
+>fn : Symbol(fn, Decl(identityModifierClosures.ts, 59, 9))
+
+        const va: number = a;   // OK — captured const
+>va : Symbol(va, Decl(identityModifierClosures.ts, 60, 13))
+>a : Symbol(a, Decl(identityModifierClosures.ts, 57, 9))
+
+        const vb: boolean = b;  // OK — captured const
+>vb : Symbol(vb, Decl(identityModifierClosures.ts, 61, 13))
+>b : Symbol(b, Decl(identityModifierClosures.ts, 58, 9))
+
+        va;
+>va : Symbol(va, Decl(identityModifierClosures.ts, 60, 13))
+
+        vb;
+>vb : Symbol(vb, Decl(identityModifierClosures.ts, 61, 13))
+
+    };
+    fn();
+>fn : Symbol(fn, Decl(identityModifierClosures.ts, 59, 9))
+}
+

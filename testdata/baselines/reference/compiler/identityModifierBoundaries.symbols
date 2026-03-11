@@ -357,7 +357,7 @@ async function testAwaitBoundary() {
         await delay();
 >delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 10, 46))
 
-        const afterAwait: string = read(); // should error
+        const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
 >afterAwait : Symbol(afterAwait, Decl(identityModifierBoundaries.ts, 137, 13))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
     }

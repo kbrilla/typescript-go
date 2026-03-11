@@ -1,0 +1,179 @@
+//// [tests/cases/compiler/identityModifierClosures.ts] ////
+
+=== identityModifierClosures.ts ===
+// Identity modifier: closure and callback scope tests.
+// Tests that identity call narrowing behaves correctly inside closures,
+// after last assignment, and across callback boundaries.
+
+declare const read: identity () => string | undefined;
+>read : () => string | undefined
+
+// --- 1. Basic closure captures narrowed identity type ---
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const captured = read();
+>captured : string | undefined
+>read() : string | undefined
+>read : () => string | undefined
+
+    const fn = () => {
+>fn : () => void
+>() => {        const v: string = captured; // OK — captured const preserves narrowing        v;    } : () => void
+
+        const v: string = captured; // OK — captured const preserves narrowing
+>v : string
+>captured : string
+
+        v;
+>v : string
+
+    };
+    fn();
+>fn() : void
+>fn : () => void
+}
+
+// --- 2. Identity call inside closure re-evaluates (no stale narrowing) ---
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const fn = () => {
+>fn : () => void
+>() => {        // Identity narrowing from outer scope propagates into closures,        // matching getter behavior. The call is narrowed by the outer guard.        const v: string = read(); // OK — identity narrowing propagates into closure (getter parity)        v;    } : () => void
+
+        // Identity narrowing from outer scope propagates into closures,
+        // matching getter behavior. The call is narrowed by the outer guard.
+        const v: string = read(); // OK — identity narrowing propagates into closure (getter parity)
+>v : string
+>read() : string | undefined
+>read : () => string | undefined
+
+        v;
+>v : string
+
+    };
+    fn();
+>fn() : void
+>fn : () => void
+}
+
+// --- 3. Closure after trivial passthrough preserves narrowing ---
+
+declare function passthrough<T>(x: T): T;
+>passthrough : <T>(x: T) => T
+>x : T
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    passthrough(read());
+>passthrough(read()) : string
+>passthrough : <T>(x: T) => T
+>read() : string | undefined
+>read : () => string | undefined
+
+    const fn = () => {
+>fn : () => void
+>() => {        const v: string = read(); // should error — closure re-evaluates identity call        v;    } : () => void
+
+        const v: string = read(); // should error — closure re-evaluates identity call
+>v : string
+>read() : string | undefined
+>read : () => string | undefined
+
+        v;
+>v : string
+
+    };
+    fn();
+>fn() : void
+>fn : () => void
+}
+
+// --- 4. Identity narrowing in immediately invoked closure ---
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const result = (() => {
+>result : string
+>(() => {        return read(); // string — IIFE preserves identity narrowing (getter parity)    })() : string
+>(() => {        return read(); // string — IIFE preserves identity narrowing (getter parity)    }) : () => string
+>() => {        return read(); // string — IIFE preserves identity narrowing (getter parity)    } : () => string
+
+        return read(); // string — IIFE preserves identity narrowing (getter parity)
+>read() : string | undefined
+>read : () => string | undefined
+
+    })();
+    result;
+>result : string
+}
+
+// --- 5. Multiple identity endpoints in closures ---
+
+declare const readA: identity () => number | null;
+>readA : () => number | null
+
+declare const readB: identity () => boolean | undefined;
+>readB : () => boolean | undefined
+
+if (readA() !== null && readB() !== undefined) {
+>readA() !== null && readB() !== undefined : boolean
+>readA() !== null : boolean
+>readA() : number | null
+>readA : () => number | null
+>readB() !== undefined : boolean
+>readB() : boolean | undefined
+>readB : () => boolean | undefined
+>undefined : undefined
+
+    const a = readA(); // narrowed to number
+>a : number | null
+>readA() : number | null
+>readA : () => number | null
+
+    const b = readB(); // narrowed to boolean
+>b : boolean | undefined
+>readB() : boolean | undefined
+>readB : () => boolean | undefined
+
+    const fn = () => {
+>fn : () => void
+>() => {        const va: number = a;   // OK — captured const        const vb: boolean = b;  // OK — captured const        va;        vb;    } : () => void
+
+        const va: number = a;   // OK — captured const
+>va : number
+>a : number
+
+        const vb: boolean = b;  // OK — captured const
+>vb : boolean
+>b : boolean
+
+        va;
+>va : number
+
+        vb;
+>vb : boolean
+
+    };
+    fn();
+>fn() : void
+>fn : () => void
+}
+
