@@ -52,7 +52,7 @@ For full problem analysis and language survey, see [docs/identity-modifier-resea
 | Phase | Objective | Key Deliverables | Entry Criteria | Exit Criteria | Contracts Required | Status |
 |-------|-----------|-----------------|----------------|---------------|-------------------|--------|
 | **1** | Identity core + conservative safety baseline | `identity` parse/bind; repeated-read narrowing; uncertainty boundaries; Tier 1 write invalidation; diagnostics (`TS100014`/`TS100015`); parity suites | SDD + TDD plan established | Full validation green; parity sweep tracked; missing matrix reported | No | **In progress** |
-| **2** | Parity breadth expansion | Callback breadth parity; write-form matrix breadth; Tier 2 guarded forwarding breadth; submodule parity expansion; equality-chain reuse; discriminant-preserving nested access | Phase 1 stable and green | Added slices green with negative controls and no broad regressions | No | **In Progress** |
+| **2** | Parity breadth expansion | Callback breadth parity; write-form matrix breadth; Tier 2 guarded forwarding breadth; submodule parity expansion; equality-chain reuse; discriminant-preserving nested access; unrelated call transparency | Phase 1 stable and green | Added slices green with negative controls and no broad regressions | No | **In Progress — Major slices landed** |
 | **3** | Guarded precision hardening | Deeper callback/forwarding families under strict proofs; expanded conservative/non-goal matrix; exhaustive switch carryover; optional-chain carryover; cross-file helper summaries | Phase 2 slices stable | Precision gains land with soundness guardrails intact | No | Planned |
 | **4** | Stabilization + perf guardrails | Regression sweeps; perf trend checks; conservative-gap documentation refresh | Phase 1–3 feature set stabilized | Repeated green validation and stable perf envelope | No | Planned |
 | **5 (Final)** | Explicit-contract stage | `mutator`/`links` fallback resolution; multi-endpoint ambiguity diagnostics; constrained-overload post-call narrowing with explicit unique links | Prior phases stable; gaps justify explicit contracts | Explicit-contract tests green and soundness constraints met | **Yes** | Planned |
@@ -317,6 +317,7 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 | `identityModifierInOperator.ts` | 52 | typeof, instanceof, in, discriminant narrowing | 0 | ✅ All narrowing forms work (fixed method call boundary false positives) |
 | `identityModifierMethodCallBoundary.ts` | 73 | Method calls on narrowed locals, unrelated objects, same-receiver negatives | 4 (correct negatives) | ✅ Phase 2 feature: unrelated method calls exempt from boundaries |
 | `identityModifierAssertionGuards.ts` | 48 | Assertion functions, type predicates, for-of loops, logical operators | 0 | ✅ All assertion/guard patterns work |
+| `identityModifierStandaloneCallBoundary.ts` | 53 | Standalone function calls transparent, same-receiver boundary, member+standalone mixing | 2 (correct negatives) | ✅ Phase 2 feature: unrelated standalone calls exempt from boundaries |
 
 ## 6. Future Phases: Candidate Features
 
@@ -334,7 +335,7 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 | Value-type boundary relaxation (ambient no-arg `void` call, expression-stmt) | Ambient declaration, zero args/params, `void` return, no alias escape | Medium | Aligns with getter behavior for primitive reads | ✅ VERIFIED WORKING — `shouldPreserveAmbientNoArgVoidUnknownCallNarrowing` already implemented |
 | Value-type boundary relaxation (`await Promise.resolve()` expression-stmt) | Exact shape match, no assignments, no intervening writes | Low | Makes existing narrow rule explicit for primitives |
 | Helper-forwarded read endpoint preserve (local non-mutating helpers) | Bounded local helper proof, no mutable aliases | Medium | Narrows identity-only conservative behavior |
-| Unrelated method call boundary exemption | PropertyAccess callee on unrelated receiver; no matching reference to identity receiver | Low | Reduces false positive TS100015/TS100014 diagnostics; matches getter behavior | ✅ IMPLEMENTED — `isUnrelatedMethodCallForIdentityReference` exempts method calls on objects unrelated to identity endpoint |
+| Unrelated call boundary exemption | Standalone and method calls unrelated to identity receiver; PropertyAccess/Identifier callee check; same-receiver method calls remain boundaries | Low | Eliminates false positive TS100015/TS100014 for function calls matching getter transparency; significant error reduction across test suite | ✅ IMPLEMENTED — `isUnrelatedCallForIdentityReference` exempts all calls unrelated to identity endpoint. Error reductions: Closures 4→0, P8Conservative 2→0, ValueTypeBoundary 6→0, HeuristicDiagnostics 7→3, Boundaries 18→14, InOperator 2→0 |
 
 ### 6.2 Phase 3 Candidates — Guarded Precision Hardening
 

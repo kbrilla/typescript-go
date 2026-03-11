@@ -97,10 +97,10 @@ if (identityModel().kind === "circle") {
 
     const identityAfterUnknownWithArg: number = identityModel().radius; // expected conservative error (non-target shape)
 >identityAfterUnknownWithArg : number
->identityModel().radius : any
+>identityModel().radius : number
 >identityModel() : Shape
 >identityModel : () => Shape
->radius : any
+>radius : number
 
     identityAfterUnknownWithArg;
 >identityAfterUnknownWithArg : number

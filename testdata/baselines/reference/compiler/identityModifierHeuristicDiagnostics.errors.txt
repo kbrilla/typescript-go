@@ -1,17 +1,9 @@
-identityModifierHeuristicDiagnostics.ts(8,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierHeuristicDiagnostics.ts(9,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-identityModifierHeuristicDiagnostics.ts(14,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierHeuristicDiagnostics.ts(15,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-identityModifierHeuristicDiagnostics.ts(16,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
 identityModifierHeuristicDiagnostics.ts(22,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierHeuristicDiagnostics.ts(26,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierHeuristicDiagnostics.ts (7 errors) ====
+==== identityModifierHeuristicDiagnostics.ts (2 errors) ====
     declare const read: identity () => string | undefined;
     declare function unknownMutate(): void;
     declare function unknownMutateWithArg(x: number): void;
@@ -20,27 +12,14 @@ identityModifierHeuristicDiagnostics.ts(26,11): error TS2322: Type 'string | und
     
     if (read() !== undefined) {
         unknownMutateWithArg(1);
-        ~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterUnknown: string = read(); // should error + unknown-call-specific diagnostic
-              ~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         afterUnknown;
     }
     
     if (read() !== undefined) {
         unknownMutateWithArg(1);
-        ~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterUnknownFirst: string = read(); // should error + one boundary diagnostic on unknown call
-              ~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         const afterUnknownSecond: string = read(); // should error, no duplicate boundary diagnostic spam
-              ~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         afterUnknownFirst;
         afterUnknownSecond;
     }

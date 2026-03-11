@@ -19,12 +19,9 @@ identityModifierTier2.ts(114,11): error TS2322: Type 'string | undefined' is not
 identityModifierTier2.ts(123,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierTier2.ts(125,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(140,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierTier2.ts(142,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierTier2.ts (16 errors) ====
+==== identityModifierTier2.ts (14 errors) ====
     // Candidate Tier 2 patterns: local alias-preserving forwarding and helper passthrough.
     declare const read: identity () => string | undefined;
     declare function pass<T>(x: T): T;
@@ -200,13 +197,8 @@ identityModifierTier2.ts(142,11): error TS2322: Type 'string | undefined' is not
     if (read() !== undefined) {
         // current conservative: passing read endpoint through a helper call invalidates prior narrowing
         useReader(pass(read));
-        ~~~~~~~~~~~~~~~~~~~~~
-!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
     
         const afterHelperPassthrough: string = read(); // current conservative: error
-              ~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         afterHelperPassthrough;
     
         // Tier 2 target: keep precision with guarded inference in provably stable local forwarding shapes.

@@ -1,0 +1,139 @@
+//// [tests/cases/compiler/identityModifierStandaloneCallBoundary.ts] ////
+
+=== identityModifierStandaloneCallBoundary.ts ===
+type Signal<T> = identity () => T;
+>Signal : Symbol(Signal, Decl(identityModifierStandaloneCallBoundary.ts, 0, 0))
+>T : Symbol(T, Decl(identityModifierStandaloneCallBoundary.ts, 0, 12))
+>T : Symbol(T, Decl(identityModifierStandaloneCallBoundary.ts, 0, 12))
+
+declare const value: Signal<string | undefined>;
+>value : Symbol(value, Decl(identityModifierStandaloneCallBoundary.ts, 1, 13))
+>Signal : Symbol(Signal, Decl(identityModifierStandaloneCallBoundary.ts, 0, 0))
+
+// === Section 1: Standalone function calls should NOT invalidate ===
+// Matches getter behavior: function calls are transparent to property narrowing.
+declare function someHelper(x: string): void;
+>someHelper : Symbol(someHelper, Decl(identityModifierStandaloneCallBoundary.ts, 1, 48))
+>x : Symbol(x, Decl(identityModifierStandaloneCallBoundary.ts, 5, 28))
+
+declare function unknownFunc(): void;
+>unknownFunc : Symbol(unknownFunc, Decl(identityModifierStandaloneCallBoundary.ts, 5, 45))
+
+declare function anotherFunc(a: number, b: string): void;
+>anotherFunc : Symbol(anotherFunc, Decl(identityModifierStandaloneCallBoundary.ts, 6, 37))
+>a : Symbol(a, Decl(identityModifierStandaloneCallBoundary.ts, 7, 29))
+>b : Symbol(b, Decl(identityModifierStandaloneCallBoundary.ts, 7, 39))
+
+if (value() !== undefined) {
+>value : Symbol(value, Decl(identityModifierStandaloneCallBoundary.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    someHelper(value());
+>someHelper : Symbol(someHelper, Decl(identityModifierStandaloneCallBoundary.ts, 1, 48))
+>value : Symbol(value, Decl(identityModifierStandaloneCallBoundary.ts, 1, 13))
+
+    const s: string = value(); // Should preserve - standalone call is unrelated
+>s : Symbol(s, Decl(identityModifierStandaloneCallBoundary.ts, 11, 9))
+>value : Symbol(value, Decl(identityModifierStandaloneCallBoundary.ts, 1, 13))
+}
+
+if (value() !== undefined) {
+>value : Symbol(value, Decl(identityModifierStandaloneCallBoundary.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    unknownFunc();
+>unknownFunc : Symbol(unknownFunc, Decl(identityModifierStandaloneCallBoundary.ts, 5, 45))
+
+    const s: string = value(); // Should preserve - standalone call is unrelated
+>s : Symbol(s, Decl(identityModifierStandaloneCallBoundary.ts, 16, 9))
+>value : Symbol(value, Decl(identityModifierStandaloneCallBoundary.ts, 1, 13))
+}
+
+if (value() !== undefined) {
+>value : Symbol(value, Decl(identityModifierStandaloneCallBoundary.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    anotherFunc(42, "hello");
+>anotherFunc : Symbol(anotherFunc, Decl(identityModifierStandaloneCallBoundary.ts, 6, 37))
+
+    const s: string = value(); // Should preserve - standalone call is unrelated
+>s : Symbol(s, Decl(identityModifierStandaloneCallBoundary.ts, 21, 9))
+>value : Symbol(value, Decl(identityModifierStandaloneCallBoundary.ts, 1, 13))
+}
+
+// === Section 2: Same-receiver method calls SHOULD invalidate ===
+declare const store: {
+>store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))
+
+    read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+
+    clear(): void;
+>clear : Symbol(clear, Decl(identityModifierStandaloneCallBoundary.ts, 26, 44))
+
+};
+
+if (store.read() !== undefined) {
+>store.read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+>store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))
+>read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+>undefined : Symbol(undefined)
+
+    store.clear();
+>store.clear : Symbol(clear, Decl(identityModifierStandaloneCallBoundary.ts, 26, 44))
+>store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))
+>clear : Symbol(clear, Decl(identityModifierStandaloneCallBoundary.ts, 26, 44))
+
+    const s: string = store.read(); // Should error - same receiver
+>s : Symbol(s, Decl(identityModifierStandaloneCallBoundary.ts, 32, 9))
+>store.read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+>store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))
+>read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+}
+
+// === Section 3: Member identity with standalone call ===
+if (store.read() !== undefined) {
+>store.read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+>store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))
+>read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+>undefined : Symbol(undefined)
+
+    unknownFunc();
+>unknownFunc : Symbol(unknownFunc, Decl(identityModifierStandaloneCallBoundary.ts, 5, 45))
+
+    const s: string = store.read(); // Should preserve - standalone call is unrelated to store
+>s : Symbol(s, Decl(identityModifierStandaloneCallBoundary.ts, 38, 9))
+>store.read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+>store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))
+>read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+}
+
+// === Section 4: Mixed patterns ===
+declare const otherStore: { doSomething(): void };
+>otherStore : Symbol(otherStore, Decl(identityModifierStandaloneCallBoundary.ts, 42, 13))
+>doSomething : Symbol(doSomething, Decl(identityModifierStandaloneCallBoundary.ts, 42, 27))
+
+if (store.read() !== undefined) {
+>store.read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+>store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))
+>read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+>undefined : Symbol(undefined)
+
+    otherStore.doSomething();
+>otherStore.doSomething : Symbol(doSomething, Decl(identityModifierStandaloneCallBoundary.ts, 42, 27))
+>otherStore : Symbol(otherStore, Decl(identityModifierStandaloneCallBoundary.ts, 42, 13))
+>doSomething : Symbol(doSomething, Decl(identityModifierStandaloneCallBoundary.ts, 42, 27))
+
+    unknownFunc();
+>unknownFunc : Symbol(unknownFunc, Decl(identityModifierStandaloneCallBoundary.ts, 5, 45))
+
+    someHelper("test");
+>someHelper : Symbol(someHelper, Decl(identityModifierStandaloneCallBoundary.ts, 1, 48))
+
+    const s: string = store.read(); // Should preserve through all unrelated calls
+>s : Symbol(s, Decl(identityModifierStandaloneCallBoundary.ts, 48, 9))
+>store.read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+>store : Symbol(store, Decl(identityModifierStandaloneCallBoundary.ts, 25, 13))
+>read : Symbol(read, Decl(identityModifierStandaloneCallBoundary.ts, 25, 22))
+}
+

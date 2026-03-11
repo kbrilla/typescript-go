@@ -620,35 +620,49 @@ func (c *Checker) isUnknownCallBoundaryForIdentityReference(reference *ast.Node,
 	return isNoArgCallExpression(reference) && isNoArgCallExpression(boundary) && !c.isMatchingReference(reference, boundary)
 }
 
-// isUnrelatedMethodCallForIdentityReference returns true when the boundary call
-// is a method call (PropertyAccessExpression or ElementAccessExpression callee)
-// on a receiver that is unrelated to the identity reference. Method calls on
-// unrelated objects cannot affect the identity function's backing state, matching
-// how getters preserve narrowing across unrelated method calls.
-func (c *Checker) isUnrelatedMethodCallForIdentityReference(reference *ast.Node, boundary *ast.Node) bool {
+// isUnrelatedCallForIdentityReference returns true when the boundary call
+// cannot affect the identity function's backing state. This matches getter
+// behavior where function calls don't invalidate property narrowing.
+//
+// For standalone identity references (Identifier callee), all calls to
+// different functions and all method calls on any object are unrelated.
+// For member identity references (AccessExpression callee), method calls
+// on unrelated receivers and standalone calls are unrelated, but method
+// calls on the same receiver may be related.
+func (c *Checker) isUnrelatedCallForIdentityReference(reference *ast.Node, boundary *ast.Node) bool {
 	if !ast.IsCallExpression(boundary) {
 		return false
 	}
 
 	callee := ast.SkipParentheses(boundary.Expression())
-	if !ast.IsAccessExpression(callee) {
+	referenceCallee := ast.SkipParentheses(reference.Expression())
+
+	// Method call (PropertyAccessExpression or ElementAccessExpression callee)
+	if ast.IsAccessExpression(callee) {
+		methodReceiver := callee.Expression()
+		// If identity reference is a standalone call, any method call is unrelated.
+		if ast.IsIdentifier(referenceCallee) {
+			return true
+		}
+		// If identity reference is a member call, check if receivers match.
+		if ast.IsAccessExpression(referenceCallee) {
+			identityReceiver := referenceCallee.Expression()
+			return !c.isMatchingReference(identityReceiver, methodReceiver)
+		}
 		return false
 	}
 
-	methodReceiver := callee.Expression()
-	referenceCallee := ast.SkipParentheses(reference.Expression())
-
-	// If the identity reference is a direct identifier call (e.g., read()),
-	// any method call on any object is unrelated.
-	if ast.IsIdentifier(referenceCallee) {
-		return true
-	}
-
-	// If the identity reference is a property/element access call (e.g., obj.read()),
-	// check if the method call's receiver matches the identity reference's receiver.
-	if ast.IsAccessExpression(referenceCallee) {
-		identityReceiver := referenceCallee.Expression()
-		return !c.isMatchingReference(identityReceiver, methodReceiver)
+	// Standalone call (Identifier callee)
+	if ast.IsIdentifier(callee) {
+		// If same function as identity reference, it may be related.
+		if ast.IsIdentifier(referenceCallee) && c.isMatchingReference(callee, referenceCallee) {
+			return false
+		}
+		// Otherwise, standalone calls can't affect identity state —
+		// there is no shared receiver to mutate.
+		if ast.IsIdentifier(referenceCallee) || ast.IsAccessExpression(referenceCallee) {
+			return true
+		}
 	}
 
 	return false
@@ -683,10 +697,10 @@ func (c *Checker) classifyIdentityBoundary(reference *ast.Node, boundary *ast.No
 			return identityBoundaryKindCallbackCall
 		}
 
-		// Method calls on objects unrelated to the identity reference cannot
-		// affect the identity function's backing state. This matches getter
-		// behavior where method calls don't invalidate property narrowing.
-		if c.isUnrelatedMethodCallForIdentityReference(reference, boundary) {
+		// Calls on objects/functions unrelated to the identity reference
+		// cannot affect the identity function's backing state. This matches
+		// getter behavior where function calls don't invalidate narrowing.
+		if c.isUnrelatedCallForIdentityReference(reference, boundary) {
 			return identityBoundaryKindNone
 		}
 

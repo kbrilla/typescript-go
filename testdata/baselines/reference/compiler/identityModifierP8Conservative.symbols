@@ -86,7 +86,9 @@ if (identityModel().kind === "circle") {
 
     const identityAfterUnknownWithArg: number = identityModel().radius; // expected conservative error (non-target shape)
 >identityAfterUnknownWithArg : Symbol(identityAfterUnknownWithArg, Decl(identityModifierP8Conservative.ts, 31, 9))
+>identityModel().radius : Symbol(radius, Decl(identityModifierP8Conservative.ts, 5, 23))
 >identityModel : Symbol(identityModel, Decl(identityModifierP8Conservative.ts, 15, 13))
+>radius : Symbol(radius, Decl(identityModifierP8Conservative.ts, 5, 23))
 
     identityAfterUnknownWithArg;
 >identityAfterUnknownWithArg : Symbol(identityAfterUnknownWithArg, Decl(identityModifierP8Conservative.ts, 31, 9))
