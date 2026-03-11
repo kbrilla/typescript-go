@@ -198,7 +198,7 @@ For full problem analysis and language survey, see [docs/identity-modifier-resea
 ### 5.8 Known Gaps and Remaining Work
 
 - [x] Callback const no-op alias parity (strict `const cb = () => {}; invoke(cb)` preserve) — **Already implemented.** `isConstNoopCallbackAlias()` resolves const alias chains up to 5 hops, checking zero params + empty body. Negative controls: mutable `let` alias rejected, non-empty body alias rejected.
-- [ ] Expanded parity mapping against submodule scenarios — **Not blocked.** This is purely test expansion work and can be done in Phase 1 or Phase 2.
+- [x] Expanded parity mapping against submodule scenarios — **DONE.** Created `identityModifierSubmoduleParity.ts` — 10 CFA pattern sections adapted from submodule tests (`controlFlowGenericTypes`, `controlFlowTruthiness`, `controlFlowOptionalChain`, `narrowByEquality`, etc.). **Result: Full parity (0 errors)** — all 10 patterns narrow correctly: switch/case, truthiness, type predicates, equality, while loops, ternary, AND/OR, nullish coalescing, discriminant, negated narrowing.
 - ~~Broader nested/indirect callback boundary forms~~ → **Moved to Phase 2/3.** Multi-arg empty callbacks (Phase 2: extend `classifyIdentityBoundary` to check each arg). Non-empty callback bodies need callback body analysis (Phase 3) or `mutator`/`links` contracts (Phase 5). Blocked on: `len(boundary.Arguments()) == 1` guard, callback body mutation proof.
 - ~~Expanded Tier 1 write-form matrix breadth~~ → **Moved to Phase 2.** Dynamic element writes need key equivalence proof. Receiver-alias writes need `isMatchingReference` normalization expansion. Blocked on: `getLiteralNamedAccessReceiverAndName` only handles literal property/element access.
 - ~~Extended Tier 2 guarded precision~~ → **Moved to Phase 2/3.** Local-scope helpers: Phase 2 (bounded local proof, const-only, depth cap). Cross-file helpers: Phase 3 (cross-file helper summary cache). Blocked on: callback body analysis, cross-file declaration analysis.
@@ -426,6 +426,7 @@ Latest tip validation is green:
 - `testdata/tests/cases/compiler/identityModifierP8Conservative.ts` — P8 conservative controls
 - `testdata/tests/cases/compiler/identityModifierBoundaries.ts` — Boundary coverage matrix
 - `testdata/tests/cases/compiler/identityModifierTier2.ts` — Tier 2 forwarding/passthrough shapes
+- `testdata/tests/cases/compiler/identityModifierSubmoduleParity.ts` — Submodule CFA parity expansion (10 patterns, 0 errors)
 
 ### Benchmark Files
 - `internal/checker/identity_bench_test.go` — Checker micro-bench harness
