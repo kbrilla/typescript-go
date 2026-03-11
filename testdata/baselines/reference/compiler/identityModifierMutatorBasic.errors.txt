@@ -5,9 +5,12 @@ identityModifierMutatorBasic.ts(28,5): error TS100014: Identity narrowing was co
 identityModifierMutatorBasic.ts(29,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 identityModifierMutatorBasic.ts(35,15): error TS100012: 'identity' modifier can only appear on a function type with no parameters.
+identityModifierMutatorBasic.ts(49,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierMutatorBasic.ts(50,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierMutatorBasic.ts (5 errors) ====
+==== identityModifierMutatorBasic.ts (7 errors) ====
     // Phase 5: Basic mutator keyword parsing and invalidation
     
     // === Section 1: Basic mutator parsing ===
@@ -56,4 +59,27 @@ identityModifierMutatorBasic.ts(35,15): error TS100012: 'identity' modifier can 
                   ~~~~~~~~
 !!! error TS100012: 'identity' modifier can only appear on a function type with no parameters.
     };
+    
+    // === Section 5: Cross-receiver mutator independence ===
+    declare const storeA: {
+        read: identity () => string | undefined;
+        reset: mutator () => void;
+    };
+    declare const storeB: {
+        read: identity () => string | undefined;
+        reset: mutator () => void;
+    };
+    
+    if (storeA.read() !== undefined && storeB.read() !== undefined) {
+        storeA.reset();
+        ~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const aAfterReset: string = storeA.read(); // should error — same receiver mutator
+              ~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        const bAfterReset: string = storeB.read(); // OK — different receiver, unaffected
+        aAfterReset;
+        bAfterReset;
+    }
     

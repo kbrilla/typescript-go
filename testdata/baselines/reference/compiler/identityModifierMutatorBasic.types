@@ -107,3 +107,67 @@ declare const bad: {
 
 };
 
+// === Section 5: Cross-receiver mutator independence ===
+declare const storeA: {
+>storeA : { read: () => string | undefined; reset: () => void; }
+
+    read: identity () => string | undefined;
+>read : () => string | undefined
+
+    reset: mutator () => void;
+>reset : () => void
+
+};
+declare const storeB: {
+>storeB : { read: () => string | undefined; reset: () => void; }
+
+    read: identity () => string | undefined;
+>read : () => string | undefined
+
+    reset: mutator () => void;
+>reset : () => void
+
+};
+
+if (storeA.read() !== undefined && storeB.read() !== undefined) {
+>storeA.read() !== undefined && storeB.read() !== undefined : boolean
+>storeA.read() !== undefined : boolean
+>storeA.read() : string | undefined
+>storeA.read : () => string | undefined
+>storeA : { read: () => string | undefined; reset: () => void; }
+>read : () => string | undefined
+>undefined : undefined
+>storeB.read() !== undefined : boolean
+>storeB.read() : string | undefined
+>storeB.read : () => string | undefined
+>storeB : { read: () => string | undefined; reset: () => void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    storeA.reset();
+>storeA.reset() : void
+>storeA.reset : () => void
+>storeA : { read: () => string | undefined; reset: () => void; }
+>reset : () => void
+
+    const aAfterReset: string = storeA.read(); // should error — same receiver mutator
+>aAfterReset : string
+>storeA.read() : string | undefined
+>storeA.read : () => string | undefined
+>storeA : { read: () => string | undefined; reset: () => void; }
+>read : () => string | undefined
+
+    const bAfterReset: string = storeB.read(); // OK — different receiver, unaffected
+>bAfterReset : string
+>storeB.read() : string | undefined
+>storeB.read : () => string | undefined
+>storeB : { read: () => string | undefined; reset: () => void; }
+>read : () => string | undefined
+
+    aAfterReset;
+>aAfterReset : string
+
+    bAfterReset;
+>bAfterReset : string
+}
+

@@ -95,3 +95,59 @@ declare const bad: {
 
 };
 
+// === Section 5: Cross-receiver mutator independence ===
+declare const storeA: {
+>storeA : Symbol(storeA, Decl(identityModifierMutatorBasic.ts, 38, 13))
+
+    read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierMutatorBasic.ts, 38, 23))
+
+    reset: mutator () => void;
+>reset : Symbol(reset, Decl(identityModifierMutatorBasic.ts, 39, 44))
+
+};
+declare const storeB: {
+>storeB : Symbol(storeB, Decl(identityModifierMutatorBasic.ts, 42, 13))
+
+    read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierMutatorBasic.ts, 42, 23))
+
+    reset: mutator () => void;
+>reset : Symbol(reset, Decl(identityModifierMutatorBasic.ts, 43, 44))
+
+};
+
+if (storeA.read() !== undefined && storeB.read() !== undefined) {
+>storeA.read : Symbol(read, Decl(identityModifierMutatorBasic.ts, 38, 23))
+>storeA : Symbol(storeA, Decl(identityModifierMutatorBasic.ts, 38, 13))
+>read : Symbol(read, Decl(identityModifierMutatorBasic.ts, 38, 23))
+>undefined : Symbol(undefined)
+>storeB.read : Symbol(read, Decl(identityModifierMutatorBasic.ts, 42, 23))
+>storeB : Symbol(storeB, Decl(identityModifierMutatorBasic.ts, 42, 13))
+>read : Symbol(read, Decl(identityModifierMutatorBasic.ts, 42, 23))
+>undefined : Symbol(undefined)
+
+    storeA.reset();
+>storeA.reset : Symbol(reset, Decl(identityModifierMutatorBasic.ts, 39, 44))
+>storeA : Symbol(storeA, Decl(identityModifierMutatorBasic.ts, 38, 13))
+>reset : Symbol(reset, Decl(identityModifierMutatorBasic.ts, 39, 44))
+
+    const aAfterReset: string = storeA.read(); // should error — same receiver mutator
+>aAfterReset : Symbol(aAfterReset, Decl(identityModifierMutatorBasic.ts, 49, 9))
+>storeA.read : Symbol(read, Decl(identityModifierMutatorBasic.ts, 38, 23))
+>storeA : Symbol(storeA, Decl(identityModifierMutatorBasic.ts, 38, 13))
+>read : Symbol(read, Decl(identityModifierMutatorBasic.ts, 38, 23))
+
+    const bAfterReset: string = storeB.read(); // OK — different receiver, unaffected
+>bAfterReset : Symbol(bAfterReset, Decl(identityModifierMutatorBasic.ts, 50, 9))
+>storeB.read : Symbol(read, Decl(identityModifierMutatorBasic.ts, 42, 23))
+>storeB : Symbol(storeB, Decl(identityModifierMutatorBasic.ts, 42, 13))
+>read : Symbol(read, Decl(identityModifierMutatorBasic.ts, 42, 23))
+
+    aAfterReset;
+>aAfterReset : Symbol(aAfterReset, Decl(identityModifierMutatorBasic.ts, 49, 9))
+
+    bAfterReset;
+>bAfterReset : Symbol(bAfterReset, Decl(identityModifierMutatorBasic.ts, 50, 9))
+}
+

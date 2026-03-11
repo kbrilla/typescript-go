@@ -37,3 +37,21 @@ if (resetable.value() !== undefined) {
 declare const bad: {
     conflict: identity mutator (v: string) => void; // should error — can't combine
 };
+
+// === Section 5: Cross-receiver mutator independence ===
+declare const storeA: {
+    read: identity () => string | undefined;
+    reset: mutator () => void;
+};
+declare const storeB: {
+    read: identity () => string | undefined;
+    reset: mutator () => void;
+};
+
+if (storeA.read() !== undefined && storeB.read() !== undefined) {
+    storeA.reset();
+    const aAfterReset: string = storeA.read(); // should error — same receiver mutator
+    const bAfterReset: string = storeB.read(); // OK — different receiver, unaffected
+    aAfterReset;
+    bAfterReset;
+}
