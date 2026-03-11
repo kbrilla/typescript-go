@@ -30,6 +30,7 @@ const (
 	stableBoundaryKindCallbackCall
 	stableBoundaryKindAwaitBoundary
 	stableBoundaryKindAliasEscape
+	stableBoundaryKindMutatorCall
 	stableBoundaryKindOther
 	stableBoundaryKindCount
 )
@@ -53,6 +54,7 @@ var stableBoundaryPreserveRulesByKind = [stableBoundaryKindCount][]stableBoundar
 		stableBoundaryPreserveRulePromiseResolveAwait,
 		stableBoundaryPreserveRuleAmbientNoArgAwait,
 	},
+	stableBoundaryKindMutatorCall: {}, // Mutator calls narrow to argument type — no preserve rules
 	stableBoundaryKindOther: {
 		stableBoundaryPreserveRuleExprStmtTrivialPassthrough,
 	},
@@ -606,7 +608,20 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 	}
 
 	boundaryKind := c.classifyStableBoundary(f.reference, flow.Node)
-	if boundaryKind != stableBoundaryKindNone {
+	if boundaryKind == stableBoundaryKindMutatorCall {
+		// Post-call narrowing: narrow the stable reference to the argument type
+		narrowedType := c.getMutatorCallNarrowedType(f, flow.Node)
+		if narrowedType != nil {
+			return c.newFlowType(narrowedType, false)
+		}
+		// Fallback: no arguments or non-union — reset to declared type
+		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
+		if flowType.t != f.declaredType {
+			c.reportStableBoundaryInvalidationDiagnostic(f.reference, flow.Node, boundaryKind)
+			return c.newFlowType(f.declaredType, flowType.incomplete)
+		}
+	}
+	if boundaryKind != stableBoundaryKindNone && boundaryKind != stableBoundaryKindMutatorCall {
 		if c.shouldPreserveStableBoundaryNarrowing(f.reference, flow.Node, boundaryKind) {
 			return FlowType{}
 		}
@@ -688,7 +703,7 @@ func (c *Checker) classifyStableBoundary(reference *ast.Node, boundary *ast.Node
 	// Explicit mutator calls invalidate linked (or all) stable endpoints
 	// on the same receiver. This takes priority over unrelated-call transparency.
 	if c.isMutatorCallBoundary(reference, boundary) {
-		return stableBoundaryKindOther
+		return stableBoundaryKindMutatorCall
 	}
 
 	if c.isAliasEscapeAssignmentForCallReference(reference, boundary) {
@@ -917,6 +932,24 @@ func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *
 
 	argType := c.getTypeOfExpression(call.Arguments()[0])
 	return argType.flags&(TypeFlagsUndefined|TypeFlagsNull) == 0
+}
+
+// getMutatorCallNarrowedType returns the narrowed type for a stable reference
+// after a mutator call. If the mutator has arguments and the declared type is
+// a union, the stable reference's type is narrowed using assignment reduction.
+func (c *Checker) getMutatorCallNarrowedType(f *FlowState, mutatorCall *ast.Node) *Type {
+	if !ast.IsCallExpression(mutatorCall) || len(mutatorCall.Arguments()) == 0 {
+		return nil
+	}
+	if f.declaredType.flags&TypeFlagsUnion == 0 {
+		return nil
+	}
+	argType := c.getTypeOfExpression(mutatorCall.Arguments()[0])
+	reduced := c.getAssignmentReducedType(f.declaredType, argType)
+	if reduced == f.declaredType {
+		return nil
+	}
+	return reduced
 }
 
 func (c *Checker) getLiteralNamedAccessReceiverAndName(access *ast.Node) (*ast.Node, string, bool) {

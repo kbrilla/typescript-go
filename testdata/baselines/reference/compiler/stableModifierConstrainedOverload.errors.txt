@@ -1,12 +1,10 @@
 stableModifierConstrainedOverload.ts(24,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 stableModifierConstrainedOverload.ts(25,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-stableModifierConstrainedOverload.ts(39,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-stableModifierConstrainedOverload.ts(40,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
+stableModifierConstrainedOverload.ts(40,11): error TS2322: Type 'undefined' is not assignable to type 'string'.
 
 
-==== stableModifierConstrainedOverload.ts (4 errors) ====
+==== stableModifierConstrainedOverload.ts (3 errors) ====
     // Phase 5: Constrained-overload post-call narrowing
     // When a mutator has <U extends T> and overload resolution selects it,
     // the linked stable endpoint narrows to U after the call.
@@ -51,11 +49,8 @@ stableModifierConstrainedOverload.ts(40,11): error TS2322: Type 'string | undefi
     if (ws.read() !== undefined) {
         const narrowed: string = ws.read(); // OK — narrowed
         ws.set(undefined);
-        ~~~~~~~~~~~~~~~~~
-!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterSet: string = ws.read(); // should error — set invalidated
               ~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+!!! error TS2322: Type 'undefined' is not assignable to type 'string'.
     }
     

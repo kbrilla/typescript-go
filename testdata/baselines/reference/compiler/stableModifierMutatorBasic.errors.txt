@@ -1,6 +1,3 @@
-stableModifierMutatorBasic.ts(16,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-stableModifierMutatorBasic.ts(17,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
 stableModifierMutatorBasic.ts(28,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 stableModifierMutatorBasic.ts(29,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
@@ -10,7 +7,7 @@ stableModifierMutatorBasic.ts(50,11): error TS2322: Type 'string | undefined' is
   Type 'undefined' is not assignable to type 'string'.
 
 
-==== stableModifierMutatorBasic.ts (7 errors) ====
+==== stableModifierMutatorBasic.ts (5 errors) ====
     // Phase 5: Basic mutator keyword parsing and invalidation
     
     // === Section 1: Basic mutator parsing ===
@@ -27,12 +24,7 @@ stableModifierMutatorBasic.ts(50,11): error TS2322: Type 'string | undefined' is
     // === Section 2: Mutator call invalidates stable narrowing ===
     if (store.read() !== undefined) {
         store.write("new");
-        ~~~~~~~~~~~~~~~~~~
-!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterWrite: string = store.read(); // should error — mutator invalidated narrowing
-              ~~~~~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         afterWrite;
     }
     

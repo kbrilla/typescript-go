@@ -1,6 +1,3 @@
-stableModifierMutatorLinks.ts(12,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-stableModifierMutatorLinks.ts(13,11): error TS2322: Type '{ name: string; } | undefined' is not assignable to type '{ name: string; }'.
-  Type 'undefined' is not assignable to type '{ name: string; }'.
 stableModifierMutatorLinks.ts(25,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 stableModifierMutatorLinks.ts(26,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
@@ -9,17 +6,10 @@ stableModifierMutatorLinks.ts(27,11): error TS2322: Type 'number | undefined' is
 stableModifierMutatorLinks.ts(38,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 stableModifierMutatorLinks.ts(39,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-stableModifierMutatorLinks.ts(40,11): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-stableModifierMutatorLinks.ts(50,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-stableModifierMutatorLinks.ts(51,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-stableModifierMutatorLinks.ts(62,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-stableModifierMutatorLinks.ts(63,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
+stableModifierMutatorLinks.ts(63,11): error TS2322: Type 'undefined' is not assignable to type 'string'.
 
 
-==== stableModifierMutatorLinks.ts (12 errors) ====
+==== stableModifierMutatorLinks.ts (6 errors) ====
     // Phase 5: Mutator with invalidates clause — selective invalidation
     
     // === Section 1: Single-endpoint invalidates ===
@@ -32,12 +22,7 @@ stableModifierMutatorLinks.ts(63,11): error TS2322: Type 'string | undefined' is
     // setUser invalidates to user — should invalidate user() but NOT settings()
     if (userStore.user() !== undefined && userStore.settings() !== undefined) {
         userStore.setUser({ name: "new" });
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const u: { name: string } = userStore.user(); // should error — user() invalidated by setUser
-              ~
-!!! error TS2322: Type '{ name: string; } | undefined' is not assignable to type '{ name: string; }'.
-!!! error TS2322:   Type 'undefined' is not assignable to type '{ name: string; }'.
         const s: { theme: string } = userStore.settings(); // OK — settings() NOT linked, still narrowed
     }
     
@@ -78,9 +63,6 @@ stableModifierMutatorLinks.ts(63,11): error TS2322: Type 'string | undefined' is
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
 !!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
         const afterY: number = ambiguousStore.y(); // should error — conservatively dropped
-              ~~~~~~
-!!! error TS2322: Type 'number | undefined' is not assignable to type 'number'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'number'.
     }
     
     // === Section 4: Mutator on single-endpoint = no ambiguity ===
@@ -91,12 +73,7 @@ stableModifierMutatorLinks.ts(63,11): error TS2322: Type 'string | undefined' is
     
     if (singleStore.value() !== undefined) {
         singleStore.setValue("new");
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const after: string = singleStore.value(); // should error — mutator invalidated
-              ~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
     }
     
     // === Section 5: Selective invalidation — unlinked endpoint preserved ===
@@ -108,12 +85,9 @@ stableModifierMutatorLinks.ts(63,11): error TS2322: Type 'string | undefined' is
     
     if (selectiveStore.x() !== undefined && selectiveStore.y() !== undefined) {
         selectiveStore.setX(undefined);
-        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterX: string = selectiveStore.x(); // should error — x() is linked
               ~~~~~~
-!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+!!! error TS2322: Type 'undefined' is not assignable to type 'string'.
         const afterY: number = selectiveStore.y(); // OK — y() is NOT linked, preserved
     }
     
