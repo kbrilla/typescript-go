@@ -942,4 +942,48 @@ For full architecture specification, flow graphs, and divergence overlay, see [d
 4. **Boundary classification:** Single `stableBoundaryKind` classifier dispatches preserves via compact table (unknown call, callback, await, alias escape, generic other).
 5. **Diagnostic emission:** Shared helpers in `checker.go` handle `TS100014`/`TS100015` selection and deduplication.
 
+---
+
+## TC39 Signals Integration
+
+The `stable` / `mutator` / `invalidates` feature provides natural type-level semantics for the [TC39 Signals proposal](https://github.com/tc39/proposal-signals) (Stage 1) and all major framework signal implementations.
+
+### Mapping
+
+```ts
+// TC39 Signal.State<T>
+interface State<T> {
+    stable get(): T;
+    mutator set(value: T): void invalidates get;
+}
+
+// TC39 Signal.Computed<T>
+interface Computed<T> {
+    stable get(): T;  // Readonly — no mutator methods
+}
+```
+
+### What This Enables
+
+```ts
+declare const count: Signal.State<number | undefined>;
+
+if (count.get() !== undefined) {
+    count.get() + 1;          // ✅ Narrowed to number — stable preserves
+    count.set(42);
+    count.get() + 1;          // ❌ Error — mutator invalidated the narrowing
+}
+```
+
+### Framework Coverage
+
+| Framework | Read | Write | Mapping |
+|-----------|------|-------|---------|
+| TC39 | `.get()` | `.set(v)` | `stable get(): T` / `mutator set(v): void invalidates get` |
+| Angular | `signal()` | `.set(v)` | `stable (): T` / `mutator set(v): void invalidates *` |
+| Solid | `getter()` | `setter(v)` | `stable (): T` / `mutator (v): void invalidates *` |
+| Vue/Preact | `.value` | `.value = v` | Property accessors (future extension) |
+
+For the complete signals analysis, see [docs/signal-proposal-stable-mutator.md](signal-proposal-stable-mutator.md).
+
 For Mermaid flow graphs (getter flow, stable flow, divergence overlay), see [docs/stable-modifier-spec.md](stable-modifier-spec.md).
