@@ -1,0 +1,77 @@
+//// [tests/cases/compiler/identityModifierOptionalChaining.ts] ////
+
+=== identityModifierOptionalChaining.ts ===
+type Signal<T> = identity () => T;
+>Signal : Signal<T>
+
+declare const read: Signal<{ name: string; age: number } | undefined>;
+>read : Signal<{ name: string; age: number; } | undefined>
+>name : string
+>age : number
+
+// Optional chaining on identity call result
+const itemName = read()?.name;
+>itemName : string | undefined
+>read()?.name : string | undefined
+>read() : { name: string; age: number; } | undefined
+>read : Signal<{ name: string; age: number; } | undefined>
+>name : string | undefined
+
+// Narrowing through optional chaining
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : { name: string; age: number; } | undefined
+>read : Signal<{ name: string; age: number; } | undefined>
+>undefined : undefined
+
+    const obj = read();
+>obj : { name: string; age: number; } | undefined
+>read() : { name: string; age: number; } | undefined
+>read : Signal<{ name: string; age: number; } | undefined>
+
+    const n: string = obj.name;
+>n : string
+>obj.name : string
+>obj : { name: string; age: number; }
+>name : string
+
+    const a: number = obj.age;
+>a : number
+>obj.age : number
+>obj : { name: string; age: number; }
+>age : number
+}
+
+// Optional chaining should not narrow
+const maybeName: string | undefined = read()?.name;
+>maybeName : string | undefined
+>read()?.name : string | undefined
+>read() : { name: string; age: number; } | undefined
+>read : Signal<{ name: string; age: number; } | undefined>
+>name : string | undefined
+
+// Nested optional chaining
+declare const nested: Signal<{ inner?: { value: string } } | undefined>;
+>nested : Signal<{ inner?: { value: string; } | undefined; } | undefined>
+>inner : { value: string; } | undefined
+>value : string
+
+const deep = nested()?.inner?.value;
+>deep : string | undefined
+>nested()?.inner?.value : string | undefined
+>nested()?.inner : { value: string; } | undefined
+>nested() : { inner?: { value: string; } | undefined; } | undefined
+>nested : Signal<{ inner?: { value: string; } | undefined; } | undefined>
+>inner : { value: string; } | undefined
+>value : string | undefined
+
+// Identity with nullish coalescing
+const nameOrDefault: string = read()?.name ?? "unknown";
+>nameOrDefault : string
+>read()?.name ?? "unknown" : string
+>read()?.name : string | undefined
+>read() : { name: string; age: number; } | undefined
+>read : Signal<{ name: string; age: number; } | undefined>
+>name : string | undefined
+>"unknown" : "unknown"
+

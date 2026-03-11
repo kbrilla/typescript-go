@@ -2294,17 +2294,24 @@ func isCallbackBoundaryCallExpression(node *ast.Node) bool {
 		return false
 	}
 
-	return slices.ContainsFunc(node.Arguments(), containsCallbackArgumentExpression)
+	return slices.ContainsFunc(node.Arguments(), func(arg *ast.Node) bool {
+		return containsCallbackArgumentExpression(arg, 10)
+	})
 }
 
-func containsCallbackArgumentExpression(node *ast.Node) bool {
+func containsCallbackArgumentExpression(node *ast.Node, depth int) bool {
+	if depth <= 0 {
+		return false
+	}
 	node = ast.SkipParentheses(node)
 	if ast.IsFunctionExpression(node) || ast.IsArrowFunction(node) {
 		return true
 	}
 
 	if ast.IsCallExpression(node) {
-		return slices.ContainsFunc(node.Arguments(), containsCallbackArgumentExpression)
+		return slices.ContainsFunc(node.Arguments(), func(arg *ast.Node) bool {
+			return containsCallbackArgumentExpression(arg, depth-1)
+		})
 	}
 
 	return false

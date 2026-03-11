@@ -1,0 +1,58 @@
+identityModifierInOperator.ts(18,5): error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
+identityModifierInOperator.ts(24,5): error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
+
+
+==== identityModifierInOperator.ts (2 errors) ====
+    type Signal<T> = identity () => T;
+    
+    interface Cat {
+        kind: "cat";
+        meow(): void;
+    }
+    
+    interface Dog {
+        kind: "dog";
+        bark(): void;
+    }
+    
+    declare const animal: Signal<Cat | Dog>;
+    
+    // Discriminant narrowing with identity
+    if (animal().kind === "cat") {
+        const cat: Cat = animal();
+        cat.meow();
+        ~~~~~~~~~~
+!!! error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
+    }
+    
+    // 'in' operator narrowing with identity
+    if ("meow" in animal()) {
+        const cat: Cat = animal();
+        cat.meow();
+        ~~~~~~~~~~
+!!! error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
+    }
+    
+    if ("bark" in animal()) {
+        const dog: Dog = animal();
+        dog.bark();
+    }
+    
+    // typeof narrowing with identity
+    declare const value: Signal<string | number>;
+    
+    if (typeof value() === "string") {
+        const str: string = value();
+    }
+    
+    if (typeof value() === "number") {
+        const num: number = value();
+    }
+    
+    // instanceof narrowing with identity
+    declare const instance: Signal<Date | RegExp>;
+    
+    if (instance() instanceof Date) {
+        const d: Date = instance();
+    }
+    

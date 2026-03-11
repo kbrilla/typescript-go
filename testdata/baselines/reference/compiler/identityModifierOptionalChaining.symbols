@@ -1,0 +1,72 @@
+//// [tests/cases/compiler/identityModifierOptionalChaining.ts] ////
+
+=== identityModifierOptionalChaining.ts ===
+type Signal<T> = identity () => T;
+>Signal : Symbol(Signal, Decl(identityModifierOptionalChaining.ts, 0, 0))
+>T : Symbol(T, Decl(identityModifierOptionalChaining.ts, 0, 12))
+>T : Symbol(T, Decl(identityModifierOptionalChaining.ts, 0, 12))
+
+declare const read: Signal<{ name: string; age: number } | undefined>;
+>read : Symbol(read, Decl(identityModifierOptionalChaining.ts, 2, 13))
+>Signal : Symbol(Signal, Decl(identityModifierOptionalChaining.ts, 0, 0))
+>name : Symbol(name, Decl(identityModifierOptionalChaining.ts, 2, 28))
+>age : Symbol(age, Decl(identityModifierOptionalChaining.ts, 2, 42))
+
+// Optional chaining on identity call result
+const itemName = read()?.name;
+>itemName : Symbol(itemName, Decl(identityModifierOptionalChaining.ts, 5, 5))
+>read()?.name : Symbol(name, Decl(identityModifierOptionalChaining.ts, 2, 28))
+>read : Symbol(read, Decl(identityModifierOptionalChaining.ts, 2, 13))
+>name : Symbol(name, Decl(identityModifierOptionalChaining.ts, 2, 28))
+
+// Narrowing through optional chaining
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierOptionalChaining.ts, 2, 13))
+>undefined : Symbol(undefined)
+
+    const obj = read();
+>obj : Symbol(obj, Decl(identityModifierOptionalChaining.ts, 9, 9))
+>read : Symbol(read, Decl(identityModifierOptionalChaining.ts, 2, 13))
+
+    const n: string = obj.name;
+>n : Symbol(n, Decl(identityModifierOptionalChaining.ts, 10, 9))
+>obj.name : Symbol(name, Decl(identityModifierOptionalChaining.ts, 2, 28))
+>obj : Symbol(obj, Decl(identityModifierOptionalChaining.ts, 9, 9))
+>name : Symbol(name, Decl(identityModifierOptionalChaining.ts, 2, 28))
+
+    const a: number = obj.age;
+>a : Symbol(a, Decl(identityModifierOptionalChaining.ts, 11, 9))
+>obj.age : Symbol(age, Decl(identityModifierOptionalChaining.ts, 2, 42))
+>obj : Symbol(obj, Decl(identityModifierOptionalChaining.ts, 9, 9))
+>age : Symbol(age, Decl(identityModifierOptionalChaining.ts, 2, 42))
+}
+
+// Optional chaining should not narrow
+const maybeName: string | undefined = read()?.name;
+>maybeName : Symbol(maybeName, Decl(identityModifierOptionalChaining.ts, 15, 5))
+>read()?.name : Symbol(name, Decl(identityModifierOptionalChaining.ts, 2, 28))
+>read : Symbol(read, Decl(identityModifierOptionalChaining.ts, 2, 13))
+>name : Symbol(name, Decl(identityModifierOptionalChaining.ts, 2, 28))
+
+// Nested optional chaining
+declare const nested: Signal<{ inner?: { value: string } } | undefined>;
+>nested : Symbol(nested, Decl(identityModifierOptionalChaining.ts, 18, 13))
+>Signal : Symbol(Signal, Decl(identityModifierOptionalChaining.ts, 0, 0))
+>inner : Symbol(inner, Decl(identityModifierOptionalChaining.ts, 18, 30))
+>value : Symbol(value, Decl(identityModifierOptionalChaining.ts, 18, 40))
+
+const deep = nested()?.inner?.value;
+>deep : Symbol(deep, Decl(identityModifierOptionalChaining.ts, 20, 5))
+>nested()?.inner?.value : Symbol(value, Decl(identityModifierOptionalChaining.ts, 18, 40))
+>nested()?.inner : Symbol(inner, Decl(identityModifierOptionalChaining.ts, 18, 30))
+>nested : Symbol(nested, Decl(identityModifierOptionalChaining.ts, 18, 13))
+>inner : Symbol(inner, Decl(identityModifierOptionalChaining.ts, 18, 30))
+>value : Symbol(value, Decl(identityModifierOptionalChaining.ts, 18, 40))
+
+// Identity with nullish coalescing
+const nameOrDefault: string = read()?.name ?? "unknown";
+>nameOrDefault : Symbol(nameOrDefault, Decl(identityModifierOptionalChaining.ts, 23, 5))
+>read()?.name : Symbol(name, Decl(identityModifierOptionalChaining.ts, 2, 28))
+>read : Symbol(read, Decl(identityModifierOptionalChaining.ts, 2, 13))
+>name : Symbol(name, Decl(identityModifierOptionalChaining.ts, 2, 28))
+

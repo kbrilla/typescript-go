@@ -52,7 +52,7 @@ For full problem analysis and language survey, see [docs/identity-modifier-resea
 | Phase | Objective | Key Deliverables | Entry Criteria | Exit Criteria | Contracts Required | Status |
 |-------|-----------|-----------------|----------------|---------------|-------------------|--------|
 | **1** | Identity core + conservative safety baseline | `identity` parse/bind; repeated-read narrowing; uncertainty boundaries; Tier 1 write invalidation; diagnostics (`TS100014`/`TS100015`); parity suites | SDD + TDD plan established | Full validation green; parity sweep tracked; missing matrix reported | No | **In progress** |
-| **2** | Parity breadth expansion | Callback breadth parity; write-form matrix breadth; Tier 2 guarded forwarding breadth; submodule parity expansion; equality-chain reuse; discriminant-preserving nested access | Phase 1 stable and green | Added slices green with negative controls and no broad regressions | No | Planned |
+| **2** | Parity breadth expansion | Callback breadth parity; write-form matrix breadth; Tier 2 guarded forwarding breadth; submodule parity expansion; equality-chain reuse; discriminant-preserving nested access | Phase 1 stable and green | Added slices green with negative controls and no broad regressions | No | **In Progress** |
 | **3** | Guarded precision hardening | Deeper callback/forwarding families under strict proofs; expanded conservative/non-goal matrix; exhaustive switch carryover; optional-chain carryover; cross-file helper summaries | Phase 2 slices stable | Precision gains land with soundness guardrails intact | No | Planned |
 | **4** | Stabilization + perf guardrails | Regression sweeps; perf trend checks; conservative-gap documentation refresh | Phase 1–3 feature set stabilized | Repeated green validation and stable perf envelope | No | Planned |
 | **5 (Final)** | Explicit-contract stage | `mutator`/`links` fallback resolution; multi-endpoint ambiguity diagnostics; constrained-overload post-call narrowing with explicit unique links | Prior phases stable; gaps justify explicit contracts | Explicit-contract tests green and soundness constraints met | **Yes** | Planned |
@@ -295,16 +295,26 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 - [ ] Consider simplifying double-dispatch (map + switch) in preserve-rule evaluation
 
 **MEDIUM (Tests):**
-- [ ] Add optional chaining test (`read()?.prop`)
-- [ ] Add `in` operator narrowing test (`"key" in read()`)
+- [x] Add optional chaining test (`read()?.prop`) — created `identityModifierOptionalChaining.ts`
+- [x] Add `in` operator narrowing test (`"key" in read()`) — created `identityModifierInOperator.ts`
 - [ ] Consolidate overlapping parity test files (Corpus/Matrix/Sweep have ~40% overlap)
 
 **LOW:**
-- [ ] Replace map dispatch table with array (flow.go ~L46-60)
+- [x] Replace map dispatch table with array — changed to `[identityBoundaryKindCount][]identityBoundaryPreserveRuleID` array
 - [ ] Lazy-init `reportedIdentityBoundaryDiagnostics` (checker.go ~L881)
-- [ ] Add depth bound to `containsCallbackArgumentExpression` (binder.go ~L2299)
+- [x] Add depth bound to `containsCallbackArgumentExpression` — added depth parameter (max 10)
 - [ ] Add "no identity types" benchmark baseline
 - [ ] Expand benchmarks with discriminant, generic, large-union scenarios
+
+### §5.12 Phase 2 Test Files
+
+| Test File | Lines | Features Tested | Errors | Verdict |
+|-----------|-------|-----------------|--------|---------|
+| `identityModifierMultiArgCallback.ts` | 56 | Multi-arg no-op callbacks (trailing, leading, multiple, middle) + negative tests | 4 (correct negatives) | ✅ Phase 2 feature working |
+| `identityModifierEqualityChain.ts` | 58 | Literal-union OR chains, negation, intersection, undefined combo | 0 | ✅ Already working |
+| `identityModifierValueTypeBoundary.ts` | 47 | Ambient void no-arg calls transparent + negatives (non-void, args, body) | 6 (3 correct negatives) | ✅ Already implemented |
+| `identityModifierOptionalChaining.ts` | 28 | Optional chaining, nullish coalescing, nested optional | 0 | ✅ Working |
+| `identityModifierInOperator.ts` | 52 | typeof, instanceof, in, discriminant narrowing | 4 (expected Phase 1 limits) | ✅ Documents current behavior |
 
 ## 6. Future Phases: Candidate Features
 
@@ -313,13 +323,13 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 | Feature | Guardrails | Risk | Parity Impact |
 |---|---|---|---|
 | Callback breadth parity slices (multi-arg, property, nested forwarding) | Multi-arg callback detection, property callback references, nested forwarding wrapper chains | Medium | Extends callback preserve beyond single-arg identifier/inline forms |
-| Multi-arg empty callback classification | Extend `classifyIdentityBoundary` to check all args of multi-arg calls; each must be zero-param empty-body | Low | Handles `invoke(cb1, cb2)` patterns |
+| Multi-arg empty callback classification | Extend `classifyIdentityBoundary` to check all args of multi-arg calls; each must be zero-param empty-body | Low | Handles `invoke(cb1, cb2)` patterns | ✅ IMPLEMENTED — changed `len(boundary.Arguments()) == 1` guard to iterate all args; all callback args must be no-op |
 | Write-form matrix breadth expansion | Proven-key guardrails for dynamic element writes | High | Closes remaining getter/setter dynamic-write gaps |
 | Tier 2 guarded forwarding expansion (2-hop local helper chains) | Local symbol only; const-only alias chains; depth cap; no mutable helpers | Medium | Reduces conservative drops in helper-heavy code |
 | Submodule parity expansion slices | Parity with additional submodule getter test cases | Low | Broader parity evidence |
-| Equality-chain literal-union reuse (`read() === "a" \|\| read() === "b"`) | Same endpoint symbol and same flow region | Medium | Matches getter literal-union behavior |
+| Equality-chain literal-union reuse (`read() === "a" \|\| read() === "b"`) | Same endpoint symbol and same flow region | Medium | Matches getter literal-union behavior | ✅ VERIFIED WORKING — existing `isMatchingReference` + `narrowTypeByEquality` pipeline handles call expressions |
 | Discriminant-preserving nested access (`read().kind` then `read().payload`) | Same endpoint candidate required | Medium | Closes nested discriminant parity gaps |
-| Value-type boundary relaxation (ambient no-arg `void` call, expression-stmt) | Ambient declaration, zero args/params, `void` return, no alias escape | Medium | Aligns with getter behavior for primitive reads |
+| Value-type boundary relaxation (ambient no-arg `void` call, expression-stmt) | Ambient declaration, zero args/params, `void` return, no alias escape | Medium | Aligns with getter behavior for primitive reads | ✅ VERIFIED WORKING — `shouldPreserveAmbientNoArgVoidUnknownCallNarrowing` already implemented |
 | Value-type boundary relaxation (`await Promise.resolve()` expression-stmt) | Exact shape match, no assignments, no intervening writes | Low | Makes existing narrow rule explicit for primitives |
 | Helper-forwarded read endpoint preserve (local non-mutating helpers) | Bounded local helper proof, no mutable aliases | Medium | Narrows identity-only conservative behavior |
 

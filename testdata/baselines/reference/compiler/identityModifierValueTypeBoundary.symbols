@@ -1,0 +1,101 @@
+//// [tests/cases/compiler/identityModifierValueTypeBoundary.ts] ////
+
+=== identityModifierValueTypeBoundary.ts ===
+type Signal<T> = identity () => T;
+>Signal : Symbol(Signal, Decl(identityModifierValueTypeBoundary.ts, 0, 0))
+>T : Symbol(T, Decl(identityModifierValueTypeBoundary.ts, 0, 12))
+>T : Symbol(T, Decl(identityModifierValueTypeBoundary.ts, 0, 12))
+
+declare const read: Signal<string | undefined>;
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+>Signal : Symbol(Signal, Decl(identityModifierValueTypeBoundary.ts, 0, 0))
+
+// Ambient void functions that should be transparent
+declare function log(): void;
+>log : Symbol(log, Decl(identityModifierValueTypeBoundary.ts, 2, 47))
+
+declare function tick(): void;
+>tick : Symbol(tick, Decl(identityModifierValueTypeBoundary.ts, 5, 29))
+
+declare function noop(): void;
+>noop : Symbol(noop, Decl(identityModifierValueTypeBoundary.ts, 6, 30))
+
+// === Ambient no-arg void calls should preserve narrowing ===
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+>undefined : Symbol(undefined)
+
+    log();
+>log : Symbol(log, Decl(identityModifierValueTypeBoundary.ts, 2, 47))
+
+    const r1: string = read(); // Should preserve - ambient, void, no-args
+>r1 : Symbol(r1, Decl(identityModifierValueTypeBoundary.ts, 12, 9))
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+>undefined : Symbol(undefined)
+
+    tick();
+>tick : Symbol(tick, Decl(identityModifierValueTypeBoundary.ts, 5, 29))
+
+    noop();
+>noop : Symbol(noop, Decl(identityModifierValueTypeBoundary.ts, 6, 30))
+
+    const r2: string = read(); // Should preserve - multiple transparent calls
+>r2 : Symbol(r2, Decl(identityModifierValueTypeBoundary.ts, 18, 9))
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+}
+
+// === NEGATIVE: Non-void return should NOT preserve ===
+declare function getValue(): number;
+>getValue : Symbol(getValue, Decl(identityModifierValueTypeBoundary.ts, 19, 1))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+>undefined : Symbol(undefined)
+
+    getValue();
+>getValue : Symbol(getValue, Decl(identityModifierValueTypeBoundary.ts, 19, 1))
+
+    const r3: string = read(); // May not preserve (non-void return)
+>r3 : Symbol(r3, Decl(identityModifierValueTypeBoundary.ts, 25, 9))
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+}
+
+// === NEGATIVE: Has arguments should NOT preserve ===
+declare function logMessage(msg: string): void;
+>logMessage : Symbol(logMessage, Decl(identityModifierValueTypeBoundary.ts, 26, 1))
+>msg : Symbol(msg, Decl(identityModifierValueTypeBoundary.ts, 29, 28))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+>undefined : Symbol(undefined)
+
+    logMessage("hello");
+>logMessage : Symbol(logMessage, Decl(identityModifierValueTypeBoundary.ts, 26, 1))
+
+    const r4: string = read(); // May not preserve (has args)
+>r4 : Symbol(r4, Decl(identityModifierValueTypeBoundary.ts, 32, 9))
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+}
+
+// === NEGATIVE: Non-ambient should NOT preserve ===
+function sideEffect(): void {
+>sideEffect : Symbol(sideEffect, Decl(identityModifierValueTypeBoundary.ts, 33, 1))
+
+    // has a body - not ambient
+}
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+>undefined : Symbol(undefined)
+
+    sideEffect();
+>sideEffect : Symbol(sideEffect, Decl(identityModifierValueTypeBoundary.ts, 33, 1))
+
+    const r5: string = read(); // May not preserve (has body)
+>r5 : Symbol(r5, Decl(identityModifierValueTypeBoundary.ts, 41, 9))
+>read : Symbol(read, Decl(identityModifierValueTypeBoundary.ts, 2, 13))
+}
+

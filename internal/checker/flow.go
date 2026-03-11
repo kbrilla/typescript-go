@@ -31,6 +31,7 @@ const (
 	identityBoundaryKindAwaitBoundary
 	identityBoundaryKindAliasEscape
 	identityBoundaryKindOther
+	identityBoundaryKindCount
 )
 
 const (
@@ -41,7 +42,7 @@ const (
 	identityBoundaryPreserveRuleExprStmtTrivialPassthrough
 )
 
-var identityBoundaryPreserveRulesByKind = map[identityBoundaryKind][]identityBoundaryPreserveRuleID{
+var identityBoundaryPreserveRulesByKind = [identityBoundaryKindCount][]identityBoundaryPreserveRuleID{
 	identityBoundaryKindUnknownCall: {
 		identityBoundaryPreserveRuleAmbientNoArgVoidUnknownCall,
 	},
@@ -644,11 +645,8 @@ func (c *Checker) classifyIdentityBoundary(reference *ast.Node, boundary *ast.No
 			return identityBoundaryKindAwaitBoundary
 		}
 
-		if ast.IsCallExpression(boundary) && len(boundary.Arguments()) == 1 {
-			callback := ast.SkipParentheses(boundary.Arguments()[0])
-			if ast.IsFunctionExpression(callback) || ast.IsArrowFunction(callback) || ast.IsIdentifier(callback) {
-				return identityBoundaryKindCallbackCall
-			}
+		if ast.IsCallExpression(boundary) && c.hasNoopCallbackArgument(boundary) {
+			return identityBoundaryKindCallbackCall
 		}
 
 		if c.isUnknownCallBoundaryForIdentityReference(reference, boundary) {
@@ -822,33 +820,50 @@ func (c *Checker) shouldPreserveNoopCallbackCallNarrowing(reference *ast.Node, c
 		return false
 	}
 
-	if len(call.Arguments()) != 1 {
-		return false
+	// Find all callback arguments (arrow functions, function expressions, or identifiers)
+	// ALL of them must be no-op (zero params, empty body) for preservation
+	foundCallback := false
+	for _, arg := range call.Arguments() {
+		callback := ast.SkipParentheses(arg)
+		if ast.IsArrowFunction(callback) || ast.IsFunctionExpression(callback) || ast.IsIdentifier(callback) {
+			foundCallback = true
+			if !c.isNoopCallback(callback) {
+				return false
+			}
+		}
 	}
+	return foundCallback
+}
 
-	callback := ast.SkipParentheses(call.Arguments()[0])
+func (c *Checker) hasNoopCallbackArgument(call *ast.Node) bool {
+	for _, arg := range call.Arguments() {
+		resolved := ast.SkipParentheses(arg)
+		if ast.IsFunctionExpression(resolved) || ast.IsArrowFunction(resolved) || ast.IsIdentifier(resolved) {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Checker) isNoopCallback(callback *ast.Node) bool {
+	callback = ast.SkipParentheses(callback)
 	if ast.IsArrowFunction(callback) {
 		if len(callback.Parameters()) != 0 {
 			return false
 		}
-
 		body := callback.Body()
 		return ast.IsBlock(body) && len(body.Statements()) == 0
 	}
-
 	if ast.IsFunctionExpression(callback) {
 		if len(callback.Parameters()) != 0 {
 			return false
 		}
-
 		body := callback.Body()
 		return body != nil && len(body.Statements()) == 0
 	}
-
 	if ast.IsIdentifier(callback) {
 		return c.isConstNoopCallbackAlias(callback)
 	}
-
 	return false
 }
 

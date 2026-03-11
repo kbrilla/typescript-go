@@ -1,0 +1,138 @@
+//// [tests/cases/compiler/identityModifierMultiArgCallback.ts] ////
+
+=== identityModifierMultiArgCallback.ts ===
+type Signal<T> = identity () => T;
+>Signal : Symbol(Signal, Decl(identityModifierMultiArgCallback.ts, 0, 0))
+>T : Symbol(T, Decl(identityModifierMultiArgCallback.ts, 0, 12))
+>T : Symbol(T, Decl(identityModifierMultiArgCallback.ts, 0, 12))
+
+declare function invoke(callback: () => void): void;
+>invoke : Symbol(invoke, Decl(identityModifierMultiArgCallback.ts, 0, 34))
+>callback : Symbol(callback, Decl(identityModifierMultiArgCallback.ts, 2, 24))
+
+declare function invokeWithData(data: number, callback: () => void): void;
+>invokeWithData : Symbol(invokeWithData, Decl(identityModifierMultiArgCallback.ts, 2, 52))
+>data : Symbol(data, Decl(identityModifierMultiArgCallback.ts, 3, 32))
+>callback : Symbol(callback, Decl(identityModifierMultiArgCallback.ts, 3, 45))
+
+declare function invokeMultiCallback(cb1: () => void, cb2: () => void): void;
+>invokeMultiCallback : Symbol(invokeMultiCallback, Decl(identityModifierMultiArgCallback.ts, 3, 74))
+>cb1 : Symbol(cb1, Decl(identityModifierMultiArgCallback.ts, 4, 37))
+>cb2 : Symbol(cb2, Decl(identityModifierMultiArgCallback.ts, 4, 53))
+
+declare function invokeCallbackFirst(callback: () => void, data: number): void;
+>invokeCallbackFirst : Symbol(invokeCallbackFirst, Decl(identityModifierMultiArgCallback.ts, 4, 77))
+>callback : Symbol(callback, Decl(identityModifierMultiArgCallback.ts, 5, 37))
+>data : Symbol(data, Decl(identityModifierMultiArgCallback.ts, 5, 58))
+
+declare function invokeThreeArgs(a: number, callback: () => void, b: string): void;
+>invokeThreeArgs : Symbol(invokeThreeArgs, Decl(identityModifierMultiArgCallback.ts, 5, 79))
+>a : Symbol(a, Decl(identityModifierMultiArgCallback.ts, 6, 33))
+>callback : Symbol(callback, Decl(identityModifierMultiArgCallback.ts, 6, 43))
+>b : Symbol(b, Decl(identityModifierMultiArgCallback.ts, 6, 65))
+
+declare const read: Signal<string | undefined>;
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+>Signal : Symbol(Signal, Decl(identityModifierMultiArgCallback.ts, 0, 0))
+
+// === Single-arg no-op callback (Phase 1 - should preserve) ===
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+>undefined : Symbol(undefined)
+
+    invoke(() => {});
+>invoke : Symbol(invoke, Decl(identityModifierMultiArgCallback.ts, 0, 34))
+
+    const r1: string = read(); // OK - single no-op callback preserves
+>r1 : Symbol(r1, Decl(identityModifierMultiArgCallback.ts, 13, 9))
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+}
+
+// === Multi-arg with trailing no-op callback (Phase 2) ===
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+>undefined : Symbol(undefined)
+
+    invokeWithData(42, () => {});
+>invokeWithData : Symbol(invokeWithData, Decl(identityModifierMultiArgCallback.ts, 2, 52))
+
+    const r2: string = read(); // Phase 2: should preserve narrowing
+>r2 : Symbol(r2, Decl(identityModifierMultiArgCallback.ts, 19, 9))
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+}
+
+// === Multi-arg with leading no-op callback (Phase 2) ===
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+>undefined : Symbol(undefined)
+
+    invokeCallbackFirst(() => {}, 42);
+>invokeCallbackFirst : Symbol(invokeCallbackFirst, Decl(identityModifierMultiArgCallback.ts, 4, 77))
+
+    const r3: string = read(); // Phase 2: should preserve narrowing
+>r3 : Symbol(r3, Decl(identityModifierMultiArgCallback.ts, 25, 9))
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+}
+
+// === Multi-arg with two no-op callbacks (Phase 2) ===
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+>undefined : Symbol(undefined)
+
+    invokeMultiCallback(() => {}, () => {});
+>invokeMultiCallback : Symbol(invokeMultiCallback, Decl(identityModifierMultiArgCallback.ts, 3, 74))
+
+    const r4: string = read(); // Phase 2: should preserve narrowing
+>r4 : Symbol(r4, Decl(identityModifierMultiArgCallback.ts, 31, 9))
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+}
+
+// === Multi-arg with callback in middle position (Phase 2) ===
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+>undefined : Symbol(undefined)
+
+    invokeThreeArgs(1, () => {}, "x");
+>invokeThreeArgs : Symbol(invokeThreeArgs, Decl(identityModifierMultiArgCallback.ts, 5, 79))
+
+    const r5: string = read(); // Phase 2: should preserve narrowing
+>r5 : Symbol(r5, Decl(identityModifierMultiArgCallback.ts, 37, 9))
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+}
+
+// === NEGATIVE: Multi-arg with non-empty callback (should NOT preserve) ===
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+>undefined : Symbol(undefined)
+
+    invokeWithData(42, () => { console.log("side effect"); });
+>invokeWithData : Symbol(invokeWithData, Decl(identityModifierMultiArgCallback.ts, 2, 52))
+>console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>console : Symbol(console, Decl(lib.dom.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+
+    const r6: string = read(); // Should fail - callback has side effects
+>r6 : Symbol(r6, Decl(identityModifierMultiArgCallback.ts, 43, 9))
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+}
+
+// === NEGATIVE: Multi-arg with parameterized callback (should NOT preserve) ===
+declare function invokeWithParamCb(data: number, callback: (x: number) => void): void;
+>invokeWithParamCb : Symbol(invokeWithParamCb, Decl(identityModifierMultiArgCallback.ts, 44, 1))
+>data : Symbol(data, Decl(identityModifierMultiArgCallback.ts, 47, 35))
+>callback : Symbol(callback, Decl(identityModifierMultiArgCallback.ts, 47, 48))
+>x : Symbol(x, Decl(identityModifierMultiArgCallback.ts, 47, 60))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+>undefined : Symbol(undefined)
+
+    invokeWithParamCb(42, (x) => {});
+>invokeWithParamCb : Symbol(invokeWithParamCb, Decl(identityModifierMultiArgCallback.ts, 44, 1))
+>x : Symbol(x, Decl(identityModifierMultiArgCallback.ts, 49, 27))
+
+    const r7: string = read(); // Should fail - callback has parameters
+>r7 : Symbol(r7, Decl(identityModifierMultiArgCallback.ts, 50, 9))
+>read : Symbol(read, Decl(identityModifierMultiArgCallback.ts, 8, 13))
+}
+
