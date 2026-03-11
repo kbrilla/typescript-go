@@ -19862,20 +19862,20 @@ func (c *Checker) shouldReportIdentityBoundaryInvalidationDiagnostic(reference *
 	return true
 }
 
-func (c *Checker) identityBoundaryInvalidationDiagnosticMessage(reference *ast.Node, boundary *ast.Node) *diagnostics.Message {
-	if c.classifyIdentityBoundary(reference, boundary) == identityBoundaryKindUnknownCall {
+func (c *Checker) identityBoundaryInvalidationDiagnosticMessage(kind identityBoundaryKind) *diagnostics.Message {
+	if kind == identityBoundaryKindUnknownCall {
 		return diagnostics.Identity_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_temporary_before_the_call_to_preserve_precision
 	}
 
 	return diagnostics.Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local
 }
 
-func (c *Checker) reportIdentityBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node) {
+func (c *Checker) reportIdentityBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node, kind identityBoundaryKind) {
 	if !c.shouldReportIdentityBoundaryInvalidationDiagnostic(reference, boundary) {
 		return
 	}
 
-	message := c.identityBoundaryInvalidationDiagnosticMessage(reference, boundary)
+	message := c.identityBoundaryInvalidationDiagnosticMessage(kind)
 	c.diagnostics.Add(createDiagnosticForNode(boundary, message))
 }
 

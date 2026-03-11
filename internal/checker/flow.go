@@ -303,7 +303,7 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 		if !c.isReachableFlowNode(flow) {
 			return FlowType{t: c.unreachableNeverType}
 		}
-		c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, node)
+		c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
 		return FlowType{t: f.declaredType}
 	}
 
@@ -313,9 +313,14 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
 		if flowType.t != f.declaredType {
-			c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, node)
+			c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
 			return c.newFlowType(f.declaredType, flowType.incomplete)
 		}
+		// Intentional fall-through: when the await boundary doesn't change the type
+		// (flowType matches declared type), we let the normal CFA continue walking
+		// antecedents. This is correct because the await didn't introduce new narrowing.
+		// Unlike identityBoundaryKindAliasEscape which always returns (an alias escape
+		// always resets narrowing), an await that preserves the declared type is transparent.
 	}
 
 	// for (const _ in ref) acts as a nonnull on ref
@@ -452,19 +457,24 @@ func (c *Checker) isAmbientIdentityPassthroughCallForCallReference(call *ast.Nod
 
 func (c *Checker) isConstAliasChainTrivialPassthroughHelper(identifier *ast.Node) bool {
 	const maxAliasChainSteps = 5
-	seen := map[*ast.Symbol]bool{}
+	var seen [maxAliasChainSteps]*ast.Symbol
 	current := identifier
 
-	for range maxAliasChainSteps {
+	for i := range maxAliasChainSteps {
 		if !ast.IsIdentifier(current) {
 			return false
 		}
 
 		symbol := c.getResolvedSymbol(current)
-		if symbol == c.unknownSymbol || seen[symbol] {
+		if symbol == c.unknownSymbol {
 			return false
 		}
-		seen[symbol] = true
+		for j := range i {
+			if seen[j] == symbol {
+				return false
+			}
+		}
+		seen[i] = symbol
 
 		declaration := symbol.ValueDeclaration
 		if declaration == nil {
@@ -589,7 +599,7 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
 		if flowType.t != f.declaredType {
-			c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, flow.Node)
+			c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, flow.Node, boundaryKind)
 			return c.newFlowType(f.declaredType, flowType.incomplete)
 		}
 	}
@@ -865,19 +875,24 @@ func (c *Checker) isNoopCallbackBoundaryCallSite(call *ast.Node) bool {
 
 func (c *Checker) isConstNoopCallbackAlias(callback *ast.Node) bool {
 	const maxAliasChainSteps = 5
-	seen := map[*ast.Symbol]bool{}
+	var seen [maxAliasChainSteps]*ast.Symbol
 	current := callback
 
-	for range maxAliasChainSteps {
+	for i := range maxAliasChainSteps {
 		if !ast.IsIdentifier(current) {
 			return false
 		}
 
 		symbol := c.getResolvedSymbol(current)
-		if symbol == nil || symbol == c.unknownSymbol || seen[symbol] {
+		if symbol == nil || symbol == c.unknownSymbol {
 			return false
 		}
-		seen[symbol] = true
+		for j := range i {
+			if seen[j] == symbol {
+				return false
+			}
+		}
+		seen[i] = symbol
 
 		declaration := symbol.ValueDeclaration
 		if declaration == nil || !c.isConstantVariable(symbol) || !ast.IsVariableDeclaration(declaration) {

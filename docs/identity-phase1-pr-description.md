@@ -133,7 +133,7 @@ For full problem analysis and language survey, see [docs/identity-modifier-resea
 | typeof identity() discrimination | Implemented | Implemented | **Full** | `typeof mixed() === "string" → mixed()` narrows to string |
 | Non-null assertion identity()! | Implemented | Implemented | **Full** | `maybe()!` narrows to non-null type |
 | Angular InputSignal<T> pattern | N/A (getter-specific) | Implemented: generic type alias identity signals | **Full** | `comp.name() !== undefined → comp.name().toUpperCase()` |
-| Await boundary (`await delay()`) | Narrowed (getter survives) | Conservative (only `await Promise.resolve()` preserved) | **Gap** | `await delay(); read()` — identity drops, getter keeps |
+| Await boundary (`await delay()`) | Narrowed (getter survives) | Guarded preserve (ambient no-arg void + non-nullish union) | **Full** | `await delay(); read()` — identity preserves for ambient no-arg void calls |
 | Tier 2 forwarding (non-trivial helpers) | N/A | Conservative | **Gap** | `localFnWrap(read); read()` |
 | Heuristic-limit diagnostics | N/A | Implemented (`TS100014`/`TS100015`) | **Partial** | Diagnostics cover uncertainty-boundary drops only |
 
@@ -265,6 +265,46 @@ Status: closed in Phase 1 with a strict guarded shape.
 - Non-ambient, non-void, assignment/initializer, method, or property-call boundary shapes remain conservative
 
 **TDD evidence:** Red (updated tests, targeted failures with baseline diffs) → Green (implemented guarded rule, accepted baselines) → Conservative control (`unknownMutateWithArg(1)` still drops narrowing).
+
+### 5.11 Code Review Findings
+
+Three expert code reviews were performed (TypeScript architect, Go engineer, testing expert). Full reports in `docs/identity-code-review.md`, `docs/identity-go-review.md`, `docs/identity-testing-review.md`.
+
+**Architecture**: Strong. Clean boundary classification + preserve-rule dispatch table. Textbook extensibility.
+
+**Go code quality**: Good. No blocking issues. Safe, correct, idiomatic Go.
+
+**Testing**: 6/10 regression safety. Strong CFA coverage (40+ patterns), critical gaps in emit and cross-module testing.
+
+#### Actionable findings (prioritized):
+
+**CRITICAL:**
+- [x] Add declaration emit test (`@declaration: true`, no `@noEmit`) — verify `.d.ts` preserves `identity`
+- [x] Add JS emit test (no `@noEmit`) — verify `identity` is erased in JS output
+- [x] TS100013 modifier-conflict diagnostic — **Non-issue.** `identity` can only appear on `FunctionType` nodes which don't support other modifiers. `findFirstModifierExcept(node, KindIdentityKeyword)` already rejects any non-identity modifier on function types. TS100013 is intentional dead code (reserved for future use if identity placement expands).
+
+**HIGH:**
+- [x] Add multi-file cross-module test (`@filename:` with import/export of identity types)
+- [x] Add explicit comment for await boundary fall-through in flow.go ~L307-318
+- [x] Fix stale parity matrix entry — `await delay()` row showed "Gap" but was closed
+- [ ] Benchmark binder broadening on large codebases to quantify performance impact
+
+**MEDIUM (Go):**
+- [x] Replace `map[*ast.Symbol]bool` with `[5]*ast.Symbol` array in cycle-detection helpers (flow.go ~L455, ~L868)
+- [x] Thread boundary kind to diagnostic message function to avoid re-classification (checker.go ~L19866)
+- [ ] Consider simplifying double-dispatch (map + switch) in preserve-rule evaluation
+
+**MEDIUM (Tests):**
+- [ ] Add optional chaining test (`read()?.prop`)
+- [ ] Add `in` operator narrowing test (`"key" in read()`)
+- [ ] Consolidate overlapping parity test files (Corpus/Matrix/Sweep have ~40% overlap)
+
+**LOW:**
+- [ ] Replace map dispatch table with array (flow.go ~L46-60)
+- [ ] Lazy-init `reportedIdentityBoundaryDiagnostics` (checker.go ~L881)
+- [ ] Add depth bound to `containsCallbackArgumentExpression` (binder.go ~L2299)
+- [ ] Add "no identity types" benchmark baseline
+- [ ] Expand benchmarks with discriminant, generic, large-union scenarios
 
 ## 6. Future Phases: Candidate Features
 
