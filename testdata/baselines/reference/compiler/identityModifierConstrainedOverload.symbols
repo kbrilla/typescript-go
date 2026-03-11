@@ -1,0 +1,120 @@
+//// [tests/cases/compiler/identityModifierConstrainedOverload.ts] ////
+
+=== identityModifierConstrainedOverload.ts ===
+// Phase 5: Constrained-overload post-call narrowing
+// When a mutator has <U extends T> and overload resolution selects it,
+// the linked identity endpoint narrows to U after the call.
+// NOTE: This is a future enhancement. For now, mutator calls invalidate
+// (widen back to declared type), which is correct conservative behavior.
+
+// === Section 1: Mutator with constrained generic ===
+declare const sig: {
+>sig : Symbol(sig, Decl(identityModifierConstrainedOverload.ts, 7, 13))
+
+    read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierConstrainedOverload.ts, 7, 20))
+
+    update: mutator <U extends string | undefined>(fn: (value: string | undefined) => U) => void links read;
+>update : Symbol(update, Decl(identityModifierConstrainedOverload.ts, 8, 44))
+>U : Symbol(U, Decl(identityModifierConstrainedOverload.ts, 9, 21))
+>fn : Symbol(fn, Decl(identityModifierConstrainedOverload.ts, 9, 51))
+>value : Symbol(value, Decl(identityModifierConstrainedOverload.ts, 9, 56))
+>U : Symbol(U, Decl(identityModifierConstrainedOverload.ts, 9, 21))
+
+};
+
+// After update, narrowing is invalidated (future: could narrow to U)
+sig.update(() => "hello");
+>sig.update : Symbol(update, Decl(identityModifierConstrainedOverload.ts, 8, 44))
+>sig : Symbol(sig, Decl(identityModifierConstrainedOverload.ts, 7, 13))
+>update : Symbol(update, Decl(identityModifierConstrainedOverload.ts, 8, 44))
+
+const afterUpdate = sig.read(); // string | undefined — conservative (future: could narrow to string)
+>afterUpdate : Symbol(afterUpdate, Decl(identityModifierConstrainedOverload.ts, 14, 5))
+>sig.read : Symbol(read, Decl(identityModifierConstrainedOverload.ts, 7, 20))
+>sig : Symbol(sig, Decl(identityModifierConstrainedOverload.ts, 7, 13))
+>read : Symbol(read, Decl(identityModifierConstrainedOverload.ts, 7, 20))
+
+// === Section 2: Reset mutator = no narrowing ===
+declare const sig2: {
+>sig2 : Symbol(sig2, Decl(identityModifierConstrainedOverload.ts, 17, 13))
+
+    read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierConstrainedOverload.ts, 17, 21))
+
+    reset: mutator () => void links read;
+>reset : Symbol(reset, Decl(identityModifierConstrainedOverload.ts, 18, 44))
+
+};
+
+if (sig2.read() !== undefined) {
+>sig2.read : Symbol(read, Decl(identityModifierConstrainedOverload.ts, 17, 21))
+>sig2 : Symbol(sig2, Decl(identityModifierConstrainedOverload.ts, 17, 13))
+>read : Symbol(read, Decl(identityModifierConstrainedOverload.ts, 17, 21))
+>undefined : Symbol(undefined)
+
+    sig2.reset();
+>sig2.reset : Symbol(reset, Decl(identityModifierConstrainedOverload.ts, 18, 44))
+>sig2 : Symbol(sig2, Decl(identityModifierConstrainedOverload.ts, 17, 13))
+>reset : Symbol(reset, Decl(identityModifierConstrainedOverload.ts, 18, 44))
+
+    const afterReset: string = sig2.read(); // should error — reset invalidated
+>afterReset : Symbol(afterReset, Decl(identityModifierConstrainedOverload.ts, 24, 9))
+>sig2.read : Symbol(read, Decl(identityModifierConstrainedOverload.ts, 17, 21))
+>sig2 : Symbol(sig2, Decl(identityModifierConstrainedOverload.ts, 17, 13))
+>read : Symbol(read, Decl(identityModifierConstrainedOverload.ts, 17, 21))
+}
+
+// === Section 3: WritableSignal pattern ===
+interface WritableSignal<T> {
+>WritableSignal : Symbol(WritableSignal, Decl(identityModifierConstrainedOverload.ts, 25, 1))
+>T : Symbol(T, Decl(identityModifierConstrainedOverload.ts, 28, 25))
+
+    read: identity () => T;
+>read : Symbol(WritableSignal.read, Decl(identityModifierConstrainedOverload.ts, 28, 29))
+>T : Symbol(T, Decl(identityModifierConstrainedOverload.ts, 28, 25))
+
+    set: mutator (value: T) => void links read;
+>set : Symbol(WritableSignal.set, Decl(identityModifierConstrainedOverload.ts, 29, 27))
+>value : Symbol(value, Decl(identityModifierConstrainedOverload.ts, 30, 18))
+>T : Symbol(T, Decl(identityModifierConstrainedOverload.ts, 28, 25))
+
+    update: mutator <U extends T>(fn: (value: T) => U) => void links read;
+>update : Symbol(WritableSignal.update, Decl(identityModifierConstrainedOverload.ts, 30, 47))
+>U : Symbol(U, Decl(identityModifierConstrainedOverload.ts, 31, 21))
+>T : Symbol(T, Decl(identityModifierConstrainedOverload.ts, 28, 25))
+>fn : Symbol(fn, Decl(identityModifierConstrainedOverload.ts, 31, 34))
+>value : Symbol(value, Decl(identityModifierConstrainedOverload.ts, 31, 39))
+>T : Symbol(T, Decl(identityModifierConstrainedOverload.ts, 28, 25))
+>U : Symbol(U, Decl(identityModifierConstrainedOverload.ts, 31, 21))
+}
+
+declare const ws: WritableSignal<string | undefined>;
+>ws : Symbol(ws, Decl(identityModifierConstrainedOverload.ts, 34, 13))
+>WritableSignal : Symbol(WritableSignal, Decl(identityModifierConstrainedOverload.ts, 25, 1))
+
+if (ws.read() !== undefined) {
+>ws.read : Symbol(WritableSignal.read, Decl(identityModifierConstrainedOverload.ts, 28, 29))
+>ws : Symbol(ws, Decl(identityModifierConstrainedOverload.ts, 34, 13))
+>read : Symbol(WritableSignal.read, Decl(identityModifierConstrainedOverload.ts, 28, 29))
+>undefined : Symbol(undefined)
+
+    const narrowed: string = ws.read(); // OK — narrowed
+>narrowed : Symbol(narrowed, Decl(identityModifierConstrainedOverload.ts, 37, 9))
+>ws.read : Symbol(WritableSignal.read, Decl(identityModifierConstrainedOverload.ts, 28, 29))
+>ws : Symbol(ws, Decl(identityModifierConstrainedOverload.ts, 34, 13))
+>read : Symbol(WritableSignal.read, Decl(identityModifierConstrainedOverload.ts, 28, 29))
+
+    ws.set(undefined);
+>ws.set : Symbol(WritableSignal.set, Decl(identityModifierConstrainedOverload.ts, 29, 27))
+>ws : Symbol(ws, Decl(identityModifierConstrainedOverload.ts, 34, 13))
+>set : Symbol(WritableSignal.set, Decl(identityModifierConstrainedOverload.ts, 29, 27))
+>undefined : Symbol(undefined)
+
+    const afterSet: string = ws.read(); // should error — set invalidated
+>afterSet : Symbol(afterSet, Decl(identityModifierConstrainedOverload.ts, 39, 9))
+>ws.read : Symbol(WritableSignal.read, Decl(identityModifierConstrainedOverload.ts, 28, 29))
+>ws : Symbol(ws, Decl(identityModifierConstrainedOverload.ts, 34, 13))
+>read : Symbol(WritableSignal.read, Decl(identityModifierConstrainedOverload.ts, 28, 29))
+}
+

@@ -526,7 +526,23 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				if len(node.Parameters()) > 0 {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_identity_modifier_can_only_appear_on_a_function_type_with_no_parameters)
 				}
+				// identity and mutator cannot combine
+				if flags&ast.ModifierFlagsMutator != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_cannot_be_used_with_identity_modifier)
+				}
 				flags |= ast.ModifierFlagsIdentity
+			case ast.KindMutatorKeyword:
+				if flags&ast.ModifierFlagsMutator != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "mutator")
+				}
+				if node.Kind != ast.KindFunctionType {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_can_only_appear_on_a_function_type)
+				}
+				// mutator and identity cannot combine
+				if flags&ast.ModifierFlagsIdentity != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_cannot_be_used_with_identity_modifier)
+				}
+				flags |= ast.ModifierFlagsMutator
 			case ast.KindInKeyword,
 				ast.KindOutKeyword:
 				var inOutFlag ast.ModifierFlags

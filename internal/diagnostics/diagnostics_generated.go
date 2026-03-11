@@ -4296,6 +4296,20 @@ var Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add
 
 var Identity_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_temporary_before_the_call_to_preserve_precision = &Message{code: 100015, category: CategoryError, key: "Identity_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_tem_100015", text: "Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision."}
 
+var X_mutator_modifier_can_only_appear_on_a_function_type_with_parameters = &Message{code: 100016, category: CategoryError, key: "mutator_modifier_can_only_appear_on_a_function_type_with_parameters_100016", text: "'mutator' modifier can only appear on a function type with parameters."}
+
+var X_mutator_modifier_cannot_be_used_with_identity_modifier = &Message{code: 100017, category: CategoryError, key: "mutator_modifier_cannot_be_used_with_identity_modifier_100017", text: "'mutator' modifier cannot be used with 'identity' modifier."}
+
+var X_links_clause_can_only_appear_on_a_mutator_function_type = &Message{code: 100018, category: CategoryError, key: "links_clause_can_only_appear_on_a_mutator_function_type_100018", text: "'links' clause can only appear on a 'mutator' function type."}
+
+var X_links_target_0_is_not_an_identity_endpoint_on_the_containing_type = &Message{code: 100019, category: CategoryError, key: "links_target_0_is_not_an_identity_endpoint_on_the_containing_type_100019", text: "'links' target '{0}' is not an identity endpoint on the containing type."}
+
+var X_links_target_0_does_not_exist_on_the_containing_type = &Message{code: 100020, category: CategoryError, key: "links_target_0_does_not_exist_on_the_containing_type_100020", text: "'links' target '{0}' does not exist on the containing type."}
+
+var Cannot_determine_which_identity_endpoints_are_invalidated_by_this_mutator_call_Add_explicit_links_metadata_to_the_mutator_declaration = &Message{code: 100021, category: CategoryError, key: "Cannot_determine_which_identity_endpoints_are_invalidated_by_this_mutator_call_Add_explicit_links_metadata_100021", text: "Cannot determine which identity endpoint(s) are invalidated by this mutator call. Add explicit 'links' metadata to the mutator declaration."}
+
+var X_mutator_modifier_can_only_appear_on_a_function_type = &Message{code: 100022, category: CategoryError, key: "mutator_modifier_can_only_appear_on_a_function_type_100022", text: "'mutator' modifier can only appear on a function type."}
+
 func keyToMessage(key Key) *Message {
 	switch key {
 	case "Unterminated_string_literal_1002":
@@ -8592,6 +8606,20 @@ func keyToMessage(key Key) *Message {
 		return Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local
 	case "Identity_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_tem_100015":
 		return Identity_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_temporary_before_the_call_to_preserve_precision
+	case "mutator_modifier_can_only_appear_on_a_function_type_with_parameters_100016":
+		return X_mutator_modifier_can_only_appear_on_a_function_type_with_parameters
+	case "mutator_modifier_cannot_be_used_with_identity_modifier_100017":
+		return X_mutator_modifier_cannot_be_used_with_identity_modifier
+	case "links_clause_can_only_appear_on_a_mutator_function_type_100018":
+		return X_links_clause_can_only_appear_on_a_mutator_function_type
+	case "links_target_0_is_not_an_identity_endpoint_on_the_containing_type_100019":
+		return X_links_target_0_is_not_an_identity_endpoint_on_the_containing_type
+	case "links_target_0_does_not_exist_on_the_containing_type_100020":
+		return X_links_target_0_does_not_exist_on_the_containing_type
+	case "Cannot_determine_which_identity_endpoints_are_invalidated_by_this_mutator_call_Add_explicit_links_metadata_100021":
+		return Cannot_determine_which_identity_endpoints_are_invalidated_by_this_mutator_call_Add_explicit_links_metadata_to_the_mutator_declaration
+	case "mutator_modifier_can_only_appear_on_a_function_type_100022":
+		return X_mutator_modifier_can_only_appear_on_a_function_type
 	default:
 		return nil
 	}

@@ -160,7 +160,9 @@ const (
 	KindIntrinsicKeyword
 	KindIsKeyword
 	KindKeyOfKeyword
+	KindLinksKeyword
 	KindModuleKeyword
+	KindMutatorKeyword
 	KindNamespaceKeyword
 	KindNeverKeyword
 	KindOutKeyword

@@ -685,6 +685,12 @@ func (c *Checker) classifyIdentityBoundary(reference *ast.Node, boundary *ast.No
 		return identityBoundaryKindNone
 	}
 
+	// Explicit mutator calls invalidate linked (or all) identity endpoints
+	// on the same receiver. This takes priority over unrelated-call transparency.
+	if c.isMutatorCallBoundary(reference, boundary) {
+		return identityBoundaryKindOther
+	}
+
 	if c.isAliasEscapeAssignmentForCallReference(reference, boundary) {
 		return identityBoundaryKindAliasEscape
 	}
@@ -836,6 +842,52 @@ func (c *Checker) isIdentityCallReference(reference *ast.Node) bool {
 
 	signature := c.getResolvedSignature(reference, nil /*candidatesOutArray*/, CheckModeTypeOnly)
 	return signature != nil && signature != c.resolvingSignature && signature.flags&SignatureFlagsIdentity != 0
+}
+
+// isMutatorCallBoundary checks if the boundary is a mutator call on the same
+// receiver as the identity reference. If the mutator has a links clause, only
+// invalidates if the reference endpoint is among the linked targets.
+func (c *Checker) isMutatorCallBoundary(reference *ast.Node, boundary *ast.Node) bool {
+	if !ast.IsCallExpression(boundary) {
+		return false
+	}
+
+	signature := c.getResolvedSignature(boundary, nil, CheckModeTypeOnly)
+	if signature == nil || signature == c.resolvingSignature || signature.flags&SignatureFlagsMutator == 0 {
+		return false
+	}
+
+	// Both reference and boundary must be property/element accesses for receiver matching
+	referenceCallee := ast.SkipParentheses(reference.Expression())
+	boundaryCallee := ast.SkipParentheses(boundary.Expression())
+
+	refReceiver, refName, refOk := c.getLiteralNamedAccessReceiverAndName(referenceCallee)
+	boundReceiver, _, boundOk := c.getLiteralNamedAccessReceiverAndName(boundaryCallee)
+
+	if !refOk || !boundOk {
+		return false
+	}
+
+	if !c.isMatchingReference(c.getNormalizedReferenceCandidate(refReceiver), c.getNormalizedReferenceCandidate(boundReceiver)) {
+		return false
+	}
+
+	// Same receiver, it's a mutator call. Check links for selective invalidation.
+	if declaration := signature.declaration; declaration != nil && ast.IsFunctionTypeNode(declaration) {
+		fnType := declaration.AsFunctionTypeNode()
+		if fnType.LinksClause != nil && len(fnType.LinksClause.Nodes) > 0 {
+			// Links exist — only invalidate if reference endpoint is linked
+			for _, link := range fnType.LinksClause.Nodes {
+				if ast.IsIdentifier(link) && link.Text() == refName {
+					return true // Linked endpoint — invalidate
+				}
+			}
+			return false // NOT a linked endpoint — preserve narrowing
+		}
+	}
+
+	// No links clause — conservatively invalidate all identity endpoints on same receiver
+	return true
 }
 
 func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *ast.Node) bool {

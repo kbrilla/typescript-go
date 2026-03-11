@@ -8769,10 +8769,11 @@ type FunctionOrConstructorTypeNodeBase struct {
 	DeclarationBase
 	ModifiersBase
 	FunctionLikeBase
+	LinksClause *NodeList // Optional: identity endpoint names for mutator links clause
 }
 
 func (node *FunctionOrConstructorTypeNodeBase) ForEachChild(v Visitor) bool {
-	return visitModifiers(v, node.modifiers) || visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type)
+	return visitModifiers(v, node.modifiers) || visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type) || visitNodeList(v, node.LinksClause)
 }
 
 // FunctionTypeNode
@@ -8802,7 +8803,11 @@ func (node *FunctionTypeNode) VisitEachChild(v *NodeVisitor) *Node {
 }
 
 func (node *FunctionTypeNode) Clone(f NodeFactoryCoercible) *Node {
-	return cloneNode(f.AsNodeFactory().NewFunctionTypeNode(node.Modifiers(), node.TypeParameters, node.Parameters, node.Type), node.AsNode(), f.AsNodeFactory().hooks)
+	result := f.AsNodeFactory().NewFunctionTypeNode(node.Modifiers(), node.TypeParameters, node.Parameters, node.Type)
+	if node.LinksClause != nil {
+		result.AsFunctionTypeNode().LinksClause = node.LinksClause
+	}
+	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
 func IsFunctionTypeNode(node *Node) bool {
@@ -8836,7 +8841,11 @@ func (node *ConstructorTypeNode) VisitEachChild(v *NodeVisitor) *Node {
 }
 
 func (node *ConstructorTypeNode) Clone(f NodeFactoryCoercible) *Node {
-	return cloneNode(f.AsNodeFactory().NewConstructorTypeNode(node.Modifiers(), node.TypeParameters, node.Parameters, node.Type), node.AsNode(), f.AsNodeFactory().hooks)
+	result := f.AsNodeFactory().NewConstructorTypeNode(node.Modifiers(), node.TypeParameters, node.Parameters, node.Type)
+	if node.LinksClause != nil {
+		result.AsConstructorTypeNode().LinksClause = node.LinksClause
+	}
+	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
 func IsConstructorTypeNode(node *Node) bool {

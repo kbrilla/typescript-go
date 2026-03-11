@@ -3128,7 +3128,7 @@ func (p *Parser) nextTokenIsOpenParenOrLessThan() bool {
 
 func (p *Parser) nextTokenStartsIdentityFunctionOrConstructorType() bool {
 	p.nextToken()
-	for p.token == ast.KindIdentityKeyword || p.token == ast.KindAbstractKeyword {
+	for p.token == ast.KindIdentityKeyword || p.token == ast.KindAbstractKeyword || p.token == ast.KindMutatorKeyword {
 		p.nextToken()
 	}
 	if p.token == ast.KindNewKeyword {
@@ -3720,7 +3720,8 @@ func (p *Parser) isStartOfFunctionTypeOrConstructorType() bool {
 		p.token == ast.KindOpenParenToken && p.lookAhead((*Parser).nextIsUnambiguouslyStartOfFunctionType) ||
 		p.token == ast.KindNewKeyword ||
 		p.token == ast.KindAbstractKeyword && p.lookAhead((*Parser).nextTokenIsNewKeyword) ||
-		p.token == ast.KindIdentityKeyword && p.lookAhead((*Parser).nextTokenStartsIdentityFunctionOrConstructorType)
+		p.token == ast.KindIdentityKeyword && p.lookAhead((*Parser).nextTokenStartsIdentityFunctionOrConstructorType) ||
+		p.token == ast.KindMutatorKeyword && p.lookAhead((*Parser).nextTokenStartsMutatorFunctionType)
 }
 
 func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
@@ -3728,15 +3729,27 @@ func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 	jsdoc := p.jsdocScannerInfo()
 	modifiers := p.parseModifiersForFunctionOrConstructorType()
 	isConstructorType := p.parseOptional(ast.KindNewKeyword)
-	debug.Assert(modifiers == nil || isConstructorType || p.hasIdentityModifier(modifiers), "Per isStartOfFunctionOrConstructorType, a function type can only have the identity modifier.")
+	debug.Assert(modifiers == nil || isConstructorType || p.hasIdentityModifier(modifiers) || p.hasMutatorModifier(modifiers), "Per isStartOfFunctionOrConstructorType, a function type can only have the identity or mutator modifier.")
 	typeParameters := p.parseTypeParameters()
 	parameters := p.parseParameters(ParseFlagsType)
 	returnType := p.parseReturnType(ast.KindEqualsGreaterThanToken, false /*isType*/)
+	// Parse optional links clause for mutator function types
+	var linksClause *ast.NodeList
+	if p.hasMutatorModifier(modifiers) && p.token == ast.KindLinksKeyword {
+		linksClause = p.parseLinksClause()
+	}
 	var result *ast.TypeNode
 	if isConstructorType {
 		result = p.factory.NewConstructorTypeNode(modifiers, typeParameters, parameters, returnType)
 	} else {
 		result = p.factory.NewFunctionTypeNode(modifiers, typeParameters, parameters, returnType)
+	}
+	if linksClause != nil {
+		if isConstructorType {
+			result.AsConstructorTypeNode().LinksClause = linksClause
+		} else {
+			result.AsFunctionTypeNode().LinksClause = linksClause
+		}
 	}
 	p.finishNode(result, pos)
 	p.withJSDoc(result, jsdoc)
@@ -3744,13 +3757,13 @@ func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 }
 
 func (p *Parser) parseModifiersForFunctionOrConstructorType() *ast.ModifierList {
-	if p.token != ast.KindIdentityKeyword && p.token != ast.KindAbstractKeyword {
+	if p.token != ast.KindIdentityKeyword && p.token != ast.KindAbstractKeyword && p.token != ast.KindMutatorKeyword {
 		return nil
 	}
 
 	pos := p.nodePos()
 	list := make([]*ast.Node, 0, 2)
-	for p.token == ast.KindIdentityKeyword || p.token == ast.KindAbstractKeyword {
+	for p.token == ast.KindIdentityKeyword || p.token == ast.KindAbstractKeyword || p.token == ast.KindMutatorKeyword {
 		modifierPos := p.nodePos()
 		modifier := p.factory.NewModifier(p.token)
 		p.nextToken()
@@ -3766,6 +3779,51 @@ func (p *Parser) hasIdentityModifier(modifiers *ast.ModifierList) bool {
 		return false
 	}
 	return modifiers.ModifierFlags&ast.ModifierFlagsIdentity != 0
+}
+
+func (p *Parser) hasMutatorModifier(modifiers *ast.ModifierList) bool {
+	if modifiers == nil {
+		return false
+	}
+	return modifiers.ModifierFlags&ast.ModifierFlagsMutator != 0
+}
+
+func (p *Parser) parseLinksClause() *ast.NodeList {
+	// Parse: links <identifier> [, <identifier>]*
+	pos := p.nodePos()
+	p.parseExpected(ast.KindLinksKeyword)
+	list := make([]*ast.Node, 0, 2)
+	for {
+		identPos := p.nodePos()
+		name := p.parseIdentifierName()
+		p.finishNode(name, identPos)
+		list = append(list, name)
+		if !p.parseOptional(ast.KindCommaToken) {
+			break
+		}
+	}
+	return p.newNodeList(core.NewTextRange(pos, p.nodePos()), p.nodeSlicePool.Clone(list))
+}
+
+func (p *Parser) nextTokenStartsMutatorFunctionType() bool {
+	p.nextToken()
+	// After mutator, skip any additional modifiers (identity, abstract)
+	for p.token == ast.KindIdentityKeyword || p.token == ast.KindAbstractKeyword || p.token == ast.KindMutatorKeyword {
+		p.nextToken()
+	}
+	if p.token == ast.KindNewKeyword {
+		return true
+	}
+	if p.token == ast.KindOpenParenToken {
+		return p.nextIsUnambiguouslyStartOfFunctionType()
+	}
+	if p.token == ast.KindLessThanToken {
+		if p.parseTypeParameters() == nil || p.token != ast.KindOpenParenToken {
+			return false
+		}
+		return p.nextIsUnambiguouslyStartOfFunctionType()
+	}
+	return false
 }
 
 func (p *Parser) nextTokenIsNewKeyword() bool {

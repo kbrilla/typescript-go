@@ -1,0 +1,109 @@
+//// [tests/cases/compiler/identityModifierMutatorBasic.ts] ////
+
+=== identityModifierMutatorBasic.ts ===
+// Phase 5: Basic mutator keyword parsing and invalidation
+
+// === Section 1: Basic mutator parsing ===
+declare const store: {
+>store : { read: () => string | undefined; write: (v: string) => void; }
+
+    read: identity () => string | undefined;
+>read : () => string | undefined
+
+    write: mutator (v: string) => void;
+>write : (v: string) => void
+>v : string
+
+};
+
+// Basic identity narrowing should still work
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; write: (v: string) => void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    const s: string = store.read(); // OK — narrowed
+>s : string
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; write: (v: string) => void; }
+>read : () => string | undefined
+}
+
+// === Section 2: Mutator call invalidates identity narrowing ===
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; write: (v: string) => void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    store.write("new");
+>store.write("new") : void
+>store.write : (v: string) => void
+>store : { read: () => string | undefined; write: (v: string) => void; }
+>write : (v: string) => void
+>"new" : "new"
+
+    const afterWrite: string = store.read(); // should error — mutator invalidated narrowing
+>afterWrite : string
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; write: (v: string) => void; }
+>read : () => string | undefined
+
+    afterWrite;
+>afterWrite : string
+}
+
+// === Section 3: Parameterless mutator works ===
+declare const resetable: {
+>resetable : { value: () => string | undefined; reset: () => void; }
+
+    value: identity () => string | undefined;
+>value : () => string | undefined
+
+    reset: mutator () => void;
+>reset : () => void
+
+};
+
+if (resetable.value() !== undefined) {
+>resetable.value() !== undefined : boolean
+>resetable.value() : string | undefined
+>resetable.value : () => string | undefined
+>resetable : { value: () => string | undefined; reset: () => void; }
+>value : () => string | undefined
+>undefined : undefined
+
+    resetable.reset();
+>resetable.reset() : void
+>resetable.reset : () => void
+>resetable : { value: () => string | undefined; reset: () => void; }
+>reset : () => void
+
+    const afterReset: string = resetable.value(); // should error — mutator invalidated
+>afterReset : string
+>resetable.value() : string | undefined
+>resetable.value : () => string | undefined
+>resetable : { value: () => string | undefined; reset: () => void; }
+>value : () => string | undefined
+
+    afterReset;
+>afterReset : string
+}
+
+// === Section 4: Mutator validation — identity and mutator cannot combine ===
+declare const bad: {
+>bad : { conflict: (v: string) => void; }
+
+    conflict: identity mutator (v: string) => void; // should error — can't combine
+>conflict : (v: string) => void
+>v : string
+
+};
+

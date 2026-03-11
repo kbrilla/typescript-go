@@ -1,0 +1,119 @@
+identityModifierMutatorLinks.ts(12,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierMutatorLinks.ts(13,11): error TS2322: Type '{ name: string; } | undefined' is not assignable to type '{ name: string; }'.
+  Type 'undefined' is not assignable to type '{ name: string; }'.
+identityModifierMutatorLinks.ts(25,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierMutatorLinks.ts(26,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierMutatorLinks.ts(27,11): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+identityModifierMutatorLinks.ts(38,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierMutatorLinks.ts(39,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierMutatorLinks.ts(40,11): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+identityModifierMutatorLinks.ts(50,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierMutatorLinks.ts(51,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierMutatorLinks.ts(62,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierMutatorLinks.ts(63,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+
+==== identityModifierMutatorLinks.ts (12 errors) ====
+    // Phase 5: Mutator with links clause — selective invalidation
+    
+    // === Section 1: Single-endpoint links ===
+    declare const userStore: {
+        user: identity () => { name: string } | undefined;
+        settings: identity () => { theme: string } | undefined;
+        setUser: mutator (v: { name: string } | undefined) => void links user;
+    };
+    
+    // setUser links to user — should invalidate user() but NOT settings()
+    if (userStore.user() !== undefined && userStore.settings() !== undefined) {
+        userStore.setUser({ name: "new" });
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const u: { name: string } = userStore.user(); // should error — user() invalidated by setUser
+              ~
+!!! error TS2322: Type '{ name: string; } | undefined' is not assignable to type '{ name: string; }'.
+!!! error TS2322:   Type 'undefined' is not assignable to type '{ name: string; }'.
+        const s: { theme: string } = userStore.settings(); // OK — settings() NOT linked, still narrowed
+    }
+    
+    // === Section 2: Multi-endpoint links ===
+    declare const multiStore: {
+        a: identity () => string | undefined;
+        b: identity () => number | undefined;
+        resetAll: mutator () => void links a, b;
+    };
+    
+    if (multiStore.a() !== undefined && multiStore.b() !== undefined) {
+        multiStore.resetAll();
+        ~~~~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterA: string = multiStore.a();   // should error — a() invalidated
+              ~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        const afterB: number = multiStore.b();   // should error — b() invalidated
+              ~~~~~~
+!!! error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'number'.
+    }
+    
+    // === Section 3: Mutator without links on multi-endpoint = conservative ===
+    declare const ambiguousStore: {
+        x: identity () => string | undefined;
+        y: identity () => number | undefined;
+        doSomething: mutator (v: number) => void; // no links clause
+    };
+    
+    if (ambiguousStore.x() !== undefined && ambiguousStore.y() !== undefined) {
+        ambiguousStore.doSomething(42);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterX: string = ambiguousStore.x(); // should error — conservatively dropped
+              ~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        const afterY: number = ambiguousStore.y(); // should error — conservatively dropped
+              ~~~~~~
+!!! error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'number'.
+    }
+    
+    // === Section 4: Mutator on single-endpoint = no ambiguity ===
+    declare const singleStore: {
+        value: identity () => string | undefined;
+        setValue: mutator (v: string | undefined) => void; // no links, but only one identity endpoint
+    };
+    
+    if (singleStore.value() !== undefined) {
+        singleStore.setValue("new");
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const after: string = singleStore.value(); // should error — mutator invalidated
+              ~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    }
+    
+    // === Section 5: Selective invalidation — unlinked endpoint preserved ===
+    declare const selectiveStore: {
+        x: identity () => string | undefined;
+        y: identity () => number | undefined;
+        setX: mutator (v: string | undefined) => void links x;
+    };
+    
+    if (selectiveStore.x() !== undefined && selectiveStore.y() !== undefined) {
+        selectiveStore.setX(undefined);
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterX: string = selectiveStore.x(); // should error — x() is linked
+              ~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        const afterY: number = selectiveStore.y(); // OK — y() is NOT linked, preserved
+    }
+    

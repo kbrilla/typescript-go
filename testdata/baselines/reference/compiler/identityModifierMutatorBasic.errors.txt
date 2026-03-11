@@ -1,0 +1,59 @@
+identityModifierMutatorBasic.ts(16,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierMutatorBasic.ts(17,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierMutatorBasic.ts(28,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierMutatorBasic.ts(29,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierMutatorBasic.ts(35,15): error TS100012: 'identity' modifier can only appear on a function type with no parameters.
+
+
+==== identityModifierMutatorBasic.ts (5 errors) ====
+    // Phase 5: Basic mutator keyword parsing and invalidation
+    
+    // === Section 1: Basic mutator parsing ===
+    declare const store: {
+        read: identity () => string | undefined;
+        write: mutator (v: string) => void;
+    };
+    
+    // Basic identity narrowing should still work
+    if (store.read() !== undefined) {
+        const s: string = store.read(); // OK — narrowed
+    }
+    
+    // === Section 2: Mutator call invalidates identity narrowing ===
+    if (store.read() !== undefined) {
+        store.write("new");
+        ~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterWrite: string = store.read(); // should error — mutator invalidated narrowing
+              ~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterWrite;
+    }
+    
+    // === Section 3: Parameterless mutator works ===
+    declare const resetable: {
+        value: identity () => string | undefined;
+        reset: mutator () => void;
+    };
+    
+    if (resetable.value() !== undefined) {
+        resetable.reset();
+        ~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterReset: string = resetable.value(); // should error — mutator invalidated
+              ~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterReset;
+    }
+    
+    // === Section 4: Mutator validation — identity and mutator cannot combine ===
+    declare const bad: {
+        conflict: identity mutator (v: string) => void; // should error — can't combine
+                  ~~~~~~~~
+!!! error TS100012: 'identity' modifier can only appear on a function type with no parameters.
+    };
+    

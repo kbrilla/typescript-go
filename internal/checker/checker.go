@@ -19264,6 +19264,9 @@ func (c *Checker) getSignatureFromDeclaration(declaration *ast.Node) *Signature 
 	if ast.IsFunctionTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsIdentity) {
 		flags |= SignatureFlagsIdentity
 	}
+	if ast.IsFunctionTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsMutator) {
+		flags |= SignatureFlagsMutator
+	}
 	links.resolvedSignature = c.newSignature(flags, declaration, typeParameters, thisParameter, parameters, nil /*resolvedReturnType*/, nil /*resolvedTypePredicate*/, minArgumentCount)
 	return links.resolvedSignature
 }

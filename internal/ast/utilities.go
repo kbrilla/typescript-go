@@ -1024,6 +1024,8 @@ func ModifierToFlag(token Kind) ModifierFlags {
 		return ModifierFlagsOverride
 	case KindIdentityKeyword:
 		return ModifierFlagsIdentity
+	case KindMutatorKeyword:
+		return ModifierFlagsMutator
 	case KindInKeyword:
 		return ModifierFlagsIn
 	case KindOutKeyword:

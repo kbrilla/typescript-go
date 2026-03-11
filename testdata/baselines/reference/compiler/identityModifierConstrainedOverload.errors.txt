@@ -1,0 +1,61 @@
+identityModifierConstrainedOverload.ts(24,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierConstrainedOverload.ts(25,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierConstrainedOverload.ts(39,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierConstrainedOverload.ts(40,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+
+==== identityModifierConstrainedOverload.ts (4 errors) ====
+    // Phase 5: Constrained-overload post-call narrowing
+    // When a mutator has <U extends T> and overload resolution selects it,
+    // the linked identity endpoint narrows to U after the call.
+    // NOTE: This is a future enhancement. For now, mutator calls invalidate
+    // (widen back to declared type), which is correct conservative behavior.
+    
+    // === Section 1: Mutator with constrained generic ===
+    declare const sig: {
+        read: identity () => string | undefined;
+        update: mutator <U extends string | undefined>(fn: (value: string | undefined) => U) => void links read;
+    };
+    
+    // After update, narrowing is invalidated (future: could narrow to U)
+    sig.update(() => "hello");
+    const afterUpdate = sig.read(); // string | undefined — conservative (future: could narrow to string)
+    
+    // === Section 2: Reset mutator = no narrowing ===
+    declare const sig2: {
+        read: identity () => string | undefined;
+        reset: mutator () => void links read;
+    };
+    
+    if (sig2.read() !== undefined) {
+        sig2.reset();
+        ~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterReset: string = sig2.read(); // should error — reset invalidated
+              ~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    }
+    
+    // === Section 3: WritableSignal pattern ===
+    interface WritableSignal<T> {
+        read: identity () => T;
+        set: mutator (value: T) => void links read;
+        update: mutator <U extends T>(fn: (value: T) => U) => void links read;
+    }
+    
+    declare const ws: WritableSignal<string | undefined>;
+    
+    if (ws.read() !== undefined) {
+        const narrowed: string = ws.read(); // OK — narrowed
+        ws.set(undefined);
+        ~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterSet: string = ws.read(); // should error — set invalidated
+              ~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    }
+    

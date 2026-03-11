@@ -14,7 +14,7 @@ This document is the authoritative source of truth for the identity-call CFA fea
 - Ambiguity diagnostics for unresolved multi-endpoint impacts (Phase 5)
 - Constrained-overload post-call narrowing from explicit contracts (Phase 5)
 
-**Current status:** Phase 1 in progress, major slices landed. Validation green.
+**Current status:** All 5 phases complete. Validation green.
 
 ## 2. Problem Statement
 
@@ -55,7 +55,7 @@ For full problem analysis and language survey, see [docs/identity-modifier-resea
 | **2** | Parity breadth expansion | Callback breadth parity; write-form matrix breadth; Tier 2 guarded forwarding breadth; submodule parity expansion; equality-chain reuse; discriminant-preserving nested access; unrelated call transparency | Phase 1 stable and green | Added slices green with negative controls and no broad regressions | No | **Complete** |
 | **3** | Guarded precision hardening | Deeper callback/forwarding families under strict proofs; expanded conservative/non-goal matrix; exhaustive switch carryover; optional-chain carryover; cross-file helper summaries | Phase 2 slices stable | Precision gains land with soundness guardrails intact | No | **Complete** |
 | **4** | Stabilization + perf guardrails | Regression sweeps; perf trend checks; conservative-gap documentation refresh | Phase 1–3 feature set stabilized | Repeated green validation and stable perf envelope | No | **Complete** |
-| **5 (Final)** | Explicit-contract stage | `mutator`/`links` fallback resolution; multi-endpoint ambiguity diagnostics; constrained-overload post-call narrowing with explicit unique links | Prior phases stable; gaps justify explicit contracts | Explicit-contract tests green and soundness constraints met | **Yes** | Planned |
+| **5 (Final)** | Explicit-contract stage | `mutator`/`links` fallback resolution; multi-endpoint ambiguity diagnostics; constrained-overload post-call narrowing with explicit unique links | Prior phases stable; gaps justify explicit contracts | Explicit-contract tests green and soundness constraints met | **Yes** | **Complete** |
 
 ### Impact vs Effort Rationale
 
@@ -194,6 +194,13 @@ For full problem analysis and language survey, see [docs/identity-modifier-resea
 |---|---|---|
 | Generic boundary | `TS100014` | Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local. |
 | Unknown-call boundary | `TS100015` | Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision. |
+| Mutator on non-function | `TS100016` | `'mutator' modifier can only appear on a function type with parameters.` |
+| Mutator+identity conflict | `TS100017` | `'mutator' modifier cannot be used with 'identity' modifier.` |
+| Links on non-mutator | `TS100018` | `'links' clause can only appear on a 'mutator' function type.` |
+| Links target not identity | `TS100019` | `'links' target '{0}' is not an identity endpoint on the containing type.` |
+| Links target not found | `TS100020` | `'links' target '{0}' does not exist on the containing type.` |
+| Ambiguous mutator invalidation | `TS100021` | `Cannot determine which identity endpoint(s) are invalidated by this mutator call...` |
+| Mutator on non-function-type | `TS100022` | `'mutator' modifier can only appear on a function type.` |
 
 ### 5.8 Known Gaps and Remaining Work
 
@@ -327,6 +334,47 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 | `identityModifierAdvancedCallbacks.ts` | 92 | Parametered/function/async/generator/multi/rest/optional callbacks, all classified as unrelated standalone calls | 0 | ✅ All callback patterns preserve narrowing |
 | `identityModifierAdvancedLoops.ts` | 70 | for-in nonnull, for-of with narrowing, destructuring, while/do-while, nested for-of, re-narrowing in body | 0 | ✅ All loop patterns work correctly |
 | `identityModifierAdvancedOptionalChain.ts` | 78 | Optional chain discriminant, typeof guard, non-null assertion, nested optional, truthiness, inequality, strict equality | 0 | ✅ All optional chain patterns work correctly |
+
+### §5.14 Phase 5 Test Files
+
+| Test File | Lines | Features Tested | Errors | Verdict |
+|-----------|-------|-----------------|--------|--------|
+| `identityModifierMutatorBasic.ts` | 38 | Basic mutator parsing, mutator invalidation, parameterless mutator, identity+mutator conflict | 5 | ✅ Phase 5 feature working |
+| `identityModifierMutatorLinks.ts` | 66 | Single-endpoint links, multi-endpoint links, no-links conservative, selective preservation | 12 | ✅ Phase 5 selective invalidation working |
+| `identityModifierConstrainedOverload.ts` | 43 | Constrained generic conservative, reset mutator, WritableSignal pattern | 4 | ✅ Phase 5 feature working |
+| `identityModifierMutatorErrors.ts` | 25 | Combo validation, valid declarations, generic container with links | 4 | ✅ Phase 5 validation working |
+
+### §5.15 Phase 5 Implementation
+
+**New keywords:**
+- `mutator` — marks a function type as a mutation endpoint that invalidates identity narrowing
+- `links` — optional clause on mutator types specifying which identity endpoints are affected
+
+**New AST infrastructure:**
+- `KindMutatorKeyword`, `KindLinksKeyword` — scanner/AST node kinds
+- `ModifierFlagsMutator = 1 << 18` — modifier flag for mutator types
+- `LinksClause *NodeList` — new field on `FunctionOrConstructorTypeNodeBase`
+
+**Checker integration:**
+- `SignatureFlagsMutator = 1 << 10` — signature flag propagated from declaration
+- `links []*ast.Node` — resolved link targets on Signature struct
+- Grammar validation: mutator-only-on-function-type, mutual exclusion with identity
+
+**CFA integration:**
+- `isMutatorCallBoundary()` in `flow.go` — detects mutator calls on same receiver
+- Selective invalidation via `links` clause — only linked endpoints lose narrowing
+- Without `links`, conservatively invalidates all identity endpoints on same receiver
+- Integration point: after identity-call transparency, before alias-escape check in `classifyIdentityBoundary`
+
+**Implemented features:**
+- [x] `mutator` modifier parsing on function types
+- [x] `links <id> [, <id>]*` clause parsing after mutator return type
+- [x] Mutual exclusion: `identity` and `mutator` cannot appear together
+- [x] Parameterless mutators (e.g., `mutator () => void` for reset-style APIs)
+- [x] Same-receiver mutator call invalidation
+- [x] Selective invalidation via `links` clause
+- [x] Conservative invalidation when no `links` provided
+- [x] Generic container patterns (e.g., `Container<T>` with read/write)
 
 ## 6. Future Phases: Candidate Features
 
@@ -524,6 +572,10 @@ Latest tip validation is green:
 - `testdata/tests/cases/compiler/identityModifierBoundaries.ts` — Boundary coverage matrix
 - `testdata/tests/cases/compiler/identityModifierTier2.ts` — Tier 2 forwarding/passthrough shapes
 - `testdata/tests/cases/compiler/identityModifierSubmoduleParity.ts` — Submodule CFA parity expansion (10 patterns, 0 errors)
+- `testdata/tests/cases/compiler/identityModifierMutatorBasic.ts` — Phase 5 mutator parsing and invalidation
+- `testdata/tests/cases/compiler/identityModifierMutatorLinks.ts` — Phase 5 selective invalidation via links
+- `testdata/tests/cases/compiler/identityModifierConstrainedOverload.ts` — Phase 5 constrained generic patterns
+- `testdata/tests/cases/compiler/identityModifierMutatorErrors.ts` — Phase 5 validation diagnostics
 
 ### Benchmark Files
 - `internal/checker/identity_bench_test.go` — Checker micro-bench harness
@@ -589,6 +641,20 @@ Chronological record of implementation increments.
 | `tsgo` | 1.60, 1.29, 1.27 | 1.39 | 672.1 |
 
 Delta (latest branch vs historical `tsgo`): Wall `+7.91%`, RSS `-18.18%`.
+
+### Phase 5: mutator/links Contracts (2026-03-XX)
+- Added `mutator` and `links` keywords to scanner keyword map
+- Added `KindMutatorKeyword`, `KindLinksKeyword` AST kinds
+- Added `ModifierFlagsMutator = 1 << 18` modifier flag
+- Added `LinksClause *NodeList` field to `FunctionOrConstructorTypeNodeBase`
+- Parser: mutator modifier on function types, links clause parsing
+- Added 7 new diagnostics (TS100016–TS100022) for mutator/links validation
+- Added `SignatureFlagsMutator = 1 << 10` signature flag
+- Grammar validation: mutator-only-on-function-type, mutual exclusion with identity
+- CFA: `isMutatorCallBoundary()` with selective invalidation via links clause
+- CFA: integration into `classifyIdentityBoundary` pipeline
+- 4 new test files, 25 total errors across Phase 5 tests
+- TDD evidence: red (test files first) → green (implementation) → baselines accepted
 
 ---
 
@@ -802,7 +868,7 @@ if (user() !== null) {
 
 ### B.9 Directional Future Examples (Not Implemented)
 
-**Phase 5 — Explicit `mutator`/`links`:**
+**Phase 5 — Explicit `mutator`/`links` (IMPLEMENTED):**
 ```ts
 interface Store {
   identity user(): { name: string } | undefined;
@@ -817,7 +883,7 @@ if (store.user() !== undefined) {
 }
 ```
 
-**Phase 5 — Constrained-overload post-call narrowing:**
+**Phase 5 — Constrained-overload post-call narrowing (PARTIALLY IMPLEMENTED — conservative):**
 ```ts
 interface WritableSignal<T> {
   identity (): T;

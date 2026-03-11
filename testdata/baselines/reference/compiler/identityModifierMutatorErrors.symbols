@@ -1,0 +1,84 @@
+//// [tests/cases/compiler/identityModifierMutatorErrors.ts] ////
+
+=== identityModifierMutatorErrors.ts ===
+// Phase 5: Mutator validation diagnostics and error cases
+
+// === Section 1: mutator and identity cannot combine ===
+type BadCombo1 = identity mutator (v: string) => void; // error: can't combine
+>BadCombo1 : Symbol(BadCombo1, Decl(identityModifierMutatorErrors.ts, 0, 0))
+>v : Symbol(v, Decl(identityModifierMutatorErrors.ts, 3, 35))
+
+type BadCombo2 = mutator identity () => void; // error: can't combine
+>BadCombo2 : Symbol(BadCombo2, Decl(identityModifierMutatorErrors.ts, 3, 54))
+
+// === Section 2: Valid mutator declarations ===
+type GoodMutator1 = mutator (v: string) => void;
+>GoodMutator1 : Symbol(GoodMutator1, Decl(identityModifierMutatorErrors.ts, 4, 45))
+>v : Symbol(v, Decl(identityModifierMutatorErrors.ts, 7, 29))
+
+type GoodMutator2 = mutator (a: number, b: string) => void;
+>GoodMutator2 : Symbol(GoodMutator2, Decl(identityModifierMutatorErrors.ts, 7, 48))
+>a : Symbol(a, Decl(identityModifierMutatorErrors.ts, 8, 29))
+>b : Symbol(b, Decl(identityModifierMutatorErrors.ts, 8, 39))
+
+type GoodMutator3 = mutator <T>(v: T) => void;
+>GoodMutator3 : Symbol(GoodMutator3, Decl(identityModifierMutatorErrors.ts, 8, 59))
+>T : Symbol(T, Decl(identityModifierMutatorErrors.ts, 9, 29))
+>v : Symbol(v, Decl(identityModifierMutatorErrors.ts, 9, 32))
+>T : Symbol(T, Decl(identityModifierMutatorErrors.ts, 9, 29))
+
+type GoodMutator4 = mutator () => void; // valid — parameterless mutator like reset()
+>GoodMutator4 : Symbol(GoodMutator4, Decl(identityModifierMutatorErrors.ts, 9, 46))
+
+// === Section 3: mutator in generic position ===
+interface Container<T> {
+>Container : Symbol(Container, Decl(identityModifierMutatorErrors.ts, 10, 39))
+>T : Symbol(T, Decl(identityModifierMutatorErrors.ts, 13, 20))
+
+    read: identity () => T;
+>read : Symbol(Container.read, Decl(identityModifierMutatorErrors.ts, 13, 24))
+>T : Symbol(T, Decl(identityModifierMutatorErrors.ts, 13, 20))
+
+    write: mutator (v: T) => void links read;
+>write : Symbol(Container.write, Decl(identityModifierMutatorErrors.ts, 14, 27))
+>v : Symbol(v, Decl(identityModifierMutatorErrors.ts, 15, 20))
+>T : Symbol(T, Decl(identityModifierMutatorErrors.ts, 13, 20))
+}
+
+declare function createContainer<T>(initial: T): Container<T>;
+>createContainer : Symbol(createContainer, Decl(identityModifierMutatorErrors.ts, 16, 1))
+>T : Symbol(T, Decl(identityModifierMutatorErrors.ts, 18, 33))
+>initial : Symbol(initial, Decl(identityModifierMutatorErrors.ts, 18, 36))
+>T : Symbol(T, Decl(identityModifierMutatorErrors.ts, 18, 33))
+>Container : Symbol(Container, Decl(identityModifierMutatorErrors.ts, 10, 39))
+>T : Symbol(T, Decl(identityModifierMutatorErrors.ts, 18, 33))
+
+const c = createContainer<string | undefined>("hello");
+>c : Symbol(c, Decl(identityModifierMutatorErrors.ts, 19, 5))
+>createContainer : Symbol(createContainer, Decl(identityModifierMutatorErrors.ts, 16, 1))
+
+if (c.read() !== undefined) {
+>c.read : Symbol(Container.read, Decl(identityModifierMutatorErrors.ts, 13, 24))
+>c : Symbol(c, Decl(identityModifierMutatorErrors.ts, 19, 5))
+>read : Symbol(Container.read, Decl(identityModifierMutatorErrors.ts, 13, 24))
+>undefined : Symbol(undefined)
+
+    const val: string = c.read(); // OK — narrowed
+>val : Symbol(val, Decl(identityModifierMutatorErrors.ts, 21, 9))
+>c.read : Symbol(Container.read, Decl(identityModifierMutatorErrors.ts, 13, 24))
+>c : Symbol(c, Decl(identityModifierMutatorErrors.ts, 19, 5))
+>read : Symbol(Container.read, Decl(identityModifierMutatorErrors.ts, 13, 24))
+
+    c.write(undefined);
+>c.write : Symbol(Container.write, Decl(identityModifierMutatorErrors.ts, 14, 27))
+>c : Symbol(c, Decl(identityModifierMutatorErrors.ts, 19, 5))
+>write : Symbol(Container.write, Decl(identityModifierMutatorErrors.ts, 14, 27))
+>undefined : Symbol(undefined)
+
+    const afterWrite: string = c.read(); // should error — mutator invalidated
+>afterWrite : Symbol(afterWrite, Decl(identityModifierMutatorErrors.ts, 23, 9))
+>c.read : Symbol(Container.read, Decl(identityModifierMutatorErrors.ts, 13, 24))
+>c : Symbol(c, Decl(identityModifierMutatorErrors.ts, 19, 5))
+>read : Symbol(Container.read, Decl(identityModifierMutatorErrors.ts, 13, 24))
+}
+
