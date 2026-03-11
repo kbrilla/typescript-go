@@ -749,3 +749,10 @@ Tier 1 write-form gaps still open:
   - `npx hereby baseline-accept`
   - `go test -run='TestLocal/(identityModifierGetterParitySweep|identityModifierParity)\.ts' ./internal/testrunner`
   - Result: green.
+
+### Latest Increment (Callback Alias Assignment-Form Coverage)
+- Expanded `identityModifierBoundaries.ts` with strict const no-op callback alias cases for:
+  - declaration-initializer call form: `const r = invoke(cb);`
+  - assignment-expression call form: `r = invoke(cb);`
+- Kept mutable and non-empty callback alias shapes conservative in the same matrix.
+- Accepted updated baselines and re-ran full gates (`build`, `test`, `lint`, `format`) successfully.

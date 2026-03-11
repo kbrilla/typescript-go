@@ -81,6 +81,21 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
+    const noopCallback = () => {};
+    const assignedNoopCallbackResult = invoke(noopCallback);
+    assignedNoopCallbackResult;
+    const afterAssignedConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
+}
+
+let assignedNoopCallbackResult: void;
+if (read() !== undefined) {
+    const noopCallback = () => {};
+    assignedNoopCallbackResult = invoke(noopCallback);
+    assignedNoopCallbackResult;
+    const afterAssignmentExprConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
+}
+
+if (read() !== undefined) {
     let mutableNoopCallback = () => {};
     mutableNoopCallback = () => {
         const callbackWrite = 1;

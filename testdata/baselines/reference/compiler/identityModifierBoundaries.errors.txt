@@ -19,17 +19,17 @@ identityModifierBoundaries.ts(71,11): error TS2322: Type 'string | undefined' is
 identityModifierBoundaries.ts(76,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierBoundaries.ts(77,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(86,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierBoundaries.ts(87,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(101,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierBoundaries.ts(102,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(95,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierBoundaries.ts(96,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(110,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierBoundaries.ts(111,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(122,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierBoundaries.ts(123,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(137,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierBoundaries.ts(138,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierBoundaries.ts(129,15): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierBoundaries.ts(131,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierBoundaries.ts(144,15): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierBoundaries.ts(146,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
@@ -161,6 +161,21 @@ identityModifierBoundaries.ts(131,15): error TS2322: Type 'string | undefined' i
               ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
 !!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    }
+    
+    if (read() !== undefined) {
+        const noopCallback = () => {};
+        const assignedNoopCallbackResult = invoke(noopCallback);
+        assignedNoopCallbackResult;
+        const afterAssignedConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
+    }
+    
+    let assignedNoopCallbackResult: void;
+    if (read() !== undefined) {
+        const noopCallback = () => {};
+        assignedNoopCallbackResult = invoke(noopCallback);
+        assignedNoopCallbackResult;
+        const afterAssignmentExprConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
     }
     
     if (read() !== undefined) {

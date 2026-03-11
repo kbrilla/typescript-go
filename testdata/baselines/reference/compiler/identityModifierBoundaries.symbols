@@ -206,25 +206,68 @@ if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 >undefined : Symbol(undefined)
 
+    const noopCallback = () => {};
+>noopCallback : Symbol(noopCallback, Decl(identityModifierBoundaries.ts, 80, 9))
+
+    const assignedNoopCallbackResult = invoke(noopCallback);
+>assignedNoopCallbackResult : Symbol(assignedNoopCallbackResult, Decl(identityModifierBoundaries.ts, 81, 9))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
+>noopCallback : Symbol(noopCallback, Decl(identityModifierBoundaries.ts, 80, 9))
+
+    assignedNoopCallbackResult;
+>assignedNoopCallbackResult : Symbol(assignedNoopCallbackResult, Decl(identityModifierBoundaries.ts, 81, 9))
+
+    const afterAssignedConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
+>afterAssignedConstNoopCallbackAlias : Symbol(afterAssignedConstNoopCallbackAlias, Decl(identityModifierBoundaries.ts, 83, 9))
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+}
+
+let assignedNoopCallbackResult: void;
+>assignedNoopCallbackResult : Symbol(assignedNoopCallbackResult, Decl(identityModifierBoundaries.ts, 86, 3))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    const noopCallback = () => {};
+>noopCallback : Symbol(noopCallback, Decl(identityModifierBoundaries.ts, 88, 9))
+
+    assignedNoopCallbackResult = invoke(noopCallback);
+>assignedNoopCallbackResult : Symbol(assignedNoopCallbackResult, Decl(identityModifierBoundaries.ts, 86, 3))
+>invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
+>noopCallback : Symbol(noopCallback, Decl(identityModifierBoundaries.ts, 88, 9))
+
+    assignedNoopCallbackResult;
+>assignedNoopCallbackResult : Symbol(assignedNoopCallbackResult, Decl(identityModifierBoundaries.ts, 86, 3))
+
+    const afterAssignmentExprConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
+>afterAssignmentExprConstNoopCallbackAlias : Symbol(afterAssignmentExprConstNoopCallbackAlias, Decl(identityModifierBoundaries.ts, 91, 9))
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
+>undefined : Symbol(undefined)
+
     let mutableNoopCallback = () => {};
->mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 80, 7))
+>mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 95, 7))
 
     mutableNoopCallback = () => {
->mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 80, 7))
+>mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 95, 7))
 
         const callbackWrite = 1;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 82, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 97, 13))
 
         callbackWrite;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 82, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 97, 13))
 
     };
     invoke(mutableNoopCallback);
 >invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
->mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 80, 7))
+>mutableNoopCallback : Symbol(mutableNoopCallback, Decl(identityModifierBoundaries.ts, 95, 7))
 
     const afterMutableNoopCallbackAlias: string = read(); // should error
->afterMutableNoopCallbackAlias : Symbol(afterMutableNoopCallbackAlias, Decl(identityModifierBoundaries.ts, 86, 9))
+>afterMutableNoopCallbackAlias : Symbol(afterMutableNoopCallbackAlias, Decl(identityModifierBoundaries.ts, 101, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
@@ -233,21 +276,21 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const nonEmptyCallback = () => {
->nonEmptyCallback : Symbol(nonEmptyCallback, Decl(identityModifierBoundaries.ts, 90, 9))
+>nonEmptyCallback : Symbol(nonEmptyCallback, Decl(identityModifierBoundaries.ts, 105, 9))
 
         const callbackWrite = 1;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 91, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 106, 13))
 
         callbackWrite;
->callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 91, 13))
+>callbackWrite : Symbol(callbackWrite, Decl(identityModifierBoundaries.ts, 106, 13))
 
     };
     invoke(nonEmptyCallback);
 >invoke : Symbol(invoke, Decl(identityModifierBoundaries.ts, 8, 34))
->nonEmptyCallback : Symbol(nonEmptyCallback, Decl(identityModifierBoundaries.ts, 90, 9))
+>nonEmptyCallback : Symbol(nonEmptyCallback, Decl(identityModifierBoundaries.ts, 105, 9))
 
     const afterNonEmptyCallbackAlias: string = read(); // should error
->afterNonEmptyCallbackAlias : Symbol(afterNonEmptyCallbackAlias, Decl(identityModifierBoundaries.ts, 95, 9))
+>afterNonEmptyCallbackAlias : Symbol(afterNonEmptyCallbackAlias, Decl(identityModifierBoundaries.ts, 110, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
@@ -256,15 +299,15 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const escapedRead = read;
->escapedRead : Symbol(escapedRead, Decl(identityModifierBoundaries.ts, 99, 9))
+>escapedRead : Symbol(escapedRead, Decl(identityModifierBoundaries.ts, 114, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
     const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
->afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierBoundaries.ts, 100, 9))
+>afterAliasEscape : Symbol(afterAliasEscape, Decl(identityModifierBoundaries.ts, 115, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
     escapedRead;
->escapedRead : Symbol(escapedRead, Decl(identityModifierBoundaries.ts, 99, 9))
+>escapedRead : Symbol(escapedRead, Decl(identityModifierBoundaries.ts, 114, 9))
 }
 
 if (read() !== undefined) {
@@ -272,40 +315,40 @@ if (read() !== undefined) {
 >undefined : Symbol(undefined)
 
     const indirect = pass(read);
->indirect : Symbol(indirect, Decl(identityModifierBoundaries.ts, 105, 9))
+>indirect : Symbol(indirect, Decl(identityModifierBoundaries.ts, 120, 9))
 >pass : Symbol(pass, Decl(identityModifierBoundaries.ts, 7, 55))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
     indirect;
->indirect : Symbol(indirect, Decl(identityModifierBoundaries.ts, 105, 9))
+>indirect : Symbol(indirect, Decl(identityModifierBoundaries.ts, 120, 9))
 
     const afterIndirectAliasEscape: string = read(); // should error
->afterIndirectAliasEscape : Symbol(afterIndirectAliasEscape, Decl(identityModifierBoundaries.ts, 107, 9))
+>afterIndirectAliasEscape : Symbol(afterIndirectAliasEscape, Decl(identityModifierBoundaries.ts, 122, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 }
 
 
 let reassignedRead: () => string | undefined;
->reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 111, 3))
+>reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 126, 3))
 
 if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 >undefined : Symbol(undefined)
 
     reassignedRead = read;
->reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 111, 3))
+>reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 126, 3))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
     const afterReassignmentEscape: string = read(); // should error
->afterReassignmentEscape : Symbol(afterReassignmentEscape, Decl(identityModifierBoundaries.ts, 115, 9))
+>afterReassignmentEscape : Symbol(afterReassignmentEscape, Decl(identityModifierBoundaries.ts, 130, 9))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 
     reassignedRead;
->reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 111, 3))
+>reassignedRead : Symbol(reassignedRead, Decl(identityModifierBoundaries.ts, 126, 3))
 }
 
 async function testAwaitBoundary() {
->testAwaitBoundary : Symbol(testAwaitBoundary, Decl(identityModifierBoundaries.ts, 117, 1))
+>testAwaitBoundary : Symbol(testAwaitBoundary, Decl(identityModifierBoundaries.ts, 132, 1))
 
     if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
@@ -315,27 +358,27 @@ async function testAwaitBoundary() {
 >delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 10, 46))
 
         const afterAwait: string = read(); // should error
->afterAwait : Symbol(afterAwait, Decl(identityModifierBoundaries.ts, 122, 13))
+>afterAwait : Symbol(afterAwait, Decl(identityModifierBoundaries.ts, 137, 13))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
     }
 }
 
 async function testAwaitAssignmentBoundary() {
->testAwaitAssignmentBoundary : Symbol(testAwaitAssignmentBoundary, Decl(identityModifierBoundaries.ts, 124, 1))
+>testAwaitAssignmentBoundary : Symbol(testAwaitAssignmentBoundary, Decl(identityModifierBoundaries.ts, 139, 1))
 
     if (read() !== undefined) {
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
 >undefined : Symbol(undefined)
 
         const x = await delay();
->x : Symbol(x, Decl(identityModifierBoundaries.ts, 128, 13))
+>x : Symbol(x, Decl(identityModifierBoundaries.ts, 143, 13))
 >delay : Symbol(delay, Decl(identityModifierBoundaries.ts, 10, 46))
 
         x;
->x : Symbol(x, Decl(identityModifierBoundaries.ts, 128, 13))
+>x : Symbol(x, Decl(identityModifierBoundaries.ts, 143, 13))
 
         const afterAwaitAssignment: string = read(); // should error
->afterAwaitAssignment : Symbol(afterAwaitAssignment, Decl(identityModifierBoundaries.ts, 130, 13))
+>afterAwaitAssignment : Symbol(afterAwaitAssignment, Decl(identityModifierBoundaries.ts, 145, 13))
 >read : Symbol(read, Decl(identityModifierBoundaries.ts, 0, 13))
     }
 }

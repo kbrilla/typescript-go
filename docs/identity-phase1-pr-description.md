@@ -430,8 +430,8 @@ Missing getter-origin matrix summary (this run):
 | Unknown call (ambient no-arg preserve) | `unknownMutate();` then `read()` | Implemented (narrow preserve) | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Unknown call (with-arg negative control) | `unknownMutateWithArg(1);` then `read()` | Intentionally conservative (error) | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback statement | `invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
-| Callback assignment form | `const r = invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
-| Callback assignment-expression form | `r = invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Callback assignment form | `const r = invoke(cb);` then `read()` | Implemented (strict const no-op alias preserve; non-empty stays conservative) | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
+| Callback assignment-expression form | `r = invoke(cb);` then `read()` | Implemented (strict const no-op alias preserve; non-empty stays conservative) | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback conditional initializer form | `const r = cond ? invoke(() => {}) : invoke(() => {});` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback indirect helper argument | `const r = invoke(pass(() => {}));` then `read()` | Implemented | `testdata/tests/cases/compiler/identityModifierBoundaries.ts` |
 | Callback const no-op alias preserve (narrow) | `const cb = () => {}; invoke(cb);` then `read()` | Open (currently conservative in baselines) | `testdata/tests/cases/compiler/identityModifierBoundaries.ts`, `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
