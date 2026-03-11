@@ -932,9 +932,50 @@ This would require `invalidates` to accept getter property names in addition to 
 
 Defer to Phase 3+. Monitor for real-world reports of the hybrid pattern causing false narrowing. If evidence appears, implement with strict guarding.
 
+
+## 8. To Consider: Conditional Type Discrimination of `stable`
+
+### 8.1 Observation
+
+The `stable` modifier parses correctly in conditional type positions:
+
+```ts
+type StableReader<T> = stable () => T;
+
+type ExtractReturn<T> = T extends stable () => infer R ? R : never;
+type Result = ExtractReturn<StableReader<string>>; // string ✓
+```
+
+However, `stable` does NOT discriminate between stable and non-stable function types in conditional checks:
+
+```ts
+type IsStable<T> = T extends stable () => any ? true : false;
+
+type A = IsStable<stable () => string>;   // true ✓
+type B = IsStable<() => string>;          // also true — not discriminated!
+```
+
+This happens because `stable` is a CFA modifier, not a structural type feature. The `extends` check uses structural compatibility, and `stable () => T` is structurally identical to `() => T`.
+
+### 8.2 Why This Is Fine for Phase 1-2
+
+CFA narrowing — the primary value of `stable` — does not require conditional type discrimination. The narrowing operates through flow analysis, not through the type system's structural comparisons.
+
+### 8.3 Potential Future Options
+
+If conditional type discrimination is ever needed:
+
+1. **`TypeFlags` bit**: Add a `TypeFlagsStable` flag and check it in conditional type resolution. Allows `T extends stable () => R ? R : never` to only match stable function types.
+2. **`IsStable<T>` intrinsic**: Similar to `ReturnType<T>` — a built-in type-level predicate. Lower risk than modifying conditional type resolution.
+3. **No action**: If CFA narrowing remains the only use case, conditional type discrimination adds complexity with no practical benefit.
+
+### 8.4 Recommendation
+
+Do not implement in Phase 1 or Phase 2. Monitor for real-world use cases where users need to distinguish `stable () => T` from `() => T` at the type level. If evidence appears, option 2 (`IsStable<T>` intrinsic) is the safest path.
+
 ---
 
-## 8. Risk Assessment
+## 9. Risk Assessment
 
 ### Technical Risks
 
@@ -964,7 +1005,7 @@ Defer to Phase 3+. Monitor for real-world reports of the hybrid pattern causing 
 
 ---
 
-## 9. Timeline & Dependencies
+## 10. Timeline & Dependencies
 
 ### Phase Dependencies
 

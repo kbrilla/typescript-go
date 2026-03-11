@@ -1,0 +1,166 @@
+//// [tests/cases/compiler/stableModifierBareParameter.ts] ////
+
+=== stableModifierBareParameter.ts ===
+// --- Section 1: Basic typeof narrowing through stable parameter ---
+function consumeStableParam(read: stable () => string | number) {
+>consumeStableParam : Symbol(consumeStableParam, Decl(stableModifierBareParameter.ts, 0, 0))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 1, 28))
+
+    if (typeof read() === 'string') {
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 1, 28))
+
+        const s: string = read();  // narrowed to string
+>s : Symbol(s, Decl(stableModifierBareParameter.ts, 3, 13))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 1, 28))
+    }
+    if (typeof read() === 'number') {
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 1, 28))
+
+        const n: number = read();  // narrowed to number
+>n : Symbol(n, Decl(stableModifierBareParameter.ts, 6, 13))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 1, 28))
+    }
+    const full: string | number = read();  // outside guard, full type
+>full : Symbol(full, Decl(stableModifierBareParameter.ts, 8, 9))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 1, 28))
+}
+
+// --- Section 2: Truthiness narrowing ---
+function consumeTruthy(read: stable () => string | undefined) {
+>consumeTruthy : Symbol(consumeTruthy, Decl(stableModifierBareParameter.ts, 9, 1))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 12, 23))
+
+    if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 12, 23))
+>undefined : Symbol(undefined)
+
+        const s: string = read();  // narrowed to string
+>s : Symbol(s, Decl(stableModifierBareParameter.ts, 14, 13))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 12, 23))
+    }
+    const maybe: string | undefined = read();  // outside guard, full type
+>maybe : Symbol(maybe, Decl(stableModifierBareParameter.ts, 16, 9))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 12, 23))
+}
+
+// --- Section 3: Discriminant narrowing ---
+interface Circle { kind: 'circle'; radius: number }
+>Circle : Symbol(Circle, Decl(stableModifierBareParameter.ts, 17, 1))
+>kind : Symbol(Circle.kind, Decl(stableModifierBareParameter.ts, 20, 18))
+>radius : Symbol(Circle.radius, Decl(stableModifierBareParameter.ts, 20, 34))
+
+interface Square { kind: 'square'; side: number }
+>Square : Symbol(Square, Decl(stableModifierBareParameter.ts, 20, 51))
+>kind : Symbol(Square.kind, Decl(stableModifierBareParameter.ts, 21, 18))
+>side : Symbol(Square.side, Decl(stableModifierBareParameter.ts, 21, 34))
+
+type Shape = Circle | Square;
+>Shape : Symbol(Shape, Decl(stableModifierBareParameter.ts, 21, 49))
+>Circle : Symbol(Circle, Decl(stableModifierBareParameter.ts, 17, 1))
+>Square : Symbol(Square, Decl(stableModifierBareParameter.ts, 20, 51))
+
+function consumeDiscriminant(read: stable () => Shape) {
+>consumeDiscriminant : Symbol(consumeDiscriminant, Decl(stableModifierBareParameter.ts, 22, 29))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 24, 29))
+>Shape : Symbol(Shape, Decl(stableModifierBareParameter.ts, 21, 49))
+
+    if (read().kind === 'circle') {
+>read().kind : Symbol(kind, Decl(stableModifierBareParameter.ts, 20, 18), Decl(stableModifierBareParameter.ts, 21, 18))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 24, 29))
+>kind : Symbol(kind, Decl(stableModifierBareParameter.ts, 20, 18), Decl(stableModifierBareParameter.ts, 21, 18))
+
+        const r: number = read().radius;  // narrowed to Circle
+>r : Symbol(r, Decl(stableModifierBareParameter.ts, 26, 13))
+>read().radius : Symbol(Circle.radius, Decl(stableModifierBareParameter.ts, 20, 34))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 24, 29))
+>radius : Symbol(Circle.radius, Decl(stableModifierBareParameter.ts, 20, 34))
+    }
+    if (read().kind === 'square') {
+>read().kind : Symbol(kind, Decl(stableModifierBareParameter.ts, 20, 18), Decl(stableModifierBareParameter.ts, 21, 18))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 24, 29))
+>kind : Symbol(kind, Decl(stableModifierBareParameter.ts, 20, 18), Decl(stableModifierBareParameter.ts, 21, 18))
+
+        const s: number = read().side;  // narrowed to Square
+>s : Symbol(s, Decl(stableModifierBareParameter.ts, 29, 13))
+>read().side : Symbol(Square.side, Decl(stableModifierBareParameter.ts, 21, 34))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 24, 29))
+>side : Symbol(Square.side, Decl(stableModifierBareParameter.ts, 21, 34))
+    }
+}
+
+// --- Section 4: Generic parameter ---
+function consumeGeneric<T>(read: stable () => T | undefined) {
+>consumeGeneric : Symbol(consumeGeneric, Decl(stableModifierBareParameter.ts, 31, 1))
+>T : Symbol(T, Decl(stableModifierBareParameter.ts, 34, 24))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 34, 27))
+>T : Symbol(T, Decl(stableModifierBareParameter.ts, 34, 24))
+
+    if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 34, 27))
+>undefined : Symbol(undefined)
+
+        const val: T = read();  // narrowed to T
+>val : Symbol(val, Decl(stableModifierBareParameter.ts, 36, 13))
+>T : Symbol(T, Decl(stableModifierBareParameter.ts, 34, 24))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 34, 27))
+    }
+}
+
+// --- Section 5: Passed as callback ---
+function acceptReader(reader: stable () => string | number) {
+>acceptReader : Symbol(acceptReader, Decl(stableModifierBareParameter.ts, 38, 1))
+>reader : Symbol(reader, Decl(stableModifierBareParameter.ts, 41, 22))
+
+    if (typeof reader() === 'string') {
+>reader : Symbol(reader, Decl(stableModifierBareParameter.ts, 41, 22))
+
+        const s: string = reader();  // narrowed
+>s : Symbol(s, Decl(stableModifierBareParameter.ts, 43, 13))
+>reader : Symbol(reader, Decl(stableModifierBareParameter.ts, 41, 22))
+    }
+}
+
+function passStableParam(read: stable () => string | number) {
+>passStableParam : Symbol(passStableParam, Decl(stableModifierBareParameter.ts, 45, 1))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 47, 25))
+
+    acceptReader(read);  // stable parameter can be passed to stable-expecting function
+>acceptReader : Symbol(acceptReader, Decl(stableModifierBareParameter.ts, 38, 1))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 47, 25))
+}
+
+// --- Section 6: Non-stable comparison ---
+function consumeNonStable(read: () => string | number) {
+>consumeNonStable : Symbol(consumeNonStable, Decl(stableModifierBareParameter.ts, 49, 1))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 52, 26))
+
+    if (typeof read() === 'string') {
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 52, 26))
+
+        const s: string | number = read();  // NOT narrowed — not stable
+>s : Symbol(s, Decl(stableModifierBareParameter.ts, 54, 13))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 52, 26))
+    }
+}
+
+// --- Section 7: Stable in type alias ---
+type StableReader<T> = stable () => T;
+>StableReader : Symbol(StableReader, Decl(stableModifierBareParameter.ts, 56, 1))
+>T : Symbol(T, Decl(stableModifierBareParameter.ts, 59, 18))
+>T : Symbol(T, Decl(stableModifierBareParameter.ts, 59, 18))
+
+function consumeAlias(read: StableReader<string | undefined>) {
+>consumeAlias : Symbol(consumeAlias, Decl(stableModifierBareParameter.ts, 59, 38))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 61, 22))
+>StableReader : Symbol(StableReader, Decl(stableModifierBareParameter.ts, 56, 1))
+
+    if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 61, 22))
+>undefined : Symbol(undefined)
+
+        const s: string = read();  // narrowed via type alias
+>s : Symbol(s, Decl(stableModifierBareParameter.ts, 63, 13))
+>read : Symbol(read, Decl(stableModifierBareParameter.ts, 61, 22))
+    }
+}
+
