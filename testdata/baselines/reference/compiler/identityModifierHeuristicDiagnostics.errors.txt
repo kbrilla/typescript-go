@@ -1,29 +1,30 @@
-identityModifierHeuristicDiagnostics.ts(7,5): error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
-identityModifierHeuristicDiagnostics.ts(8,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierHeuristicDiagnostics.ts(8,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierHeuristicDiagnostics.ts(9,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierHeuristicDiagnostics.ts(13,5): error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
-identityModifierHeuristicDiagnostics.ts(14,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
+identityModifierHeuristicDiagnostics.ts(14,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierHeuristicDiagnostics.ts(15,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierHeuristicDiagnostics.ts(21,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierHeuristicDiagnostics.ts(25,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierHeuristicDiagnostics.ts(16,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
-identityModifierHeuristicDiagnostics.ts(38,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierHeuristicDiagnostics.ts(39,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierHeuristicDiagnostics.ts(22,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierHeuristicDiagnostics.ts(26,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierHeuristicDiagnostics.ts(39,9): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierHeuristicDiagnostics.ts(40,15): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
 ==== identityModifierHeuristicDiagnostics.ts (9 errors) ====
     declare const read: identity () => string | undefined;
     declare function unknownMutate(): void;
+    declare function unknownMutateWithArg(x: number): void;
     declare function invoke(cb: () => void): void;
     declare function delay(): Promise<void>;
     
     if (read() !== undefined) {
-        unknownMutate();
-        ~~~~~~~~~~~~~~~
-!!! error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
+        unknownMutateWithArg(1);
+        ~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterUnknown: string = read(); // should error + unknown-call-specific diagnostic
               ~~~~~~~~~~~~
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
@@ -32,9 +33,9 @@ identityModifierHeuristicDiagnostics.ts(39,15): error TS2322: Type 'string | und
     }
     
     if (read() !== undefined) {
-        unknownMutate();
-        ~~~~~~~~~~~~~~~
-!!! error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
+        unknownMutateWithArg(1);
+        ~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
         const afterUnknownFirst: string = read(); // should error + one boundary diagnostic on unknown call
               ~~~~~~~~~~~~~~~~~
 !!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.

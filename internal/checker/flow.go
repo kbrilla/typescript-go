@@ -741,10 +741,6 @@ func (c *Checker) shouldPreserveAmbientNoArgVoidUnknownCallNarrowing(reference *
 		return false
 	}
 
-	if c.maybeTypeOfKind(readReturnType, TypeFlagsUndefined|TypeFlagsNull) {
-		return false
-	}
-
 	return true
 }
 

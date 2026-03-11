@@ -922,7 +922,7 @@ if (m6BoundaryIdentity() !== undefined) {
 >unknownMutate() : void
 >unknownMutate : () => void
 
-    const m6IdentityBoundaryControl: string = m6BoundaryIdentity(); // expected to remain conservative
+    const m6IdentityBoundaryControl: string = m6BoundaryIdentity(); // parity with getter baseline via ambient no-arg unknown-call preserve rule
 >m6IdentityBoundaryControl : string
 >m6BoundaryIdentity() : string | undefined
 >m6BoundaryIdentity : () => string | undefined

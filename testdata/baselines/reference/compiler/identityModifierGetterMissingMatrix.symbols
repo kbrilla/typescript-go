@@ -855,7 +855,7 @@ if (m6BoundaryIdentity() !== undefined) {
     unknownMutate();
 >unknownMutate : Symbol(unknownMutate, Decl(identityModifierGetterMissingMatrix.ts, 0, 0))
 
-    const m6IdentityBoundaryControl: string = m6BoundaryIdentity(); // expected to remain conservative
+    const m6IdentityBoundaryControl: string = m6BoundaryIdentity(); // parity with getter baseline via ambient no-arg unknown-call preserve rule
 >m6IdentityBoundaryControl : Symbol(m6IdentityBoundaryControl, Decl(identityModifierGetterMissingMatrix.ts, 280, 9))
 >m6BoundaryIdentity : Symbol(m6BoundaryIdentity, Decl(identityModifierGetterMissingMatrix.ts, 256, 13))
 

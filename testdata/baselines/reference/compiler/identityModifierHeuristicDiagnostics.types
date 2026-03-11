@@ -7,6 +7,10 @@ declare const read: identity () => string | undefined;
 declare function unknownMutate(): void;
 >unknownMutate : () => void
 
+declare function unknownMutateWithArg(x: number): void;
+>unknownMutateWithArg : (x: number) => void
+>x : number
+
 declare function invoke(cb: () => void): void;
 >invoke : (cb: () => void) => void
 >cb : () => void
@@ -20,9 +24,10 @@ if (read() !== undefined) {
 >read : () => string | undefined
 >undefined : undefined
 
-    unknownMutate();
->unknownMutate() : void
->unknownMutate : () => void
+    unknownMutateWithArg(1);
+>unknownMutateWithArg(1) : void
+>unknownMutateWithArg : (x: number) => void
+>1 : 1
 
     const afterUnknown: string = read(); // should error + unknown-call-specific diagnostic
 >afterUnknown : string
@@ -39,9 +44,10 @@ if (read() !== undefined) {
 >read : () => string | undefined
 >undefined : undefined
 
-    unknownMutate();
->unknownMutate() : void
->unknownMutate : () => void
+    unknownMutateWithArg(1);
+>unknownMutateWithArg(1) : void
+>unknownMutateWithArg : (x: number) => void
+>1 : 1
 
     const afterUnknownFirst: string = read(); // should error + one boundary diagnostic on unknown call
 >afterUnknownFirst : string

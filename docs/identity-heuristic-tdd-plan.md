@@ -335,7 +335,7 @@ Current status:
   - Broad corpus mismatch count moved `4 -> 0` cases and corpus error count moved `9 -> 2`.
   - Getter parity sweep score has now moved to `9/9` after closing the guarded unknown-call parity shape (`P8`/`X3`).
   - Added missing getter-origin parity expansion matrix in `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts`.
-  - Added `6` missing scenarios (`M1`..`M6`) with source-tagged sections; accepted baseline outcome is `5` matched and `1` mismatched (`M6` unknown-call boundary contrast remains conservative for identity).
+  - Added `6` missing scenarios (`M1`..`M6`) with source-tagged sections; accepted baseline outcome is `6` matched and `0` mismatched (M6 unknown-call boundary contrast is closed under a bounded ambient no-arg preserve rule).
   - Remaining: expand parity mapping against additional submodule scenarios.
 - [ ] Step 7: Tier 2 guarded invalidation and precision (broad)
   - Added starter local test coverage for candidate Tier 2 forwarding/passthrough patterns with current conservative expectations.
@@ -372,22 +372,23 @@ Current status:
   - `npx hereby baseline-accept`
 - Measured result from accepted baseline:
   - total scenarios: `6`
-  - matched: `5`
-  - mismatched: `1`
-- Newly observed gap to track:
-  - conformance-style unknown-call boundary contrast (`M6`) remains conservative for identity reads.
+  - matched: `6`
+  - mismatched: `0`
+- M6 status update:
+  - conformance-style unknown-call boundary contrast (`M6`) is now closed under a guarded ambient no-arg unknown-call preserve slice.
 
-### Latest Increment (M6 Closure Attempt, Not Landed)
-- Objective: close `M6` with the narrowest possible unknown-call preserve rule.
-- Red evidence captured:
-  - after checker experiment, `go test -run='TestLocal/identityModifierGetterMissingMatrix\.ts' ./internal/testrunner` failed with baseline drift (`identityModifierGetterMissingMatrix.errors.txt`), indicating the target mismatch was removed.
+### Latest Increment (M6 Closure Landed with Narrow Rule)
+- Objective: close `M6` with the narrowest possible unknown-call preserve rule and keep surrounding boundaries conservative.
+- Validation evidence:
+  - `go test -run='TestLocal/identityModifierGetterMissingMatrix\.ts' ./internal/testrunner` passed after baseline acceptance with `M6` closed.
+  - `go test -run='TestLocal/identityModifierBoundaries\.ts' ./internal/testrunner` remained intentionally conservative for non-ambient unknown-call and callback/await/alias boundaries.
 - Safety check outcome:
-  - running adjacent boundary coverage showed non-target conservative drift:
-    - `go test -run='TestLocal/(identityModifierGetterMissingMatrix|identityModifierParity|identityModifierBoundaries)\.ts' ./internal/testrunner`
-    - drift appeared in `identityModifierBoundaries.ts`.
+  - adjacent boundary coverage remains conservative for non-ambient unknown calls and callback/await/alias boundaries.
+  - explicit negative control added: unknown call with args still invalidates narrowing in `identityModifierHeuristicDiagnostics.ts`.
 - Decision:
-  - reverted the checker experiment and retained conservative behavior outside the target shape.
-  - matrix remains `5/6` matched with `M6` as explicit residual for Phase 1.
+  - landed the checker rule with bounded guards (ambient, no-arg, `void`, expression-statement call boundary, identity read with union return).
+  - updated boundary matrix expectations to preserve narrowing only for this exact ambient no-arg shape while retaining conservative behavior for with-arg unknown calls and other uncertainty boundaries.
+  - matrix is now `6/6` matched after landing the guarded ambient no-arg unknown-call preserve slice.
 
 ## Implementation Checklist Updates From Re-Review
 - [x] Added complexity guardrail requirements for preserve matcher design.

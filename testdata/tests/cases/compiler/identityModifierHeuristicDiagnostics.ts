@@ -3,17 +3,18 @@
 
 declare const read: identity () => string | undefined;
 declare function unknownMutate(): void;
+declare function unknownMutateWithArg(x: number): void;
 declare function invoke(cb: () => void): void;
 declare function delay(): Promise<void>;
 
 if (read() !== undefined) {
-    unknownMutate();
+    unknownMutateWithArg(1);
     const afterUnknown: string = read(); // should error + unknown-call-specific diagnostic
     afterUnknown;
 }
 
 if (read() !== undefined) {
-    unknownMutate();
+    unknownMutateWithArg(1);
     const afterUnknownFirst: string = read(); // should error + one boundary diagnostic on unknown call
     const afterUnknownSecond: string = read(); // should error, no duplicate boundary diagnostic spam
     afterUnknownFirst;

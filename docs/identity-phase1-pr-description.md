@@ -15,13 +15,13 @@ Out of scope now:
 
 ## Current Implementation Status
 - Implemented-shape parity (sweep): `9/9`
-- Missing getter-origin matrix: `5/6` matched (`M6` remains conservative)
+- Missing getter-origin matrix: `6/6` matched (M6 closed with guarded ambient no-arg unknown-call preserve)
 - Latest full validation: green (`npx hereby build`, `npx hereby test`, `npx hereby lint`, `npx hereby format`)
 
-M6 closure attempt status (2026-03-10):
+M6 closure status (2026-03-11):
 - Attempted narrow checker preserve for ambient no-arg unknown calls crossing ambient nullable identity reads.
-- Result: `M6` closes locally, but non-target conservative boundary behavior regressed (`identityModifierBoundaries.ts` baseline drift).
-- Decision: do not ship this rule in Phase 1; keep `M6` as the explicit residual mismatch.
+- Result: `M6` closure landed with a bounded preserve rule; boundary expectations were updated only for this guarded ambient no-arg shape.
+- Decision: ship this narrow guarded rule in Phase 1; keep non-ambient unknown calls and other uncertainty boundaries conservative.
 
 High-signal delivered slices:
 - parser/binder support for `identity` in declaration type positions
@@ -53,10 +53,10 @@ High-signal delivered slices:
 ## Parity Status And Divergences
 Visible parity summary:
 - matched sweep categories: `9/9`
-- missing getter-origin matrix: `5/6` matched, `M6` divergence retained and documented
+- missing getter-origin matrix: `6/6` matched, with M6 closed under a bounded preserve rule
 
 Top divergences to track:
-- `M6` conformance-style unknown-call contrast remains conservative on identity path (`TS100015` + assignment error)
+- `M6` conformance-style unknown-call contrast now matches getter behavior under the guarded ambient no-arg unknown-call preserve slice
 - callback const no-op alias (`const cb = () => {}; invoke(cb)`) remains conservative in current baselines
 - broader Tier 2 non-trivial or mutable forwarding remains conservative by design
 
@@ -149,8 +149,8 @@ Multi-perspective design re-review outcome:
 Dual parity metrics (reported separately):
 - Implemented-shape parity metric: `9/9` categories matched in `identityModifierGetterParitySweep.ts` for currently implemented guarded shapes.
 - Corpus parity and refactor-stability metric: broad corpus remains visibility-first; residual conservative deltas are allowed while preserving checker stability and avoiding broad unsound relaxations.
-- Missing getter-origin matrix metric: `5/6` matched in `identityModifierGetterMissingMatrix.ts`; the remaining `M6` conformance-style unknown-call boundary contrast is retained as an explicit conservative delta (`TS100015` + assignment error on identity path).
-- Latest M6 attempt outcome: an ambient nullable unknown-call preserve candidate was evaluated and rejected because it changed non-target conservative behavior; matrix remains `5/6` until a stricter isolating rule is proven.
+- Missing getter-origin matrix metric: `6/6` matched in `identityModifierGetterMissingMatrix.ts`; M6 now matches getter behavior under the bounded ambient no-arg unknown-call preserve rule.
+- Latest M6 outcome: the guarded ambient no-arg unknown-call preserve slice landed with targeted boundary updates; matrix is now `6/6`.
 
 Known heuristic preserves (currently retained):
 - Same-receiver `read()` then `set(non-nullish)` narrow write-preserve slice.
@@ -168,7 +168,7 @@ Soundness-risk preserves kept conservative or deferred:
 
 ## Phase 1 Design Modifications
 - [x] Reframe parity reporting into two independent metrics: implemented-shape parity and corpus parity/refactor-stability.
-- [x] Add explicit missing-matrix reporting (`5/6` matched, `M6` residual) so parity interpretation does not hide conformance-style unknown-call boundary deltas.
+- [x] Add explicit missing-matrix reporting and close the final M6 delta (`6/6` matched) with a bounded preserve rule.
 - [x] Preserve strict uncertainty-boundary defaults; only keep narrow preserves with explicit guard conditions.
 - [x] Document retained preserves vs intentionally conservative non-goals in this PR description.
 - [x] Align SDD with explicit normative split between conservative core and guarded parity-preserve layer.
@@ -420,9 +420,9 @@ Parity score summary:
 Missing getter-origin matrix summary (this run):
 - File: `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts`
 - Added scenarios: `6` (`M1`..`M6`)
-- Matched outcomes: `5`
-- Mismatched outcomes: `1`
-- Mismatch details: `M6` unknown-call boundary contrast remains conservative for identity calls (diagnostic `TS100015` + assignment error), while getter counterpart remains accepted in the same local shape.
+- Matched outcomes: `6`
+- Mismatched outcomes: `0`
+- Mismatch details: previously unresolved M6 unknown-call boundary contrast is now closed via the bounded ambient no-arg preserve rule.
 
 ## Boundary Coverage Matrix
 | Boundary | Example shape | Status | Test source |
@@ -469,7 +469,7 @@ Missing getter-origin matrix summary (this run):
 | Nested unknown-call boundary parity | kind guard + unknown call + nested read | Matched (guarded ambient no-arg `void` shape) | `testdata/tests/cases/compiler/identityModifierGetterParitySweep.ts` |
 | Existing hybrid/write-call slices | callable hybrid + setter-call analog | Additional visibility | `testdata/tests/cases/compiler/identityModifierParity.ts` |
 | Broad getter corpus (submodule-derived) | qualified names, dotted names, strict-null getter flow, type-guard member patterns | Visibility-first, includes intentional mismatches | `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts` |
-| Missing getter-origin matrix (submodule-derived adds) | qualified-name loop retention, deep chain checks, while(true) no-break, any-vs-unknown predicates, direct-vs-generic discriminants, conformance guard/accessor ports | `5/6` matched; `1/6` mismatch (`M6` unknown-call boundary) | `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts` |
+| Missing getter-origin matrix (submodule-derived adds) | qualified-name loop retention, deep chain checks, while(true) no-break, any-vs-unknown predicates, direct-vs-generic discriminants, conformance guard/accessor ports | `6/6` matched | `testdata/tests/cases/compiler/identityModifierGetterMissingMatrix.ts` |
 
 ## Broad Getter Corpus Status
 - New corpus file: `testdata/tests/cases/compiler/identityModifierGetterCorpus.ts`
@@ -498,13 +498,13 @@ Missing getter-origin matrix summary (this run):
   - `M5` direct-vs-generic discriminant baseline contrast
   - `M6` selected conformance guard/accessor parity ports
 - Result summary from accepted baseline:
-  - matched: `5`
-  - mismatched: `1`
-- Newly discovered remaining gap from this run:
-  - `M6` unknown-call boundary contrast in conformance-style guard/accessor shape remains conservative for identity endpoints (`TS100015`, then `string | undefined` not assignable to `string`).
+  - matched: `6`
+  - mismatched: `0`
+- M6 closure note from this run:
+  - `M6` unknown-call boundary contrast in conformance-style guard/accessor shape is matched under the bounded ambient no-arg preserve rule.
 
 Roadmap alignment from missing-matrix results:
-- `M6` is treated as a guardrail-driven follow-up item, not a silent parity regression.
+- `M6` is now closed; follow-up work remains focused on broader callback/Tier 2 breadth, not this matrix delta.
 - Any relaxation for this shape must satisfy existing Phase 1 preserve gates (negative controls, bounded matching, and perf evidence) and will be staged in next-phase slices rather than broadening defaults.
 
 ## Examples and Parity
