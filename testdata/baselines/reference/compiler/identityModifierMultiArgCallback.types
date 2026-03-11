@@ -29,6 +29,10 @@ declare function invokeThreeArgs(a: number, callback: () => void, b: string): vo
 >callback : () => void
 >b : string
 
+declare function pass<T>(x: T): T;
+>pass : <T>(x: T) => T
+>x : T
+
 declare const read: Signal<string | undefined>;
 >read : Signal<string | undefined>
 
@@ -173,6 +177,128 @@ if (read() !== undefined) {
 
     const r7: string = read(); // Should fail - callback has parameters
 >r7 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === Multi-arg with property callback reference (Phase 2) ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    const callbacks = {
+>callbacks : { noop: () => void; }
+>{        noop: () => {},    } : { noop: () => void; }
+
+        noop: () => {},
+>noop : () => void
+>() => {} : () => void
+
+    };
+    invokeWithData(42, callbacks.noop);
+>invokeWithData(42, callbacks.noop) : void
+>invokeWithData : (data: number, callback: () => void) => void
+>42 : 42
+>callbacks.noop : () => void
+>callbacks : { noop: () => void; }
+>noop : () => void
+
+    const r8: string = read(); // Phase 2: should preserve narrowing
+>r8 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === Multi-arg with nested forwarding wrapper (Phase 2) ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invokeWithData(42, pass(pass(() => {})));
+>invokeWithData(42, pass(pass(() => {}))) : void
+>invokeWithData : (data: number, callback: () => void) => void
+>42 : 42
+>pass(pass(() => {})) : () => void
+>pass : <T>(x: T) => T
+>pass(() => {}) : () => void
+>pass : <T>(x: T) => T
+>() => {} : () => void
+
+    const r9: string = read(); // Phase 2: should preserve narrowing
+>r9 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === NEGATIVE: property callback reference with non-empty body ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    const callbacks = {
+>callbacks : { nonEmpty: () => void; }
+>{        nonEmpty: () => {            const sideEffect = 1;            sideEffect;        },    } : { nonEmpty: () => void; }
+
+        nonEmpty: () => {
+>nonEmpty : () => void
+>() => {            const sideEffect = 1;            sideEffect;        } : () => void
+
+            const sideEffect = 1;
+>sideEffect : 1
+>1 : 1
+
+            sideEffect;
+>sideEffect : 1
+
+        },
+    };
+    invokeWithData(42, callbacks.nonEmpty);
+>invokeWithData(42, callbacks.nonEmpty) : void
+>invokeWithData : (data: number, callback: () => void) => void
+>42 : 42
+>callbacks.nonEmpty : () => void
+>callbacks : { nonEmpty: () => void; }
+>nonEmpty : () => void
+
+    const r10: string = read(); // Should fail - callback is non-empty
+>r10 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === NEGATIVE: nested forwarding wrapper around non-empty callback ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invokeWithData(42, pass(pass(() => {
+>invokeWithData(42, pass(pass(() => {        const sideEffect = 1;        sideEffect;    }))) : void
+>invokeWithData : (data: number, callback: () => void) => void
+>42 : 42
+>pass(pass(() => {        const sideEffect = 1;        sideEffect;    })) : () => void
+>pass : <T>(x: T) => T
+>pass(() => {        const sideEffect = 1;        sideEffect;    }) : () => void
+>pass : <T>(x: T) => T
+>() => {        const sideEffect = 1;        sideEffect;    } : () => void
+
+        const sideEffect = 1;
+>sideEffect : 1
+>1 : 1
+
+        sideEffect;
+>sideEffect : 1
+
+    })));
+    const r11: string = read(); // Should fail - wrapped callback is non-empty
+>r11 : string
 >read() : string | undefined
 >read : Signal<string | undefined>
 }

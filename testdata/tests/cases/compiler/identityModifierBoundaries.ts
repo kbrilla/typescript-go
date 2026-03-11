@@ -115,6 +115,60 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
+    const callbacks = {
+        noop: () => {},
+    };
+    invoke(callbacks.noop);
+    const afterPropertyNoopCallbackAlias: string = read(); // should preserve
+}
+
+if (read() !== undefined) {
+    const callbacks = {
+        noop: () => {},
+    };
+    invoke(callbacks["noop"]);
+    const afterElementPropertyNoopCallbackAlias: string = read(); // should preserve
+}
+
+if (read() !== undefined) {
+    const callbacks = {
+        nonEmpty: () => {
+            const callbackWrite = 1;
+            callbackWrite;
+        },
+    };
+    invoke(callbacks.nonEmpty);
+    const afterPropertyNonEmptyCallbackAlias: string = read(); // should error
+}
+
+if (read() !== undefined) {
+    let mutableCallbacks = {
+        noop: () => {},
+    };
+    mutableCallbacks = {
+        noop: () => {
+            const callbackWrite = 1;
+            callbackWrite;
+        },
+    };
+    invoke(mutableCallbacks.noop);
+    const afterMutablePropertyNoopCallbackAlias: string = read(); // should error
+}
+
+if (read() !== undefined) {
+    invoke(pass(pass(() => {})));
+    const afterNestedForwardedNoopCallback: string = read(); // should preserve
+}
+
+if (read() !== undefined) {
+    invoke(pass(pass(() => {
+        const callbackWrite = 1;
+        callbackWrite;
+    })));
+    const afterNestedForwardedNonEmptyCallback: string = read(); // should error
+}
+
+if (read() !== undefined) {
     const escapedRead = read;
     const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
     escapedRead;

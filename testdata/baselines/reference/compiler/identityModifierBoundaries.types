@@ -375,6 +375,194 @@ if (read() !== undefined) {
 >read : () => string | undefined
 >undefined : undefined
 
+    const callbacks = {
+>callbacks : { noop: () => void; }
+>{        noop: () => {},    } : { noop: () => void; }
+
+        noop: () => {},
+>noop : () => void
+>() => {} : () => void
+
+    };
+    invoke(callbacks.noop);
+>invoke(callbacks.noop) : void
+>invoke : (cb: () => void) => void
+>callbacks.noop : () => void
+>callbacks : { noop: () => void; }
+>noop : () => void
+
+    const afterPropertyNoopCallbackAlias: string = read(); // should preserve
+>afterPropertyNoopCallbackAlias : string
+>read() : string | undefined
+>read : () => string | undefined
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const callbacks = {
+>callbacks : { noop: () => void; }
+>{        noop: () => {},    } : { noop: () => void; }
+
+        noop: () => {},
+>noop : () => void
+>() => {} : () => void
+
+    };
+    invoke(callbacks["noop"]);
+>invoke(callbacks["noop"]) : void
+>invoke : (cb: () => void) => void
+>callbacks["noop"] : () => void
+>callbacks : { noop: () => void; }
+>"noop" : "noop"
+
+    const afterElementPropertyNoopCallbackAlias: string = read(); // should preserve
+>afterElementPropertyNoopCallbackAlias : string
+>read() : string | undefined
+>read : () => string | undefined
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    const callbacks = {
+>callbacks : { nonEmpty: () => void; }
+>{        nonEmpty: () => {            const callbackWrite = 1;            callbackWrite;        },    } : { nonEmpty: () => void; }
+
+        nonEmpty: () => {
+>nonEmpty : () => void
+>() => {            const callbackWrite = 1;            callbackWrite;        } : () => void
+
+            const callbackWrite = 1;
+>callbackWrite : 1
+>1 : 1
+
+            callbackWrite;
+>callbackWrite : 1
+
+        },
+    };
+    invoke(callbacks.nonEmpty);
+>invoke(callbacks.nonEmpty) : void
+>invoke : (cb: () => void) => void
+>callbacks.nonEmpty : () => void
+>callbacks : { nonEmpty: () => void; }
+>nonEmpty : () => void
+
+    const afterPropertyNonEmptyCallbackAlias: string = read(); // should error
+>afterPropertyNonEmptyCallbackAlias : string
+>read() : string | undefined
+>read : () => string | undefined
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    let mutableCallbacks = {
+>mutableCallbacks : { noop: () => void; }
+>{        noop: () => {},    } : { noop: () => void; }
+
+        noop: () => {},
+>noop : () => void
+>() => {} : () => void
+
+    };
+    mutableCallbacks = {
+>mutableCallbacks = {        noop: () => {            const callbackWrite = 1;            callbackWrite;        },    } : { noop: () => void; }
+>mutableCallbacks : { noop: () => void; }
+>{        noop: () => {            const callbackWrite = 1;            callbackWrite;        },    } : { noop: () => void; }
+
+        noop: () => {
+>noop : () => void
+>() => {            const callbackWrite = 1;            callbackWrite;        } : () => void
+
+            const callbackWrite = 1;
+>callbackWrite : 1
+>1 : 1
+
+            callbackWrite;
+>callbackWrite : 1
+
+        },
+    };
+    invoke(mutableCallbacks.noop);
+>invoke(mutableCallbacks.noop) : void
+>invoke : (cb: () => void) => void
+>mutableCallbacks.noop : () => void
+>mutableCallbacks : { noop: () => void; }
+>noop : () => void
+
+    const afterMutablePropertyNoopCallbackAlias: string = read(); // should error
+>afterMutablePropertyNoopCallbackAlias : string
+>read() : string | undefined
+>read : () => string | undefined
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invoke(pass(pass(() => {})));
+>invoke(pass(pass(() => {}))) : void
+>invoke : (cb: () => void) => void
+>pass(pass(() => {})) : () => void
+>pass : <T>(x: T) => T
+>pass(() => {}) : () => void
+>pass : <T>(x: T) => T
+>() => {} : () => void
+
+    const afterNestedForwardedNoopCallback: string = read(); // should preserve
+>afterNestedForwardedNoopCallback : string
+>read() : string | undefined
+>read : () => string | undefined
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
+    invoke(pass(pass(() => {
+>invoke(pass(pass(() => {        const callbackWrite = 1;        callbackWrite;    }))) : void
+>invoke : (cb: () => void) => void
+>pass(pass(() => {        const callbackWrite = 1;        callbackWrite;    })) : () => void
+>pass : <T>(x: T) => T
+>pass(() => {        const callbackWrite = 1;        callbackWrite;    }) : () => void
+>pass : <T>(x: T) => T
+>() => {        const callbackWrite = 1;        callbackWrite;    } : () => void
+
+        const callbackWrite = 1;
+>callbackWrite : 1
+>1 : 1
+
+        callbackWrite;
+>callbackWrite : 1
+
+    })));
+    const afterNestedForwardedNonEmptyCallback: string = read(); // should error
+>afterNestedForwardedNonEmptyCallback : string
+>read() : string | undefined
+>read : () => string | undefined
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : () => string | undefined
+>undefined : undefined
+
     const escapedRead = read;
 >escapedRead : () => string | undefined
 >read : () => string | undefined

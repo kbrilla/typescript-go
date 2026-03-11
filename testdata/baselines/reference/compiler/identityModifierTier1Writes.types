@@ -304,3 +304,194 @@ if (store.read() !== undefined) {
 >afterBracketSetCall : string
 }
 
+// Identity call write-matrix breadth: dynamic keys and receiver-alias writes.
+declare const keyStore: {
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+
+    read: identity () => string | undefined;
+>read : () => string | undefined
+
+    set(v: string | undefined): void;
+>set : (v: string | undefined) => void
+>v : string | undefined
+
+};
+
+declare const readKey: "read";
+>readKey : "read"
+
+if (keyStore[readKey]() !== undefined) {
+>keyStore[readKey]() !== undefined : boolean
+>keyStore[readKey]() : string | undefined
+>keyStore[readKey] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>readKey : "read"
+>undefined : undefined
+
+    const sameReadKey = readKey;
+>sameReadKey : "read"
+>readKey : "read"
+
+    keyStore[sameReadKey] = (() => undefined) as identity () => string | undefined;
+>keyStore[sameReadKey] = (() => undefined) as identity () => string | undefined : () => string | undefined
+>keyStore[sameReadKey] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>sameReadKey : "read"
+>(() => undefined) as identity () => string | undefined : () => string | undefined
+>(() => undefined) : () => undefined
+>() => undefined : () => undefined
+>undefined : undefined
+
+    const afterProvenDynamicWrite: string = keyStore[readKey](); // should error
+>afterProvenDynamicWrite : string
+>keyStore[readKey]() : string | undefined
+>keyStore[readKey] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>readKey : "read"
+
+    afterProvenDynamicWrite;
+>afterProvenDynamicWrite : string
+}
+
+if (keyStore.read() !== undefined) {
+>keyStore.read() !== undefined : boolean
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    const alias = keyStore;
+>alias : { read: () => string | undefined; set(v: string | undefined): void; }
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+
+    alias.read = (() => undefined) as identity () => string | undefined;
+>alias.read = (() => undefined) as identity () => string | undefined : () => string | undefined
+>alias.read : () => string | undefined
+>alias : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>(() => undefined) as identity () => string | undefined : () => string | undefined
+>(() => undefined) : () => undefined
+>() => undefined : () => undefined
+>undefined : undefined
+
+    const afterAliasDotWrite: string = keyStore.read(); // should error
+>afterAliasDotWrite : string
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+
+    afterAliasDotWrite;
+>afterAliasDotWrite : string
+}
+
+if (keyStore[readKey]() !== undefined) {
+>keyStore[readKey]() !== undefined : boolean
+>keyStore[readKey]() : string | undefined
+>keyStore[readKey] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>readKey : "read"
+>undefined : undefined
+
+    const alias = keyStore;
+>alias : { read: () => string | undefined; set(v: string | undefined): void; }
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+
+    alias[readKey] = (() => undefined) as identity () => string | undefined;
+>alias[readKey] = (() => undefined) as identity () => string | undefined : () => string | undefined
+>alias[readKey] : () => string | undefined
+>alias : { read: () => string | undefined; set(v: string | undefined): void; }
+>readKey : "read"
+>(() => undefined) as identity () => string | undefined : () => string | undefined
+>(() => undefined) : () => undefined
+>() => undefined : () => undefined
+>undefined : undefined
+
+    const afterAliasDynamicWrite: string = keyStore[readKey](); // should error
+>afterAliasDynamicWrite : string
+>keyStore[readKey]() : string | undefined
+>keyStore[readKey] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>readKey : "read"
+
+    afterAliasDynamicWrite;
+>afterAliasDynamicWrite : string
+}
+
+if (keyStore.read() !== undefined) {
+>keyStore.read() !== undefined : boolean
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    let unknownKey: string = "read";
+>unknownKey : string
+>"read" : "read"
+
+    unknownKey = "read";
+>unknownKey = "read" : "read"
+>unknownKey : string
+>"read" : "read"
+
+    keyStore[unknownKey as "read"] = (() => undefined) as identity () => string | undefined;
+>keyStore[unknownKey as "read"] = (() => undefined) as identity () => string | undefined : () => string | undefined
+>keyStore[unknownKey as "read"] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>unknownKey as "read" : "read"
+>unknownKey : string
+>(() => undefined) as identity () => string | undefined : () => string | undefined
+>(() => undefined) : () => undefined
+>() => undefined : () => undefined
+>undefined : undefined
+
+    const afterNonProvenDynamicWrite: string = keyStore.read(); // should error
+>afterNonProvenDynamicWrite : string
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+
+    afterNonProvenDynamicWrite;
+>afterNonProvenDynamicWrite : string
+}
+
+declare const otherKeyStore: {
+>otherKeyStore : { read: () => string | undefined; }
+
+    read: identity () => string | undefined;
+>read : () => string | undefined
+
+};
+
+if (keyStore.read() !== undefined) {
+>keyStore.read() !== undefined : boolean
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    otherKeyStore.read = (() => undefined) as identity () => string | undefined;
+>otherKeyStore.read = (() => undefined) as identity () => string | undefined : () => string | undefined
+>otherKeyStore.read : () => string | undefined
+>otherKeyStore : { read: () => string | undefined; }
+>read : () => string | undefined
+>(() => undefined) as identity () => string | undefined : () => string | undefined
+>(() => undefined) : () => undefined
+>() => undefined : () => undefined
+>undefined : undefined
+
+    const afterOtherReceiverWrite: string = keyStore.read(); // should stay narrowed
+>afterOtherReceiverWrite : string
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+
+    afterOtherReceiverWrite;
+>afterOtherReceiverWrite : string
+}
+

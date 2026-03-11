@@ -1,11 +1,11 @@
-identityModifierTier2.ts(78,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierTier2.ts(81,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
-  Type 'undefined' is not assignable to type 'string'.
-identityModifierTier2.ts(89,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
-identityModifierTier2.ts(92,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(90,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier2.ts(93,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 identityModifierTier2.ts(101,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
 identityModifierTier2.ts(104,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierTier2.ts(113,11): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier2.ts(116,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
   Type 'undefined' is not assignable to type 'string'.
 
 
@@ -48,6 +48,18 @@ identityModifierTier2.ts(104,11): error TS2322: Type 'string | undefined' is not
     
         const afterConstHelperAliasChain: string = read(); // should stay narrowed
         afterConstHelperAliasChain;
+    }
+    
+    if (read() !== undefined) {
+        // Tier 2 precision target: 2-hop const alias-chain to trivial passthrough helper should preserve narrowing.
+        const localId = <T>(x: T) => x;
+        const localId2 = localId;
+        const localId3 = localId2;
+        const forwarded = localId3(read);
+        forwarded;
+    
+        const afterConstHelperTwoHopAliasChain: string = read(); // should stay narrowed
+        afterConstHelperTwoHopAliasChain;
     }
     
     if (read() !== undefined) {
@@ -133,24 +145,46 @@ identityModifierTier2.ts(104,11): error TS2322: Type 'string | undefined' is not
     }
     
     if (read() !== undefined) {
-        // Conservative boundary: mutable helper in expression-statement form remains invalidating.
+        // Current guardrail: bare standalone helper expression-statement call is treated as unrelated and preserves narrowing.
         let localMaybeId = <T>(x: T) => x;
         localMaybeId = pass;
         localMaybeId(read);
     
-        const afterExprStmtMutableHelper: string = read(); // current conservative: error
+        const afterExprStmtMutableHelper: string = read(); // currently preserved under standalone-call unrelated heuristic
         afterExprStmtMutableHelper;
     }
     
     if (read() !== undefined) {
-        // Conservative boundary: non-trivial helper in expression-statement form remains invalidating.
+        // Current guardrail: bare standalone helper expression-statement call is treated as unrelated and preserves narrowing.
         function localFnWrap<T>(x: T) {
             return () => x;
         }
         localFnWrap(read);
     
-        const afterExprStmtNonTrivialHelper: string = read(); // current conservative: error
+        const afterExprStmtNonTrivialHelper: string = read(); // currently preserved under standalone-call unrelated heuristic
         afterExprStmtNonTrivialHelper;
+    }
+    
+    if (read() !== undefined) {
+        // Conservative boundary: mutable helper wrapped in a further helper call should invalidate prior narrowing.
+        let localMaybeId = <T>(x: T) => x;
+        localMaybeId = pass;
+        useReader(localMaybeId(read));
+    
+        const afterWrappedMutableHelperPassthrough: string = read(); // current conservative: error
+        afterWrappedMutableHelperPassthrough;
+    }
+    
+    if (read() !== undefined) {
+        // Conservative boundary: non-trivial helper wrapped in a further helper call should invalidate prior narrowing.
+        function localFnWrap<T>(x: T) {
+            const local = x;
+            return local;
+        }
+        useReader(localFnWrap(read));
+    
+        const afterWrappedNonTrivialFnHelper: string = read(); // current conservative: error
+        afterWrappedNonTrivialFnHelper;
     }
     
     if (read() !== undefined) {

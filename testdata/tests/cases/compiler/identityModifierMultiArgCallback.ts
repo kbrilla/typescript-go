@@ -9,6 +9,7 @@ declare function invokeWithData(data: number, callback: () => void): void;
 declare function invokeMultiCallback(cb1: () => void, cb2: () => void): void;
 declare function invokeCallbackFirst(callback: () => void, data: number): void;
 declare function invokeThreeArgs(a: number, callback: () => void, b: string): void;
+declare function pass<T>(x: T): T;
 
 declare const read: Signal<string | undefined>;
 
@@ -53,4 +54,40 @@ declare function invokeWithParamCb(data: number, callback: (x: number) => void):
 if (read() !== undefined) {
     invokeWithParamCb(42, (x) => {});
     const r7: string = read(); // Should fail - callback has parameters
+}
+
+// === Multi-arg with property callback reference (Phase 2) ===
+if (read() !== undefined) {
+    const callbacks = {
+        noop: () => {},
+    };
+    invokeWithData(42, callbacks.noop);
+    const r8: string = read(); // Phase 2: should preserve narrowing
+}
+
+// === Multi-arg with nested forwarding wrapper (Phase 2) ===
+if (read() !== undefined) {
+    invokeWithData(42, pass(pass(() => {})));
+    const r9: string = read(); // Phase 2: should preserve narrowing
+}
+
+// === NEGATIVE: property callback reference with non-empty body ===
+if (read() !== undefined) {
+    const callbacks = {
+        nonEmpty: () => {
+            const sideEffect = 1;
+            sideEffect;
+        },
+    };
+    invokeWithData(42, callbacks.nonEmpty);
+    const r10: string = read(); // Should fail - callback is non-empty
+}
+
+// === NEGATIVE: nested forwarding wrapper around non-empty callback ===
+if (read() !== undefined) {
+    invokeWithData(42, pass(pass(() => {
+        const sideEffect = 1;
+        sideEffect;
+    })));
+    const r11: string = read(); // Should fail - wrapped callback is non-empty
 }

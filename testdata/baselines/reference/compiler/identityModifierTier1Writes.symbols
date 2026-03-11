@@ -266,3 +266,148 @@ if (store.read() !== undefined) {
 >afterBracketSetCall : Symbol(afterBracketSetCall, Decl(identityModifierTier1Writes.ts, 79, 9))
 }
 
+// Identity call write-matrix breadth: dynamic keys and receiver-alias writes.
+declare const keyStore: {
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+
+    read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+
+    set(v: string | undefined): void;
+>set : Symbol(set, Decl(identityModifierTier1Writes.ts, 85, 44))
+>v : Symbol(v, Decl(identityModifierTier1Writes.ts, 86, 8))
+
+};
+
+declare const readKey: "read";
+>readKey : Symbol(readKey, Decl(identityModifierTier1Writes.ts, 89, 13))
+
+if (keyStore[readKey]() !== undefined) {
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>readKey : Symbol(readKey, Decl(identityModifierTier1Writes.ts, 89, 13))
+>undefined : Symbol(undefined)
+
+    const sameReadKey = readKey;
+>sameReadKey : Symbol(sameReadKey, Decl(identityModifierTier1Writes.ts, 92, 9))
+>readKey : Symbol(readKey, Decl(identityModifierTier1Writes.ts, 89, 13))
+
+    keyStore[sameReadKey] = (() => undefined) as identity () => string | undefined;
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>sameReadKey : Symbol(sameReadKey, Decl(identityModifierTier1Writes.ts, 92, 9))
+>undefined : Symbol(undefined)
+
+    const afterProvenDynamicWrite: string = keyStore[readKey](); // should error
+>afterProvenDynamicWrite : Symbol(afterProvenDynamicWrite, Decl(identityModifierTier1Writes.ts, 94, 9))
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>readKey : Symbol(readKey, Decl(identityModifierTier1Writes.ts, 89, 13))
+
+    afterProvenDynamicWrite;
+>afterProvenDynamicWrite : Symbol(afterProvenDynamicWrite, Decl(identityModifierTier1Writes.ts, 94, 9))
+}
+
+if (keyStore.read() !== undefined) {
+>keyStore.read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>undefined : Symbol(undefined)
+
+    const alias = keyStore;
+>alias : Symbol(alias, Decl(identityModifierTier1Writes.ts, 99, 9))
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+
+    alias.read = (() => undefined) as identity () => string | undefined;
+>alias.read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>alias : Symbol(alias, Decl(identityModifierTier1Writes.ts, 99, 9))
+>read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>undefined : Symbol(undefined)
+
+    const afterAliasDotWrite: string = keyStore.read(); // should error
+>afterAliasDotWrite : Symbol(afterAliasDotWrite, Decl(identityModifierTier1Writes.ts, 101, 9))
+>keyStore.read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+
+    afterAliasDotWrite;
+>afterAliasDotWrite : Symbol(afterAliasDotWrite, Decl(identityModifierTier1Writes.ts, 101, 9))
+}
+
+if (keyStore[readKey]() !== undefined) {
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>readKey : Symbol(readKey, Decl(identityModifierTier1Writes.ts, 89, 13))
+>undefined : Symbol(undefined)
+
+    const alias = keyStore;
+>alias : Symbol(alias, Decl(identityModifierTier1Writes.ts, 106, 9))
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+
+    alias[readKey] = (() => undefined) as identity () => string | undefined;
+>alias : Symbol(alias, Decl(identityModifierTier1Writes.ts, 106, 9))
+>readKey : Symbol(readKey, Decl(identityModifierTier1Writes.ts, 89, 13))
+>undefined : Symbol(undefined)
+
+    const afterAliasDynamicWrite: string = keyStore[readKey](); // should error
+>afterAliasDynamicWrite : Symbol(afterAliasDynamicWrite, Decl(identityModifierTier1Writes.ts, 108, 9))
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>readKey : Symbol(readKey, Decl(identityModifierTier1Writes.ts, 89, 13))
+
+    afterAliasDynamicWrite;
+>afterAliasDynamicWrite : Symbol(afterAliasDynamicWrite, Decl(identityModifierTier1Writes.ts, 108, 9))
+}
+
+if (keyStore.read() !== undefined) {
+>keyStore.read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>undefined : Symbol(undefined)
+
+    let unknownKey: string = "read";
+>unknownKey : Symbol(unknownKey, Decl(identityModifierTier1Writes.ts, 113, 7))
+
+    unknownKey = "read";
+>unknownKey : Symbol(unknownKey, Decl(identityModifierTier1Writes.ts, 113, 7))
+
+    keyStore[unknownKey as "read"] = (() => undefined) as identity () => string | undefined;
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>unknownKey : Symbol(unknownKey, Decl(identityModifierTier1Writes.ts, 113, 7))
+>undefined : Symbol(undefined)
+
+    const afterNonProvenDynamicWrite: string = keyStore.read(); // should error
+>afterNonProvenDynamicWrite : Symbol(afterNonProvenDynamicWrite, Decl(identityModifierTier1Writes.ts, 116, 9))
+>keyStore.read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+
+    afterNonProvenDynamicWrite;
+>afterNonProvenDynamicWrite : Symbol(afterNonProvenDynamicWrite, Decl(identityModifierTier1Writes.ts, 116, 9))
+}
+
+declare const otherKeyStore: {
+>otherKeyStore : Symbol(otherKeyStore, Decl(identityModifierTier1Writes.ts, 120, 13))
+
+    read: identity () => string | undefined;
+>read : Symbol(read, Decl(identityModifierTier1Writes.ts, 120, 30))
+
+};
+
+if (keyStore.read() !== undefined) {
+>keyStore.read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>undefined : Symbol(undefined)
+
+    otherKeyStore.read = (() => undefined) as identity () => string | undefined;
+>otherKeyStore.read : Symbol(read, Decl(identityModifierTier1Writes.ts, 120, 30))
+>otherKeyStore : Symbol(otherKeyStore, Decl(identityModifierTier1Writes.ts, 120, 13))
+>read : Symbol(read, Decl(identityModifierTier1Writes.ts, 120, 30))
+>undefined : Symbol(undefined)
+
+    const afterOtherReceiverWrite: string = keyStore.read(); // should stay narrowed
+>afterOtherReceiverWrite : Symbol(afterOtherReceiverWrite, Decl(identityModifierTier1Writes.ts, 126, 9))
+>keyStore.read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(identityModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(identityModifierTier1Writes.ts, 84, 25))
+
+    afterOtherReceiverWrite;
+>afterOtherReceiverWrite : Symbol(afterOtherReceiverWrite, Decl(identityModifierTier1Writes.ts, 126, 9))
+}
+

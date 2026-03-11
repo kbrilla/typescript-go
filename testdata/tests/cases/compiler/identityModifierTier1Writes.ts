@@ -83,3 +83,50 @@ if (store.read() !== undefined) {
     const afterBracketSetCall: string = store.read(); // should stay narrowed
     afterBracketSetCall;
 }
+
+// Identity call write-matrix breadth: dynamic keys and receiver-alias writes.
+declare const keyStore: {
+    read: identity () => string | undefined;
+    set(v: string | undefined): void;
+};
+
+declare const readKey: "read";
+
+if (keyStore[readKey]() !== undefined) {
+    const sameReadKey = readKey;
+    keyStore[sameReadKey] = (() => undefined) as identity () => string | undefined;
+    const afterProvenDynamicWrite: string = keyStore[readKey](); // should error
+    afterProvenDynamicWrite;
+}
+
+if (keyStore.read() !== undefined) {
+    const alias = keyStore;
+    alias.read = (() => undefined) as identity () => string | undefined;
+    const afterAliasDotWrite: string = keyStore.read(); // should error
+    afterAliasDotWrite;
+}
+
+if (keyStore[readKey]() !== undefined) {
+    const alias = keyStore;
+    alias[readKey] = (() => undefined) as identity () => string | undefined;
+    const afterAliasDynamicWrite: string = keyStore[readKey](); // should error
+    afterAliasDynamicWrite;
+}
+
+if (keyStore.read() !== undefined) {
+    let unknownKey: string = "read";
+    unknownKey = "read";
+    keyStore[unknownKey as "read"] = (() => undefined) as identity () => string | undefined;
+    const afterNonProvenDynamicWrite: string = keyStore.read(); // should error
+    afterNonProvenDynamicWrite;
+}
+
+declare const otherKeyStore: {
+    read: identity () => string | undefined;
+};
+
+if (keyStore.read() !== undefined) {
+    otherKeyStore.read = (() => undefined) as identity () => string | undefined;
+    const afterOtherReceiverWrite: string = keyStore.read(); // should stay narrowed
+    afterOtherReceiverWrite;
+}

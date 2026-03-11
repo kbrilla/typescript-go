@@ -14,9 +14,17 @@ identityModifierTier1Writes.ts(56,11): error TS2322: Type 'number | undefined' i
   Type 'undefined' is not assignable to type 'number'.
 identityModifierTier1Writes.ts(62,11): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
   Type 'undefined' is not assignable to type 'number'.
+identityModifierTier1Writes.ts(95,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierTier1Writes.ts(101,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier1Writes.ts(102,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierTier1Writes.ts(108,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierTier1Writes.ts(109,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
 
 
-==== identityModifierTier1Writes.ts (8 errors) ====
+==== identityModifierTier1Writes.ts (13 errors) ====
     // Tier 1 write-form invalidation: dot and bracket-literal assignment forms.
     declare const propertyModel: {
         get value(): string | undefined;
@@ -122,5 +130,65 @@ identityModifierTier1Writes.ts(62,11): error TS2322: Type 'number | undefined' i
         store["set"]("next");
         const afterBracketSetCall: string = store.read(); // should stay narrowed
         afterBracketSetCall;
+    }
+    
+    // Identity call write-matrix breadth: dynamic keys and receiver-alias writes.
+    declare const keyStore: {
+        read: identity () => string | undefined;
+        set(v: string | undefined): void;
+    };
+    
+    declare const readKey: "read";
+    
+    if (keyStore[readKey]() !== undefined) {
+        const sameReadKey = readKey;
+        keyStore[sameReadKey] = (() => undefined) as identity () => string | undefined;
+        const afterProvenDynamicWrite: string = keyStore[readKey](); // should error
+              ~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterProvenDynamicWrite;
+    }
+    
+    if (keyStore.read() !== undefined) {
+        const alias = keyStore;
+        alias.read = (() => undefined) as identity () => string | undefined;
+        ~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterAliasDotWrite: string = keyStore.read(); // should error
+              ~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterAliasDotWrite;
+    }
+    
+    if (keyStore[readKey]() !== undefined) {
+        const alias = keyStore;
+        alias[readKey] = (() => undefined) as identity () => string | undefined;
+        ~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterAliasDynamicWrite: string = keyStore[readKey](); // should error
+              ~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterAliasDynamicWrite;
+    }
+    
+    if (keyStore.read() !== undefined) {
+        let unknownKey: string = "read";
+        unknownKey = "read";
+        keyStore[unknownKey as "read"] = (() => undefined) as identity () => string | undefined;
+        const afterNonProvenDynamicWrite: string = keyStore.read(); // should error
+        afterNonProvenDynamicWrite;
+    }
+    
+    declare const otherKeyStore: {
+        read: identity () => string | undefined;
+    };
+    
+    if (keyStore.read() !== undefined) {
+        otherKeyStore.read = (() => undefined) as identity () => string | undefined;
+        const afterOtherReceiverWrite: string = keyStore.read(); // should stay narrowed
+        afterOtherReceiverWrite;
     }
     

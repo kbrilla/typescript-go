@@ -42,6 +42,18 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
+    // Tier 2 precision target: 2-hop const alias-chain to trivial passthrough helper should preserve narrowing.
+    const localId = <T>(x: T) => x;
+    const localId2 = localId;
+    const localId3 = localId2;
+    const forwarded = localId3(read);
+    forwarded;
+
+    const afterConstHelperTwoHopAliasChain: string = read(); // should stay narrowed
+    afterConstHelperTwoHopAliasChain;
+}
+
+if (read() !== undefined) {
     // Tier 2 precision target: local function declaration helper with trivial passthrough body.
     function localFnId<T>(x: T) {
         return x;
@@ -109,24 +121,46 @@ if (read() !== undefined) {
 }
 
 if (read() !== undefined) {
-    // Conservative boundary: mutable helper in expression-statement form remains invalidating.
+    // Current guardrail: bare standalone helper expression-statement call is treated as unrelated and preserves narrowing.
     let localMaybeId = <T>(x: T) => x;
     localMaybeId = pass;
     localMaybeId(read);
 
-    const afterExprStmtMutableHelper: string = read(); // current conservative: error
+    const afterExprStmtMutableHelper: string = read(); // currently preserved under standalone-call unrelated heuristic
     afterExprStmtMutableHelper;
 }
 
 if (read() !== undefined) {
-    // Conservative boundary: non-trivial helper in expression-statement form remains invalidating.
+    // Current guardrail: bare standalone helper expression-statement call is treated as unrelated and preserves narrowing.
     function localFnWrap<T>(x: T) {
         return () => x;
     }
     localFnWrap(read);
 
-    const afterExprStmtNonTrivialHelper: string = read(); // current conservative: error
+    const afterExprStmtNonTrivialHelper: string = read(); // currently preserved under standalone-call unrelated heuristic
     afterExprStmtNonTrivialHelper;
+}
+
+if (read() !== undefined) {
+    // Conservative boundary: mutable helper wrapped in a further helper call should invalidate prior narrowing.
+    let localMaybeId = <T>(x: T) => x;
+    localMaybeId = pass;
+    useReader(localMaybeId(read));
+
+    const afterWrappedMutableHelperPassthrough: string = read(); // current conservative: error
+    afterWrappedMutableHelperPassthrough;
+}
+
+if (read() !== undefined) {
+    // Conservative boundary: non-trivial helper wrapped in a further helper call should invalidate prior narrowing.
+    function localFnWrap<T>(x: T) {
+        const local = x;
+        return local;
+    }
+    useReader(localFnWrap(read));
+
+    const afterWrappedNonTrivialFnHelper: string = read(); // current conservative: error
+    afterWrappedNonTrivialFnHelper;
 }
 
 if (read() !== undefined) {
