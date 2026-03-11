@@ -198,10 +198,10 @@ For full problem analysis and language survey, see [docs/identity-modifier-resea
 ### 5.8 Known Gaps and Remaining Work
 
 - [x] Callback const no-op alias parity (strict `const cb = () => {}; invoke(cb)` preserve) — **Already implemented.** `isConstNoopCallbackAlias()` resolves const alias chains up to 5 hops, checking zero params + empty body. Negative controls: mutable `let` alias rejected, non-empty body alias rejected.
-- [ ] Broader nested/indirect callback boundary forms
-- [ ] Expanded Tier 1 write-form matrix breadth
-- [ ] Extended Tier 2 guarded precision beyond strict trivial passthrough forms
-- [ ] Expanded parity mapping against submodule scenarios
+- [ ] Expanded parity mapping against submodule scenarios — **Not blocked.** This is purely test expansion work and can be done in Phase 1 or Phase 2.
+- ~~Broader nested/indirect callback boundary forms~~ → **Moved to Phase 2/3.** Multi-arg empty callbacks (Phase 2: extend `classifyIdentityBoundary` to check each arg). Non-empty callback bodies need callback body analysis (Phase 3) or `mutator`/`links` contracts (Phase 5). Blocked on: `len(boundary.Arguments()) == 1` guard, callback body mutation proof.
+- ~~Expanded Tier 1 write-form matrix breadth~~ → **Moved to Phase 2.** Dynamic element writes need key equivalence proof. Receiver-alias writes need `isMatchingReference` normalization expansion. Blocked on: `getLiteralNamedAccessReceiverAndName` only handles literal property/element access.
+- ~~Extended Tier 2 guarded precision~~ → **Moved to Phase 2/3.** Local-scope helpers: Phase 2 (bounded local proof, const-only, depth cap). Cross-file helpers: Phase 3 (cross-file helper summary cache). Blocked on: callback body analysis, cross-file declaration analysis.
 
 **Newly found gaps (post-audit):**
 
@@ -218,7 +218,7 @@ For full problem analysis and language survey, see [docs/identity-modifier-resea
 **Parity gaps (identity more conservative than getter):**
 
 - ~~*Await boundary (`await delay()`):*~~ **CLOSED.** Fixed `shouldPreserveAmbientNoArgAwaitCallNarrowing` — relaxed the return type check from requiring `null`-containing non-`undefined` types to accepting any union type (`TypeFlagsUnion`), matching the unknown-call preserve rule. Now `await delay()` in expression-statement position preserves identity narrowing for ambient no-arg void functions. Variable-declaration form (`const x = await delay()`) correctly remains conservative. Error reduction: -2 errors across 4 test files (HeuristicDiagnostics 9→7, Parity 10→8, Boundaries 20→18, ParitySweep 10→8).
-- *Assignment-expression callback boundary:* `assignedInvokeResult = invoke(() => {...})` invalidates identity (lines 75, 80 in sweep), but getter stays narrowed through callback boundaries.
+- *Assignment-expression callback boundary:* `assignedInvokeResult = invoke(() => { ... })` invalidates identity (lines 75, 80 in sweep). The callback body is non-empty (has statements), so `shouldPreserveNoopCallbackCallNarrowing` correctly rejects it. **Blocked on:** Phase 3 callback body analysis or Phase 5 `mutator`/`links` contracts to prove the callback doesn't mutate identity state. Note: empty-body callbacks in assignment-expression form (`x = invoke(() => {})`) already preserve narrowing via `isNoopCallbackBoundaryCallSite`.
 
 **Missing test coverage (uncovered getter patterns):**
 
@@ -273,6 +273,7 @@ Status: closed in Phase 1 with a strict guarded shape.
 | Feature | Guardrails | Risk | Parity Impact |
 |---|---|---|---|
 | Callback breadth parity slices (multi-arg, property, nested forwarding) | Multi-arg callback detection, property callback references, nested forwarding wrapper chains | Medium | Extends callback preserve beyond single-arg identifier/inline forms |
+| Multi-arg empty callback classification | Extend `classifyIdentityBoundary` to check all args of multi-arg calls; each must be zero-param empty-body | Low | Handles `invoke(cb1, cb2)` patterns |
 | Write-form matrix breadth expansion | Proven-key guardrails for dynamic element writes | High | Closes remaining getter/setter dynamic-write gaps |
 | Tier 2 guarded forwarding expansion (2-hop local helper chains) | Local symbol only; const-only alias chains; depth cap; no mutable helpers | Medium | Reduces conservative drops in helper-heavy code |
 | Submodule parity expansion slices | Parity with additional submodule getter test cases | Low | Broader parity evidence |
