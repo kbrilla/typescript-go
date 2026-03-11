@@ -1,0 +1,75 @@
+//// [tests/cases/compiler/stableModifierGenericDiscriminant.ts] ////
+
+=== stableModifierGenericDiscriminant.ts ===
+// Generic discriminant narrowing parity: getter and stable endpoint forms.
+type Fish = { type: "fish"; hasFins: true };
+>Fish : Symbol(Fish, Decl(stableModifierGenericDiscriminant.ts, 0, 0))
+>type : Symbol(type, Decl(stableModifierGenericDiscriminant.ts, 1, 13))
+>hasFins : Symbol(hasFins, Decl(stableModifierGenericDiscriminant.ts, 1, 27))
+
+type Dog = { type: "dog"; saysWoof: true };
+>Dog : Symbol(Dog, Decl(stableModifierGenericDiscriminant.ts, 1, 44))
+>type : Symbol(type, Decl(stableModifierGenericDiscriminant.ts, 2, 12))
+>saysWoof : Symbol(saysWoof, Decl(stableModifierGenericDiscriminant.ts, 2, 25))
+
+type Pet = Fish | Dog;
+>Pet : Symbol(Pet, Decl(stableModifierGenericDiscriminant.ts, 2, 43))
+>Fish : Symbol(Fish, Decl(stableModifierGenericDiscriminant.ts, 0, 0))
+>Dog : Symbol(Dog, Decl(stableModifierGenericDiscriminant.ts, 1, 44))
+
+function getterGeneric<PetType extends Pet>(pet: { get value(): PetType }) {
+>getterGeneric : Symbol(getterGeneric, Decl(stableModifierGenericDiscriminant.ts, 3, 22))
+>PetType : Symbol(PetType, Decl(stableModifierGenericDiscriminant.ts, 5, 23))
+>Pet : Symbol(Pet, Decl(stableModifierGenericDiscriminant.ts, 2, 43))
+>pet : Symbol(pet, Decl(stableModifierGenericDiscriminant.ts, 5, 44))
+>value : Symbol(value, Decl(stableModifierGenericDiscriminant.ts, 5, 50))
+>PetType : Symbol(PetType, Decl(stableModifierGenericDiscriminant.ts, 5, 23))
+
+    if (pet.value.type === "dog") {
+>pet.value.type : Symbol(type, Decl(stableModifierGenericDiscriminant.ts, 2, 12), Decl(stableModifierGenericDiscriminant.ts, 1, 13))
+>pet.value : Symbol(value, Decl(stableModifierGenericDiscriminant.ts, 5, 50))
+>pet : Symbol(pet, Decl(stableModifierGenericDiscriminant.ts, 5, 44))
+>value : Symbol(value, Decl(stableModifierGenericDiscriminant.ts, 5, 50))
+>type : Symbol(type, Decl(stableModifierGenericDiscriminant.ts, 2, 12), Decl(stableModifierGenericDiscriminant.ts, 1, 13))
+
+        const getterDog: true = pet.value.saysWoof; // baseline: OK
+>getterDog : Symbol(getterDog, Decl(stableModifierGenericDiscriminant.ts, 7, 13))
+>pet.value.saysWoof : Symbol(saysWoof, Decl(stableModifierGenericDiscriminant.ts, 2, 25))
+>pet.value : Symbol(value, Decl(stableModifierGenericDiscriminant.ts, 5, 50))
+>pet : Symbol(pet, Decl(stableModifierGenericDiscriminant.ts, 5, 44))
+>value : Symbol(value, Decl(stableModifierGenericDiscriminant.ts, 5, 50))
+>saysWoof : Symbol(saysWoof, Decl(stableModifierGenericDiscriminant.ts, 2, 25))
+
+        getterDog;
+>getterDog : Symbol(getterDog, Decl(stableModifierGenericDiscriminant.ts, 7, 13))
+    }
+}
+
+function identityGeneric<PetType extends Pet>(pet: { value: stable () => PetType }) {
+>identityGeneric : Symbol(identityGeneric, Decl(stableModifierGenericDiscriminant.ts, 10, 1))
+>PetType : Symbol(PetType, Decl(stableModifierGenericDiscriminant.ts, 12, 25))
+>Pet : Symbol(Pet, Decl(stableModifierGenericDiscriminant.ts, 2, 43))
+>pet : Symbol(pet, Decl(stableModifierGenericDiscriminant.ts, 12, 46))
+>value : Symbol(value, Decl(stableModifierGenericDiscriminant.ts, 12, 52))
+>PetType : Symbol(PetType, Decl(stableModifierGenericDiscriminant.ts, 12, 25))
+
+    if (pet.value().type === "dog") {
+>pet.value().type : Symbol(type, Decl(stableModifierGenericDiscriminant.ts, 2, 12), Decl(stableModifierGenericDiscriminant.ts, 1, 13))
+>pet.value : Symbol(value, Decl(stableModifierGenericDiscriminant.ts, 12, 52))
+>pet : Symbol(pet, Decl(stableModifierGenericDiscriminant.ts, 12, 46))
+>value : Symbol(value, Decl(stableModifierGenericDiscriminant.ts, 12, 52))
+>type : Symbol(type, Decl(stableModifierGenericDiscriminant.ts, 2, 12), Decl(stableModifierGenericDiscriminant.ts, 1, 13))
+
+        const identityDog: true = pet.value().saysWoof; // parity target: OK
+>identityDog : Symbol(identityDog, Decl(stableModifierGenericDiscriminant.ts, 14, 13))
+>pet.value().saysWoof : Symbol(saysWoof, Decl(stableModifierGenericDiscriminant.ts, 2, 25))
+>pet.value : Symbol(value, Decl(stableModifierGenericDiscriminant.ts, 12, 52))
+>pet : Symbol(pet, Decl(stableModifierGenericDiscriminant.ts, 12, 46))
+>value : Symbol(value, Decl(stableModifierGenericDiscriminant.ts, 12, 52))
+>saysWoof : Symbol(saysWoof, Decl(stableModifierGenericDiscriminant.ts, 2, 25))
+
+        identityDog;
+>identityDog : Symbol(identityDog, Decl(stableModifierGenericDiscriminant.ts, 14, 13))
+    }
+}
+

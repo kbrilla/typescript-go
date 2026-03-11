@@ -1,0 +1,235 @@
+//// [tests/cases/compiler/stableModifierExhaustiveSwitch.ts] ////
+
+=== stableModifierExhaustiveSwitch.ts ===
+// Phase 3: Exhaustive switch carryover on stable reads.
+// Verifies that switch/case discriminant narrowing works with stable calls
+// and that exhaustiveness checking produces the expected `never` type.
+
+type Shape =
+>Shape : Symbol(Shape, Decl(stableModifierExhaustiveSwitch.ts, 0, 0))
+
+    | { kind: "circle"; radius: number }
+>kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 5, 7))
+>radius : Symbol(radius, Decl(stableModifierExhaustiveSwitch.ts, 5, 23))
+
+    | { kind: "square"; side: number }
+>kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 6, 7))
+>side : Symbol(side, Decl(stableModifierExhaustiveSwitch.ts, 6, 23))
+
+    | { kind: "triangle"; base: number; height: number };
+>kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 7, 7))
+>base : Symbol(base, Decl(stableModifierExhaustiveSwitch.ts, 7, 25))
+>height : Symbol(height, Decl(stableModifierExhaustiveSwitch.ts, 7, 39))
+
+declare const readShape: stable () => Shape;
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>Shape : Symbol(Shape, Decl(stableModifierExhaustiveSwitch.ts, 0, 0))
+
+// Exhaustive switch — each case should narrow the discriminant.
+function exhaustiveSwitch() {
+>exhaustiveSwitch : Symbol(exhaustiveSwitch, Decl(stableModifierExhaustiveSwitch.ts, 9, 44))
+
+    switch (readShape().kind) {
+>readShape().kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 5, 7), Decl(stableModifierExhaustiveSwitch.ts, 6, 7), Decl(stableModifierExhaustiveSwitch.ts, 7, 7))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 5, 7), Decl(stableModifierExhaustiveSwitch.ts, 6, 7), Decl(stableModifierExhaustiveSwitch.ts, 7, 7))
+
+        case "circle":
+            const circleRadius: number = readShape().radius;
+>circleRadius : Symbol(circleRadius, Decl(stableModifierExhaustiveSwitch.ts, 15, 17))
+>readShape().radius : Symbol(radius, Decl(stableModifierExhaustiveSwitch.ts, 5, 23))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>radius : Symbol(radius, Decl(stableModifierExhaustiveSwitch.ts, 5, 23))
+
+            circleRadius;
+>circleRadius : Symbol(circleRadius, Decl(stableModifierExhaustiveSwitch.ts, 15, 17))
+
+            break;
+        case "square":
+            const squareSide: number = readShape().side;
+>squareSide : Symbol(squareSide, Decl(stableModifierExhaustiveSwitch.ts, 19, 17))
+>readShape().side : Symbol(side, Decl(stableModifierExhaustiveSwitch.ts, 6, 23))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>side : Symbol(side, Decl(stableModifierExhaustiveSwitch.ts, 6, 23))
+
+            squareSide;
+>squareSide : Symbol(squareSide, Decl(stableModifierExhaustiveSwitch.ts, 19, 17))
+
+            break;
+        case "triangle":
+            const triBase: number = readShape().base;
+>triBase : Symbol(triBase, Decl(stableModifierExhaustiveSwitch.ts, 23, 17))
+>readShape().base : Symbol(base, Decl(stableModifierExhaustiveSwitch.ts, 7, 25))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>base : Symbol(base, Decl(stableModifierExhaustiveSwitch.ts, 7, 25))
+
+            triBase;
+>triBase : Symbol(triBase, Decl(stableModifierExhaustiveSwitch.ts, 23, 17))
+
+            break;
+    }
+}
+
+// Exhaustive switch with default never — confirms exhaustiveness.
+function exhaustiveWithDefaultNever() {
+>exhaustiveWithDefaultNever : Symbol(exhaustiveWithDefaultNever, Decl(stableModifierExhaustiveSwitch.ts, 27, 1))
+
+    switch (readShape().kind) {
+>readShape().kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 5, 7), Decl(stableModifierExhaustiveSwitch.ts, 6, 7), Decl(stableModifierExhaustiveSwitch.ts, 7, 7))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 5, 7), Decl(stableModifierExhaustiveSwitch.ts, 6, 7), Decl(stableModifierExhaustiveSwitch.ts, 7, 7))
+
+        case "circle":
+            const circleRadius: number = readShape().radius;
+>circleRadius : Symbol(circleRadius, Decl(stableModifierExhaustiveSwitch.ts, 33, 17))
+>readShape().radius : Symbol(radius, Decl(stableModifierExhaustiveSwitch.ts, 5, 23))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>radius : Symbol(radius, Decl(stableModifierExhaustiveSwitch.ts, 5, 23))
+
+            circleRadius;
+>circleRadius : Symbol(circleRadius, Decl(stableModifierExhaustiveSwitch.ts, 33, 17))
+
+            break;
+        case "square":
+            const squareSide: number = readShape().side;
+>squareSide : Symbol(squareSide, Decl(stableModifierExhaustiveSwitch.ts, 37, 17))
+>readShape().side : Symbol(side, Decl(stableModifierExhaustiveSwitch.ts, 6, 23))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>side : Symbol(side, Decl(stableModifierExhaustiveSwitch.ts, 6, 23))
+
+            squareSide;
+>squareSide : Symbol(squareSide, Decl(stableModifierExhaustiveSwitch.ts, 37, 17))
+
+            break;
+        case "triangle":
+            const triBase: number = readShape().base;
+>triBase : Symbol(triBase, Decl(stableModifierExhaustiveSwitch.ts, 41, 17))
+>readShape().base : Symbol(base, Decl(stableModifierExhaustiveSwitch.ts, 7, 25))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>base : Symbol(base, Decl(stableModifierExhaustiveSwitch.ts, 7, 25))
+
+            triBase;
+>triBase : Symbol(triBase, Decl(stableModifierExhaustiveSwitch.ts, 41, 17))
+
+            break;
+        default:
+            const _exhaustive: never = readShape();
+>_exhaustive : Symbol(_exhaustive, Decl(stableModifierExhaustiveSwitch.ts, 45, 17))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+
+            _exhaustive;
+>_exhaustive : Symbol(_exhaustive, Decl(stableModifierExhaustiveSwitch.ts, 45, 17))
+    }
+}
+
+// typeof switch narrowing on stable calls.
+declare const readValue: stable () => string | number | boolean;
+>readValue : Symbol(readValue, Decl(stableModifierExhaustiveSwitch.ts, 51, 13))
+
+function typeofSwitch() {
+>typeofSwitch : Symbol(typeofSwitch, Decl(stableModifierExhaustiveSwitch.ts, 51, 64))
+
+    switch (typeof readValue()) {
+>readValue : Symbol(readValue, Decl(stableModifierExhaustiveSwitch.ts, 51, 13))
+
+        case "string":
+            const str: string = readValue();
+>str : Symbol(str, Decl(stableModifierExhaustiveSwitch.ts, 56, 17))
+>readValue : Symbol(readValue, Decl(stableModifierExhaustiveSwitch.ts, 51, 13))
+
+            str;
+>str : Symbol(str, Decl(stableModifierExhaustiveSwitch.ts, 56, 17))
+
+            break;
+        case "number":
+            const num: number = readValue();
+>num : Symbol(num, Decl(stableModifierExhaustiveSwitch.ts, 60, 17))
+>readValue : Symbol(readValue, Decl(stableModifierExhaustiveSwitch.ts, 51, 13))
+
+            num;
+>num : Symbol(num, Decl(stableModifierExhaustiveSwitch.ts, 60, 17))
+
+            break;
+        case "boolean":
+            const bool: boolean = readValue();
+>bool : Symbol(bool, Decl(stableModifierExhaustiveSwitch.ts, 64, 17))
+>readValue : Symbol(readValue, Decl(stableModifierExhaustiveSwitch.ts, 51, 13))
+
+            bool;
+>bool : Symbol(bool, Decl(stableModifierExhaustiveSwitch.ts, 64, 17))
+
+            break;
+    }
+}
+
+// Switch with fall-through between cases (narrowing should widen).
+function switchFallthrough() {
+>switchFallthrough : Symbol(switchFallthrough, Decl(stableModifierExhaustiveSwitch.ts, 68, 1))
+
+    switch (readShape().kind) {
+>readShape().kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 5, 7), Decl(stableModifierExhaustiveSwitch.ts, 6, 7), Decl(stableModifierExhaustiveSwitch.ts, 7, 7))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 5, 7), Decl(stableModifierExhaustiveSwitch.ts, 6, 7), Decl(stableModifierExhaustiveSwitch.ts, 7, 7))
+
+        case "circle":
+        case "square":
+            // After fall-through, should be circle | square
+            const circleOrSquare: { kind: "circle"; radius: number } | { kind: "square"; side: number } = readShape();
+>circleOrSquare : Symbol(circleOrSquare, Decl(stableModifierExhaustiveSwitch.ts, 76, 17))
+>kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 76, 35))
+>radius : Symbol(radius, Decl(stableModifierExhaustiveSwitch.ts, 76, 51))
+>kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 76, 72))
+>side : Symbol(side, Decl(stableModifierExhaustiveSwitch.ts, 76, 88))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+
+            circleOrSquare;
+>circleOrSquare : Symbol(circleOrSquare, Decl(stableModifierExhaustiveSwitch.ts, 76, 17))
+
+            break;
+        case "triangle":
+            const tri: { kind: "triangle"; base: number; height: number } = readShape();
+>tri : Symbol(tri, Decl(stableModifierExhaustiveSwitch.ts, 80, 17))
+>kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 80, 24))
+>base : Symbol(base, Decl(stableModifierExhaustiveSwitch.ts, 80, 42))
+>height : Symbol(height, Decl(stableModifierExhaustiveSwitch.ts, 80, 56))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+
+            tri;
+>tri : Symbol(tri, Decl(stableModifierExhaustiveSwitch.ts, 80, 17))
+
+            break;
+    }
+}
+
+// Non-exhaustive switch — narrowing is not guaranteed after switch.
+function nonExhaustiveSwitch() {
+>nonExhaustiveSwitch : Symbol(nonExhaustiveSwitch, Decl(stableModifierExhaustiveSwitch.ts, 84, 1))
+
+    switch (readShape().kind) {
+>readShape().kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 5, 7), Decl(stableModifierExhaustiveSwitch.ts, 6, 7), Decl(stableModifierExhaustiveSwitch.ts, 7, 7))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>kind : Symbol(kind, Decl(stableModifierExhaustiveSwitch.ts, 5, 7), Decl(stableModifierExhaustiveSwitch.ts, 6, 7), Decl(stableModifierExhaustiveSwitch.ts, 7, 7))
+
+        case "circle":
+            const circleRadius: number = readShape().radius;
+>circleRadius : Symbol(circleRadius, Decl(stableModifierExhaustiveSwitch.ts, 90, 17))
+>readShape().radius : Symbol(radius, Decl(stableModifierExhaustiveSwitch.ts, 5, 23))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+>radius : Symbol(radius, Decl(stableModifierExhaustiveSwitch.ts, 5, 23))
+
+            circleRadius;
+>circleRadius : Symbol(circleRadius, Decl(stableModifierExhaustiveSwitch.ts, 90, 17))
+
+            break;
+        // Missing square and triangle cases
+    }
+    // After non-exhaustive switch, type should be Shape (not narrowed).
+    const afterNonExhaustive: Shape = readShape();
+>afterNonExhaustive : Symbol(afterNonExhaustive, Decl(stableModifierExhaustiveSwitch.ts, 96, 9))
+>Shape : Symbol(Shape, Decl(stableModifierExhaustiveSwitch.ts, 0, 0))
+>readShape : Symbol(readShape, Decl(stableModifierExhaustiveSwitch.ts, 9, 13))
+
+    afterNonExhaustive;
+>afterNonExhaustive : Symbol(afterNonExhaustive, Decl(stableModifierExhaustiveSwitch.ts, 96, 9))
+}
+

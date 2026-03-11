@@ -154,13 +154,12 @@ const (
 	KindConstructorKeyword
 	KindDeclareKeyword
 	KindGetKeyword
-	KindIdentityKeyword
 	KindImmediateKeyword
 	KindInferKeyword
 	KindIntrinsicKeyword
+	KindInvalidatesKeyword
 	KindIsKeyword
 	KindKeyOfKeyword
-	KindLinksKeyword
 	KindModuleKeyword
 	KindMutatorKeyword
 	KindNamespaceKeyword
@@ -172,6 +171,7 @@ const (
 	KindObjectKeyword
 	KindSatisfiesKeyword
 	KindSetKeyword
+	KindStableKeyword
 	KindStringKeyword
 	KindSymbolKeyword
 	KindTypeKeyword

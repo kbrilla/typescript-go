@@ -1,0 +1,31 @@
+//// [tests/cases/compiler/stableModifierErrors.ts] ////
+
+=== stableModifierErrors.ts ===
+// Error: stable modifier on function with parameters
+declare const fn1: stable (x: string) => number; // should error
+>fn1 : Symbol(fn1, Decl(stableModifierErrors.ts, 1, 13))
+>x : Symbol(x, Decl(stableModifierErrors.ts, 1, 27))
+
+// Valid: stable modifier on parameterless function type
+declare const fn3: stable () => string | undefined; // OK
+>fn3 : Symbol(fn3, Decl(stableModifierErrors.ts, 4, 13))
+
+// Identity modifier in a type alias
+type Getter<T> = stable () => T; // OK
+>Getter : Symbol(Getter, Decl(stableModifierErrors.ts, 4, 51))
+>T : Symbol(T, Decl(stableModifierErrors.ts, 7, 12))
+>T : Symbol(T, Decl(stableModifierErrors.ts, 7, 12))
+
+// Using 'stable' as a variable name should still work (contextual keyword)
+const stable = <T>(x: T): T => x; // OK - 'stable' used as identifier
+>stable : Symbol(stable, Decl(stableModifierErrors.ts, 10, 5))
+>T : Symbol(T, Decl(stableModifierErrors.ts, 10, 16))
+>x : Symbol(x, Decl(stableModifierErrors.ts, 10, 19))
+>T : Symbol(T, Decl(stableModifierErrors.ts, 10, 16))
+>T : Symbol(T, Decl(stableModifierErrors.ts, 10, 16))
+>x : Symbol(x, Decl(stableModifierErrors.ts, 10, 19))
+
+const result = stable("hello");
+>result : Symbol(result, Decl(stableModifierErrors.ts, 11, 5))
+>stable : Symbol(stable, Decl(stableModifierErrors.ts, 10, 5))
+

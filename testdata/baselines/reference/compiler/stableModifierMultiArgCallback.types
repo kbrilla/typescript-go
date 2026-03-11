@@ -1,0 +1,305 @@
+//// [tests/cases/compiler/stableModifierMultiArgCallback.ts] ////
+
+=== stableModifierMultiArgCallback.ts ===
+type Signal<T> = stable () => T;
+>Signal : Signal<T>
+
+declare function invoke(callback: () => void): void;
+>invoke : (callback: () => void) => void
+>callback : () => void
+
+declare function invokeWithData(data: number, callback: () => void): void;
+>invokeWithData : (data: number, callback: () => void) => void
+>data : number
+>callback : () => void
+
+declare function invokeMultiCallback(cb1: () => void, cb2: () => void): void;
+>invokeMultiCallback : (cb1: () => void, cb2: () => void) => void
+>cb1 : () => void
+>cb2 : () => void
+
+declare function invokeCallbackFirst(callback: () => void, data: number): void;
+>invokeCallbackFirst : (callback: () => void, data: number) => void
+>callback : () => void
+>data : number
+
+declare function invokeThreeArgs(a: number, callback: () => void, b: string): void;
+>invokeThreeArgs : (a: number, callback: () => void, b: string) => void
+>a : number
+>callback : () => void
+>b : string
+
+declare function pass<T>(x: T): T;
+>pass : <T>(x: T) => T
+>x : T
+
+declare const read: Signal<string | undefined>;
+>read : Signal<string | undefined>
+
+// === Single-arg no-op callback (Phase 1 - should preserve) ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invoke(() => {});
+>invoke(() => {}) : void
+>invoke : (callback: () => void) => void
+>() => {} : () => void
+
+    const r1: string = read(); // OK - single no-op callback preserves
+>r1 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === Multi-arg with trailing no-op callback (Phase 2) ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invokeWithData(42, () => {});
+>invokeWithData(42, () => {}) : void
+>invokeWithData : (data: number, callback: () => void) => void
+>42 : 42
+>() => {} : () => void
+
+    const r2: string = read(); // Phase 2: should preserve narrowing
+>r2 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === Multi-arg with leading no-op callback (Phase 2) ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invokeCallbackFirst(() => {}, 42);
+>invokeCallbackFirst(() => {}, 42) : void
+>invokeCallbackFirst : (callback: () => void, data: number) => void
+>() => {} : () => void
+>42 : 42
+
+    const r3: string = read(); // Phase 2: should preserve narrowing
+>r3 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === Multi-arg with two no-op callbacks (Phase 2) ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invokeMultiCallback(() => {}, () => {});
+>invokeMultiCallback(() => {}, () => {}) : void
+>invokeMultiCallback : (cb1: () => void, cb2: () => void) => void
+>() => {} : () => void
+>() => {} : () => void
+
+    const r4: string = read(); // Phase 2: should preserve narrowing
+>r4 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === Multi-arg with callback in middle position (Phase 2) ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invokeThreeArgs(1, () => {}, "x");
+>invokeThreeArgs(1, () => {}, "x") : void
+>invokeThreeArgs : (a: number, callback: () => void, b: string) => void
+>1 : 1
+>() => {} : () => void
+>"x" : "x"
+
+    const r5: string = read(); // Phase 2: should preserve narrowing
+>r5 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === NEGATIVE: Multi-arg with non-empty callback (should NOT preserve) ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invokeWithData(42, () => { console.log("side effect"); });
+>invokeWithData(42, () => { console.log("side effect"); }) : void
+>invokeWithData : (data: number, callback: () => void) => void
+>42 : 42
+>() => { console.log("side effect"); } : () => void
+>console.log("side effect") : void
+>console.log : (...data: any[]) => void
+>console : Console
+>log : (...data: any[]) => void
+>"side effect" : "side effect"
+
+    const r6: string = read(); // Should fail - callback has side effects
+>r6 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === NEGATIVE: Multi-arg with parameterized callback (should NOT preserve) ===
+declare function invokeWithParamCb(data: number, callback: (x: number) => void): void;
+>invokeWithParamCb : (data: number, callback: (x: number) => void) => void
+>data : number
+>callback : (x: number) => void
+>x : number
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invokeWithParamCb(42, (x) => {});
+>invokeWithParamCb(42, (x) => {}) : void
+>invokeWithParamCb : (data: number, callback: (x: number) => void) => void
+>42 : 42
+>(x) => {} : (x: number) => void
+>x : number
+
+    const r7: string = read(); // Should fail - callback has parameters
+>r7 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === Multi-arg with property callback reference (Phase 2) ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    const callbacks = {
+>callbacks : { noop: () => void; }
+>{        noop: () => {},    } : { noop: () => void; }
+
+        noop: () => {},
+>noop : () => void
+>() => {} : () => void
+
+    };
+    invokeWithData(42, callbacks.noop);
+>invokeWithData(42, callbacks.noop) : void
+>invokeWithData : (data: number, callback: () => void) => void
+>42 : 42
+>callbacks.noop : () => void
+>callbacks : { noop: () => void; }
+>noop : () => void
+
+    const r8: string = read(); // Phase 2: should preserve narrowing
+>r8 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === Multi-arg with nested forwarding wrapper (Phase 2) ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invokeWithData(42, pass(pass(() => {})));
+>invokeWithData(42, pass(pass(() => {}))) : void
+>invokeWithData : (data: number, callback: () => void) => void
+>42 : 42
+>pass(pass(() => {})) : () => void
+>pass : <T>(x: T) => T
+>pass(() => {}) : () => void
+>pass : <T>(x: T) => T
+>() => {} : () => void
+
+    const r9: string = read(); // Phase 2: should preserve narrowing
+>r9 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === NEGATIVE: property callback reference with non-empty body ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    const callbacks = {
+>callbacks : { nonEmpty: () => void; }
+>{        nonEmpty: () => {            const sideEffect = 1;            sideEffect;        },    } : { nonEmpty: () => void; }
+
+        nonEmpty: () => {
+>nonEmpty : () => void
+>() => {            const sideEffect = 1;            sideEffect;        } : () => void
+
+            const sideEffect = 1;
+>sideEffect : 1
+>1 : 1
+
+            sideEffect;
+>sideEffect : 1
+
+        },
+    };
+    invokeWithData(42, callbacks.nonEmpty);
+>invokeWithData(42, callbacks.nonEmpty) : void
+>invokeWithData : (data: number, callback: () => void) => void
+>42 : 42
+>callbacks.nonEmpty : () => void
+>callbacks : { nonEmpty: () => void; }
+>nonEmpty : () => void
+
+    const r10: string = read(); // Should fail - callback is non-empty
+>r10 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+
+// === NEGATIVE: nested forwarding wrapper around non-empty callback ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    invokeWithData(42, pass(pass(() => {
+>invokeWithData(42, pass(pass(() => {        const sideEffect = 1;        sideEffect;    }))) : void
+>invokeWithData : (data: number, callback: () => void) => void
+>42 : 42
+>pass(pass(() => {        const sideEffect = 1;        sideEffect;    })) : () => void
+>pass : <T>(x: T) => T
+>pass(() => {        const sideEffect = 1;        sideEffect;    }) : () => void
+>pass : <T>(x: T) => T
+>() => {        const sideEffect = 1;        sideEffect;    } : () => void
+
+        const sideEffect = 1;
+>sideEffect : 1
+>1 : 1
+
+        sideEffect;
+>sideEffect : 1
+
+    })));
+    const r11: string = read(); // Should fail - wrapped callback is non-empty
+>r11 : string
+>read() : string | undefined
+>read : Signal<string | undefined>
+}
+

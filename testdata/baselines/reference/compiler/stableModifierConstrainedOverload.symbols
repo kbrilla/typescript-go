@@ -1,0 +1,120 @@
+//// [tests/cases/compiler/stableModifierConstrainedOverload.ts] ////
+
+=== stableModifierConstrainedOverload.ts ===
+// Phase 5: Constrained-overload post-call narrowing
+// When a mutator has <U extends T> and overload resolution selects it,
+// the linked stable endpoint narrows to U after the call.
+// NOTE: This is a future enhancement. For now, mutator calls invalidate
+// (widen back to declared type), which is correct conservative behavior.
+
+// === Section 1: Mutator with constrained generic ===
+declare const sig: {
+>sig : Symbol(sig, Decl(stableModifierConstrainedOverload.ts, 7, 13))
+
+    read: stable () => string | undefined;
+>read : Symbol(read, Decl(stableModifierConstrainedOverload.ts, 7, 20))
+
+    update: mutator <U extends string | undefined>(fn: (value: string | undefined) => U) => void invalidates read;
+>update : Symbol(update, Decl(stableModifierConstrainedOverload.ts, 8, 42))
+>U : Symbol(U, Decl(stableModifierConstrainedOverload.ts, 9, 21))
+>fn : Symbol(fn, Decl(stableModifierConstrainedOverload.ts, 9, 51))
+>value : Symbol(value, Decl(stableModifierConstrainedOverload.ts, 9, 56))
+>U : Symbol(U, Decl(stableModifierConstrainedOverload.ts, 9, 21))
+
+};
+
+// After update, narrowing is invalidated (future: could narrow to U)
+sig.update(() => "hello");
+>sig.update : Symbol(update, Decl(stableModifierConstrainedOverload.ts, 8, 42))
+>sig : Symbol(sig, Decl(stableModifierConstrainedOverload.ts, 7, 13))
+>update : Symbol(update, Decl(stableModifierConstrainedOverload.ts, 8, 42))
+
+const afterUpdate = sig.read(); // string | undefined — conservative (future: could narrow to string)
+>afterUpdate : Symbol(afterUpdate, Decl(stableModifierConstrainedOverload.ts, 14, 5))
+>sig.read : Symbol(read, Decl(stableModifierConstrainedOverload.ts, 7, 20))
+>sig : Symbol(sig, Decl(stableModifierConstrainedOverload.ts, 7, 13))
+>read : Symbol(read, Decl(stableModifierConstrainedOverload.ts, 7, 20))
+
+// === Section 2: Reset mutator = no narrowing ===
+declare const sig2: {
+>sig2 : Symbol(sig2, Decl(stableModifierConstrainedOverload.ts, 17, 13))
+
+    read: stable () => string | undefined;
+>read : Symbol(read, Decl(stableModifierConstrainedOverload.ts, 17, 21))
+
+    reset: mutator () => void invalidates read;
+>reset : Symbol(reset, Decl(stableModifierConstrainedOverload.ts, 18, 42))
+
+};
+
+if (sig2.read() !== undefined) {
+>sig2.read : Symbol(read, Decl(stableModifierConstrainedOverload.ts, 17, 21))
+>sig2 : Symbol(sig2, Decl(stableModifierConstrainedOverload.ts, 17, 13))
+>read : Symbol(read, Decl(stableModifierConstrainedOverload.ts, 17, 21))
+>undefined : Symbol(undefined)
+
+    sig2.reset();
+>sig2.reset : Symbol(reset, Decl(stableModifierConstrainedOverload.ts, 18, 42))
+>sig2 : Symbol(sig2, Decl(stableModifierConstrainedOverload.ts, 17, 13))
+>reset : Symbol(reset, Decl(stableModifierConstrainedOverload.ts, 18, 42))
+
+    const afterReset: string = sig2.read(); // should error — reset invalidated
+>afterReset : Symbol(afterReset, Decl(stableModifierConstrainedOverload.ts, 24, 9))
+>sig2.read : Symbol(read, Decl(stableModifierConstrainedOverload.ts, 17, 21))
+>sig2 : Symbol(sig2, Decl(stableModifierConstrainedOverload.ts, 17, 13))
+>read : Symbol(read, Decl(stableModifierConstrainedOverload.ts, 17, 21))
+}
+
+// === Section 3: WritableSignal pattern ===
+interface WritableSignal<T> {
+>WritableSignal : Symbol(WritableSignal, Decl(stableModifierConstrainedOverload.ts, 25, 1))
+>T : Symbol(T, Decl(stableModifierConstrainedOverload.ts, 28, 25))
+
+    read: stable () => T;
+>read : Symbol(WritableSignal.read, Decl(stableModifierConstrainedOverload.ts, 28, 29))
+>T : Symbol(T, Decl(stableModifierConstrainedOverload.ts, 28, 25))
+
+    set: mutator (value: T) => void invalidates read;
+>set : Symbol(WritableSignal.set, Decl(stableModifierConstrainedOverload.ts, 29, 25))
+>value : Symbol(value, Decl(stableModifierConstrainedOverload.ts, 30, 18))
+>T : Symbol(T, Decl(stableModifierConstrainedOverload.ts, 28, 25))
+
+    update: mutator <U extends T>(fn: (value: T) => U) => void invalidates read;
+>update : Symbol(WritableSignal.update, Decl(stableModifierConstrainedOverload.ts, 30, 53))
+>U : Symbol(U, Decl(stableModifierConstrainedOverload.ts, 31, 21))
+>T : Symbol(T, Decl(stableModifierConstrainedOverload.ts, 28, 25))
+>fn : Symbol(fn, Decl(stableModifierConstrainedOverload.ts, 31, 34))
+>value : Symbol(value, Decl(stableModifierConstrainedOverload.ts, 31, 39))
+>T : Symbol(T, Decl(stableModifierConstrainedOverload.ts, 28, 25))
+>U : Symbol(U, Decl(stableModifierConstrainedOverload.ts, 31, 21))
+}
+
+declare const ws: WritableSignal<string | undefined>;
+>ws : Symbol(ws, Decl(stableModifierConstrainedOverload.ts, 34, 13))
+>WritableSignal : Symbol(WritableSignal, Decl(stableModifierConstrainedOverload.ts, 25, 1))
+
+if (ws.read() !== undefined) {
+>ws.read : Symbol(WritableSignal.read, Decl(stableModifierConstrainedOverload.ts, 28, 29))
+>ws : Symbol(ws, Decl(stableModifierConstrainedOverload.ts, 34, 13))
+>read : Symbol(WritableSignal.read, Decl(stableModifierConstrainedOverload.ts, 28, 29))
+>undefined : Symbol(undefined)
+
+    const narrowed: string = ws.read(); // OK — narrowed
+>narrowed : Symbol(narrowed, Decl(stableModifierConstrainedOverload.ts, 37, 9))
+>ws.read : Symbol(WritableSignal.read, Decl(stableModifierConstrainedOverload.ts, 28, 29))
+>ws : Symbol(ws, Decl(stableModifierConstrainedOverload.ts, 34, 13))
+>read : Symbol(WritableSignal.read, Decl(stableModifierConstrainedOverload.ts, 28, 29))
+
+    ws.set(undefined);
+>ws.set : Symbol(WritableSignal.set, Decl(stableModifierConstrainedOverload.ts, 29, 25))
+>ws : Symbol(ws, Decl(stableModifierConstrainedOverload.ts, 34, 13))
+>set : Symbol(WritableSignal.set, Decl(stableModifierConstrainedOverload.ts, 29, 25))
+>undefined : Symbol(undefined)
+
+    const afterSet: string = ws.read(); // should error — set invalidated
+>afterSet : Symbol(afterSet, Decl(stableModifierConstrainedOverload.ts, 39, 9))
+>ws.read : Symbol(WritableSignal.read, Decl(stableModifierConstrainedOverload.ts, 28, 29))
+>ws : Symbol(ws, Decl(stableModifierConstrainedOverload.ts, 34, 13))
+>read : Symbol(WritableSignal.read, Decl(stableModifierConstrainedOverload.ts, 28, 29))
+}
+

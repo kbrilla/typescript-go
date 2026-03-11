@@ -878,7 +878,7 @@ type Checker struct {
 	ambientModules                              []*ast.Symbol
 	withinUnreachableCode                       bool
 	reportedUnreachableNodes                    collections.Set[*ast.Node]
-	reportedIdentityBoundaryDiagnostics         collections.Set[*ast.Node]
+	reportedStableBoundaryDiagnostics           collections.Set[*ast.Node]
 	nonExistentProperties                       collections.Set[NonExistentPropertyKey]
 
 	mu sync.Mutex
@@ -8108,10 +8108,10 @@ func (c *Checker) checkCallExpression(node *ast.Node, checkMode CheckMode) *Type
 		return c.resolveExternalModuleTypeByLiteral(node.Arguments()[0])
 	}
 	returnType := c.getReturnTypeOfSignature(signature)
-	// For identity function calls (stable return value), use flow analysis to narrow the return type.
-	// Identity functions guarantee that parameterless calls return a stable value, so we can track
+	// For stable function calls (stable return value), use flow analysis to narrow the return type.
+	// Stable functions guarantee that parameterless calls return a stable value, so we can track
 	// the call expression as a reference through the control flow graph for type narrowing.
-	if signature.flags&SignatureFlagsIdentity != 0 && ast.IsCallExpression(node) && len(node.Arguments()) == 0 {
+	if signature.flags&SignatureFlagsStable != 0 && ast.IsCallExpression(node) && len(node.Arguments()) == 0 {
 		narrowableReturnType := c.getNarrowableTypeForReference(returnType, node, checkMode)
 		flowType := c.getFlowTypeOfReference(node, narrowableReturnType)
 		if flowType != narrowableReturnType {
@@ -19261,8 +19261,8 @@ func (c *Checker) getSignatureFromDeclaration(declaration *ast.Node) *Signature 
 	if ast.IsConstructorTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsAbstract) || ast.IsConstructorDeclaration(declaration) && ast.HasSyntacticModifier(declaration.Parent, ast.ModifierFlagsAbstract) {
 		flags |= SignatureFlagsAbstract
 	}
-	if ast.IsFunctionTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsIdentity) {
-		flags |= SignatureFlagsIdentity
+	if ast.IsFunctionTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsStable) {
+		flags |= SignatureFlagsStable
 	}
 	if ast.IsFunctionTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsMutator) {
 		flags |= SignatureFlagsMutator
@@ -19856,29 +19856,29 @@ func (c *Checker) shouldReportErrorsFromWideningWithContextualSignature(declarat
 	return false
 }
 
-func (c *Checker) shouldReportIdentityBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node) bool {
-	if boundary == nil || c.reportedIdentityBoundaryDiagnostics.Has(boundary) || !c.isIdentityCallReference(reference) {
+func (c *Checker) shouldReportStableBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node) bool {
+	if boundary == nil || c.reportedStableBoundaryDiagnostics.Has(boundary) || !c.isStableCallReference(reference) {
 		return false
 	}
 
-	c.reportedIdentityBoundaryDiagnostics.Add(boundary)
+	c.reportedStableBoundaryDiagnostics.Add(boundary)
 	return true
 }
 
-func (c *Checker) identityBoundaryInvalidationDiagnosticMessage(kind identityBoundaryKind) *diagnostics.Message {
-	if kind == identityBoundaryKindUnknownCall {
-		return diagnostics.Identity_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_temporary_before_the_call_to_preserve_precision
+func (c *Checker) stableBoundaryInvalidationDiagnosticMessage(kind stableBoundaryKind) *diagnostics.Message {
+	if kind == stableBoundaryKindUnknownCall {
+		return diagnostics.Stable_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_temporary_before_the_call_to_preserve_precision
 	}
 
-	return diagnostics.Identity_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local
+	return diagnostics.Stable_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local
 }
 
-func (c *Checker) reportIdentityBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node, kind identityBoundaryKind) {
-	if !c.shouldReportIdentityBoundaryInvalidationDiagnostic(reference, boundary) {
+func (c *Checker) reportStableBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node, kind stableBoundaryKind) {
+	if !c.shouldReportStableBoundaryInvalidationDiagnostic(reference, boundary) {
 		return
 	}
 
-	message := c.identityBoundaryInvalidationDiagnosticMessage(kind)
+	message := c.stableBoundaryInvalidationDiagnosticMessage(kind)
 	c.diagnostics.Add(createDiagnosticForNode(boundary, message))
 }
 

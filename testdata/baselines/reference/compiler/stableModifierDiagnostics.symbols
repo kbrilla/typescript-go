@@ -1,0 +1,20 @@
+//// [tests/cases/compiler/stableModifierDiagnostics.ts] ////
+
+=== stableModifierDiagnostics.ts ===
+// Error: stable modifier on function type with parameters
+declare const badWithParams: stable (x: string) => string;
+>badWithParams : Symbol(badWithParams, Decl(stableModifierDiagnostics.ts, 1, 13))
+>x : Symbol(x, Decl(stableModifierDiagnostics.ts, 1, 37))
+
+// Error: duplicate stable modifier
+declare const badDuplicate: stable stable () => string;
+>badDuplicate : Symbol(badDuplicate, Decl(stableModifierDiagnostics.ts, 4, 13))
+
+// Error: stable modifier cannot appear on constructor type
+declare const badConstructor: stable new () => object;
+>badConstructor : Symbol(badConstructor, Decl(stableModifierDiagnostics.ts, 7, 13))
+
+// Valid: stable on parameterless function type
+declare const good: stable () => string | undefined;
+>good : Symbol(good, Decl(stableModifierDiagnostics.ts, 10, 13))
+

@@ -1,0 +1,118 @@
+//// [tests/cases/compiler/stableModifierHeuristicDiagnostics.ts] ////
+
+=== stableModifierHeuristicDiagnostics.ts ===
+declare const read: stable () => string | undefined;
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+
+declare function unknownMutate(): void;
+>unknownMutate : Symbol(unknownMutate, Decl(stableModifierHeuristicDiagnostics.ts, 0, 52))
+
+declare function unknownMutateWithArg(x: number): void;
+>unknownMutateWithArg : Symbol(unknownMutateWithArg, Decl(stableModifierHeuristicDiagnostics.ts, 1, 39))
+>x : Symbol(x, Decl(stableModifierHeuristicDiagnostics.ts, 2, 38))
+
+declare function invoke(cb: () => void): void;
+>invoke : Symbol(invoke, Decl(stableModifierHeuristicDiagnostics.ts, 2, 55))
+>cb : Symbol(cb, Decl(stableModifierHeuristicDiagnostics.ts, 3, 24))
+
+declare function delay(): Promise<void>;
+>delay : Symbol(delay, Decl(stableModifierHeuristicDiagnostics.ts, 3, 46))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    unknownMutateWithArg(1);
+>unknownMutateWithArg : Symbol(unknownMutateWithArg, Decl(stableModifierHeuristicDiagnostics.ts, 1, 39))
+
+    const afterUnknown: string = read(); // should error + unknown-call-specific diagnostic
+>afterUnknown : Symbol(afterUnknown, Decl(stableModifierHeuristicDiagnostics.ts, 8, 9))
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+
+    afterUnknown;
+>afterUnknown : Symbol(afterUnknown, Decl(stableModifierHeuristicDiagnostics.ts, 8, 9))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    unknownMutateWithArg(1);
+>unknownMutateWithArg : Symbol(unknownMutateWithArg, Decl(stableModifierHeuristicDiagnostics.ts, 1, 39))
+
+    const afterUnknownFirst: string = read(); // should error + one boundary diagnostic on unknown call
+>afterUnknownFirst : Symbol(afterUnknownFirst, Decl(stableModifierHeuristicDiagnostics.ts, 14, 9))
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+
+    const afterUnknownSecond: string = read(); // should error, no duplicate boundary diagnostic spam
+>afterUnknownSecond : Symbol(afterUnknownSecond, Decl(stableModifierHeuristicDiagnostics.ts, 15, 9))
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+
+    afterUnknownFirst;
+>afterUnknownFirst : Symbol(afterUnknownFirst, Decl(stableModifierHeuristicDiagnostics.ts, 14, 9))
+
+    afterUnknownSecond;
+>afterUnknownSecond : Symbol(afterUnknownSecond, Decl(stableModifierHeuristicDiagnostics.ts, 15, 9))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    invoke(() => {
+>invoke : Symbol(invoke, Decl(stableModifierHeuristicDiagnostics.ts, 2, 55))
+
+        const callbackWrite = 1;
+>callbackWrite : Symbol(callbackWrite, Decl(stableModifierHeuristicDiagnostics.ts, 22, 13))
+
+        callbackWrite;
+>callbackWrite : Symbol(callbackWrite, Decl(stableModifierHeuristicDiagnostics.ts, 22, 13))
+
+    });
+    const afterCallback: string = read(); // should error + generic uncertainty-boundary diagnostic
+>afterCallback : Symbol(afterCallback, Decl(stableModifierHeuristicDiagnostics.ts, 25, 9))
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+
+    afterCallback;
+>afterCallback : Symbol(afterCallback, Decl(stableModifierHeuristicDiagnostics.ts, 25, 9))
+}
+
+if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+    const escaped = read;
+>escaped : Symbol(escaped, Decl(stableModifierHeuristicDiagnostics.ts, 30, 9))
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+
+    escaped;
+>escaped : Symbol(escaped, Decl(stableModifierHeuristicDiagnostics.ts, 30, 9))
+
+    const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
+>afterAliasEscape : Symbol(afterAliasEscape, Decl(stableModifierHeuristicDiagnostics.ts, 32, 9))
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+
+    afterAliasEscape;
+>afterAliasEscape : Symbol(afterAliasEscape, Decl(stableModifierHeuristicDiagnostics.ts, 32, 9))
+}
+
+async function testAwaitBoundary() {
+>testAwaitBoundary : Symbol(testAwaitBoundary, Decl(stableModifierHeuristicDiagnostics.ts, 34, 1))
+
+    if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+>undefined : Symbol(undefined)
+
+        await delay();
+>delay : Symbol(delay, Decl(stableModifierHeuristicDiagnostics.ts, 3, 46))
+
+        const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
+>afterAwait : Symbol(afterAwait, Decl(stableModifierHeuristicDiagnostics.ts, 39, 13))
+>read : Symbol(read, Decl(stableModifierHeuristicDiagnostics.ts, 0, 13))
+
+        afterAwait;
+>afterAwait : Symbol(afterAwait, Decl(stableModifierHeuristicDiagnostics.ts, 39, 13))
+    }
+}
+

@@ -1,0 +1,1188 @@
+//// [tests/cases/compiler/stableModifierGetterCorpus.ts] ////
+
+=== stableModifierGetterCorpus.ts ===
+// Broad getter -> stable parity corpus.
+// Visibility-focused: intentional parity gaps are kept to track divergence.
+
+declare function invoke(cb: () => void): void;
+>invoke : (cb: () => void) => void
+>cb : () => void
+
+declare function unknownMutate(): void;
+>unknownMutate : () => void
+
+declare function pass<T>(x: T): T;
+>pass : <T>(x: T) => T
+>x : T
+
+declare function delay(): Promise<void>;
+>delay : () => Promise<void>
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfQualifiedNames.ts
+// -----------------------------------------------------------------------------
+
+// Case QN1: basic qualified-name guard and repeated read in block.
+declare const getterQN1: {
+>getterQN1 : { readonly foo: { aaa: string; bbb: string; } | undefined; }
+
+    get foo(): { aaa: string; bbb: string } | undefined;
+>foo : { aaa: string; bbb: string; } | undefined
+>aaa : string
+>bbb : string
+
+};
+
+declare const identityQN1: {
+>identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
+
+    foo: stable () => { aaa: string; bbb: string } | undefined;
+>foo : () => { aaa: string; bbb: string; } | undefined
+>aaa : string
+>bbb : string
+
+};
+
+if (getterQN1.foo) {
+>getterQN1.foo : { aaa: string; bbb: string; } | undefined
+>getterQN1 : { readonly foo: { aaa: string; bbb: string; } | undefined; }
+>foo : { aaa: string; bbb: string; } | undefined
+
+    const qn1GetterA: string = getterQN1.foo.aaa; // getter baseline: OK
+>qn1GetterA : string
+>getterQN1.foo.aaa : string
+>getterQN1.foo : { aaa: string; bbb: string; }
+>getterQN1 : { readonly foo: { aaa: string; bbb: string; } | undefined; }
+>foo : { aaa: string; bbb: string; }
+>aaa : string
+
+    const qn1GetterB: string = getterQN1.foo.bbb; // getter baseline: OK
+>qn1GetterB : string
+>getterQN1.foo.bbb : string
+>getterQN1.foo : { aaa: string; bbb: string; }
+>getterQN1 : { readonly foo: { aaa: string; bbb: string; } | undefined; }
+>foo : { aaa: string; bbb: string; }
+>bbb : string
+
+    qn1GetterA;
+>qn1GetterA : string
+
+    qn1GetterB;
+>qn1GetterB : string
+}
+
+if (identityQN1.foo()) {
+>identityQN1.foo() : { aaa: string; bbb: string; } | undefined
+>identityQN1.foo : () => { aaa: string; bbb: string; } | undefined
+>identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
+>foo : () => { aaa: string; bbb: string; } | undefined
+
+    const qn1IdentityA: string = identityQN1.foo().aaa; // stable parity target: OK
+>qn1IdentityA : string
+>identityQN1.foo().aaa : string
+>identityQN1.foo() : { aaa: string; bbb: string; } | undefined
+>identityQN1.foo : () => { aaa: string; bbb: string; } | undefined
+>identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
+>foo : () => { aaa: string; bbb: string; } | undefined
+>aaa : string
+
+    const qn1IdentityB: string = identityQN1.foo().bbb; // stable parity target: OK
+>qn1IdentityB : string
+>identityQN1.foo().bbb : string
+>identityQN1.foo() : { aaa: string; bbb: string; } | undefined
+>identityQN1.foo : () => { aaa: string; bbb: string; } | undefined
+>identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
+>foo : () => { aaa: string; bbb: string; } | undefined
+>bbb : string
+
+    qn1IdentityA;
+>qn1IdentityA : string
+
+    qn1IdentityB;
+>qn1IdentityB : string
+}
+
+// Case QN2: loop retention after guard.
+if (getterQN1.foo) {
+>getterQN1.foo : { aaa: string; bbb: string; } | undefined
+>getterQN1 : { readonly foo: { aaa: string; bbb: string; } | undefined; }
+>foo : { aaa: string; bbb: string; } | undefined
+
+    for (const _ of [1, 2, 3]) {
+>_ : number
+>[1, 2, 3] : number[]
+>1 : 1
+>2 : 2
+>3 : 3
+
+        const qn2Getter: string = getterQN1.foo.aaa; // getter baseline: OK
+>qn2Getter : string
+>getterQN1.foo.aaa : string
+>getterQN1.foo : { aaa: string; bbb: string; }
+>getterQN1 : { readonly foo: { aaa: string; bbb: string; } | undefined; }
+>foo : { aaa: string; bbb: string; }
+>aaa : string
+
+        qn2Getter;
+>qn2Getter : string
+    }
+}
+
+if (identityQN1.foo()) {
+>identityQN1.foo() : { aaa: string; bbb: string; } | undefined
+>identityQN1.foo : () => { aaa: string; bbb: string; } | undefined
+>identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
+>foo : () => { aaa: string; bbb: string; } | undefined
+
+    for (const _ of [1, 2, 3]) {
+>_ : number
+>[1, 2, 3] : number[]
+>1 : 1
+>2 : 2
+>3 : 3
+
+        const qn2Identity: string = identityQN1.foo().aaa; // stable parity target: OK
+>qn2Identity : string
+>identityQN1.foo().aaa : string
+>identityQN1.foo() : { aaa: string; bbb: string; } | undefined
+>identityQN1.foo : () => { aaa: string; bbb: string; } | undefined
+>identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
+>foo : () => { aaa: string; bbb: string; } | undefined
+>aaa : string
+
+        qn2Identity;
+>qn2Identity : string
+    }
+}
+
+interface DeepOptionalGetter {
+    a?: {
+>a : { b?: { c?: string | undefined; } | undefined; } | undefined
+
+        b?: {
+>b : { c?: string | undefined; } | undefined
+
+            c?: string;
+>c : string | undefined
+
+        };
+    };
+}
+
+declare const getterQN2: {
+>getterQN2 : { readonly value: DeepOptionalGetter; }
+
+    get value(): DeepOptionalGetter;
+>value : DeepOptionalGetter
+
+};
+
+declare const identityQN2: {
+>identityQN2 : { value: () => DeepOptionalGetter; }
+
+    value: stable () => DeepOptionalGetter;
+>value : () => DeepOptionalGetter
+
+};
+
+// Case QN3: deep qualified-name chain with nested guards.
+if (getterQN2.value.a) {
+>getterQN2.value.a : { b?: { c?: string | undefined; } | undefined; } | undefined
+>getterQN2.value : DeepOptionalGetter
+>getterQN2 : { readonly value: DeepOptionalGetter; }
+>value : DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; } | undefined
+
+    if (getterQN2.value.a.b) {
+>getterQN2.value.a.b : { c?: string | undefined; } | undefined
+>getterQN2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterQN2.value : DeepOptionalGetter
+>getterQN2 : { readonly value: DeepOptionalGetter; }
+>value : DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; } | undefined
+
+        if (getterQN2.value.a.b.c) {
+>getterQN2.value.a.b.c : string | undefined
+>getterQN2.value.a.b : { c?: string | undefined; }
+>getterQN2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterQN2.value : DeepOptionalGetter
+>getterQN2 : { readonly value: DeepOptionalGetter; }
+>value : DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string | undefined
+
+            const qn3Getter: string = getterQN2.value.a.b.c; // getter baseline: OK
+>qn3Getter : string
+>getterQN2.value.a.b.c : string
+>getterQN2.value.a.b : { c?: string | undefined; }
+>getterQN2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterQN2.value : DeepOptionalGetter
+>getterQN2 : { readonly value: DeepOptionalGetter; }
+>value : DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string
+
+            qn3Getter;
+>qn3Getter : string
+        }
+    }
+}
+
+if (identityQN2.value().a) {
+>identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; } | undefined
+>identityQN2.value() : DeepOptionalGetter
+>identityQN2.value : () => DeepOptionalGetter
+>identityQN2 : { value: () => DeepOptionalGetter; }
+>value : () => DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; } | undefined
+
+    if (identityQN2.value().a.b) {
+>identityQN2.value().a.b : { c?: string | undefined; } | undefined
+>identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
+>identityQN2.value() : DeepOptionalGetter
+>identityQN2.value : () => DeepOptionalGetter
+>identityQN2 : { value: () => DeepOptionalGetter; }
+>value : () => DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; } | undefined
+
+        if (identityQN2.value().a.b.c) {
+>identityQN2.value().a.b.c : string | undefined
+>identityQN2.value().a.b : { c?: string | undefined; }
+>identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
+>identityQN2.value() : DeepOptionalGetter
+>identityQN2.value : () => DeepOptionalGetter
+>identityQN2 : { value: () => DeepOptionalGetter; }
+>value : () => DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string | undefined
+
+            const qn3Identity: string = identityQN2.value().a.b.c; // stable parity target: OK
+>qn3Identity : string
+>identityQN2.value().a.b.c : string
+>identityQN2.value().a.b : { c?: string | undefined; }
+>identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
+>identityQN2.value() : DeepOptionalGetter
+>identityQN2.value : () => DeepOptionalGetter
+>identityQN2 : { value: () => DeepOptionalGetter; }
+>value : () => DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string
+
+            qn3Identity;
+>qn3Identity : string
+        }
+    }
+}
+
+// Repro family: generic discriminant narrowing (from #48289 section).
+type Fish = { type: "fish"; hasFins: true };
+>Fish : Fish
+>type : "fish"
+>hasFins : true
+>true : true
+
+type Dog = { type: "dog"; saysWoof: true };
+>Dog : Dog
+>type : "dog"
+>saysWoof : true
+>true : true
+
+type Pet = Fish | Dog;
+>Pet : Pet
+
+// Case QN4: discriminant narrowing over generic parameter via getter.
+function qn4Getter<PetType extends Pet>(pet: { get value(): PetType }) {
+>qn4Getter : <PetType extends Pet>(pet: { readonly value: PetType; }) => void
+>pet : { readonly value: PetType; }
+>value : PetType
+
+    if (pet.value.type === "dog") {
+>pet.value.type === "dog" : boolean
+>pet.value.type : "dog" | "fish"
+>pet.value : Pet
+>pet : { readonly value: PetType; }
+>value : Pet
+>type : "dog" | "fish"
+>"dog" : "dog"
+
+        const qn4a: true = pet.value.saysWoof; // getter baseline: OK
+>qn4a : true
+>true : true
+>pet.value.saysWoof : true
+>pet.value : Dog
+>pet : { readonly value: PetType; }
+>value : Dog
+>saysWoof : true
+
+        qn4a;
+>qn4a : true
+    }
+}
+
+// Case QN5: discriminant narrowing over generic parameter via stable endpoint.
+function qn5Identity<PetType extends Pet>(pet: { value: stable () => PetType }) {
+>qn5Identity : <PetType extends Pet>(pet: { value: () => PetType; }) => void
+>pet : { value: () => PetType; }
+>value : () => PetType
+
+    if (pet.value().type === "dog") {
+>pet.value().type === "dog" : boolean
+>pet.value().type : "dog" | "fish"
+>pet.value() : PetType
+>pet.value : () => PetType
+>pet : { value: () => PetType; }
+>value : () => PetType
+>type : "dog" | "fish"
+>"dog" : "dog"
+
+        const qn5a: true = pet.value().saysWoof; // stable parity target: OK
+>qn5a : true
+>true : true
+>pet.value().saysWoof : true
+>pet.value() : PetType
+>pet.value : () => PetType
+>pet : { value: () => PetType; }
+>value : () => PetType
+>saysWoof : true
+
+        qn5a;
+>qn5a : true
+    }
+}
+
+// Case QN6: unknown-call boundary after discriminant guard.
+if (getterQN2.value.a && getterQN2.value.a.b && getterQN2.value.a.b.c) {
+>getterQN2.value.a && getterQN2.value.a.b && getterQN2.value.a.b.c : string | undefined
+>getterQN2.value.a && getterQN2.value.a.b : { c?: string | undefined; } | undefined
+>getterQN2.value.a : { b?: { c?: string | undefined; } | undefined; } | undefined
+>getterQN2.value : DeepOptionalGetter
+>getterQN2 : { readonly value: DeepOptionalGetter; }
+>value : DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; } | undefined
+>getterQN2.value.a.b : { c?: string | undefined; } | undefined
+>getterQN2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterQN2.value : DeepOptionalGetter
+>getterQN2 : { readonly value: DeepOptionalGetter; }
+>value : DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; } | undefined
+>getterQN2.value.a.b.c : string | undefined
+>getterQN2.value.a.b : { c?: string | undefined; }
+>getterQN2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterQN2.value : DeepOptionalGetter
+>getterQN2 : { readonly value: DeepOptionalGetter; }
+>value : DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string | undefined
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const qn6Getter: string = getterQN2.value.a.b.c; // getter sweep often remains narrowed
+>qn6Getter : string
+>getterQN2.value.a.b.c : string
+>getterQN2.value.a.b : { c?: string | undefined; }
+>getterQN2.value.a : { b?: { c?: string | undefined; } | undefined; }
+>getterQN2.value : DeepOptionalGetter
+>getterQN2 : { readonly value: DeepOptionalGetter; }
+>value : DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string
+
+    qn6Getter;
+>qn6Getter : string
+}
+
+if (identityQN2.value().a && identityQN2.value().a.b && identityQN2.value().a.b.c) {
+>identityQN2.value().a && identityQN2.value().a.b && identityQN2.value().a.b.c : string | undefined
+>identityQN2.value().a && identityQN2.value().a.b : { c?: string | undefined; } | undefined
+>identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; } | undefined
+>identityQN2.value() : DeepOptionalGetter
+>identityQN2.value : () => DeepOptionalGetter
+>identityQN2 : { value: () => DeepOptionalGetter; }
+>value : () => DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; } | undefined
+>identityQN2.value().a.b : { c?: string | undefined; } | undefined
+>identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
+>identityQN2.value() : DeepOptionalGetter
+>identityQN2.value : () => DeepOptionalGetter
+>identityQN2 : { value: () => DeepOptionalGetter; }
+>value : () => DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; } | undefined
+>identityQN2.value().a.b.c : string | undefined
+>identityQN2.value().a.b : { c?: string | undefined; }
+>identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
+>identityQN2.value() : DeepOptionalGetter
+>identityQN2.value : () => DeepOptionalGetter
+>identityQN2 : { value: () => DeepOptionalGetter; }
+>value : () => DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string | undefined
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const qn6Identity: string = identityQN2.value().a.b.c; // intentional gap visibility candidate
+>qn6Identity : string
+>identityQN2.value().a.b.c : string
+>identityQN2.value().a.b : { c?: string | undefined; }
+>identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
+>identityQN2.value() : DeepOptionalGetter
+>identityQN2.value : () => DeepOptionalGetter
+>identityQN2 : { value: () => DeepOptionalGetter; }
+>value : () => DeepOptionalGetter
+>a : { b?: { c?: string | undefined; } | undefined; }
+>b : { c?: string | undefined; }
+>c : string
+
+    qn6Identity;
+>qn6Identity : string
+}
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfDottedNames.ts
+// -----------------------------------------------------------------------------
+
+class DotA {
+>DotA : DotA
+
+    prop!: { a: string };
+>prop : { a: string; }
+>a : string
+}
+
+class DotB {
+>DotB : DotB
+
+    prop!: { b: string };
+>prop : { b: string; }
+>b : string
+}
+
+function isDotA(x: unknown): x is DotA {
+>isDotA : (x: unknown) => x is DotA
+>x : unknown
+
+    return x instanceof DotA;
+>x instanceof DotA : boolean
+>x : unknown
+>DotA : typeof DotA
+}
+
+function isDotB(x: unknown): x is DotB {
+>isDotB : (x: unknown) => x is DotB
+>x : unknown
+
+    return x instanceof DotB;
+>x instanceof DotB : boolean
+>x : unknown
+>DotB : typeof DotB
+}
+
+class DotAIdentity {
+>DotAIdentity : DotAIdentity
+
+    prop!: stable () => { a: string };
+>prop : () => { a: string; }
+>a : string
+}
+
+class DotBIdentity {
+>DotBIdentity : DotBIdentity
+
+    prop!: stable () => { b: string };
+>prop : () => { b: string; }
+>b : string
+}
+
+function isDotAIdentity(x: unknown): x is DotAIdentity {
+>isDotAIdentity : (x: unknown) => x is DotAIdentity
+>x : unknown
+
+    return x instanceof DotAIdentity;
+>x instanceof DotAIdentity : boolean
+>x : unknown
+>DotAIdentity : typeof DotAIdentity
+}
+
+function isDotBIdentity(x: unknown): x is DotBIdentity {
+>isDotBIdentity : (x: unknown) => x is DotBIdentity
+>x : unknown
+
+    return x instanceof DotBIdentity;
+>x instanceof DotBIdentity : boolean
+>x : unknown
+>DotBIdentity : typeof DotBIdentity
+}
+
+// Case DN1: dotted member narrowing in loop with instanceof.
+function dn1Getter(x: DotA | DotB) {
+>dn1Getter : (x: DotA | DotB) => void
+>x : DotA | DotB
+
+    while (true) {
+>true : true
+
+        if (x instanceof DotA) {
+>x instanceof DotA : boolean
+>x : DotA | DotB
+>DotA : typeof DotA
+
+            const dn1a: string = x.prop.a; // getter/property baseline: OK
+>dn1a : string
+>x.prop.a : string
+>x.prop : { a: string; }
+>x : DotA
+>prop : { a: string; }
+>a : string
+
+            dn1a;
+>dn1a : string
+
+        } else if (x instanceof DotB) {
+>x instanceof DotB : boolean
+>x : DotB
+>DotB : typeof DotB
+
+            const dn1b: string = x.prop.b; // getter/property baseline: OK
+>dn1b : string
+>x.prop.b : string
+>x.prop : { b: string; }
+>x : DotB
+>prop : { b: string; }
+>b : string
+
+            dn1b;
+>dn1b : string
+        }
+        break;
+    }
+}
+
+// Case DN2: stable callable-property variant with user-defined predicates.
+function dn2Identity(x: DotAIdentity | DotBIdentity) {
+>dn2Identity : (x: DotAIdentity | DotBIdentity) => void
+>x : DotAIdentity | DotBIdentity
+
+    while (true) {
+>true : true
+
+        if (isDotAIdentity(x)) {
+>isDotAIdentity(x) : boolean
+>isDotAIdentity : (x: unknown) => x is DotAIdentity
+>x : DotAIdentity | DotBIdentity
+
+            const dn2a: string = x.prop().a; // stable parity target: OK
+>dn2a : string
+>x.prop().a : string
+>x.prop() : { a: string; }
+>x.prop : () => { a: string; }
+>x : DotAIdentity
+>prop : () => { a: string; }
+>a : string
+
+            dn2a;
+>dn2a : string
+
+        } else if (isDotBIdentity(x)) {
+>isDotBIdentity(x) : boolean
+>isDotBIdentity : (x: unknown) => x is DotBIdentity
+>x : DotBIdentity
+
+            const dn2b: string = x.prop().b; // stable parity target: OK
+>dn2b : string
+>x.prop().b : string
+>x.prop() : { b: string; }
+>x.prop : () => { b: string; }
+>x : DotBIdentity
+>prop : () => { b: string; }
+>b : string
+
+            dn2b;
+>dn2b : string
+        }
+        break;
+    }
+}
+
+class AInfo {
+>AInfo : AInfo
+
+    a_count: number = 1;
+>a_count : number
+>1 : 1
+}
+
+class BInfo {
+>BInfo : BInfo
+
+    b_count: number = 1;
+>b_count : number
+>1 : 1
+}
+
+class DotBase {
+>DotBase : DotBase
+
+    id: number = 0;
+>id : number
+>0 : 0
+}
+
+class DotA2 extends DotBase {
+>DotA2 : DotA2
+>DotBase : DotBase
+
+    info!: AInfo;
+>info : AInfo
+}
+
+class DotB2 extends DotBase {
+>DotB2 : DotB2
+>DotBase : DotBase
+
+    info!: BInfo;
+>info : BInfo
+}
+
+class DotA2Identity extends DotBase {
+>DotA2Identity : DotA2Identity
+>DotBase : DotBase
+
+    info!: stable () => AInfo;
+>info : () => AInfo
+}
+
+class DotB2Identity extends DotBase {
+>DotB2Identity : DotB2Identity
+>DotBase : DotBase
+
+    info!: stable () => BInfo;
+>info : () => BInfo
+}
+
+// Case DN3: dotted-name access after class narrowing in loop.
+let dn3Target: DotBase | null = null as DotBase | null;
+>dn3Target : DotBase | null
+>null as DotBase | null : DotBase | null
+
+while (dn3Target) {
+>dn3Target : DotBase | null
+
+    if (dn3Target instanceof DotA2) {
+>dn3Target instanceof DotA2 : boolean
+>dn3Target : DotBase
+>DotA2 : typeof DotA2
+
+        dn3Target.info.a_count = 3; // getter/property baseline: OK
+>dn3Target.info.a_count = 3 : 3
+>dn3Target.info.a_count : number
+>dn3Target.info : AInfo
+>dn3Target : DotA2
+>info : AInfo
+>a_count : number
+>3 : 3
+
+    } else if (dn3Target instanceof DotB2) {
+>dn3Target instanceof DotB2 : boolean
+>dn3Target : DotBase
+>DotB2 : typeof DotB2
+
+        const dn3b: BInfo = dn3Target.info; // getter/property baseline: OK
+>dn3b : BInfo
+>dn3Target.info : BInfo
+>dn3Target : DotB2
+>info : BInfo
+
+        dn3b;
+>dn3b : BInfo
+    }
+    break;
+}
+
+// Case DN4: stable callable-property analog.
+let dn4Target: DotA2Identity | DotB2Identity | null = null as DotA2Identity | DotB2Identity | null;
+>dn4Target : DotA2Identity | DotB2Identity | null
+>null as DotA2Identity | DotB2Identity | null : DotA2Identity | DotB2Identity | null
+
+while (dn4Target) {
+>dn4Target : DotA2Identity | DotB2Identity | null
+
+    if (dn4Target instanceof DotA2Identity) {
+>dn4Target instanceof DotA2Identity : boolean
+>dn4Target : DotA2Identity | DotB2Identity
+>DotA2Identity : typeof DotA2Identity
+
+        dn4Target.info().a_count = 3; // stable parity target: OK
+>dn4Target.info().a_count = 3 : 3
+>dn4Target.info().a_count : number
+>dn4Target.info() : AInfo
+>dn4Target.info : () => AInfo
+>dn4Target : DotA2Identity
+>info : () => AInfo
+>a_count : number
+>3 : 3
+
+    } else if (dn4Target instanceof DotB2Identity) {
+>dn4Target instanceof DotB2Identity : boolean
+>dn4Target : DotB2Identity
+>DotB2Identity : typeof DotB2Identity
+
+        const dn4b: BInfo = dn4Target.info(); // stable parity target: OK
+>dn4b : BInfo
+>dn4Target.info() : BInfo
+>dn4Target.info : () => BInfo
+>dn4Target : DotB2Identity
+>info : () => BInfo
+
+        dn4b;
+>dn4b : BInfo
+    }
+    break;
+}
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/compiler/getterControlFlowStrictNull.ts
+// -----------------------------------------------------------------------------
+
+declare const getterNullish: {
+>getterNullish : { readonly value: string | null; }
+
+    get value(): string | null;
+>value : string | null
+
+};
+
+declare const identityNullish: stable () => string | null;
+>identityNullish : () => string | null
+
+// Case GC1: truthiness guard repeated reads.
+if (getterNullish.value) {
+>getterNullish.value : string | null
+>getterNullish : { readonly value: string | null; }
+>value : string | null
+
+    const gc1Getter: number = getterNullish.value.length; // getter baseline: OK
+>gc1Getter : number
+>getterNullish.value.length : number
+>getterNullish.value : string
+>getterNullish : { readonly value: string | null; }
+>value : string
+>length : number
+
+    gc1Getter;
+>gc1Getter : number
+}
+
+if (identityNullish()) {
+>identityNullish() : string | null
+>identityNullish : () => string | null
+
+    const gc1Identity: number = identityNullish().length; // stable parity target: OK
+>gc1Identity : number
+>identityNullish().length : number
+>identityNullish() : string | null
+>identityNullish : () => string | null
+>length : number
+
+    gc1Identity;
+>gc1Identity : number
+}
+
+// Case GC2: callback boundary.
+if (getterNullish.value) {
+>getterNullish.value : string | null
+>getterNullish : { readonly value: string | null; }
+>value : string | null
+
+    invoke(() => {});
+>invoke(() => {}) : void
+>invoke : (cb: () => void) => void
+>() => {} : () => void
+
+    const gc2Getter: number = getterNullish.value.length; // getter sweep often remains narrowed
+>gc2Getter : number
+>getterNullish.value.length : number
+>getterNullish.value : string
+>getterNullish : { readonly value: string | null; }
+>value : string
+>length : number
+
+    gc2Getter;
+>gc2Getter : number
+}
+
+if (identityNullish()) {
+>identityNullish() : string | null
+>identityNullish : () => string | null
+
+    invoke(() => {});
+>invoke(() => {}) : void
+>invoke : (cb: () => void) => void
+>() => {} : () => void
+
+    const gc2Identity: number = identityNullish().length; // intentional gap visibility candidate
+>gc2Identity : number
+>identityNullish().length : number
+>identityNullish() : string | null
+>identityNullish : () => string | null
+>length : number
+
+    gc2Identity;
+>gc2Identity : number
+}
+
+// Case GC3: await boundary.
+async function gc3Getter() {
+>gc3Getter : () => Promise<void>
+
+    if (getterNullish.value) {
+>getterNullish.value : string | null
+>getterNullish : { readonly value: string | null; }
+>value : string | null
+
+        await delay();
+>await delay() : void
+>delay() : Promise<void>
+>delay : () => Promise<void>
+
+        const gc3a: number = getterNullish.value.length; // getter sweep often remains narrowed
+>gc3a : number
+>getterNullish.value.length : number
+>getterNullish.value : string
+>getterNullish : { readonly value: string | null; }
+>value : string
+>length : number
+
+        gc3a;
+>gc3a : number
+    }
+}
+
+async function gc3Identity() {
+>gc3Identity : () => Promise<void>
+
+    if (identityNullish()) {
+>identityNullish() : string | null
+>identityNullish : () => string | null
+
+        await delay();
+>await delay() : void
+>delay() : Promise<void>
+>delay : () => Promise<void>
+
+        const gc3b: number = identityNullish().length; // stable parity target: OK
+>gc3b : number
+>identityNullish().length : number
+>identityNullish() : string | null
+>identityNullish : () => string | null
+>length : number
+
+        gc3b;
+>gc3b : number
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/conformance/expressions/typeGuards/
+//   - typeGuardsInProperties.ts
+//   - typeGuardsInClassAccessors.ts
+// -----------------------------------------------------------------------------
+
+// Case TG1: guard on member does not permanently narrow property/member type.
+declare const getterTG1: {
+>getterTG1 : { readonly value: string | number; }
+
+    get value(): string | number;
+>value : string | number
+
+};
+
+declare const identityTG1: {
+>identityTG1 : { value: () => string | number; }
+
+    value: stable () => string | number;
+>value : () => string | number
+
+};
+
+const tg1Getter: string | number = typeof getterTG1.value === "string" && getterTG1.value;
+>tg1Getter : string | number
+>typeof getterTG1.value === "string" && getterTG1.value : string | false
+>typeof getterTG1.value === "string" : boolean
+>typeof getterTG1.value : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>getterTG1.value : string | number
+>getterTG1 : { readonly value: string | number; }
+>value : string | number
+>"string" : "string"
+>getterTG1.value : string
+>getterTG1 : { readonly value: string | number; }
+>value : string
+
+tg1Getter;
+>tg1Getter : string | number
+
+const tg1Identity: string | number = typeof identityTG1.value() === "string" && identityTG1.value();
+>tg1Identity : string | number
+>typeof identityTG1.value() === "string" && identityTG1.value() : string | false
+>typeof identityTG1.value() === "string" : boolean
+>typeof identityTG1.value() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>identityTG1.value() : string | number
+>identityTG1.value : () => string | number
+>identityTG1 : { value: () => string | number; }
+>value : () => string | number
+>"string" : "string"
+>identityTG1.value() : string | number
+>identityTG1.value : () => string | number
+>identityTG1 : { value: () => string | number; }
+>value : () => string | number
+
+tg1Identity;
+>tg1Identity : string | number
+
+// Case TG2: local temporary pattern (control case expected to work for both).
+const tg2GetterValue = getterTG1.value;
+>tg2GetterValue : string | number
+>getterTG1.value : string | number
+>getterTG1 : { readonly value: string | number; }
+>value : string | number
+
+if (typeof tg2GetterValue === "string") {
+>typeof tg2GetterValue === "string" : boolean
+>typeof tg2GetterValue : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>tg2GetterValue : string | number
+>"string" : "string"
+
+    const tg2Getter: string = tg2GetterValue; // control: OK
+>tg2Getter : string
+>tg2GetterValue : string
+
+    tg2Getter;
+>tg2Getter : string
+}
+
+const tg2IdentityValue = identityTG1.value();
+>tg2IdentityValue : string | number
+>identityTG1.value() : string | number
+>identityTG1.value : () => string | number
+>identityTG1 : { value: () => string | number; }
+>value : () => string | number
+
+if (typeof tg2IdentityValue === "string") {
+>typeof tg2IdentityValue === "string" : boolean
+>typeof tg2IdentityValue : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>tg2IdentityValue : string | number
+>"string" : "string"
+
+    const tg2Identity: string = tg2IdentityValue; // control: OK
+>tg2Identity : string
+>tg2IdentityValue : string
+
+    tg2Identity;
+>tg2Identity : string
+}
+
+// -----------------------------------------------------------------------------
+// Additional broad parity visibility slices
+// -----------------------------------------------------------------------------
+
+// Case X1: alias escape via passthrough helper.
+declare const identityX1: stable () => string | undefined;
+>identityX1 : () => string | undefined
+
+if (identityX1() !== undefined) {
+>identityX1() !== undefined : boolean
+>identityX1() : string | undefined
+>identityX1 : () => string | undefined
+>undefined : undefined
+
+    const escaped = pass(identityX1);
+>escaped : () => string | undefined
+>pass(identityX1) : () => string | undefined
+>pass : <T>(x: T) => T
+>identityX1 : () => string | undefined
+
+    escaped;
+>escaped : () => string | undefined
+
+    const x1: string = identityX1(); // parity target: OK
+>x1 : string
+>identityX1() : string | undefined
+>identityX1 : () => string | undefined
+
+    const x1Upper: string = identityX1().toUpperCase(); // parity target: OK
+>x1Upper : string
+>identityX1().toUpperCase() : string
+>identityX1().toUpperCase : () => string
+>identityX1() : string | undefined
+>identityX1 : () => string | undefined
+>toUpperCase : () => string
+
+    x1;
+>x1 : string
+
+    x1Upper;
+>x1Upper : string
+}
+
+// Case X2: conditional expression repeated reads.
+declare const getterX2: {
+>getterX2 : { readonly value: string | undefined; }
+
+    get value(): string | undefined;
+>value : string | undefined
+
+};
+
+declare const identityX2: stable () => string | undefined;
+>identityX2 : () => string | undefined
+
+const x2Getter: string = getterX2.value !== undefined ? getterX2.value : "fallback"; // getter baseline: OK
+>x2Getter : string
+>getterX2.value !== undefined ? getterX2.value : "fallback" : string
+>getterX2.value !== undefined : boolean
+>getterX2.value : string | undefined
+>getterX2 : { readonly value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+>getterX2.value : string
+>getterX2 : { readonly value: string | undefined; }
+>value : string
+>"fallback" : "fallback"
+
+x2Getter;
+>x2Getter : string
+
+const x2Identity: string = identityX2() !== undefined ? identityX2() : "fallback"; // stable parity target: OK
+>x2Identity : string
+>identityX2() !== undefined ? identityX2() : "fallback" : string
+>identityX2() !== undefined : boolean
+>identityX2() : string | undefined
+>identityX2 : () => string | undefined
+>undefined : undefined
+>identityX2() : string | undefined
+>identityX2 : () => string | undefined
+>"fallback" : "fallback"
+
+x2Identity;
+>x2Identity : string
+
+// Case X3: nested discriminant with unknown boundary.
+type Shape = { kind: "circle"; radius: number } | { kind: "square"; size: number };
+>Shape : Shape
+>kind : "circle"
+>radius : number
+>kind : "square"
+>size : number
+
+declare const getterX3: {
+>getterX3 : { readonly value: Shape; }
+
+    get value(): Shape;
+>value : Shape
+
+};
+
+declare const identityX3: stable () => Shape;
+>identityX3 : () => Shape
+
+if (getterX3.value.kind === "circle") {
+>getterX3.value.kind === "circle" : boolean
+>getterX3.value.kind : "circle" | "square"
+>getterX3.value : Shape
+>getterX3 : { readonly value: Shape; }
+>value : Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    const x3GetterA: number = getterX3.value.radius; // getter baseline: OK
+>x3GetterA : number
+>getterX3.value.radius : number
+>getterX3.value : { kind: "circle"; radius: number; }
+>getterX3 : { readonly value: Shape; }
+>value : { kind: "circle"; radius: number; }
+>radius : number
+
+    x3GetterA;
+>x3GetterA : number
+}
+
+if (identityX3().kind === "circle") {
+>identityX3().kind === "circle" : boolean
+>identityX3().kind : "circle" | "square"
+>identityX3() : Shape
+>identityX3 : () => Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    const x3IdentityA: number = identityX3().radius; // stable parity target: OK
+>x3IdentityA : number
+>identityX3().radius : number
+>identityX3() : Shape
+>identityX3 : () => Shape
+>radius : number
+
+    x3IdentityA;
+>x3IdentityA : number
+}
+
+if (getterX3.value.kind === "circle") {
+>getterX3.value.kind === "circle" : boolean
+>getterX3.value.kind : "circle" | "square"
+>getterX3.value : Shape
+>getterX3 : { readonly value: Shape; }
+>value : Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const x3GetterB: number = getterX3.value.radius; // getter sweep often remains narrowed
+>x3GetterB : number
+>getterX3.value.radius : number
+>getterX3.value : { kind: "circle"; radius: number; }
+>getterX3 : { readonly value: Shape; }
+>value : { kind: "circle"; radius: number; }
+>radius : number
+
+    x3GetterB;
+>x3GetterB : number
+}
+
+if (identityX3().kind === "circle") {
+>identityX3().kind === "circle" : boolean
+>identityX3().kind : "circle" | "square"
+>identityX3() : Shape
+>identityX3 : () => Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const x3IdentityB: number = identityX3().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
+>x3IdentityB : number
+>identityX3().radius : number
+>identityX3() : Shape
+>identityX3 : () => Shape
+>radius : number
+
+    x3IdentityB;
+>x3IdentityB : number
+}
+

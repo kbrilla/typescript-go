@@ -8769,7 +8769,7 @@ type FunctionOrConstructorTypeNodeBase struct {
 	DeclarationBase
 	ModifiersBase
 	FunctionLikeBase
-	LinksClause *NodeList // Optional: identity endpoint names for mutator links clause
+	LinksClause *NodeList // Optional: stable endpoint names for mutator invalidates clause
 }
 
 func (node *FunctionOrConstructorTypeNodeBase) ForEachChild(v Visitor) bool {

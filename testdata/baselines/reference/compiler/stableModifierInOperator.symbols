@@ -1,0 +1,118 @@
+//// [tests/cases/compiler/stableModifierInOperator.ts] ////
+
+=== stableModifierInOperator.ts ===
+type Signal<T> = stable () => T;
+>Signal : Symbol(Signal, Decl(stableModifierInOperator.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierInOperator.ts, 0, 12))
+>T : Symbol(T, Decl(stableModifierInOperator.ts, 0, 12))
+
+interface Cat {
+>Cat : Symbol(Cat, Decl(stableModifierInOperator.ts, 0, 32))
+
+    kind: "cat";
+>kind : Symbol(Cat.kind, Decl(stableModifierInOperator.ts, 2, 15))
+
+    meow(): void;
+>meow : Symbol(Cat.meow, Decl(stableModifierInOperator.ts, 3, 16))
+}
+
+interface Dog {
+>Dog : Symbol(Dog, Decl(stableModifierInOperator.ts, 5, 1))
+
+    kind: "dog";
+>kind : Symbol(Dog.kind, Decl(stableModifierInOperator.ts, 7, 15))
+
+    bark(): void;
+>bark : Symbol(Dog.bark, Decl(stableModifierInOperator.ts, 8, 16))
+}
+
+declare const animal: Signal<Cat | Dog>;
+>animal : Symbol(animal, Decl(stableModifierInOperator.ts, 12, 13))
+>Signal : Symbol(Signal, Decl(stableModifierInOperator.ts, 0, 0))
+>Cat : Symbol(Cat, Decl(stableModifierInOperator.ts, 0, 32))
+>Dog : Symbol(Dog, Decl(stableModifierInOperator.ts, 5, 1))
+
+// Discriminant narrowing with stable
+if (animal().kind === "cat") {
+>animal().kind : Symbol(kind, Decl(stableModifierInOperator.ts, 2, 15), Decl(stableModifierInOperator.ts, 7, 15))
+>animal : Symbol(animal, Decl(stableModifierInOperator.ts, 12, 13))
+>kind : Symbol(kind, Decl(stableModifierInOperator.ts, 2, 15), Decl(stableModifierInOperator.ts, 7, 15))
+
+    const cat: Cat = animal();
+>cat : Symbol(cat, Decl(stableModifierInOperator.ts, 16, 9))
+>Cat : Symbol(Cat, Decl(stableModifierInOperator.ts, 0, 32))
+>animal : Symbol(animal, Decl(stableModifierInOperator.ts, 12, 13))
+
+    cat.meow();
+>cat.meow : Symbol(Cat.meow, Decl(stableModifierInOperator.ts, 3, 16))
+>cat : Symbol(cat, Decl(stableModifierInOperator.ts, 16, 9))
+>meow : Symbol(Cat.meow, Decl(stableModifierInOperator.ts, 3, 16))
+}
+
+// 'in' operator narrowing with stable
+if ("meow" in animal()) {
+>animal : Symbol(animal, Decl(stableModifierInOperator.ts, 12, 13))
+
+    const cat: Cat = animal();
+>cat : Symbol(cat, Decl(stableModifierInOperator.ts, 22, 9))
+>Cat : Symbol(Cat, Decl(stableModifierInOperator.ts, 0, 32))
+>animal : Symbol(animal, Decl(stableModifierInOperator.ts, 12, 13))
+
+    cat.meow();
+>cat.meow : Symbol(Cat.meow, Decl(stableModifierInOperator.ts, 3, 16))
+>cat : Symbol(cat, Decl(stableModifierInOperator.ts, 22, 9))
+>meow : Symbol(Cat.meow, Decl(stableModifierInOperator.ts, 3, 16))
+}
+
+if ("bark" in animal()) {
+>animal : Symbol(animal, Decl(stableModifierInOperator.ts, 12, 13))
+
+    const dog: Dog = animal();
+>dog : Symbol(dog, Decl(stableModifierInOperator.ts, 27, 9))
+>Dog : Symbol(Dog, Decl(stableModifierInOperator.ts, 5, 1))
+>animal : Symbol(animal, Decl(stableModifierInOperator.ts, 12, 13))
+
+    dog.bark();
+>dog.bark : Symbol(Dog.bark, Decl(stableModifierInOperator.ts, 8, 16))
+>dog : Symbol(dog, Decl(stableModifierInOperator.ts, 27, 9))
+>bark : Symbol(Dog.bark, Decl(stableModifierInOperator.ts, 8, 16))
+}
+
+// typeof narrowing with stable
+declare const value: Signal<string | number>;
+>value : Symbol(value, Decl(stableModifierInOperator.ts, 32, 13))
+>Signal : Symbol(Signal, Decl(stableModifierInOperator.ts, 0, 0))
+
+if (typeof value() === "string") {
+>value : Symbol(value, Decl(stableModifierInOperator.ts, 32, 13))
+
+    const str: string = value();
+>str : Symbol(str, Decl(stableModifierInOperator.ts, 35, 9))
+>value : Symbol(value, Decl(stableModifierInOperator.ts, 32, 13))
+}
+
+if (typeof value() === "number") {
+>value : Symbol(value, Decl(stableModifierInOperator.ts, 32, 13))
+
+    const num: number = value();
+>num : Symbol(num, Decl(stableModifierInOperator.ts, 39, 9))
+>value : Symbol(value, Decl(stableModifierInOperator.ts, 32, 13))
+}
+
+// instanceof narrowing with stable
+declare const instance: Signal<Date | RegExp>;
+>instance : Symbol(instance, Decl(stableModifierInOperator.ts, 43, 13))
+>Signal : Symbol(Signal, Decl(stableModifierInOperator.ts, 0, 0))
+>Date : Symbol(Date, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.scripthost.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --) ... and 2 more)
+>RegExp : Symbol(RegExp, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.regexp.d.ts, --, --) ... and 3 more)
+
+if (instance() instanceof Date) {
+>instance : Symbol(instance, Decl(stableModifierInOperator.ts, 43, 13))
+>Date : Symbol(Date, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.scripthost.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --) ... and 2 more)
+
+    const d: Date = instance();
+>d : Symbol(d, Decl(stableModifierInOperator.ts, 46, 9))
+>Date : Symbol(Date, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.scripthost.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --) ... and 2 more)
+>instance : Symbol(instance, Decl(stableModifierInOperator.ts, 43, 13))
+}
+

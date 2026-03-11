@@ -515,22 +515,22 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				}
 				flags |= ast.ModifierFlagsAsync
 				lastAsync = modifier
-			case ast.KindIdentityKeyword:
-				if flags&ast.ModifierFlagsIdentity != 0 {
-					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "identity")
+			case ast.KindStableKeyword:
+				if flags&ast.ModifierFlagsStable != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "stable")
 				}
 				if node.Kind != ast.KindFunctionType {
-					return c.grammarErrorOnNode(modifier, diagnostics.X_identity_modifier_can_only_appear_on_a_function_type_with_no_parameters)
+					return c.grammarErrorOnNode(modifier, diagnostics.X_stable_modifier_can_only_appear_on_a_function_type_with_no_parameters)
 				}
 				// Check that the function type has no parameters
 				if len(node.Parameters()) > 0 {
-					return c.grammarErrorOnNode(modifier, diagnostics.X_identity_modifier_can_only_appear_on_a_function_type_with_no_parameters)
+					return c.grammarErrorOnNode(modifier, diagnostics.X_stable_modifier_can_only_appear_on_a_function_type_with_no_parameters)
 				}
-				// identity and mutator cannot combine
+				// stable and mutator cannot combine
 				if flags&ast.ModifierFlagsMutator != 0 {
-					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_cannot_be_used_with_identity_modifier)
+					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_cannot_be_used_with_stable_modifier)
 				}
-				flags |= ast.ModifierFlagsIdentity
+				flags |= ast.ModifierFlagsStable
 			case ast.KindMutatorKeyword:
 				if flags&ast.ModifierFlagsMutator != 0 {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "mutator")
@@ -538,9 +538,9 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				if node.Kind != ast.KindFunctionType {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_can_only_appear_on_a_function_type)
 				}
-				// mutator and identity cannot combine
-				if flags&ast.ModifierFlagsIdentity != 0 {
-					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_cannot_be_used_with_identity_modifier)
+				// mutator and stable cannot combine
+				if flags&ast.ModifierFlagsStable != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_cannot_be_used_with_stable_modifier)
 				}
 				flags |= ast.ModifierFlagsMutator
 			case ast.KindInKeyword,
@@ -659,7 +659,7 @@ func (c *Checker) findFirstIllegalModifier(node *ast.Node) *ast.Node {
 			ast.KindConstructorType:
 			return c.findFirstModifierExcept(node, ast.KindAbstractKeyword)
 		case ast.KindFunctionType:
-			return c.findFirstModifierExcept(node, ast.KindIdentityKeyword)
+			return c.findFirstModifierExcept(node, ast.KindStableKeyword)
 		case ast.KindClassExpression,
 			ast.KindInterfaceDeclaration,
 			ast.KindTypeAliasDeclaration:

@@ -1,0 +1,72 @@
+//// [tests/cases/compiler/stableModifierOptionalChaining.ts] ////
+
+=== stableModifierOptionalChaining.ts ===
+type Signal<T> = stable () => T;
+>Signal : Symbol(Signal, Decl(stableModifierOptionalChaining.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierOptionalChaining.ts, 0, 12))
+>T : Symbol(T, Decl(stableModifierOptionalChaining.ts, 0, 12))
+
+declare const read: Signal<{ name: string; age: number } | undefined>;
+>read : Symbol(read, Decl(stableModifierOptionalChaining.ts, 2, 13))
+>Signal : Symbol(Signal, Decl(stableModifierOptionalChaining.ts, 0, 0))
+>name : Symbol(name, Decl(stableModifierOptionalChaining.ts, 2, 28))
+>age : Symbol(age, Decl(stableModifierOptionalChaining.ts, 2, 42))
+
+// Optional chaining on stable call result
+const itemName = read()?.name;
+>itemName : Symbol(itemName, Decl(stableModifierOptionalChaining.ts, 5, 5))
+>read()?.name : Symbol(name, Decl(stableModifierOptionalChaining.ts, 2, 28))
+>read : Symbol(read, Decl(stableModifierOptionalChaining.ts, 2, 13))
+>name : Symbol(name, Decl(stableModifierOptionalChaining.ts, 2, 28))
+
+// Narrowing through optional chaining
+if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierOptionalChaining.ts, 2, 13))
+>undefined : Symbol(undefined)
+
+    const obj = read();
+>obj : Symbol(obj, Decl(stableModifierOptionalChaining.ts, 9, 9))
+>read : Symbol(read, Decl(stableModifierOptionalChaining.ts, 2, 13))
+
+    const n: string = obj.name;
+>n : Symbol(n, Decl(stableModifierOptionalChaining.ts, 10, 9))
+>obj.name : Symbol(name, Decl(stableModifierOptionalChaining.ts, 2, 28))
+>obj : Symbol(obj, Decl(stableModifierOptionalChaining.ts, 9, 9))
+>name : Symbol(name, Decl(stableModifierOptionalChaining.ts, 2, 28))
+
+    const a: number = obj.age;
+>a : Symbol(a, Decl(stableModifierOptionalChaining.ts, 11, 9))
+>obj.age : Symbol(age, Decl(stableModifierOptionalChaining.ts, 2, 42))
+>obj : Symbol(obj, Decl(stableModifierOptionalChaining.ts, 9, 9))
+>age : Symbol(age, Decl(stableModifierOptionalChaining.ts, 2, 42))
+}
+
+// Optional chaining should not narrow
+const maybeName: string | undefined = read()?.name;
+>maybeName : Symbol(maybeName, Decl(stableModifierOptionalChaining.ts, 15, 5))
+>read()?.name : Symbol(name, Decl(stableModifierOptionalChaining.ts, 2, 28))
+>read : Symbol(read, Decl(stableModifierOptionalChaining.ts, 2, 13))
+>name : Symbol(name, Decl(stableModifierOptionalChaining.ts, 2, 28))
+
+// Nested optional chaining
+declare const nested: Signal<{ inner?: { value: string } } | undefined>;
+>nested : Symbol(nested, Decl(stableModifierOptionalChaining.ts, 18, 13))
+>Signal : Symbol(Signal, Decl(stableModifierOptionalChaining.ts, 0, 0))
+>inner : Symbol(inner, Decl(stableModifierOptionalChaining.ts, 18, 30))
+>value : Symbol(value, Decl(stableModifierOptionalChaining.ts, 18, 40))
+
+const deep = nested()?.inner?.value;
+>deep : Symbol(deep, Decl(stableModifierOptionalChaining.ts, 20, 5))
+>nested()?.inner?.value : Symbol(value, Decl(stableModifierOptionalChaining.ts, 18, 40))
+>nested()?.inner : Symbol(inner, Decl(stableModifierOptionalChaining.ts, 18, 30))
+>nested : Symbol(nested, Decl(stableModifierOptionalChaining.ts, 18, 13))
+>inner : Symbol(inner, Decl(stableModifierOptionalChaining.ts, 18, 30))
+>value : Symbol(value, Decl(stableModifierOptionalChaining.ts, 18, 40))
+
+// Identity with nullish coalescing
+const nameOrDefault: string = read()?.name ?? "unknown";
+>nameOrDefault : Symbol(nameOrDefault, Decl(stableModifierOptionalChaining.ts, 23, 5))
+>read()?.name : Symbol(name, Decl(stableModifierOptionalChaining.ts, 2, 28))
+>read : Symbol(read, Decl(stableModifierOptionalChaining.ts, 2, 13))
+>name : Symbol(name, Decl(stableModifierOptionalChaining.ts, 2, 28))
+

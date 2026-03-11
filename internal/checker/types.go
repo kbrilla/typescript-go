@@ -1124,12 +1124,12 @@ const (
 	SignatureFlagsIsUntypedSignatureInJSFile             SignatureFlags = 1 << 6 // Indicates signature is from a js file and has no types
 	SignatureFlagsIsNonInferrable                        SignatureFlags = 1 << 7 // Indicates signature comes from a non-inferrable type
 	SignatureFlagsIsSignatureCandidateForOverloadFailure SignatureFlags = 1 << 8
-	SignatureFlagsIdentity                               SignatureFlags = 1 << 9  // Indicates signature is an identity function (stable return value for narrowing)
-	SignatureFlagsMutator                                SignatureFlags = 1 << 10 // Indicates signature is a mutator function (invalidates identity endpoints)
+	SignatureFlagsStable                                 SignatureFlags = 1 << 9  // Indicates signature is a stable function (stable return value for narrowing)
+	SignatureFlagsMutator                                SignatureFlags = 1 << 10 // Indicates signature is a mutator function (invalidates stable endpoints)
 	// We do not propagate `IsInnerCallChain` or `IsOuterCallChain` to instantiated signatures, as that would result in us
 	// attempting to add `| undefined` on each recursive call to `getReturnTypeOfSignature` when
 	// instantiating the return type.
-	SignatureFlagsPropagatingFlags = SignatureFlagsHasRestParameter | SignatureFlagsHasLiteralTypes | SignatureFlagsConstruct | SignatureFlagsAbstract | SignatureFlagsIsUntypedSignatureInJSFile | SignatureFlagsIsSignatureCandidateForOverloadFailure | SignatureFlagsIdentity | SignatureFlagsMutator
+	SignatureFlagsPropagatingFlags = SignatureFlagsHasRestParameter | SignatureFlagsHasLiteralTypes | SignatureFlagsConstruct | SignatureFlagsAbstract | SignatureFlagsIsUntypedSignatureInJSFile | SignatureFlagsIsSignatureCandidateForOverloadFailure | SignatureFlagsStable | SignatureFlagsMutator
 	SignatureFlagsCallChainFlags   = SignatureFlagsIsInnerCallChain | SignatureFlagsIsOuterCallChain
 )
 
@@ -1149,7 +1149,7 @@ type Signature struct {
 	mapper                   *TypeMapper
 	isolatedSignatureType    *Type
 	composite                *CompositeSignature
-	links                    []*ast.Node // Resolved links clause nodes (identity endpoint identifiers) from mutator declaration
+	links                    []*ast.Node // Resolved invalidates clause nodes (stable endpoint identifiers) from mutator declaration
 }
 
 func (s *Signature) Flags() SignatureFlags {

@@ -20,41 +20,41 @@ type FlowType struct {
 	incomplete bool
 }
 
-type identityBoundaryKind int8
+type stableBoundaryKind int8
 
-type identityBoundaryPreserveRuleID int8
+type stableBoundaryPreserveRuleID int8
 
 const (
-	identityBoundaryKindNone identityBoundaryKind = iota
-	identityBoundaryKindUnknownCall
-	identityBoundaryKindCallbackCall
-	identityBoundaryKindAwaitBoundary
-	identityBoundaryKindAliasEscape
-	identityBoundaryKindOther
-	identityBoundaryKindCount
+	stableBoundaryKindNone stableBoundaryKind = iota
+	stableBoundaryKindUnknownCall
+	stableBoundaryKindCallbackCall
+	stableBoundaryKindAwaitBoundary
+	stableBoundaryKindAliasEscape
+	stableBoundaryKindOther
+	stableBoundaryKindCount
 )
 
 const (
-	identityBoundaryPreserveRuleNoopCallback identityBoundaryPreserveRuleID = iota + 1
-	identityBoundaryPreserveRulePromiseResolveAwait
-	identityBoundaryPreserveRuleAmbientNoArgAwait
-	identityBoundaryPreserveRuleAmbientNoArgVoidUnknownCall
-	identityBoundaryPreserveRuleExprStmtTrivialPassthrough
+	stableBoundaryPreserveRuleNoopCallback stableBoundaryPreserveRuleID = iota + 1
+	stableBoundaryPreserveRulePromiseResolveAwait
+	stableBoundaryPreserveRuleAmbientNoArgAwait
+	stableBoundaryPreserveRuleAmbientNoArgVoidUnknownCall
+	stableBoundaryPreserveRuleExprStmtTrivialPassthrough
 )
 
-var identityBoundaryPreserveRulesByKind = [identityBoundaryKindCount][]identityBoundaryPreserveRuleID{
-	identityBoundaryKindUnknownCall: {
-		identityBoundaryPreserveRuleAmbientNoArgVoidUnknownCall,
+var stableBoundaryPreserveRulesByKind = [stableBoundaryKindCount][]stableBoundaryPreserveRuleID{
+	stableBoundaryKindUnknownCall: {
+		stableBoundaryPreserveRuleAmbientNoArgVoidUnknownCall,
 	},
-	identityBoundaryKindCallbackCall: {
-		identityBoundaryPreserveRuleNoopCallback,
+	stableBoundaryKindCallbackCall: {
+		stableBoundaryPreserveRuleNoopCallback,
 	},
-	identityBoundaryKindAwaitBoundary: {
-		identityBoundaryPreserveRulePromiseResolveAwait,
-		identityBoundaryPreserveRuleAmbientNoArgAwait,
+	stableBoundaryKindAwaitBoundary: {
+		stableBoundaryPreserveRulePromiseResolveAwait,
+		stableBoundaryPreserveRuleAmbientNoArgAwait,
 	},
-	identityBoundaryKindOther: {
-		identityBoundaryPreserveRuleExprStmtTrivialPassthrough,
+	stableBoundaryKindOther: {
+		stableBoundaryPreserveRuleExprStmtTrivialPassthrough,
 	},
 }
 
@@ -299,38 +299,38 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 		return FlowType{t: f.declaredType}
 	}
 
-	boundaryKind := c.classifyIdentityBoundary(f.reference, node)
-	if boundaryKind == identityBoundaryKindAliasEscape {
+	boundaryKind := c.classifyStableBoundary(f.reference, node)
+	if boundaryKind == stableBoundaryKindAliasEscape {
 		if !c.isReachableFlowNode(flow) {
 			return FlowType{t: c.unreachableNeverType}
 		}
-		c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
+		c.reportStableBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
 		return FlowType{t: f.declaredType}
 	}
 
-	if boundaryKind == identityBoundaryKindAwaitBoundary {
+	if boundaryKind == stableBoundaryKindAwaitBoundary {
 		if !c.isReachableFlowNode(flow) {
 			return FlowType{t: c.unreachableNeverType}
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
 		if flowType.t != f.declaredType {
-			c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
+			c.reportStableBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
 			return c.newFlowType(f.declaredType, flowType.incomplete)
 		}
 		// Intentional fall-through: when the await boundary doesn't change the type
 		// (flowType matches declared type), we let the normal CFA continue walking
 		// antecedents. This is correct because the await didn't introduce new narrowing.
-		// Unlike identityBoundaryKindAliasEscape which always returns (an alias escape
+		// Unlike stableBoundaryKindAliasEscape which always returns (an alias escape
 		// always resets narrowing), an await that preserves the declared type is transparent.
 	}
 
-	if boundaryKind == identityBoundaryKindOther && !c.shouldPreserveIdentityBoundaryNarrowing(f.reference, node, boundaryKind) {
+	if boundaryKind == stableBoundaryKindOther && !c.shouldPreserveStableBoundaryNarrowing(f.reference, node, boundaryKind) {
 		if !c.isReachableFlowNode(flow) {
 			return FlowType{t: c.unreachableNeverType}
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
 		if flowType.t != f.declaredType {
-			c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
+			c.reportStableBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
 			return c.newFlowType(f.declaredType, flowType.incomplete)
 		}
 		return flowType
@@ -446,13 +446,13 @@ func (c *Checker) isInlineTrivialPassthroughCallForCallReference(callee *ast.Nod
 	}
 
 	if ast.IsIdentifier(invoked) {
-		return c.isConstAliasChainTrivialPassthroughHelper(invoked) || c.isAmbientIdentityPassthroughCallForCallReference(initializer)
+		return c.isConstAliasChainTrivialPassthroughHelper(invoked) || c.isAmbientStablePassthroughCallForCallReference(initializer)
 	}
 
 	return false
 }
 
-func (c *Checker) isAmbientIdentityPassthroughCallForCallReference(call *ast.Node) bool {
+func (c *Checker) isAmbientStablePassthroughCallForCallReference(call *ast.Node) bool {
 	signature := c.getResolvedSignature(call, nil /*candidatesOutArray*/, CheckModeNormal)
 	if signature == nil || signature == c.resolvingSignature || len(signature.parameters) != 1 || signatureHasRestParameter(signature) {
 		return false
@@ -605,14 +605,14 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 		}
 	}
 
-	boundaryKind := c.classifyIdentityBoundary(f.reference, flow.Node)
-	if boundaryKind != identityBoundaryKindNone {
-		if c.shouldPreserveIdentityBoundaryNarrowing(f.reference, flow.Node, boundaryKind) {
+	boundaryKind := c.classifyStableBoundary(f.reference, flow.Node)
+	if boundaryKind != stableBoundaryKindNone {
+		if c.shouldPreserveStableBoundaryNarrowing(f.reference, flow.Node, boundaryKind) {
 			return FlowType{}
 		}
 		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
 		if flowType.t != f.declaredType {
-			c.reportIdentityBoundaryInvalidationDiagnostic(f.reference, flow.Node, boundaryKind)
+			c.reportStableBoundaryInvalidationDiagnostic(f.reference, flow.Node, boundaryKind)
 			return c.newFlowType(f.declaredType, flowType.incomplete)
 		}
 	}
@@ -628,20 +628,20 @@ func (c *Checker) isNonMatchingCallBoundary(reference *ast.Node, boundary *ast.N
 	return ast.IsCallExpression(reference) && !c.isMatchingReference(reference, boundary)
 }
 
-func (c *Checker) isUnknownCallBoundaryForIdentityReference(reference *ast.Node, boundary *ast.Node) bool {
+func (c *Checker) isUnknownCallBoundaryForStableReference(reference *ast.Node, boundary *ast.Node) bool {
 	return isNoArgCallExpression(reference) && isNoArgCallExpression(boundary) && !c.isMatchingReference(reference, boundary)
 }
 
-// isUnrelatedCallForIdentityReference returns true when the boundary call
-// cannot affect the identity function's backing state. This matches getter
+// isUnrelatedCallForStableReference returns true when the boundary call
+// cannot affect the stable function's backing state. This matches getter
 // behavior where function calls don't invalidate property narrowing.
 //
-// For standalone identity references (Identifier callee), all calls to
+// For standalone stable references (Identifier callee), all calls to
 // different functions and all method calls on any object are unrelated.
-// For member identity references (AccessExpression callee), method calls
+// For member stable references (AccessExpression callee), method calls
 // on unrelated receivers and standalone calls are unrelated, but method
 // calls on the same receiver may be related.
-func (c *Checker) isUnrelatedCallForIdentityReference(reference *ast.Node, boundary *ast.Node) bool {
+func (c *Checker) isUnrelatedCallForStableReference(reference *ast.Node, boundary *ast.Node) bool {
 	if !ast.IsCallExpression(boundary) {
 		return false
 	}
@@ -659,11 +659,11 @@ func (c *Checker) isUnrelatedCallForIdentityReference(reference *ast.Node, bound
 
 	// Standalone call (Identifier callee)
 	if ast.IsIdentifier(callee) {
-		// If same function as identity reference, it may be related.
+		// If same function as stable reference, it may be related.
 		if ast.IsIdentifier(referenceCallee) && c.isMatchingReference(callee, referenceCallee) {
 			return false
 		}
-		// Otherwise, standalone calls can't affect identity state —
+		// Otherwise, standalone calls can't affect stable state —
 		// there is no shared receiver to mutate.
 		if ast.IsIdentifier(referenceCallee) || ast.IsAccessExpression(referenceCallee) {
 			return true
@@ -673,75 +673,75 @@ func (c *Checker) isUnrelatedCallForIdentityReference(reference *ast.Node, bound
 	return false
 }
 
-func (c *Checker) classifyIdentityBoundary(reference *ast.Node, boundary *ast.Node) identityBoundaryKind {
-	if !c.isIdentityCallReference(reference) {
-		return identityBoundaryKindNone
+func (c *Checker) classifyStableBoundary(reference *ast.Node, boundary *ast.Node) stableBoundaryKind {
+	if !c.isStableCallReference(reference) {
+		return stableBoundaryKindNone
 	}
 
-	// Identity calls are pure reads by contract — they cannot mutate state
-	// that would affect other identity references. This matches how
+	// Stable calls are pure reads by contract — they cannot mutate state
+	// that would affect other stable references. This matches how
 	// independent property getters narrow independently.
-	if c.isIdentityCallReference(boundary) {
-		return identityBoundaryKindNone
+	if c.isStableCallReference(boundary) {
+		return stableBoundaryKindNone
 	}
 
-	// Explicit mutator calls invalidate linked (or all) identity endpoints
+	// Explicit mutator calls invalidate linked (or all) stable endpoints
 	// on the same receiver. This takes priority over unrelated-call transparency.
 	if c.isMutatorCallBoundary(reference, boundary) {
-		return identityBoundaryKindOther
+		return stableBoundaryKindOther
 	}
 
 	if c.isAliasEscapeAssignmentForCallReference(reference, boundary) {
-		return identityBoundaryKindAliasEscape
+		return stableBoundaryKindAliasEscape
 	}
 
 	if c.isAwaitAssignmentBoundaryForCallReference(reference, boundary) {
-		return identityBoundaryKindAwaitBoundary
+		return stableBoundaryKindAwaitBoundary
 	}
 
-	if c.isIdentityReceiverWriteBoundaryForCallReference(reference, boundary) {
-		return identityBoundaryKindOther
+	if c.isStableReceiverWriteBoundaryForCallReference(reference, boundary) {
+		return stableBoundaryKindOther
 	}
 
 	if c.isNonMatchingCallBoundary(reference, boundary) {
 		if ast.IsAwaitExpression(boundary) {
-			return identityBoundaryKindAwaitBoundary
+			return stableBoundaryKindAwaitBoundary
 		}
 
-		// Calls on objects/functions unrelated to the identity reference
-		// cannot affect the identity function's backing state. This matches
+		// Calls on objects/functions unrelated to the stable reference
+		// cannot affect the stable function's backing state. This matches
 		// getter behavior where function calls don't invalidate narrowing.
-		if c.isUnrelatedCallForIdentityReference(reference, boundary) {
-			return identityBoundaryKindNone
+		if c.isUnrelatedCallForStableReference(reference, boundary) {
+			return stableBoundaryKindNone
 		}
 
 		if ast.IsCallExpression(boundary) && c.hasNoopCallbackArgument(boundary) {
-			return identityBoundaryKindCallbackCall
+			return stableBoundaryKindCallbackCall
 		}
 
-		if c.isUnknownCallBoundaryForIdentityReference(reference, boundary) {
-			return identityBoundaryKindUnknownCall
+		if c.isUnknownCallBoundaryForStableReference(reference, boundary) {
+			return stableBoundaryKindUnknownCall
 		}
 
 		// Non-call boundaries (e.g. property assignments on different receivers) that
-		// weren't caught by isIdentityReceiverWriteBoundaryForCallReference are unrelated.
+		// weren't caught by isStableReceiverWriteBoundaryForCallReference are unrelated.
 		if !ast.IsCallExpression(boundary) {
-			return identityBoundaryKindNone
+			return stableBoundaryKindNone
 		}
 
-		return identityBoundaryKindOther
+		return stableBoundaryKindOther
 	}
 
-	return identityBoundaryKindNone
+	return stableBoundaryKindNone
 }
 
-func (c *Checker) shouldPreserveIdentityBoundaryNarrowing(reference *ast.Node, boundary *ast.Node, kind identityBoundaryKind) bool {
+func (c *Checker) shouldPreserveStableBoundaryNarrowing(reference *ast.Node, boundary *ast.Node, kind stableBoundaryKind) bool {
 	if c.shouldPreserveReadSetCallNarrowing(reference, boundary) {
 		return true
 	}
 
-	for _, preserveRule := range identityBoundaryPreserveRulesByKind[kind] {
-		if c.shouldPreserveIdentityBoundaryByRule(reference, boundary, preserveRule) {
+	for _, preserveRule := range stableBoundaryPreserveRulesByKind[kind] {
+		if c.shouldPreserveStableBoundaryByRule(reference, boundary, preserveRule) {
 			return true
 		}
 	}
@@ -749,17 +749,17 @@ func (c *Checker) shouldPreserveIdentityBoundaryNarrowing(reference *ast.Node, b
 	return false
 }
 
-func (c *Checker) shouldPreserveIdentityBoundaryByRule(reference *ast.Node, boundary *ast.Node, rule identityBoundaryPreserveRuleID) bool {
+func (c *Checker) shouldPreserveStableBoundaryByRule(reference *ast.Node, boundary *ast.Node, rule stableBoundaryPreserveRuleID) bool {
 	switch rule {
-	case identityBoundaryPreserveRuleNoopCallback:
+	case stableBoundaryPreserveRuleNoopCallback:
 		return c.shouldPreserveNoopCallbackCallNarrowing(reference, boundary)
-	case identityBoundaryPreserveRulePromiseResolveAwait:
+	case stableBoundaryPreserveRulePromiseResolveAwait:
 		return c.shouldPreservePromiseResolveAwaitCallNarrowing(reference, boundary)
-	case identityBoundaryPreserveRuleAmbientNoArgAwait:
+	case stableBoundaryPreserveRuleAmbientNoArgAwait:
 		return c.shouldPreserveAmbientNoArgAwaitCallNarrowing(reference, boundary)
-	case identityBoundaryPreserveRuleAmbientNoArgVoidUnknownCall:
+	case stableBoundaryPreserveRuleAmbientNoArgVoidUnknownCall:
 		return c.shouldPreserveAmbientNoArgVoidUnknownCallNarrowing(reference, boundary)
-	case identityBoundaryPreserveRuleExprStmtTrivialPassthrough:
+	case stableBoundaryPreserveRuleExprStmtTrivialPassthrough:
 		return c.shouldPreserveExprStmtTrivialPassthroughNarrowing(reference, boundary)
 	default:
 		return false
@@ -835,17 +835,17 @@ func (c *Checker) shouldPreserveAmbientNoArgVoidUnknownCallNarrowing(reference *
 	return true
 }
 
-func (c *Checker) isIdentityCallReference(reference *ast.Node) bool {
+func (c *Checker) isStableCallReference(reference *ast.Node) bool {
 	if !isNoArgCallExpression(reference) {
 		return false
 	}
 
 	signature := c.getResolvedSignature(reference, nil /*candidatesOutArray*/, CheckModeTypeOnly)
-	return signature != nil && signature != c.resolvingSignature && signature.flags&SignatureFlagsIdentity != 0
+	return signature != nil && signature != c.resolvingSignature && signature.flags&SignatureFlagsStable != 0
 }
 
 // isMutatorCallBoundary checks if the boundary is a mutator call on the same
-// receiver as the identity reference. If the mutator has a links clause, only
+// receiver as the stable reference. If the mutator has an invalidates clause, only
 // invalidates if the reference endpoint is among the linked targets.
 func (c *Checker) isMutatorCallBoundary(reference *ast.Node, boundary *ast.Node) bool {
 	if !ast.IsCallExpression(boundary) {
@@ -872,11 +872,11 @@ func (c *Checker) isMutatorCallBoundary(reference *ast.Node, boundary *ast.Node)
 		return false
 	}
 
-	// Same receiver, it's a mutator call. Check links for selective invalidation.
+	// Same receiver, it's a mutator call. Check invalidates clause for selective invalidation.
 	if declaration := signature.declaration; declaration != nil && ast.IsFunctionTypeNode(declaration) {
 		fnType := declaration.AsFunctionTypeNode()
 		if fnType.LinksClause != nil && len(fnType.LinksClause.Nodes) > 0 {
-			// Links exist — only invalidate if reference endpoint is linked
+			// Invalidates clause exists — only invalidate if reference endpoint is linked
 			for _, link := range fnType.LinksClause.Nodes {
 				if ast.IsIdentifier(link) && link.Text() == refName {
 					return true // Linked endpoint — invalidate
@@ -886,7 +886,7 @@ func (c *Checker) isMutatorCallBoundary(reference *ast.Node, boundary *ast.Node)
 		}
 	}
 
-	// No links clause — conservatively invalidate all identity endpoints on same receiver
+	// No invalidates clause — conservatively invalidate all stable endpoints on same receiver
 	return true
 }
 
@@ -933,7 +933,7 @@ func (c *Checker) getLiteralNamedAccessReceiverAndName(access *ast.Node) (*ast.N
 	return nil, "", false
 }
 
-func (c *Checker) isIdentityReceiverWriteBoundaryForCallReference(reference *ast.Node, boundary *ast.Node) bool {
+func (c *Checker) isStableReceiverWriteBoundaryForCallReference(reference *ast.Node, boundary *ast.Node) bool {
 	if !isNoArgCallExpression(reference) {
 		return false
 	}
@@ -966,7 +966,7 @@ func (c *Checker) isIdentityReceiverWriteBoundaryForCallReference(reference *ast
 	}
 
 	// Any same-receiver write is conservatively treated as potentially mutating
-	// identity-backed state.
+	// stable-backed state.
 	return true
 }
 
@@ -1168,7 +1168,7 @@ func (c *Checker) isTrivialCallbackForwardingCall(call *ast.Node) bool {
 	}
 
 	if ast.IsIdentifier(invoked) {
-		return c.isConstAliasChainTrivialPassthroughHelper(invoked) || c.isAmbientIdentityPassthroughCallForCallReference(call)
+		return c.isConstAliasChainTrivialPassthroughHelper(invoked) || c.isAmbientStablePassthroughCallForCallReference(call)
 	}
 
 	return false
@@ -2742,8 +2742,8 @@ func (c *Checker) isMatchingReference(source *ast.Node, target *ast.Node) bool {
 	case ast.KindBinaryExpression:
 		return ast.IsBinaryExpression(source) && source.AsBinaryExpression().OperatorToken.Kind == ast.KindCommaToken && c.isMatchingReference(source.AsBinaryExpression().Right, target)
 	case ast.KindCallExpression:
-		// Identity function calls: two parameterless calls to the same identity function are matching references.
-		// This enables type narrowing across repeated calls to identity (stable) functions.
+		// Stable function calls: two parameterless calls to the same stable function are matching references.
+		// This enables type narrowing across repeated calls to stable functions.
 		if ast.IsCallExpression(target) && len(source.Arguments()) == 0 && len(target.Arguments()) == 0 {
 			return c.isMatchingReference(source.Expression(), target.Expression())
 		}
@@ -2824,7 +2824,7 @@ func (c *Checker) writeFlowCacheKey(b *keyBuilder, node *ast.Node, declaredType 
 		b.writeType(declaredType)
 		return true
 	case ast.KindCallExpression:
-		// For identity function calls, generate a cache key based on the callee expression
+		// For stable function calls, generate a cache key based on the callee expression
 		if len(node.Arguments()) == 0 {
 			if !c.writeFlowCacheKey(b, node.Expression(), declaredType, initialType, flowContainer) {
 				return false

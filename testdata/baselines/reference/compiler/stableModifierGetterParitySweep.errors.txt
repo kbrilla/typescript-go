@@ -1,0 +1,241 @@
+stableModifierGetterParitySweep.ts(40,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+stableModifierGetterParitySweep.ts(48,7): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+
+==== stableModifierGetterParitySweep.ts (2 errors) ====
+    // Getter-to-stable parity sweep.
+    // Categories: repeated reads, branch merges, callback/await boundaries,
+    // write invalidation, aliasing, conditional/ternary, nested access.
+    
+    declare function invoke(cb: () => void): void;
+    declare function delay(): Promise<void>;
+    declare function unknownMutate(): void;
+    declare function pass<T>(x: T): T;
+    
+    // -----------------------------------------------------------------------------
+    // [P1] Basic repeated reads
+    // -----------------------------------------------------------------------------
+    
+    declare const getterBasic: {
+        get value(): string | undefined;
+        set value(v: string | undefined);
+    };
+    
+    declare const identityBasic: stable () => string | undefined;
+    
+    if (getterBasic.value !== undefined) {
+        const getterStable: string = getterBasic.value; // getter baseline: OK
+        getterStable;
+    }
+    
+    if (identityBasic() !== undefined) {
+        const identityStable: string = identityBasic(); // stable parity target: OK
+        identityStable;
+    }
+    
+    // -----------------------------------------------------------------------------
+    // [P2] Branch merges
+    // -----------------------------------------------------------------------------
+    
+    if (getterBasic.value !== undefined) {
+        getterBasic.value;
+    } else {
+        getterBasic.value;
+    }
+    const getterMerged: string = getterBasic.value; // getter baseline: error
+          ~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    getterMerged;
+    
+    if (identityBasic() !== undefined) {
+        identityBasic();
+    } else {
+        identityBasic();
+    }
+    const identityMerged: string = identityBasic(); // stable parity target: error
+          ~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    identityMerged;
+    
+    // -----------------------------------------------------------------------------
+    // [P3] Callback boundary invalidation
+    // -----------------------------------------------------------------------------
+    
+    if (getterBasic.value !== undefined) {
+        invoke(() => {});
+        const getterAfterCallback: string = getterBasic.value; // getter observed: remains narrowed
+        getterAfterCallback;
+    }
+    
+    if (identityBasic() !== undefined) {
+        invoke(() => {});
+        const identityAfterCallback: string = identityBasic(); // OK (empty callback preserves narrowing)
+        identityAfterCallback;
+    }
+    
+    if (identityBasic() !== undefined) {
+        invoke(() => {});
+        const identityAfterNoopCallback: string = identityBasic(); // parity target: OK for narrow no-op callback shape
+        identityAfterNoopCallback;
+    }
+    
+    let assignedInvokeResult: void;
+    if (identityBasic() !== undefined) {
+        assignedInvokeResult = invoke(() => {
+            const callbackWrite = 1;
+            callbackWrite;
+        });
+        assignedInvokeResult;
+        const identityAfterAssignmentCallback: string = identityBasic(); // stable boundary target: error for assignment-expression callback form
+        identityAfterAssignmentCallback;
+    }
+    
+    if (identityBasic() !== undefined) {
+        const cb = () => {};
+        invoke(cb);
+        const identityAfterConstNoopCallbackAlias: string = identityBasic(); // stable precision target: OK under strict const no-op alias guard
+        identityAfterConstNoopCallbackAlias;
+    }
+    
+    if (identityBasic() !== undefined) {
+        let cb = () => {};
+        cb = () => {
+            const callbackWrite = 1;
+            callbackWrite;
+        };
+        invoke(cb);
+        const identityAfterMutableCallbackAlias: string = identityBasic(); // stable boundary target: error (mutable alias remains conservative)
+        identityAfterMutableCallbackAlias;
+    }
+    
+    if (identityBasic() !== undefined) {
+        const cb = () => {
+            const callbackWrite = 1;
+            callbackWrite;
+        };
+        invoke(cb);
+        const identityAfterNonEmptyCallbackAlias: string = identityBasic(); // stable boundary target: error (non-empty alias remains conservative)
+        identityAfterNonEmptyCallbackAlias;
+    }
+    
+    // -----------------------------------------------------------------------------
+    // [P4] Await boundary invalidation
+    // -----------------------------------------------------------------------------
+    
+    async function parityAwaitBoundaries() {
+        if (getterBasic.value !== undefined) {
+            await delay();
+            const getterAfterAwait: string = getterBasic.value; // getter observed: remains narrowed
+            getterAfterAwait;
+        }
+    
+        if (identityBasic() !== undefined) {
+            await delay();
+            const identityAfterAwait: string = identityBasic(); // OK (ambient no-arg await preserves narrowing)
+            identityAfterAwait;
+        }
+    
+        if (identityBasic() !== undefined) {
+            await Promise.resolve();
+            const identityAfterSafeAwait: string = identityBasic(); // parity target: OK for narrow safe await shape
+            identityAfterSafeAwait;
+        }
+    }
+    
+    // -----------------------------------------------------------------------------
+    // [P5] Write invalidation
+    // -----------------------------------------------------------------------------
+    
+    if (getterBasic.value !== undefined) {
+        getterBasic.value = "next";
+        const getterAfterWrite: string = getterBasic.value; // getter observed: remains narrowed
+        getterAfterWrite;
+    }
+    
+    declare const identityStore: {
+        read: stable () => string | undefined;
+        set(v: string | undefined): void;
+    };
+    
+    if (identityStore.read() !== undefined) {
+        identityStore.set("next");
+        const identityAfterWrite: string = identityStore.read(); // stable parity target: OK
+        identityAfterWrite;
+    }
+    
+    // -----------------------------------------------------------------------------
+    // [P6] Aliasing / escape
+    // -----------------------------------------------------------------------------
+    
+    if (getterBasic.value !== undefined) {
+        const getterAlias = getterBasic;
+        getterAlias;
+        const getterAfterAlias: string = getterBasic.value; // getter baseline target: OK
+        getterAfterAlias;
+    }
+    
+    if (identityBasic() !== undefined) {
+        const identityAlias = identityBasic;
+        identityAlias;
+        const identityAfterAlias: string = identityBasic(); // stable parity target: OK for direct const alias
+        identityAfterAlias;
+    }
+    
+    if (identityBasic() !== undefined) {
+        const identityIndirectAlias = pass(identityBasic);
+        identityIndirectAlias;
+        const identityAfterIndirectAlias: string = identityBasic(); // stable observed: error (indirect alias escape)
+        identityAfterIndirectAlias;
+    }
+    
+    // -----------------------------------------------------------------------------
+    // [P7] Conditional/ternary
+    // -----------------------------------------------------------------------------
+    
+    const getterTernary: string = getterBasic.value !== undefined ? getterBasic.value : "fallback"; // getter baseline: OK
+    getterTernary;
+    
+    const identityTernary: string = identityBasic() !== undefined ? identityBasic() : "fallback"; // stable parity target: OK
+    identityTernary;
+    
+    // -----------------------------------------------------------------------------
+    // [P8] Nested access (discriminated union)
+    // -----------------------------------------------------------------------------
+    
+    type Shape =
+        | { kind: "circle"; radius: number }
+        | { kind: "square"; size: number };
+    
+    declare const getterNested: {
+        get value(): Shape;
+        set value(v: Shape);
+    };
+    
+    declare const identityNested: stable () => Shape;
+    
+    if (getterNested.value.kind === "circle") {
+        const getterRadius: number = getterNested.value.radius; // getter baseline: OK
+        getterRadius;
+    }
+    
+    if (identityNested().kind === "circle") {
+        const identityRadius: number = identityNested().radius; // stable parity target: OK
+        identityRadius;
+    }
+    
+    if (getterNested.value.kind === "circle") {
+        unknownMutate();
+        const getterAfterUnknown: number = getterNested.value.radius; // getter observed: remains narrowed
+        getterAfterUnknown;
+    }
+    
+    if (identityNested().kind === "circle") {
+        unknownMutate();
+        const identityAfterUnknown: number = identityNested().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
+        identityAfterUnknown;
+    }
+    

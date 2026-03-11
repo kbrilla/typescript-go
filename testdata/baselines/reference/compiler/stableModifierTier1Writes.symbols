@@ -1,0 +1,413 @@
+//// [tests/cases/compiler/stableModifierTier1Writes.ts] ////
+
+=== stableModifierTier1Writes.ts ===
+// Tier 1 write-form invalidation: dot and bracket-literal assignment forms.
+declare const propertyModel: {
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+
+    get value(): string | undefined;
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    set value(v: string | undefined);
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>v : Symbol(v, Decl(stableModifierTier1Writes.ts, 3, 14))
+
+};
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>undefined : Symbol(undefined)
+
+    propertyModel.value += "!";
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    const afterPlusEquals: string = propertyModel.value; // should error
+>afterPlusEquals : Symbol(afterPlusEquals, Decl(stableModifierTier1Writes.ts, 8, 9))
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    afterPlusEquals;
+>afterPlusEquals : Symbol(afterPlusEquals, Decl(stableModifierTier1Writes.ts, 8, 9))
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>undefined : Symbol(undefined)
+
+    propertyModel.value ??= "fallback";
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    const afterQuestionQuestionEquals: string = propertyModel.value; // should error
+>afterQuestionQuestionEquals : Symbol(afterQuestionQuestionEquals, Decl(stableModifierTier1Writes.ts, 14, 9))
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    afterQuestionQuestionEquals;
+>afterQuestionQuestionEquals : Symbol(afterQuestionQuestionEquals, Decl(stableModifierTier1Writes.ts, 14, 9))
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>undefined : Symbol(undefined)
+
+    propertyModel.value ||= "fallback";
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    const afterBarBarEquals: string = propertyModel.value; // should error
+>afterBarBarEquals : Symbol(afterBarBarEquals, Decl(stableModifierTier1Writes.ts, 20, 9))
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    afterBarBarEquals;
+>afterBarBarEquals : Symbol(afterBarBarEquals, Decl(stableModifierTier1Writes.ts, 20, 9))
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>undefined : Symbol(undefined)
+
+    propertyModel.value &&= "next";
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    const afterAmpAmpEquals: string = propertyModel.value; // should error
+>afterAmpAmpEquals : Symbol(afterAmpAmpEquals, Decl(stableModifierTier1Writes.ts, 26, 9))
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    afterAmpAmpEquals;
+>afterAmpAmpEquals : Symbol(afterAmpAmpEquals, Decl(stableModifierTier1Writes.ts, 26, 9))
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>undefined : Symbol(undefined)
+
+    propertyModel["value"] = "next";
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>"value" : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    const afterBracketEquals: string = propertyModel.value; // parity with dot '=' behavior (currently preserved)
+>afterBracketEquals : Symbol(afterBracketEquals, Decl(stableModifierTier1Writes.ts, 32, 9))
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    afterBracketEquals;
+>afterBracketEquals : Symbol(afterBracketEquals, Decl(stableModifierTier1Writes.ts, 32, 9))
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>undefined : Symbol(undefined)
+
+    propertyModel["value"] ||= "fallback";
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>"value" : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    const afterBracketBarBarEquals: string = propertyModel.value; // should error
+>afterBracketBarBarEquals : Symbol(afterBracketBarBarEquals, Decl(stableModifierTier1Writes.ts, 38, 9))
+>propertyModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+>propertyModel : Symbol(propertyModel, Decl(stableModifierTier1Writes.ts, 1, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 1, 30), Decl(stableModifierTier1Writes.ts, 2, 36))
+
+    afterBracketBarBarEquals;
+>afterBracketBarBarEquals : Symbol(afterBracketBarBarEquals, Decl(stableModifierTier1Writes.ts, 38, 9))
+}
+
+declare const numberModel: {
+>numberModel : Symbol(numberModel, Decl(stableModifierTier1Writes.ts, 42, 13))
+
+    get value(): number | undefined;
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+
+    set value(v: number | undefined);
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>v : Symbol(v, Decl(stableModifierTier1Writes.ts, 44, 14))
+
+};
+
+if (numberModel.value !== undefined) {
+>numberModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>numberModel : Symbol(numberModel, Decl(stableModifierTier1Writes.ts, 42, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>undefined : Symbol(undefined)
+
+    numberModel.value++;
+>numberModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>numberModel : Symbol(numberModel, Decl(stableModifierTier1Writes.ts, 42, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+
+    const afterPostfixPlusPlus: number = numberModel.value; // should error
+>afterPostfixPlusPlus : Symbol(afterPostfixPlusPlus, Decl(stableModifierTier1Writes.ts, 49, 9))
+>numberModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>numberModel : Symbol(numberModel, Decl(stableModifierTier1Writes.ts, 42, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+
+    afterPostfixPlusPlus;
+>afterPostfixPlusPlus : Symbol(afterPostfixPlusPlus, Decl(stableModifierTier1Writes.ts, 49, 9))
+}
+
+if (numberModel.value !== undefined) {
+>numberModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>numberModel : Symbol(numberModel, Decl(stableModifierTier1Writes.ts, 42, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>undefined : Symbol(undefined)
+
+    --numberModel.value;
+>numberModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>numberModel : Symbol(numberModel, Decl(stableModifierTier1Writes.ts, 42, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+
+    const afterPrefixMinusMinus: number = numberModel.value; // should error
+>afterPrefixMinusMinus : Symbol(afterPrefixMinusMinus, Decl(stableModifierTier1Writes.ts, 55, 9))
+>numberModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>numberModel : Symbol(numberModel, Decl(stableModifierTier1Writes.ts, 42, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+
+    afterPrefixMinusMinus;
+>afterPrefixMinusMinus : Symbol(afterPrefixMinusMinus, Decl(stableModifierTier1Writes.ts, 55, 9))
+}
+
+if (numberModel.value !== undefined) {
+>numberModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>numberModel : Symbol(numberModel, Decl(stableModifierTier1Writes.ts, 42, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>undefined : Symbol(undefined)
+
+    numberModel["value"]++;
+>numberModel : Symbol(numberModel, Decl(stableModifierTier1Writes.ts, 42, 13))
+>"value" : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+
+    const afterBracketPostfixPlusPlus: number = numberModel.value; // should error
+>afterBracketPostfixPlusPlus : Symbol(afterBracketPostfixPlusPlus, Decl(stableModifierTier1Writes.ts, 61, 9))
+>numberModel.value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+>numberModel : Symbol(numberModel, Decl(stableModifierTier1Writes.ts, 42, 13))
+>value : Symbol(value, Decl(stableModifierTier1Writes.ts, 42, 28), Decl(stableModifierTier1Writes.ts, 43, 36))
+
+    afterBracketPostfixPlusPlus;
+>afterBracketPostfixPlusPlus : Symbol(afterBracketPostfixPlusPlus, Decl(stableModifierTier1Writes.ts, 61, 9))
+}
+
+// Bracket-literal mutator parity with existing dot-form read/set special-case.
+declare const store: {
+>store : Symbol(store, Decl(stableModifierTier1Writes.ts, 66, 13))
+
+    read: stable () => string | undefined;
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 66, 22))
+
+    set(v: string | undefined): void;
+>set : Symbol(set, Decl(stableModifierTier1Writes.ts, 67, 42))
+>v : Symbol(v, Decl(stableModifierTier1Writes.ts, 68, 8))
+
+};
+
+if (store.read() !== undefined) {
+>store.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 66, 22))
+>store : Symbol(store, Decl(stableModifierTier1Writes.ts, 66, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 66, 22))
+>undefined : Symbol(undefined)
+
+    store.set("next");
+>store.set : Symbol(set, Decl(stableModifierTier1Writes.ts, 67, 42))
+>store : Symbol(store, Decl(stableModifierTier1Writes.ts, 66, 13))
+>set : Symbol(set, Decl(stableModifierTier1Writes.ts, 67, 42))
+
+    const afterDotSetCall: string = store.read(); // should stay narrowed
+>afterDotSetCall : Symbol(afterDotSetCall, Decl(stableModifierTier1Writes.ts, 73, 9))
+>store.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 66, 22))
+>store : Symbol(store, Decl(stableModifierTier1Writes.ts, 66, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 66, 22))
+
+    afterDotSetCall;
+>afterDotSetCall : Symbol(afterDotSetCall, Decl(stableModifierTier1Writes.ts, 73, 9))
+}
+
+if (store.read() !== undefined) {
+>store.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 66, 22))
+>store : Symbol(store, Decl(stableModifierTier1Writes.ts, 66, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 66, 22))
+>undefined : Symbol(undefined)
+
+    store["set"]("next");
+>store : Symbol(store, Decl(stableModifierTier1Writes.ts, 66, 13))
+>"set" : Symbol(set, Decl(stableModifierTier1Writes.ts, 67, 42))
+
+    const afterBracketSetCall: string = store.read(); // should stay narrowed
+>afterBracketSetCall : Symbol(afterBracketSetCall, Decl(stableModifierTier1Writes.ts, 79, 9))
+>store.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 66, 22))
+>store : Symbol(store, Decl(stableModifierTier1Writes.ts, 66, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 66, 22))
+
+    afterBracketSetCall;
+>afterBracketSetCall : Symbol(afterBracketSetCall, Decl(stableModifierTier1Writes.ts, 79, 9))
+}
+
+// Identity call write-matrix breadth: dynamic keys and receiver-alias writes.
+declare const keyStore: {
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+
+    read: stable () => string | undefined;
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+
+    set(v: string | undefined): void;
+>set : Symbol(set, Decl(stableModifierTier1Writes.ts, 85, 42))
+>v : Symbol(v, Decl(stableModifierTier1Writes.ts, 86, 8))
+
+};
+
+declare const readKey: "read";
+>readKey : Symbol(readKey, Decl(stableModifierTier1Writes.ts, 89, 13))
+
+if (keyStore[readKey]() !== undefined) {
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>readKey : Symbol(readKey, Decl(stableModifierTier1Writes.ts, 89, 13))
+>undefined : Symbol(undefined)
+
+    const sameReadKey = readKey;
+>sameReadKey : Symbol(sameReadKey, Decl(stableModifierTier1Writes.ts, 92, 9))
+>readKey : Symbol(readKey, Decl(stableModifierTier1Writes.ts, 89, 13))
+
+    keyStore[sameReadKey] = (() => undefined) as stable () => string | undefined;
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>sameReadKey : Symbol(sameReadKey, Decl(stableModifierTier1Writes.ts, 92, 9))
+>undefined : Symbol(undefined)
+
+    const afterProvenDynamicWrite: string = keyStore[readKey](); // should error
+>afterProvenDynamicWrite : Symbol(afterProvenDynamicWrite, Decl(stableModifierTier1Writes.ts, 94, 9))
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>readKey : Symbol(readKey, Decl(stableModifierTier1Writes.ts, 89, 13))
+
+    afterProvenDynamicWrite;
+>afterProvenDynamicWrite : Symbol(afterProvenDynamicWrite, Decl(stableModifierTier1Writes.ts, 94, 9))
+}
+
+if (keyStore.read() !== undefined) {
+>keyStore.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>undefined : Symbol(undefined)
+
+    const alias = keyStore;
+>alias : Symbol(alias, Decl(stableModifierTier1Writes.ts, 99, 9))
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+
+    alias.read = (() => undefined) as stable () => string | undefined;
+>alias.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>alias : Symbol(alias, Decl(stableModifierTier1Writes.ts, 99, 9))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>undefined : Symbol(undefined)
+
+    const afterAliasDotWrite: string = keyStore.read(); // should error
+>afterAliasDotWrite : Symbol(afterAliasDotWrite, Decl(stableModifierTier1Writes.ts, 101, 9))
+>keyStore.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+
+    afterAliasDotWrite;
+>afterAliasDotWrite : Symbol(afterAliasDotWrite, Decl(stableModifierTier1Writes.ts, 101, 9))
+}
+
+if (keyStore[readKey]() !== undefined) {
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>readKey : Symbol(readKey, Decl(stableModifierTier1Writes.ts, 89, 13))
+>undefined : Symbol(undefined)
+
+    const alias = keyStore;
+>alias : Symbol(alias, Decl(stableModifierTier1Writes.ts, 106, 9))
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+
+    alias[readKey] = (() => undefined) as stable () => string | undefined;
+>alias : Symbol(alias, Decl(stableModifierTier1Writes.ts, 106, 9))
+>readKey : Symbol(readKey, Decl(stableModifierTier1Writes.ts, 89, 13))
+>undefined : Symbol(undefined)
+
+    const afterAliasDynamicWrite: string = keyStore[readKey](); // should error
+>afterAliasDynamicWrite : Symbol(afterAliasDynamicWrite, Decl(stableModifierTier1Writes.ts, 108, 9))
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>readKey : Symbol(readKey, Decl(stableModifierTier1Writes.ts, 89, 13))
+
+    afterAliasDynamicWrite;
+>afterAliasDynamicWrite : Symbol(afterAliasDynamicWrite, Decl(stableModifierTier1Writes.ts, 108, 9))
+}
+
+if (keyStore.read() !== undefined) {
+>keyStore.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>undefined : Symbol(undefined)
+
+    let unknownKey: string = "read";
+>unknownKey : Symbol(unknownKey, Decl(stableModifierTier1Writes.ts, 113, 7))
+
+    unknownKey = "read";
+>unknownKey : Symbol(unknownKey, Decl(stableModifierTier1Writes.ts, 113, 7))
+
+    keyStore[unknownKey as "read"] = (() => undefined) as stable () => string | undefined;
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>unknownKey : Symbol(unknownKey, Decl(stableModifierTier1Writes.ts, 113, 7))
+>undefined : Symbol(undefined)
+
+    const afterNonProvenDynamicWrite: string = keyStore.read(); // should error
+>afterNonProvenDynamicWrite : Symbol(afterNonProvenDynamicWrite, Decl(stableModifierTier1Writes.ts, 116, 9))
+>keyStore.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+
+    afterNonProvenDynamicWrite;
+>afterNonProvenDynamicWrite : Symbol(afterNonProvenDynamicWrite, Decl(stableModifierTier1Writes.ts, 116, 9))
+}
+
+declare const otherKeyStore: {
+>otherKeyStore : Symbol(otherKeyStore, Decl(stableModifierTier1Writes.ts, 120, 13))
+
+    read: stable () => string | undefined;
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 120, 30))
+
+};
+
+if (keyStore.read() !== undefined) {
+>keyStore.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>undefined : Symbol(undefined)
+
+    otherKeyStore.read = (() => undefined) as stable () => string | undefined;
+>otherKeyStore.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 120, 30))
+>otherKeyStore : Symbol(otherKeyStore, Decl(stableModifierTier1Writes.ts, 120, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 120, 30))
+>undefined : Symbol(undefined)
+
+    const afterOtherReceiverWrite: string = keyStore.read(); // should stay narrowed
+>afterOtherReceiverWrite : Symbol(afterOtherReceiverWrite, Decl(stableModifierTier1Writes.ts, 126, 9))
+>keyStore.read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+>keyStore : Symbol(keyStore, Decl(stableModifierTier1Writes.ts, 84, 13))
+>read : Symbol(read, Decl(stableModifierTier1Writes.ts, 84, 25))
+
+    afterOtherReceiverWrite;
+>afterOtherReceiverWrite : Symbol(afterOtherReceiverWrite, Decl(stableModifierTier1Writes.ts, 126, 9))
+}
+

@@ -1,0 +1,29 @@
+//// [tests/cases/compiler/stableModifierErrors.ts] ////
+
+=== stableModifierErrors.ts ===
+// Error: stable modifier on function with parameters
+declare const fn1: stable (x: string) => number; // should error
+>fn1 : (x: string) => number
+>x : string
+
+// Valid: stable modifier on parameterless function type
+declare const fn3: stable () => string | undefined; // OK
+>fn3 : () => string | undefined
+
+// Identity modifier in a type alias
+type Getter<T> = stable () => T; // OK
+>Getter : Getter<T>
+
+// Using 'stable' as a variable name should still work (contextual keyword)
+const stable = <T>(x: T): T => x; // OK - 'stable' used as identifier
+>stable : <T>(x: T) => T
+><T>(x: T): T => x : <T>(x: T) => T
+>x : T
+>x : T
+
+const result = stable("hello");
+>result : "hello"
+>stable("hello") : "hello"
+>stable : <T>(x: T) => T
+>"hello" : "hello"
+

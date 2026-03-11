@@ -1,0 +1,497 @@
+//// [tests/cases/compiler/stableModifierTier1Writes.ts] ////
+
+=== stableModifierTier1Writes.ts ===
+// Tier 1 write-form invalidation: dot and bracket-literal assignment forms.
+declare const propertyModel: {
+>propertyModel : { value: string | undefined; }
+
+    get value(): string | undefined;
+>value : string | undefined
+
+    set value(v: string | undefined);
+>value : string | undefined
+>v : string | undefined
+
+};
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value !== undefined : boolean
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    propertyModel.value += "!";
+>propertyModel.value += "!" : string
+>propertyModel.value : string
+>propertyModel : { value: string | undefined; }
+>value : string
+>"!" : "!"
+
+    const afterPlusEquals: string = propertyModel.value; // should error
+>afterPlusEquals : string
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+
+    afterPlusEquals;
+>afterPlusEquals : string
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value !== undefined : boolean
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    propertyModel.value ??= "fallback";
+>propertyModel.value ??= "fallback" : string
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>"fallback" : "fallback"
+
+    const afterQuestionQuestionEquals: string = propertyModel.value; // should error
+>afterQuestionQuestionEquals : string
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+
+    afterQuestionQuestionEquals;
+>afterQuestionQuestionEquals : string
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value !== undefined : boolean
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    propertyModel.value ||= "fallback";
+>propertyModel.value ||= "fallback" : string
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>"fallback" : "fallback"
+
+    const afterBarBarEquals: string = propertyModel.value; // should error
+>afterBarBarEquals : string
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+
+    afterBarBarEquals;
+>afterBarBarEquals : string
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value !== undefined : boolean
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    propertyModel.value &&= "next";
+>propertyModel.value &&= "next" : "" | "next" | undefined
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>"next" : "next"
+
+    const afterAmpAmpEquals: string = propertyModel.value; // should error
+>afterAmpAmpEquals : string
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+
+    afterAmpAmpEquals;
+>afterAmpAmpEquals : string
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value !== undefined : boolean
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    propertyModel["value"] = "next";
+>propertyModel["value"] = "next" : "next"
+>propertyModel["value"] : string | undefined
+>propertyModel : { value: string | undefined; }
+>"value" : "value"
+>"next" : "next"
+
+    const afterBracketEquals: string = propertyModel.value; // parity with dot '=' behavior (currently preserved)
+>afterBracketEquals : string
+>propertyModel.value : string
+>propertyModel : { value: string | undefined; }
+>value : string
+
+    afterBracketEquals;
+>afterBracketEquals : string
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value !== undefined : boolean
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    propertyModel["value"] ||= "fallback";
+>propertyModel["value"] ||= "fallback" : string
+>propertyModel["value"] : string | undefined
+>propertyModel : { value: string | undefined; }
+>"value" : "value"
+>"fallback" : "fallback"
+
+    const afterBracketBarBarEquals: string = propertyModel.value; // should error
+>afterBracketBarBarEquals : string
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+
+    afterBracketBarBarEquals;
+>afterBracketBarBarEquals : string
+}
+
+declare const numberModel: {
+>numberModel : { value: number | undefined; }
+
+    get value(): number | undefined;
+>value : number | undefined
+
+    set value(v: number | undefined);
+>value : number | undefined
+>v : number | undefined
+
+};
+
+if (numberModel.value !== undefined) {
+>numberModel.value !== undefined : boolean
+>numberModel.value : number | undefined
+>numberModel : { value: number | undefined; }
+>value : number | undefined
+>undefined : undefined
+
+    numberModel.value++;
+>numberModel.value++ : number
+>numberModel.value : number
+>numberModel : { value: number | undefined; }
+>value : number
+
+    const afterPostfixPlusPlus: number = numberModel.value; // should error
+>afterPostfixPlusPlus : number
+>numberModel.value : number | undefined
+>numberModel : { value: number | undefined; }
+>value : number | undefined
+
+    afterPostfixPlusPlus;
+>afterPostfixPlusPlus : number
+}
+
+if (numberModel.value !== undefined) {
+>numberModel.value !== undefined : boolean
+>numberModel.value : number | undefined
+>numberModel : { value: number | undefined; }
+>value : number | undefined
+>undefined : undefined
+
+    --numberModel.value;
+>--numberModel.value : number
+>numberModel.value : number
+>numberModel : { value: number | undefined; }
+>value : number
+
+    const afterPrefixMinusMinus: number = numberModel.value; // should error
+>afterPrefixMinusMinus : number
+>numberModel.value : number | undefined
+>numberModel : { value: number | undefined; }
+>value : number | undefined
+
+    afterPrefixMinusMinus;
+>afterPrefixMinusMinus : number
+}
+
+if (numberModel.value !== undefined) {
+>numberModel.value !== undefined : boolean
+>numberModel.value : number | undefined
+>numberModel : { value: number | undefined; }
+>value : number | undefined
+>undefined : undefined
+
+    numberModel["value"]++;
+>numberModel["value"]++ : number
+>numberModel["value"] : number
+>numberModel : { value: number | undefined; }
+>"value" : "value"
+
+    const afterBracketPostfixPlusPlus: number = numberModel.value; // should error
+>afterBracketPostfixPlusPlus : number
+>numberModel.value : number | undefined
+>numberModel : { value: number | undefined; }
+>value : number | undefined
+
+    afterBracketPostfixPlusPlus;
+>afterBracketPostfixPlusPlus : number
+}
+
+// Bracket-literal mutator parity with existing dot-form read/set special-case.
+declare const store: {
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+
+    read: stable () => string | undefined;
+>read : () => string | undefined
+
+    set(v: string | undefined): void;
+>set : (v: string | undefined) => void
+>v : string | undefined
+
+};
+
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    store.set("next");
+>store.set("next") : void
+>store.set : (v: string | undefined) => void
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>set : (v: string | undefined) => void
+>"next" : "next"
+
+    const afterDotSetCall: string = store.read(); // should stay narrowed
+>afterDotSetCall : string
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+
+    afterDotSetCall;
+>afterDotSetCall : string
+}
+
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    store["set"]("next");
+>store["set"]("next") : void
+>store["set"] : (v: string | undefined) => void
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>"set" : "set"
+>"next" : "next"
+
+    const afterBracketSetCall: string = store.read(); // should stay narrowed
+>afterBracketSetCall : string
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+
+    afterBracketSetCall;
+>afterBracketSetCall : string
+}
+
+// Identity call write-matrix breadth: dynamic keys and receiver-alias writes.
+declare const keyStore: {
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+
+    read: stable () => string | undefined;
+>read : () => string | undefined
+
+    set(v: string | undefined): void;
+>set : (v: string | undefined) => void
+>v : string | undefined
+
+};
+
+declare const readKey: "read";
+>readKey : "read"
+
+if (keyStore[readKey]() !== undefined) {
+>keyStore[readKey]() !== undefined : boolean
+>keyStore[readKey]() : string | undefined
+>keyStore[readKey] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>readKey : "read"
+>undefined : undefined
+
+    const sameReadKey = readKey;
+>sameReadKey : "read"
+>readKey : "read"
+
+    keyStore[sameReadKey] = (() => undefined) as stable () => string | undefined;
+>keyStore[sameReadKey] = (() => undefined) as stable () => string | undefined : () => string | undefined
+>keyStore[sameReadKey] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>sameReadKey : "read"
+>(() => undefined) as stable () => string | undefined : () => string | undefined
+>(() => undefined) : () => undefined
+>() => undefined : () => undefined
+>undefined : undefined
+
+    const afterProvenDynamicWrite: string = keyStore[readKey](); // should error
+>afterProvenDynamicWrite : string
+>keyStore[readKey]() : string | undefined
+>keyStore[readKey] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>readKey : "read"
+
+    afterProvenDynamicWrite;
+>afterProvenDynamicWrite : string
+}
+
+if (keyStore.read() !== undefined) {
+>keyStore.read() !== undefined : boolean
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    const alias = keyStore;
+>alias : { read: () => string | undefined; set(v: string | undefined): void; }
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+
+    alias.read = (() => undefined) as stable () => string | undefined;
+>alias.read = (() => undefined) as stable () => string | undefined : () => string | undefined
+>alias.read : () => string | undefined
+>alias : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>(() => undefined) as stable () => string | undefined : () => string | undefined
+>(() => undefined) : () => undefined
+>() => undefined : () => undefined
+>undefined : undefined
+
+    const afterAliasDotWrite: string = keyStore.read(); // should error
+>afterAliasDotWrite : string
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+
+    afterAliasDotWrite;
+>afterAliasDotWrite : string
+}
+
+if (keyStore[readKey]() !== undefined) {
+>keyStore[readKey]() !== undefined : boolean
+>keyStore[readKey]() : string | undefined
+>keyStore[readKey] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>readKey : "read"
+>undefined : undefined
+
+    const alias = keyStore;
+>alias : { read: () => string | undefined; set(v: string | undefined): void; }
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+
+    alias[readKey] = (() => undefined) as stable () => string | undefined;
+>alias[readKey] = (() => undefined) as stable () => string | undefined : () => string | undefined
+>alias[readKey] : () => string | undefined
+>alias : { read: () => string | undefined; set(v: string | undefined): void; }
+>readKey : "read"
+>(() => undefined) as stable () => string | undefined : () => string | undefined
+>(() => undefined) : () => undefined
+>() => undefined : () => undefined
+>undefined : undefined
+
+    const afterAliasDynamicWrite: string = keyStore[readKey](); // should error
+>afterAliasDynamicWrite : string
+>keyStore[readKey]() : string | undefined
+>keyStore[readKey] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>readKey : "read"
+
+    afterAliasDynamicWrite;
+>afterAliasDynamicWrite : string
+}
+
+if (keyStore.read() !== undefined) {
+>keyStore.read() !== undefined : boolean
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    let unknownKey: string = "read";
+>unknownKey : string
+>"read" : "read"
+
+    unknownKey = "read";
+>unknownKey = "read" : "read"
+>unknownKey : string
+>"read" : "read"
+
+    keyStore[unknownKey as "read"] = (() => undefined) as stable () => string | undefined;
+>keyStore[unknownKey as "read"] = (() => undefined) as stable () => string | undefined : () => string | undefined
+>keyStore[unknownKey as "read"] : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>unknownKey as "read" : "read"
+>unknownKey : string
+>(() => undefined) as stable () => string | undefined : () => string | undefined
+>(() => undefined) : () => undefined
+>() => undefined : () => undefined
+>undefined : undefined
+
+    const afterNonProvenDynamicWrite: string = keyStore.read(); // should error
+>afterNonProvenDynamicWrite : string
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+
+    afterNonProvenDynamicWrite;
+>afterNonProvenDynamicWrite : string
+}
+
+declare const otherKeyStore: {
+>otherKeyStore : { read: () => string | undefined; }
+
+    read: stable () => string | undefined;
+>read : () => string | undefined
+
+};
+
+if (keyStore.read() !== undefined) {
+>keyStore.read() !== undefined : boolean
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    otherKeyStore.read = (() => undefined) as stable () => string | undefined;
+>otherKeyStore.read = (() => undefined) as stable () => string | undefined : () => string | undefined
+>otherKeyStore.read : () => string | undefined
+>otherKeyStore : { read: () => string | undefined; }
+>read : () => string | undefined
+>(() => undefined) as stable () => string | undefined : () => string | undefined
+>(() => undefined) : () => undefined
+>() => undefined : () => undefined
+>undefined : undefined
+
+    const afterOtherReceiverWrite: string = keyStore.read(); // should stay narrowed
+>afterOtherReceiverWrite : string
+>keyStore.read() : string | undefined
+>keyStore.read : () => string | undefined
+>keyStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+
+    afterOtherReceiverWrite;
+>afterOtherReceiverWrite : string
+}
+

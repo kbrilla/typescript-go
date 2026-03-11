@@ -1,0 +1,383 @@
+// @strict: true
+// @noEmit: true
+// @target: es2015
+
+// Broad getter -> stable parity corpus.
+// Visibility-focused: intentional parity gaps are kept to track divergence.
+
+declare function invoke(cb: () => void): void;
+declare function unknownMutate(): void;
+declare function pass<T>(x: T): T;
+declare function delay(): Promise<void>;
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfQualifiedNames.ts
+// -----------------------------------------------------------------------------
+
+// Case QN1: basic qualified-name guard and repeated read in block.
+declare const getterQN1: {
+    get foo(): { aaa: string; bbb: string } | undefined;
+};
+
+declare const identityQN1: {
+    foo: stable () => { aaa: string; bbb: string } | undefined;
+};
+
+if (getterQN1.foo) {
+    const qn1GetterA: string = getterQN1.foo.aaa; // getter baseline: OK
+    const qn1GetterB: string = getterQN1.foo.bbb; // getter baseline: OK
+    qn1GetterA;
+    qn1GetterB;
+}
+
+if (identityQN1.foo()) {
+    const qn1IdentityA: string = identityQN1.foo().aaa; // stable parity target: OK
+    const qn1IdentityB: string = identityQN1.foo().bbb; // stable parity target: OK
+    qn1IdentityA;
+    qn1IdentityB;
+}
+
+// Case QN2: loop retention after guard.
+if (getterQN1.foo) {
+    for (const _ of [1, 2, 3]) {
+        const qn2Getter: string = getterQN1.foo.aaa; // getter baseline: OK
+        qn2Getter;
+    }
+}
+
+if (identityQN1.foo()) {
+    for (const _ of [1, 2, 3]) {
+        const qn2Identity: string = identityQN1.foo().aaa; // stable parity target: OK
+        qn2Identity;
+    }
+}
+
+interface DeepOptionalGetter {
+    a?: {
+        b?: {
+            c?: string;
+        };
+    };
+}
+
+declare const getterQN2: {
+    get value(): DeepOptionalGetter;
+};
+
+declare const identityQN2: {
+    value: stable () => DeepOptionalGetter;
+};
+
+// Case QN3: deep qualified-name chain with nested guards.
+if (getterQN2.value.a) {
+    if (getterQN2.value.a.b) {
+        if (getterQN2.value.a.b.c) {
+            const qn3Getter: string = getterQN2.value.a.b.c; // getter baseline: OK
+            qn3Getter;
+        }
+    }
+}
+
+if (identityQN2.value().a) {
+    if (identityQN2.value().a.b) {
+        if (identityQN2.value().a.b.c) {
+            const qn3Identity: string = identityQN2.value().a.b.c; // stable parity target: OK
+            qn3Identity;
+        }
+    }
+}
+
+// Repro family: generic discriminant narrowing (from #48289 section).
+type Fish = { type: "fish"; hasFins: true };
+type Dog = { type: "dog"; saysWoof: true };
+type Pet = Fish | Dog;
+
+// Case QN4: discriminant narrowing over generic parameter via getter.
+function qn4Getter<PetType extends Pet>(pet: { get value(): PetType }) {
+    if (pet.value.type === "dog") {
+        const qn4a: true = pet.value.saysWoof; // getter baseline: OK
+        qn4a;
+    }
+}
+
+// Case QN5: discriminant narrowing over generic parameter via stable endpoint.
+function qn5Identity<PetType extends Pet>(pet: { value: stable () => PetType }) {
+    if (pet.value().type === "dog") {
+        const qn5a: true = pet.value().saysWoof; // stable parity target: OK
+        qn5a;
+    }
+}
+
+// Case QN6: unknown-call boundary after discriminant guard.
+if (getterQN2.value.a && getterQN2.value.a.b && getterQN2.value.a.b.c) {
+    unknownMutate();
+    const qn6Getter: string = getterQN2.value.a.b.c; // getter sweep often remains narrowed
+    qn6Getter;
+}
+
+if (identityQN2.value().a && identityQN2.value().a.b && identityQN2.value().a.b.c) {
+    unknownMutate();
+    const qn6Identity: string = identityQN2.value().a.b.c; // intentional gap visibility candidate
+    qn6Identity;
+}
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/compiler/narrowingOfDottedNames.ts
+// -----------------------------------------------------------------------------
+
+class DotA {
+    prop!: { a: string };
+}
+
+class DotB {
+    prop!: { b: string };
+}
+
+function isDotA(x: unknown): x is DotA {
+    return x instanceof DotA;
+}
+
+function isDotB(x: unknown): x is DotB {
+    return x instanceof DotB;
+}
+
+class DotAIdentity {
+    prop!: stable () => { a: string };
+}
+
+class DotBIdentity {
+    prop!: stable () => { b: string };
+}
+
+function isDotAIdentity(x: unknown): x is DotAIdentity {
+    return x instanceof DotAIdentity;
+}
+
+function isDotBIdentity(x: unknown): x is DotBIdentity {
+    return x instanceof DotBIdentity;
+}
+
+// Case DN1: dotted member narrowing in loop with instanceof.
+function dn1Getter(x: DotA | DotB) {
+    while (true) {
+        if (x instanceof DotA) {
+            const dn1a: string = x.prop.a; // getter/property baseline: OK
+            dn1a;
+        } else if (x instanceof DotB) {
+            const dn1b: string = x.prop.b; // getter/property baseline: OK
+            dn1b;
+        }
+        break;
+    }
+}
+
+// Case DN2: stable callable-property variant with user-defined predicates.
+function dn2Identity(x: DotAIdentity | DotBIdentity) {
+    while (true) {
+        if (isDotAIdentity(x)) {
+            const dn2a: string = x.prop().a; // stable parity target: OK
+            dn2a;
+        } else if (isDotBIdentity(x)) {
+            const dn2b: string = x.prop().b; // stable parity target: OK
+            dn2b;
+        }
+        break;
+    }
+}
+
+class AInfo {
+    a_count: number = 1;
+}
+
+class BInfo {
+    b_count: number = 1;
+}
+
+class DotBase {
+    id: number = 0;
+}
+
+class DotA2 extends DotBase {
+    info!: AInfo;
+}
+
+class DotB2 extends DotBase {
+    info!: BInfo;
+}
+
+class DotA2Identity extends DotBase {
+    info!: stable () => AInfo;
+}
+
+class DotB2Identity extends DotBase {
+    info!: stable () => BInfo;
+}
+
+// Case DN3: dotted-name access after class narrowing in loop.
+let dn3Target: DotBase | null = null as DotBase | null;
+while (dn3Target) {
+    if (dn3Target instanceof DotA2) {
+        dn3Target.info.a_count = 3; // getter/property baseline: OK
+    } else if (dn3Target instanceof DotB2) {
+        const dn3b: BInfo = dn3Target.info; // getter/property baseline: OK
+        dn3b;
+    }
+    break;
+}
+
+// Case DN4: stable callable-property analog.
+let dn4Target: DotA2Identity | DotB2Identity | null = null as DotA2Identity | DotB2Identity | null;
+while (dn4Target) {
+    if (dn4Target instanceof DotA2Identity) {
+        dn4Target.info().a_count = 3; // stable parity target: OK
+    } else if (dn4Target instanceof DotB2Identity) {
+        const dn4b: BInfo = dn4Target.info(); // stable parity target: OK
+        dn4b;
+    }
+    break;
+}
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/compiler/getterControlFlowStrictNull.ts
+// -----------------------------------------------------------------------------
+
+declare const getterNullish: {
+    get value(): string | null;
+};
+
+declare const identityNullish: stable () => string | null;
+
+// Case GC1: truthiness guard repeated reads.
+if (getterNullish.value) {
+    const gc1Getter: number = getterNullish.value.length; // getter baseline: OK
+    gc1Getter;
+}
+
+if (identityNullish()) {
+    const gc1Identity: number = identityNullish().length; // stable parity target: OK
+    gc1Identity;
+}
+
+// Case GC2: callback boundary.
+if (getterNullish.value) {
+    invoke(() => {});
+    const gc2Getter: number = getterNullish.value.length; // getter sweep often remains narrowed
+    gc2Getter;
+}
+
+if (identityNullish()) {
+    invoke(() => {});
+    const gc2Identity: number = identityNullish().length; // intentional gap visibility candidate
+    gc2Identity;
+}
+
+// Case GC3: await boundary.
+async function gc3Getter() {
+    if (getterNullish.value) {
+        await delay();
+        const gc3a: number = getterNullish.value.length; // getter sweep often remains narrowed
+        gc3a;
+    }
+}
+
+async function gc3Identity() {
+    if (identityNullish()) {
+        await delay();
+        const gc3b: number = identityNullish().length; // stable parity target: OK
+        gc3b;
+    }
+}
+
+// -----------------------------------------------------------------------------
+// Source: _submodules/TypeScript/tests/cases/conformance/expressions/typeGuards/
+//   - typeGuardsInProperties.ts
+//   - typeGuardsInClassAccessors.ts
+// -----------------------------------------------------------------------------
+
+// Case TG1: guard on member does not permanently narrow property/member type.
+declare const getterTG1: {
+    get value(): string | number;
+};
+
+declare const identityTG1: {
+    value: stable () => string | number;
+};
+
+const tg1Getter: string | number = typeof getterTG1.value === "string" && getterTG1.value;
+tg1Getter;
+
+const tg1Identity: string | number = typeof identityTG1.value() === "string" && identityTG1.value();
+tg1Identity;
+
+// Case TG2: local temporary pattern (control case expected to work for both).
+const tg2GetterValue = getterTG1.value;
+if (typeof tg2GetterValue === "string") {
+    const tg2Getter: string = tg2GetterValue; // control: OK
+    tg2Getter;
+}
+
+const tg2IdentityValue = identityTG1.value();
+if (typeof tg2IdentityValue === "string") {
+    const tg2Identity: string = tg2IdentityValue; // control: OK
+    tg2Identity;
+}
+
+// -----------------------------------------------------------------------------
+// Additional broad parity visibility slices
+// -----------------------------------------------------------------------------
+
+// Case X1: alias escape via passthrough helper.
+declare const identityX1: stable () => string | undefined;
+
+if (identityX1() !== undefined) {
+    const escaped = pass(identityX1);
+    escaped;
+    const x1: string = identityX1(); // parity target: OK
+    const x1Upper: string = identityX1().toUpperCase(); // parity target: OK
+    x1;
+    x1Upper;
+}
+
+// Case X2: conditional expression repeated reads.
+declare const getterX2: {
+    get value(): string | undefined;
+};
+
+declare const identityX2: stable () => string | undefined;
+
+const x2Getter: string = getterX2.value !== undefined ? getterX2.value : "fallback"; // getter baseline: OK
+x2Getter;
+
+const x2Identity: string = identityX2() !== undefined ? identityX2() : "fallback"; // stable parity target: OK
+x2Identity;
+
+// Case X3: nested discriminant with unknown boundary.
+type Shape = { kind: "circle"; radius: number } | { kind: "square"; size: number };
+
+declare const getterX3: {
+    get value(): Shape;
+};
+
+declare const identityX3: stable () => Shape;
+
+if (getterX3.value.kind === "circle") {
+    const x3GetterA: number = getterX3.value.radius; // getter baseline: OK
+    x3GetterA;
+}
+
+if (identityX3().kind === "circle") {
+    const x3IdentityA: number = identityX3().radius; // stable parity target: OK
+    x3IdentityA;
+}
+
+if (getterX3.value.kind === "circle") {
+    unknownMutate();
+    const x3GetterB: number = getterX3.value.radius; // getter sweep often remains narrowed
+    x3GetterB;
+}
+
+if (identityX3().kind === "circle") {
+    unknownMutate();
+    const x3IdentityB: number = identityX3().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
+    x3IdentityB;
+}

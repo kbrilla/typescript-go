@@ -1,0 +1,24 @@
+stableModifierDiagnostics.ts(2,30): error TS100012: 'stable' modifier can only appear on a function type with no parameters.
+stableModifierDiagnostics.ts(5,36): error TS1030: 'stable' modifier already seen.
+stableModifierDiagnostics.ts(8,31): error TS1184: Modifiers cannot appear here.
+
+
+==== stableModifierDiagnostics.ts (3 errors) ====
+    // Error: stable modifier on function type with parameters
+    declare const badWithParams: stable (x: string) => string;
+                                 ~~~~~~
+!!! error TS100012: 'stable' modifier can only appear on a function type with no parameters.
+    
+    // Error: duplicate stable modifier
+    declare const badDuplicate: stable stable () => string;
+                                       ~~~~~~
+!!! error TS1030: 'stable' modifier already seen.
+    
+    // Error: stable modifier cannot appear on constructor type
+    declare const badConstructor: stable new () => object;
+                                  ~~~~~~
+!!! error TS1184: Modifiers cannot appear here.
+    
+    // Valid: stable on parameterless function type
+    declare const good: stable () => string | undefined;
+    

@@ -1,0 +1,97 @@
+//// [tests/cases/compiler/stableModifierNarrowing.ts] ////
+
+=== stableModifierNarrowing.ts ===
+// Basic stable function type narrowing
+declare const value: stable () => string | undefined;
+>value : Symbol(value, Decl(stableModifierNarrowing.ts, 1, 13))
+
+if (value() !== undefined) {
+>value : Symbol(value, Decl(stableModifierNarrowing.ts, 1, 13))
+>undefined : Symbol(undefined)
+
+    value(); // should be narrowed to string
+>value : Symbol(value, Decl(stableModifierNarrowing.ts, 1, 13))
+
+    console.log(value().toUpperCase()); // should work, no error
+>console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>console : Symbol(console, Decl(lib.dom.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>value : Symbol(value, Decl(stableModifierNarrowing.ts, 1, 13))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+
+// Identity function with truthiness check
+declare const flag: stable () => string | null;
+>flag : Symbol(flag, Decl(stableModifierNarrowing.ts, 9, 13))
+
+if (flag()) {
+>flag : Symbol(flag, Decl(stableModifierNarrowing.ts, 9, 13))
+
+    flag(); // should be narrowed to string (truthy)
+>flag : Symbol(flag, Decl(stableModifierNarrowing.ts, 9, 13))
+
+    console.log(flag().length); // should work
+>console.log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>console : Symbol(console, Decl(lib.dom.d.ts, --, --))
+>log : Symbol(Console.log, Decl(lib.dom.d.ts, --, --))
+>flag().length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>flag : Symbol(flag, Decl(stableModifierNarrowing.ts, 9, 13))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+}
+
+// Identity function narrowing cleared in closures
+declare const closureVal: stable () => string | undefined;
+>closureVal : Symbol(closureVal, Decl(stableModifierNarrowing.ts, 17, 13))
+
+if (closureVal() !== undefined) {
+>closureVal : Symbol(closureVal, Decl(stableModifierNarrowing.ts, 17, 13))
+>undefined : Symbol(undefined)
+
+    setTimeout(() => {
+>setTimeout : Symbol(setTimeout, Decl(lib.dom.d.ts, --, --))
+
+        closureVal(); // should be string | undefined (narrowing lost in closure)
+>closureVal : Symbol(closureVal, Decl(stableModifierNarrowing.ts, 17, 13))
+
+    });
+}
+
+// Generic stable function type alias
+type Signal<T> = stable () => T;
+>Signal : Symbol(Signal, Decl(stableModifierNarrowing.ts, 23, 1))
+>T : Symbol(T, Decl(stableModifierNarrowing.ts, 26, 12))
+>T : Symbol(T, Decl(stableModifierNarrowing.ts, 26, 12))
+
+declare const sig: Signal<string | undefined>;
+>sig : Symbol(sig, Decl(stableModifierNarrowing.ts, 28, 13))
+>Signal : Symbol(Signal, Decl(stableModifierNarrowing.ts, 23, 1))
+
+if (sig() !== undefined) {
+>sig : Symbol(sig, Decl(stableModifierNarrowing.ts, 28, 13))
+>undefined : Symbol(undefined)
+
+    sig(); // should be narrowed to string
+>sig : Symbol(sig, Decl(stableModifierNarrowing.ts, 28, 13))
+}
+
+// Multiple stable functions - independent narrowing
+declare const a: stable () => string | undefined;
+>a : Symbol(a, Decl(stableModifierNarrowing.ts, 35, 13))
+
+declare const b: stable () => number | undefined;
+>b : Symbol(b, Decl(stableModifierNarrowing.ts, 36, 13))
+
+if (a() !== undefined && b() !== undefined) {
+>a : Symbol(a, Decl(stableModifierNarrowing.ts, 35, 13))
+>undefined : Symbol(undefined)
+>b : Symbol(b, Decl(stableModifierNarrowing.ts, 36, 13))
+>undefined : Symbol(undefined)
+
+    a(); // should be string
+>a : Symbol(a, Decl(stableModifierNarrowing.ts, 35, 13))
+
+    b(); // should be number
+>b : Symbol(b, Decl(stableModifierNarrowing.ts, 36, 13))
+}
+

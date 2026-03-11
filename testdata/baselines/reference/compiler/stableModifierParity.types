@@ -1,0 +1,312 @@
+//// [tests/cases/compiler/stableModifierParity.ts] ////
+
+=== stableModifierParity.ts ===
+// Parity baseline: property getter/setter repeated read narrowing.
+declare const propertyModel: {
+>propertyModel : { value: string | undefined; }
+
+    get value(): string | undefined;
+>value : string | undefined
+
+    set value(v: string | undefined);
+>value : string | undefined
+>v : string | undefined
+
+};
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value !== undefined : boolean
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    const propertyStable: string = propertyModel.value; // OK
+>propertyStable : string
+>propertyModel.value : string
+>propertyModel : { value: string | undefined; }
+>value : string
+
+    propertyStable;
+>propertyStable : string
+}
+
+if (propertyModel.value !== undefined) {
+>propertyModel.value !== undefined : boolean
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>undefined : undefined
+
+    propertyModel.value = "next";
+>propertyModel.value = "next" : "next"
+>propertyModel.value : string | undefined
+>propertyModel : { value: string | undefined; }
+>value : string | undefined
+>"next" : "next"
+
+    const propertyAfterSet: string = propertyModel.value; // should error
+>propertyAfterSet : string
+>propertyModel.value : string
+>propertyModel : { value: string | undefined; }
+>value : string
+
+    propertyAfterSet;
+>propertyAfterSet : string
+}
+
+// Identity parity: repeated-read stable narrowing success.
+declare const identityRead: stable () => string | undefined;
+>identityRead : () => string | undefined
+
+if (identityRead() !== undefined) {
+>identityRead() !== undefined : boolean
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+>undefined : undefined
+
+    const identityStable: string = identityRead(); // OK
+>identityStable : string
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+
+    identityStable;
+>identityStable : string
+}
+
+// One-liner ternary parity shape from issue families.
+const ternaryStable: string = identityRead() !== undefined ? identityRead() : "fallback"; // OK
+>ternaryStable : string
+>identityRead() !== undefined ? identityRead() : "fallback" : string
+>identityRead() !== undefined : boolean
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+>undefined : undefined
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+>"fallback" : "fallback"
+
+ternaryStable;
+>ternaryStable : string
+
+// Callback boundary parity: prior narrowing should invalidate.
+declare function invoke(cb: () => void): void;
+>invoke : (cb: () => void) => void
+>cb : () => void
+
+if (identityRead() !== undefined) {
+>identityRead() !== undefined : boolean
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+>undefined : undefined
+
+    invoke(() => {
+>invoke(() => {        const callbackWrite = 1;        callbackWrite;    }) : void
+>invoke : (cb: () => void) => void
+>() => {        const callbackWrite = 1;        callbackWrite;    } : () => void
+
+        const callbackWrite = 1;
+>callbackWrite : 1
+>1 : 1
+
+        callbackWrite;
+>callbackWrite : 1
+
+    });
+    const afterCallback: string = identityRead(); // should error
+>afterCallback : string
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+
+    afterCallback;
+>afterCallback : string
+}
+
+// Await boundary parity: prior narrowing should invalidate.
+declare function delay(): Promise<void>;
+>delay : () => Promise<void>
+
+async function testAwaitParity() {
+>testAwaitParity : () => Promise<void>
+
+    if (identityRead() !== undefined) {
+>identityRead() !== undefined : boolean
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+>undefined : undefined
+
+        await delay();
+>await delay() : void
+>delay() : Promise<void>
+>delay : () => Promise<void>
+
+        const afterAwait: string = identityRead(); // OK (ambient no-arg await preserves narrowing)
+>afterAwait : string
+>identityRead() : string | undefined
+>identityRead : () => string | undefined
+
+        afterAwait;
+>afterAwait : string
+    }
+}
+
+// Setter/write-call analog shape: object stable getter + mutating method call.
+declare const store: {
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+
+    read: stable () => string | undefined;
+>read : () => string | undefined
+
+    set(v: string | undefined): void;
+>set : (v: string | undefined) => void
+>v : string | undefined
+
+};
+
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    store.set("next");
+>store.set("next") : void
+>store.set : (v: string | undefined) => void
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>set : (v: string | undefined) => void
+>"next" : "next"
+
+    const afterSetCall: string = store.read(); // should be OK
+>afterSetCall : string
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; set(v: string | undefined): void; }
+>read : () => string | undefined
+
+    afterSetCall;
+>afterSetCall : string
+}
+
+// Callable hybrid parity: same callable symbol used as getter and setter-style write.
+// Known Phase 1 limitation: `stable` on call signatures in interfaces is not supported.
+// The parser interprets `stable` as a method name, not a modifier on the call signature.
+// Only standalone function types (`stable () => T`) are supported in Phase 1.
+// See Edge Case 4 in docs/stable-modifier-research.md.
+interface HybridSignal {
+    stable (): string | undefined;
+>stable : () => string | undefined
+
+    (v: string | undefined): void;
+>v : string | undefined
+}
+
+declare const hybrid: HybridSignal;
+>hybrid : HybridSignal
+
+// Because `stable` is parsed as a method name (not a call signature modifier),
+// overload resolution only sees the setter `(v)` overload for zero-arg calls.
+// These errors are expected in Phase 1.
+if (hybrid() !== undefined) {
+>hybrid() !== undefined : boolean
+>hybrid() : void
+>hybrid : HybridSignal
+>undefined : undefined
+
+    hybrid("next");
+>hybrid("next") : void
+>hybrid : HybridSignal
+>"next" : "next"
+
+    const afterHybridSetCall: string = hybrid(); // should error
+>afterHybridSetCall : string
+>hybrid() : void
+>hybrid : HybridSignal
+
+    afterHybridSetCall;
+>afterHybridSetCall : string
+}
+
+// Callable hybrid direct undefined write should also invalidate prior narrowing.
+// Same Phase 1 limitation applies here.
+if (hybrid() !== undefined) {
+>hybrid() !== undefined : boolean
+>hybrid() : void
+>hybrid : HybridSignal
+>undefined : undefined
+
+    hybrid(undefined);
+>hybrid(undefined) : void
+>hybrid : HybridSignal
+>undefined : undefined
+
+    const afterHybridUndefinedWrite: string = hybrid(); // should error
+>afterHybridUndefinedWrite : string
+>hybrid() : void
+>hybrid : HybridSignal
+
+    afterHybridUndefinedWrite;
+>afterHybridUndefinedWrite : string
+}
+
+// Discriminated-union parity: repeated stable reads should narrow by kind.
+type Shape =
+>Shape : Shape
+
+    | { kind: "circle"; radius: number }
+>kind : "circle"
+>radius : number
+
+    | { kind: "square"; size: number };
+>kind : "square"
+>size : number
+
+declare const shape: stable () => Shape;
+>shape : () => Shape
+
+if (shape().kind === "circle") {
+>shape().kind === "circle" : boolean
+>shape().kind : "circle" | "square"
+>shape() : Shape
+>shape : () => Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    const circleRadius: number = shape().radius; // OK
+>circleRadius : number
+>shape().radius : number
+>shape() : Shape
+>shape : () => Shape
+>radius : number
+
+    circleRadius;
+>circleRadius : number
+}
+
+// Discriminated-union boundary parity: unknown call invalidates prior narrowing.
+declare function unknownShapeMutate(): void;
+>unknownShapeMutate : () => void
+
+if (shape().kind === "circle") {
+>shape().kind === "circle" : boolean
+>shape().kind : "circle" | "square"
+>shape() : Shape
+>shape : () => Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    unknownShapeMutate();
+>unknownShapeMutate() : void
+>unknownShapeMutate : () => void
+
+    const afterUnknownShapeCall: number = shape().radius; // OK (no-arg unknown call preserves narrowing)
+>afterUnknownShapeCall : number
+>shape().radius : number
+>shape() : Shape
+>shape : () => Shape
+>radius : number
+
+    afterUnknownShapeCall;
+>afterUnknownShapeCall : number
+}
