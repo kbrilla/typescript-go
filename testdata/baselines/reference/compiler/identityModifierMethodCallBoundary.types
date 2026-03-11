@@ -1,0 +1,219 @@
+//// [tests/cases/compiler/identityModifierMethodCallBoundary.ts] ////
+
+=== identityModifierMethodCallBoundary.ts ===
+type Signal<T> = identity () => T;
+>Signal : Signal<T>
+
+interface Cat {
+    kind: "cat";
+>kind : "cat"
+
+    meow(): void;
+>meow : () => void
+}
+
+interface Dog {
+    kind: "dog";
+>kind : "dog"
+
+    bark(): void;
+>bark : () => void
+}
+
+type Animal = Cat | Dog;
+>Animal : Animal
+
+declare const animal: Signal<Animal>;
+>animal : Signal<Animal>
+
+// === Section 1: Method calls on narrowed results ===
+// Method calls on local consts narrowed from identity should not invalidate
+if (animal().kind === "cat") {
+>animal().kind === "cat" : boolean
+>animal().kind : "cat" | "dog"
+>animal() : Animal
+>animal : Signal<Animal>
+>kind : "cat" | "dog"
+>"cat" : "cat"
+
+    const cat: Cat = animal();
+>cat : Cat
+>animal() : Animal
+>animal : Signal<Animal>
+
+    cat.meow();
+>cat.meow() : void
+>cat.meow : () => void
+>cat : Cat
+>meow : () => void
+
+    const cat2: Cat = animal(); // Should still be narrowed to Cat
+>cat2 : Cat
+>animal() : Animal
+>animal : Signal<Animal>
+}
+
+if (animal().kind === "dog") {
+>animal().kind === "dog" : boolean
+>animal().kind : "cat" | "dog"
+>animal() : Animal
+>animal : Signal<Animal>
+>kind : "cat" | "dog"
+>"dog" : "dog"
+
+    const dog: Dog = animal();
+>dog : Dog
+>animal() : Animal
+>animal : Signal<Animal>
+
+    dog.bark();
+>dog.bark() : void
+>dog.bark : () => void
+>dog : Dog
+>bark : () => void
+
+    const dog2: Dog = animal(); // Should still be narrowed to Dog
+>dog2 : Dog
+>animal() : Animal
+>animal : Signal<Animal>
+}
+
+// === Section 2: Console/utility method calls ===
+declare const value: Signal<string | undefined>;
+>value : Signal<string | undefined>
+
+if (value() !== undefined) {
+>value() !== undefined : boolean
+>value() : string | undefined
+>value : Signal<string | undefined>
+>undefined : undefined
+
+    console.log("test");
+>console.log("test") : void
+>console.log : (...data: any[]) => void
+>console : Console
+>log : (...data: any[]) => void
+>"test" : "test"
+
+    const s: string = value(); // console.log should not invalidate
+>s : string
+>value() : string | undefined
+>value : Signal<string | undefined>
+}
+
+// === Section 3: Method calls on unrelated objects ===
+declare const helper: { log(s: string): void; format(s: string): string };
+>helper : { log(s: string): void; format(s: string): string; }
+>log : (s: string) => void
+>s : string
+>format : (s: string) => string
+>s : string
+
+if (value() !== undefined) {
+>value() !== undefined : boolean
+>value() : string | undefined
+>value : Signal<string | undefined>
+>undefined : undefined
+
+    helper.log(value());
+>helper.log(value()) : void
+>helper.log : (s: string) => void
+>helper : { log(s: string): void; format(s: string): string; }
+>log : (s: string) => void
+>value() : string | undefined
+>value : Signal<string | undefined>
+
+    const s: string = value(); // Method call on unrelated object
+>s : string
+>value() : string | undefined
+>value : Signal<string | undefined>
+}
+
+// === Section 4: Same-receiver method calls SHOULD invalidate ===
+declare const store: {
+>store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+
+    read: identity () => string | undefined;
+>read : () => string | undefined
+
+    clear(): void;
+>clear : () => void
+
+    reset(v: string): void;
+>reset : (v: string) => void
+>v : string
+
+};
+
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    store.clear();
+>store.clear() : void
+>store.clear : () => void
+>store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>clear : () => void
+
+    const s: string = store.read(); // Should error - clear() could affect read()
+>s : string
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>read : () => string | undefined
+}
+
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    store.reset("new");
+>store.reset("new") : void
+>store.reset : (v: string) => void
+>store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>reset : (v: string) => void
+>"new" : "new"
+
+    const s: string = store.read(); // Should error - reset() could affect read()
+>s : string
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>read : () => string | undefined
+}
+
+// === Section 5: Method calls on different receiver ===
+declare const otherStore: { doSomething(): void };
+>otherStore : { doSomething(): void; }
+>doSomething : () => void
+
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>read : () => string | undefined
+>undefined : undefined
+
+    otherStore.doSomething();
+>otherStore.doSomething() : void
+>otherStore.doSomething : () => void
+>otherStore : { doSomething(): void; }
+>doSomething : () => void
+
+    const s: string = store.read(); // Should preserve - different receiver
+>s : string
+>store.read() : string | undefined
+>store.read : () => string | undefined
+>store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>read : () => string | undefined
+}
+

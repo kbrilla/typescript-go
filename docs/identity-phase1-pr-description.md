@@ -296,7 +296,7 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 
 **MEDIUM (Tests):**
 - [x] Add optional chaining test (`read()?.prop`) — created `identityModifierOptionalChaining.ts`
-- [x] Add `in` operator narrowing test (`"key" in read()`) — created `identityModifierInOperator.ts`
+- [x] Add `in` operator narrowing test (`"key" in read()`) — created `identityModifierInOperator.ts` — 0 errors after method call boundary fix
 - [ ] Consolidate overlapping parity test files (Corpus/Matrix/Sweep have ~40% overlap)
 
 **LOW:**
@@ -314,7 +314,9 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 | `identityModifierEqualityChain.ts` | 58 | Literal-union OR chains, negation, intersection, undefined combo | 0 | ✅ Already working |
 | `identityModifierValueTypeBoundary.ts` | 47 | Ambient void no-arg calls transparent + negatives (non-void, args, body) | 6 (3 correct negatives) | ✅ Already implemented |
 | `identityModifierOptionalChaining.ts` | 28 | Optional chaining, nullish coalescing, nested optional | 0 | ✅ Working |
-| `identityModifierInOperator.ts` | 52 | typeof, instanceof, in, discriminant narrowing | 4 (expected Phase 1 limits) | ✅ Documents current behavior |
+| `identityModifierInOperator.ts` | 52 | typeof, instanceof, in, discriminant narrowing | 0 | ✅ All narrowing forms work (fixed method call boundary false positives) |
+| `identityModifierMethodCallBoundary.ts` | 73 | Method calls on narrowed locals, unrelated objects, same-receiver negatives | 4 (correct negatives) | ✅ Phase 2 feature: unrelated method calls exempt from boundaries |
+| `identityModifierAssertionGuards.ts` | 48 | Assertion functions, type predicates, for-of loops, logical operators | 0 | ✅ All assertion/guard patterns work |
 
 ## 6. Future Phases: Candidate Features
 
@@ -328,10 +330,11 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 | Tier 2 guarded forwarding expansion (2-hop local helper chains) | Local symbol only; const-only alias chains; depth cap; no mutable helpers | Medium | Reduces conservative drops in helper-heavy code |
 | Submodule parity expansion slices | Parity with additional submodule getter test cases | Low | Broader parity evidence |
 | Equality-chain literal-union reuse (`read() === "a" \|\| read() === "b"`) | Same endpoint symbol and same flow region | Medium | Matches getter literal-union behavior | ✅ VERIFIED WORKING — existing `isMatchingReference` + `narrowTypeByEquality` pipeline handles call expressions |
-| Discriminant-preserving nested access (`read().kind` then `read().payload`) | Same endpoint candidate required | Medium | Closes nested discriminant parity gaps |
+| Discriminant-preserving nested access (`read().kind` then `read().payload`) | Same endpoint candidate required | Medium | Closes nested discriminant parity gaps | ✅ VERIFIED WORKING — existing `isMatchingReference` + `getDiscriminantPropertyAccess` pipeline handles identity calls |
 | Value-type boundary relaxation (ambient no-arg `void` call, expression-stmt) | Ambient declaration, zero args/params, `void` return, no alias escape | Medium | Aligns with getter behavior for primitive reads | ✅ VERIFIED WORKING — `shouldPreserveAmbientNoArgVoidUnknownCallNarrowing` already implemented |
 | Value-type boundary relaxation (`await Promise.resolve()` expression-stmt) | Exact shape match, no assignments, no intervening writes | Low | Makes existing narrow rule explicit for primitives |
 | Helper-forwarded read endpoint preserve (local non-mutating helpers) | Bounded local helper proof, no mutable aliases | Medium | Narrows identity-only conservative behavior |
+| Unrelated method call boundary exemption | PropertyAccess callee on unrelated receiver; no matching reference to identity receiver | Low | Reduces false positive TS100015/TS100014 diagnostics; matches getter behavior | ✅ IMPLEMENTED — `isUnrelatedMethodCallForIdentityReference` exempts method calls on objects unrelated to identity endpoint |
 
 ### 6.2 Phase 3 Candidates — Guarded Precision Hardening
 

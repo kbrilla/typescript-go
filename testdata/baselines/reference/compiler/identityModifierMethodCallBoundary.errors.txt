@@ -1,0 +1,90 @@
+identityModifierMethodCallBoundary.ts(55,5): error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
+identityModifierMethodCallBoundary.ts(56,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+identityModifierMethodCallBoundary.ts(60,5): error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+identityModifierMethodCallBoundary.ts(61,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+
+==== identityModifierMethodCallBoundary.ts (4 errors) ====
+    type Signal<T> = identity () => T;
+    
+    interface Cat {
+        kind: "cat";
+        meow(): void;
+    }
+    
+    interface Dog {
+        kind: "dog";
+        bark(): void;
+    }
+    
+    type Animal = Cat | Dog;
+    
+    declare const animal: Signal<Animal>;
+    
+    // === Section 1: Method calls on narrowed results ===
+    // Method calls on local consts narrowed from identity should not invalidate
+    if (animal().kind === "cat") {
+        const cat: Cat = animal();
+        cat.meow();
+        const cat2: Cat = animal(); // Should still be narrowed to Cat
+    }
+    
+    if (animal().kind === "dog") {
+        const dog: Dog = animal();
+        dog.bark();
+        const dog2: Dog = animal(); // Should still be narrowed to Dog
+    }
+    
+    // === Section 2: Console/utility method calls ===
+    declare const value: Signal<string | undefined>;
+    
+    if (value() !== undefined) {
+        console.log("test");
+        const s: string = value(); // console.log should not invalidate
+    }
+    
+    // === Section 3: Method calls on unrelated objects ===
+    declare const helper: { log(s: string): void; format(s: string): string };
+    
+    if (value() !== undefined) {
+        helper.log(value());
+        const s: string = value(); // Method call on unrelated object
+    }
+    
+    // === Section 4: Same-receiver method calls SHOULD invalidate ===
+    declare const store: {
+        read: identity () => string | undefined;
+        clear(): void;
+        reset(v: string): void;
+    };
+    
+    if (store.read() !== undefined) {
+        store.clear();
+        ~~~~~~~~~~~~~
+!!! error TS100015: Identity narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.
+        const s: string = store.read(); // Should error - clear() could affect read()
+              ~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    }
+    
+    if (store.read() !== undefined) {
+        store.reset("new");
+        ~~~~~~~~~~~~~~~~~~
+!!! error TS100014: Identity narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const s: string = store.read(); // Should error - reset() could affect read()
+              ~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+    }
+    
+    // === Section 5: Method calls on different receiver ===
+    declare const otherStore: { doSomething(): void };
+    
+    if (store.read() !== undefined) {
+        otherStore.doSomething();
+        const s: string = store.read(); // Should preserve - different receiver
+    }
+    

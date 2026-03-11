@@ -1,0 +1,115 @@
+//// [tests/cases/compiler/identityModifierAssertionGuards.ts] ////
+
+=== identityModifierAssertionGuards.ts ===
+type Signal<T> = identity () => T;
+>Signal : Signal<T>
+
+// === Section 1: Assertion function narrowing ===
+declare function assertDefined<T>(value: T): asserts value is NonNullable<T>;
+>assertDefined : <T>(value: T) => asserts value is NonNullable<T>
+>value : T
+
+declare const maybeStr: Signal<string | undefined>;
+>maybeStr : Signal<string | undefined>
+
+if (true) {
+>true : true
+
+    assertDefined(maybeStr());
+>assertDefined(maybeStr()) : void
+>assertDefined : <T>(value: T) => asserts value is NonNullable<T>
+>maybeStr() : string | undefined
+>maybeStr : Signal<string | undefined>
+
+    const s: string = maybeStr(); // Should be narrowed after assertion
+>s : string
+>maybeStr() : string | undefined
+>maybeStr : Signal<string | undefined>
+}
+
+// === Section 2: Type predicate narrowing ===
+declare function isString(value: unknown): value is string;
+>isString : (value: unknown) => value is string
+>value : unknown
+
+declare const unknown: Signal<string | number>;
+>unknown : Signal<string | number>
+
+if (isString(unknown())) {
+>isString(unknown()) : boolean
+>isString : (value: unknown) => value is string
+>unknown() : string | number
+>unknown : Signal<string | number>
+
+    const s: string = unknown(); // Should be narrowed by type predicate
+>s : string
+>unknown() : string | number
+>unknown : Signal<string | number>
+}
+
+// === Section 3: Custom assertion with identity ===
+declare function assertNotNull<T>(value: T | null): asserts value is T;
+>assertNotNull : <T>(value: T | null) => asserts value is T
+>value : T | null
+
+declare const maybeNull: Signal<string | null>;
+>maybeNull : Signal<string | null>
+
+if (true) {
+>true : true
+
+    assertNotNull(maybeNull());
+>assertNotNull(maybeNull()) : void
+>assertNotNull : <T>(value: T | null) => asserts value is T
+>maybeNull() : string | null
+>maybeNull : Signal<string | null>
+
+    const s: string = maybeNull(); // Should be narrowed after assertion
+>s : string
+>maybeNull() : string | null
+>maybeNull : Signal<string | null>
+}
+
+// === Section 4: for-of loop narrowing ===
+declare const items: Signal<readonly string[] | undefined>;
+>items : Signal<readonly string[] | undefined>
+
+if (items() !== undefined) {
+>items() !== undefined : boolean
+>items() : readonly string[] | undefined
+>items : Signal<readonly string[] | undefined>
+>undefined : undefined
+
+    for (const item of items()) {
+>item : string
+>items() : readonly string[] | undefined
+>items : Signal<readonly string[] | undefined>
+
+        const s: string = item;
+>s : string
+>item : string
+    }
+}
+
+// === Section 5: Logical AND/OR narrowing ===
+declare const flag: Signal<string | undefined>;
+>flag : Signal<string | undefined>
+
+const result1: string = flag() ?? "default"; // nullish coalescing
+>result1 : string
+>flag() ?? "default" : string
+>flag() : string | undefined
+>flag : Signal<string | undefined>
+>"default" : "default"
+
+const result2: string | undefined = flag() && flag().toUpperCase(); // logical AND
+>result2 : string | undefined
+>flag() && flag().toUpperCase() : string | undefined
+>flag() : string | undefined
+>flag : Signal<string | undefined>
+>flag().toUpperCase() : string
+>flag().toUpperCase : () => string
+>flag() : string | undefined
+>flag : Signal<string | undefined>
+>toUpperCase : () => string
+

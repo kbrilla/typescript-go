@@ -1,0 +1,109 @@
+//// [tests/cases/compiler/identityModifierAssertionGuards.ts] ////
+
+=== identityModifierAssertionGuards.ts ===
+type Signal<T> = identity () => T;
+>Signal : Symbol(Signal, Decl(identityModifierAssertionGuards.ts, 0, 0))
+>T : Symbol(T, Decl(identityModifierAssertionGuards.ts, 0, 12))
+>T : Symbol(T, Decl(identityModifierAssertionGuards.ts, 0, 12))
+
+// === Section 1: Assertion function narrowing ===
+declare function assertDefined<T>(value: T): asserts value is NonNullable<T>;
+>assertDefined : Symbol(assertDefined, Decl(identityModifierAssertionGuards.ts, 0, 34))
+>T : Symbol(T, Decl(identityModifierAssertionGuards.ts, 3, 31))
+>value : Symbol(value, Decl(identityModifierAssertionGuards.ts, 3, 34))
+>T : Symbol(T, Decl(identityModifierAssertionGuards.ts, 3, 31))
+>value : Symbol(value, Decl(identityModifierAssertionGuards.ts, 3, 34))
+>NonNullable : Symbol(NonNullable, Decl(lib.es5.d.ts, --, --))
+>T : Symbol(T, Decl(identityModifierAssertionGuards.ts, 3, 31))
+
+declare const maybeStr: Signal<string | undefined>;
+>maybeStr : Symbol(maybeStr, Decl(identityModifierAssertionGuards.ts, 5, 13))
+>Signal : Symbol(Signal, Decl(identityModifierAssertionGuards.ts, 0, 0))
+
+if (true) {
+    assertDefined(maybeStr());
+>assertDefined : Symbol(assertDefined, Decl(identityModifierAssertionGuards.ts, 0, 34))
+>maybeStr : Symbol(maybeStr, Decl(identityModifierAssertionGuards.ts, 5, 13))
+
+    const s: string = maybeStr(); // Should be narrowed after assertion
+>s : Symbol(s, Decl(identityModifierAssertionGuards.ts, 9, 9))
+>maybeStr : Symbol(maybeStr, Decl(identityModifierAssertionGuards.ts, 5, 13))
+}
+
+// === Section 2: Type predicate narrowing ===
+declare function isString(value: unknown): value is string;
+>isString : Symbol(isString, Decl(identityModifierAssertionGuards.ts, 10, 1))
+>value : Symbol(value, Decl(identityModifierAssertionGuards.ts, 13, 26))
+>value : Symbol(value, Decl(identityModifierAssertionGuards.ts, 13, 26))
+
+declare const unknown: Signal<string | number>;
+>unknown : Symbol(unknown, Decl(identityModifierAssertionGuards.ts, 15, 13))
+>Signal : Symbol(Signal, Decl(identityModifierAssertionGuards.ts, 0, 0))
+
+if (isString(unknown())) {
+>isString : Symbol(isString, Decl(identityModifierAssertionGuards.ts, 10, 1))
+>unknown : Symbol(unknown, Decl(identityModifierAssertionGuards.ts, 15, 13))
+
+    const s: string = unknown(); // Should be narrowed by type predicate
+>s : Symbol(s, Decl(identityModifierAssertionGuards.ts, 18, 9))
+>unknown : Symbol(unknown, Decl(identityModifierAssertionGuards.ts, 15, 13))
+}
+
+// === Section 3: Custom assertion with identity ===
+declare function assertNotNull<T>(value: T | null): asserts value is T;
+>assertNotNull : Symbol(assertNotNull, Decl(identityModifierAssertionGuards.ts, 19, 1))
+>T : Symbol(T, Decl(identityModifierAssertionGuards.ts, 22, 31))
+>value : Symbol(value, Decl(identityModifierAssertionGuards.ts, 22, 34))
+>T : Symbol(T, Decl(identityModifierAssertionGuards.ts, 22, 31))
+>value : Symbol(value, Decl(identityModifierAssertionGuards.ts, 22, 34))
+>T : Symbol(T, Decl(identityModifierAssertionGuards.ts, 22, 31))
+
+declare const maybeNull: Signal<string | null>;
+>maybeNull : Symbol(maybeNull, Decl(identityModifierAssertionGuards.ts, 24, 13))
+>Signal : Symbol(Signal, Decl(identityModifierAssertionGuards.ts, 0, 0))
+
+if (true) {
+    assertNotNull(maybeNull());
+>assertNotNull : Symbol(assertNotNull, Decl(identityModifierAssertionGuards.ts, 19, 1))
+>maybeNull : Symbol(maybeNull, Decl(identityModifierAssertionGuards.ts, 24, 13))
+
+    const s: string = maybeNull(); // Should be narrowed after assertion
+>s : Symbol(s, Decl(identityModifierAssertionGuards.ts, 28, 9))
+>maybeNull : Symbol(maybeNull, Decl(identityModifierAssertionGuards.ts, 24, 13))
+}
+
+// === Section 4: for-of loop narrowing ===
+declare const items: Signal<readonly string[] | undefined>;
+>items : Symbol(items, Decl(identityModifierAssertionGuards.ts, 32, 13))
+>Signal : Symbol(Signal, Decl(identityModifierAssertionGuards.ts, 0, 0))
+
+if (items() !== undefined) {
+>items : Symbol(items, Decl(identityModifierAssertionGuards.ts, 32, 13))
+>undefined : Symbol(undefined)
+
+    for (const item of items()) {
+>item : Symbol(item, Decl(identityModifierAssertionGuards.ts, 35, 14))
+>items : Symbol(items, Decl(identityModifierAssertionGuards.ts, 32, 13))
+
+        const s: string = item;
+>s : Symbol(s, Decl(identityModifierAssertionGuards.ts, 36, 13))
+>item : Symbol(item, Decl(identityModifierAssertionGuards.ts, 35, 14))
+    }
+}
+
+// === Section 5: Logical AND/OR narrowing ===
+declare const flag: Signal<string | undefined>;
+>flag : Symbol(flag, Decl(identityModifierAssertionGuards.ts, 41, 13))
+>Signal : Symbol(Signal, Decl(identityModifierAssertionGuards.ts, 0, 0))
+
+const result1: string = flag() ?? "default"; // nullish coalescing
+>result1 : Symbol(result1, Decl(identityModifierAssertionGuards.ts, 43, 5))
+>flag : Symbol(flag, Decl(identityModifierAssertionGuards.ts, 41, 13))
+
+const result2: string | undefined = flag() && flag().toUpperCase(); // logical AND
+>result2 : Symbol(result2, Decl(identityModifierAssertionGuards.ts, 44, 5))
+>flag : Symbol(flag, Decl(identityModifierAssertionGuards.ts, 41, 13))
+>flag().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>flag : Symbol(flag, Decl(identityModifierAssertionGuards.ts, 41, 13))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
