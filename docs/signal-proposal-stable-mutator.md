@@ -135,9 +135,11 @@ if (val !== undefined) {
 
     // Mutator invalidates:
     count.set(42);
-    console.log(count.get() + 1); // ❌ Error: count.get() is `number | undefined` again
+    console.log(count.get() + 1); // ✅ OK: post-call narrowing — count.get() is now `number`
 }
 ```
+
+> **Note:** Post-call narrowing (P3) narrows the stable reference to the type of the argument passed to the mutator. `set(42)` narrows `get()` to `number` because `42` is `number`, which is a subtype of `number | undefined`.
 
 Without `stable`, the second `count.get()` call would return the full `number | undefined` type — TypeScript has no way to know that `.get()` returns the same value. Without `mutator invalidates`, the third `count.get()` call after `.set(42)` might *appear* narrowed when it shouldn't be.
 

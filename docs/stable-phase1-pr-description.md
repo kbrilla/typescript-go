@@ -56,6 +56,7 @@ For full problem analysis and language survey, see [docs/stable-modifier-researc
 | **3** | Guarded precision hardening | Deeper callback/forwarding families under strict proofs; expanded conservative/non-goal matrix; exhaustive switch carryover; optional-chain carryover; cross-file helper summaries | Phase 2 slices stable | Precision gains land with soundness guardrails intact | No | **Complete** |
 | **4** | Stabilization + perf guardrails | Regression sweeps; perf trend checks; conservative-gap documentation refresh | Phase 1–3 feature set stabilized | Repeated green validation and stable perf envelope | No | **Complete** |
 | **5 (Final)** | Explicit-contract stage | `mutator`/`invalidates` fallback resolution; multi-endpoint ambiguity diagnostics; constrained-overload post-call narrowing with explicit unique invalidates | Prior phases stable; gaps justify explicit contracts | Explicit-contract tests green and soundness constraints met | **Yes** | **Complete** |
+| **P3** | Post-call narrowing | `set(42)` narrows `read()` to `number` via `getAssignmentReducedType`; `stableBoundaryKindMutatorCall` boundary kind | Phase 5 mutator/invalidates complete | P3 test green, no regressions, pipeline passes | **Yes** | **Complete** |
 
 ### Impact vs Effort Rationale
 
@@ -376,6 +377,28 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 - [x] Conservative invalidation when no `invalidates` provided
 - [x] Generic container patterns (e.g., `Container<T>` with read/write)
 
+### §5.16 P3: Post-Call Narrowing
+
+**Feature:** After a mutator call with arguments, narrow the linked stable reference to the argument type instead of resetting to the declared type.
+
+**New CFA infrastructure:**
+- `stableBoundaryKindMutatorCall` — new boundary kind distinguishing mutator calls from generic boundaries
+- `getMutatorCallNarrowedType()` — extracts first argument type, uses `getAssignmentReducedType` to narrow the declared union type
+
+**How it works:**
+1. Mutator call boundary is classified as `stableBoundaryKindMutatorCall` (replaces generic `stableBoundaryKindOther`)
+2. In `getTypeAtFlowCall`, mutator calls are handled specially: the first argument's type is extracted
+3. `getAssignmentReducedType(declaredType, argType)` narrows the union to only constituents assignable from the argument
+4. Falls back to declared-type reset if no narrowing is possible (e.g., no arguments, non-union type)
+
+**Test file:** `stableModifierPostCallNarrowing.ts` — 12 sections, 0 errors
+
+**Improvements to existing tests:**
+- `stableModifierMutatorBasic`: 7→5 errors 
+- `stableModifierMutatorLinks`: 12→6 errors
+- `stableModifierConstrainedOverload`: 4→3 errors
+- `stableModifierMutatorErrors`: 4→3 errors
+
 ## 6. Future Phases: Candidate Features
 
 ### 6.1 Phase 2 Candidates — Parity Breadth Expansion
@@ -545,6 +568,7 @@ rm -rf ./_submodules/TypeScript/built/local
 | Diagnostic helpers refactor | Landed (semantics-preserving) | Shared emit/select/dedupe helpers in `checker.go` |
 | Reference candidate normalization | Landed (semantics-preserving) | Unified path reduces normalization drift risk |
 | Independent stable endpoints | Stable calls exempt from boundary invalidation | Stable calls are pure reads by contract; matches getter independence |
+| Post-call narrowing via assignment reduction | Shipped in P3 | Reuses existing `getAssignmentReducedType` infrastructure; same mechanism as variable assignment narrowing but applied to stable call references after mutator calls |
 
 ## 10. Validation
 
@@ -576,6 +600,7 @@ Latest tip validation is green:
 - `testdata/tests/cases/compiler/stableModifierMutatorInvalidates.ts` — Phase 5 selective invalidation via invalidates
 - `testdata/tests/cases/compiler/stableModifierConstrainedOverload.ts` — Phase 5 constrained generic patterns
 - `testdata/tests/cases/compiler/stableModifierMutatorErrors.ts` — Phase 5 validation diagnostics
+- `testdata/tests/cases/compiler/stableModifierPostCallNarrowing.ts` — P3 post-call narrowing (12 patterns, 0 errors)
 
 ### Benchmark Files
 - `internal/checker/stable_bench_test.go` — Checker micro-bench harness
@@ -655,6 +680,14 @@ Delta (latest branch vs historical `tsgo`): Wall `+7.91%`, RSS `-18.18%`.
 - CFA: integration into `classifyStableBoundary` pipeline
 - 4 new test files, 25 total errors across Phase 5 tests
 - TDD evidence: red (test files first) → green (implementation) → baselines accepted
+
+### P3: Post-Call Narrowing (2026-03-XX)
+- Added `stableBoundaryKindMutatorCall` to boundary kind enum
+- After a mutator call with arguments, the linked stable reference is narrowed to the argument type via `getAssignmentReducedType`
+- `getMutatorCallNarrowedType()` helper extracts first argument type and narrows declared union
+- Test file: `stableModifierPostCallNarrowing.ts` — 12 sections covering basic narrowing, sequential sets, cross-receiver independence, literal types, guarded interactions, variable arguments, named invalidates targets
+- Improved ALL existing mutator test baselines (error reductions)
+- Pipeline: build, test, lint, format all pass
 
 ---
 
@@ -971,7 +1004,7 @@ declare const count: Signal.State<number | undefined>;
 if (count.get() !== undefined) {
     count.get() + 1;          // ✅ Narrowed to number — stable preserves
     count.set(42);
-    count.get() + 1;          // ❌ Error — mutator invalidated the narrowing
+    count.get() + 1;          // ✅ OK — post-call narrowing: set(42) narrows to number
 }
 ```
 
