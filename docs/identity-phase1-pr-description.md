@@ -51,9 +51,9 @@ For full problem analysis and language survey, see [docs/identity-modifier-resea
 
 | Phase | Objective | Key Deliverables | Entry Criteria | Exit Criteria | Contracts Required | Status |
 |-------|-----------|-----------------|----------------|---------------|-------------------|--------|
-| **1** | Identity core + conservative safety baseline | `identity` parse/bind; repeated-read narrowing; uncertainty boundaries; Tier 1 write invalidation; diagnostics (`TS100014`/`TS100015`); parity suites | SDD + TDD plan established | Full validation green; parity sweep tracked; missing matrix reported | No | **In progress** |
-| **2** | Parity breadth expansion | Callback breadth parity; write-form matrix breadth; Tier 2 guarded forwarding breadth; submodule parity expansion; equality-chain reuse; discriminant-preserving nested access; unrelated call transparency | Phase 1 stable and green | Added slices green with negative controls and no broad regressions | No | **Nearly complete — only expected errors remaining** |
-| **3** | Guarded precision hardening | Deeper callback/forwarding families under strict proofs; expanded conservative/non-goal matrix; exhaustive switch carryover; optional-chain carryover; cross-file helper summaries | Phase 2 slices stable | Precision gains land with soundness guardrails intact | No | Planned |
+| **1** | Identity core + conservative safety baseline | `identity` parse/bind; repeated-read narrowing; uncertainty boundaries; Tier 1 write invalidation; diagnostics (`TS100014`/`TS100015`); parity suites | SDD + TDD plan established | Full validation green; parity sweep tracked; missing matrix reported | No | **Complete** |
+| **2** | Parity breadth expansion | Callback breadth parity; write-form matrix breadth; Tier 2 guarded forwarding breadth; submodule parity expansion; equality-chain reuse; discriminant-preserving nested access; unrelated call transparency | Phase 1 stable and green | Added slices green with negative controls and no broad regressions | No | **Complete** |
+| **3** | Guarded precision hardening | Deeper callback/forwarding families under strict proofs; expanded conservative/non-goal matrix; exhaustive switch carryover; optional-chain carryover; cross-file helper summaries | Phase 2 slices stable | Precision gains land with soundness guardrails intact | No | **Complete** |
 | **4** | Stabilization + perf guardrails | Regression sweeps; perf trend checks; conservative-gap documentation refresh | Phase 1–3 feature set stabilized | Repeated green validation and stable perf envelope | No | Planned |
 | **5 (Final)** | Explicit-contract stage | `mutator`/`links` fallback resolution; multi-endpoint ambiguity diagnostics; constrained-overload post-call narrowing with explicit unique links | Prior phases stable; gaps justify explicit contracts | Explicit-contract tests green and soundness constraints met | **Yes** | Planned |
 
@@ -319,6 +319,15 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 | `identityModifierAssertionGuards.ts` | 48 | Assertion functions, type predicates, for-of loops, logical operators | 0 | ✅ All assertion/guard patterns work |
 | `identityModifierStandaloneCallBoundary.ts` | 53 | Standalone function calls transparent, same-receiver method calls transparent, member+standalone mixing | 0 | ✅ Phase 2 feature: unrelated standalone calls exempt from boundaries |
 
+### §5.13 Phase 3 Test Files
+
+| Test File | Lines | Features Tested | Errors | Verdict |
+|-----------|-------|-----------------|--------|---------|
+| `identityModifierExhaustiveSwitch.ts` | 102 | Exhaustive discriminant switch, default:never, typeof switch, fall-through, non-exhaustive | 0 | ✅ All switch patterns work correctly |
+| `identityModifierAdvancedCallbacks.ts` | 92 | Parametered/function/async/generator/multi/rest/optional callbacks, all classified as unrelated standalone calls | 0 | ✅ All callback patterns preserve narrowing |
+| `identityModifierAdvancedLoops.ts` | 70 | for-in nonnull, for-of with narrowing, destructuring, while/do-while, nested for-of, re-narrowing in body | 0 | ✅ All loop patterns work correctly |
+| `identityModifierAdvancedOptionalChain.ts` | 78 | Optional chain discriminant, typeof guard, non-null assertion, nested optional, truthiness, inequality, strict equality | 0 | ✅ All optional chain patterns work correctly |
+
 ## 6. Future Phases: Candidate Features
 
 ### 6.1 Phase 2 Candidates — Parity Breadth Expansion
@@ -342,9 +351,9 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 | Feature | Guardrails | Risk | Parity Impact |
 |---|---|---|---|
 | Cross-file helper summary cache for safe passthrough | Declaration-only, side-effect-free; cache invalidates on program update | High | Broadens parity in real codebases with shared helpers |
-| Expanded callback-alias parity family | Local const/no-param/empty-body/non-reassigned proofs; conservative fallback | Medium | Closes remaining callback parity gaps |
-| Exhaustive switch carryover on identity reads | Exhaustive discriminant switches with no invalidating boundary inside cases | Medium | Brings identity closer to mature getter switch CFA |
-| Guarded optional-chain carryover (`read()?.x`) | Non-mutating expression-stmt boundaries; stable endpoint symbol | High | Expands parity in optional-chain-heavy code |
+| Expanded callback-alias parity family | Local const/no-param/empty-body/non-reassigned proofs; conservative fallback | Medium | Closes remaining callback parity gaps | ✅ VERIFIED WORKING — parametered callbacks, function keyword, async, generator, multi-arg, rest/optional params all preserve narrowing (classified as unrelated standalone calls) |
+| Exhaustive switch carryover on identity reads | Exhaustive discriminant switches with no invalidating boundary inside cases | Medium | Brings identity closer to mature getter switch CFA | ✅ VERIFIED WORKING — existing `isMatchingReference` + `narrowTypeBySwitchOnDiscriminant` pipeline handles identity calls transparently; exhaustive `default: never` and `typeof` switch both work |
+| Guarded optional-chain carryover (`read()?.x`) | Non-mutating expression-stmt boundaries; stable endpoint symbol | High | Expands parity in optional-chain-heavy code | ✅ VERIFIED WORKING — optional chain narrowing works transparently with identity calls; optional chain as discriminant, nested optional chains, and property access all work |
 | Callback no-op alias value-type relaxation | Zero params, empty body, non-reassigned, primitive/literal-union only | Medium | Narrows over-invalidation gap |
 | Alias initializer value-type relaxation | Alias never called/passed/reassigned before next read; primitive only | High | Reduces over-invalidation in refactor patterns |
 | Await assignment forms (`const x = await delay()`) | Exact safe-shape + value-type proof required | High | Prevents unsound broad async relaxation |
