@@ -310,7 +310,7 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 
 | Test File | Lines | Features Tested | Errors | Verdict |
 |-----------|-------|-----------------|--------|---------|
-| `identityModifierMultiArgCallback.ts` | 56 | Multi-arg no-op callbacks (trailing, leading, multiple, middle) + negative tests | 0 | ✅ Phase 2 feature working |
+| `identityModifierMultiArgCallback.ts` | 93 | Multi-arg no-op callbacks (trailing, leading, multiple, middle) + property callback references + nested forwarding wrappers + negative tests | 0 | ✅ Phase 2 feature working |
 | `identityModifierEqualityChain.ts` | 58 | Literal-union OR chains, negation, intersection, undefined combo | 0 | ✅ Already working |
 | `identityModifierValueTypeBoundary.ts` | 47 | Ambient void no-arg calls transparent + negatives (non-void, args, body) | 6 (3 correct negatives) | ✅ Already implemented |
 | `identityModifierOptionalChaining.ts` | 28 | Optional chaining, nullish coalescing, nested optional | 0 | ✅ Working |
@@ -325,10 +325,10 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 
 | Feature | Guardrails | Risk | Parity Impact |
 |---|---|---|---|
-| Callback breadth parity slices (multi-arg, property, nested forwarding) | Multi-arg callback detection, property callback references, nested forwarding wrapper chains | Medium | Extends callback preserve beyond single-arg identifier/inline forms |
+| Callback breadth parity slices (multi-arg, property, nested forwarding) | Multi-arg callback detection, property callback references, nested forwarding wrapper chains | Medium | Extends callback preserve beyond single-arg identifier/inline forms | ✅ IMPLEMENTED — `isConstNoopCallbackPropertyAlias` resolves const object literal property callbacks; `isTrivialCallbackForwardingCall` handles nested `pass(pass(() => {}))` chains; `isNoopCallbackWithDepth` adds depth-bounded (max 5) no-op checking |
 | Multi-arg empty callback classification | Extend `classifyIdentityBoundary` to check all args of multi-arg calls; each must be zero-param empty-body | Low | Handles `invoke(cb1, cb2)` patterns | ✅ IMPLEMENTED — changed `len(boundary.Arguments()) == 1` guard to iterate all args; all callback args must be no-op |
-| Write-form matrix breadth expansion | Proven-key guardrails for dynamic element writes | High | Closes remaining getter/setter dynamic-write gaps |
-| Tier 2 guarded forwarding expansion (2-hop local helper chains) | Local symbol only; const-only alias chains; depth cap; no mutable helpers | Medium | Reduces conservative drops in helper-heavy code |
+| Write-form matrix breadth expansion | Proven-key guardrails for dynamic element writes; const-alias receiver resolution | High | Closes remaining getter/setter dynamic-write gaps | ✅ IMPLEMENTED — `isIdentityReceiverWriteBoundaryForCallReference` detects same-receiver property writes; `resolveConstAliasReference` resolves const alias chains; `getWriteAccessExpressionFromBoundary` handles assignment/prefix/postfix writes; `getTypeAtFlowAssignment` now handles `identityBoundaryKindOther` |
+| Tier 2 guarded forwarding expansion (2-hop local helper chains) | Local symbol only; const-only alias chains; depth cap; no mutable helpers | Medium | Reduces conservative drops in helper-heavy code | ✅ PARTIALLY IMPLEMENTED — 2-hop const alias chain test added; expression-statement comment updates; more complex helper chains deferred to Phase 3 |
 | Submodule parity expansion slices | Parity with additional submodule getter test cases | Low | Broader parity evidence |
 | Equality-chain literal-union reuse (`read() === "a" \|\| read() === "b"`) | Same endpoint symbol and same flow region | Medium | Matches getter literal-union behavior | ✅ VERIFIED WORKING — existing `isMatchingReference` + `narrowTypeByEquality` pipeline handles call expressions |
 | Discriminant-preserving nested access (`read().kind` then `read().payload`) | Same endpoint candidate required | Medium | Closes nested discriminant parity gaps | ✅ VERIFIED WORKING — existing `isMatchingReference` + `getDiscriminantPropertyAccess` pipeline handles identity calls |
@@ -348,7 +348,7 @@ Three expert code reviews were performed (TypeScript architect, Go engineer, tes
 | Callback no-op alias value-type relaxation | Zero params, empty body, non-reassigned, primitive/literal-union only | Medium | Narrows over-invalidation gap |
 | Alias initializer value-type relaxation | Alias never called/passed/reassigned before next read; primitive only | High | Reduces over-invalidation in refactor patterns |
 | Await assignment forms (`const x = await delay()`) | Exact safe-shape + value-type proof required | High | Prevents unsound broad async relaxation |
-| Dynamic key write (`model[key] = ...`) | Key equivalence proof required | High | Improves parity without global alias analysis |
+| Dynamic key write (`model[key] = ...`) | Key equivalence proof required | High | Improves parity without global alias analysis | ✅ IMPLEMENTED in Phase 2 — `isIdentityReceiverWriteBoundaryForCallReference` with `getAccessedPropertyName` key comparison |
 
 ### 6.3 Phase 4 Candidates — Stabilization
 
