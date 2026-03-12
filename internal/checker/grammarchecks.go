@@ -519,7 +519,7 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				if flags&ast.ModifierFlagsStable != 0 {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "stable")
 				}
-				if node.Kind != ast.KindFunctionType && node.Kind != ast.KindMethodDeclaration && node.Kind != ast.KindMethodSignature {
+				if node.Kind != ast.KindFunctionType && node.Kind != ast.KindMethodDeclaration && node.Kind != ast.KindMethodSignature && node.Kind != ast.KindFunctionDeclaration && node.Kind != ast.KindFunctionExpression && node.Kind != ast.KindArrowFunction && node.Kind != ast.KindGetAccessor {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_stable_modifier_can_only_appear_on_a_function_type_with_no_parameters)
 				}
 				// Check that the function type/method has no parameters
@@ -535,7 +535,7 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				if flags&ast.ModifierFlagsMutator != 0 {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "mutator")
 				}
-				if node.Kind != ast.KindFunctionType && node.Kind != ast.KindMethodDeclaration && node.Kind != ast.KindMethodSignature {
+				if node.Kind != ast.KindFunctionType && node.Kind != ast.KindMethodDeclaration && node.Kind != ast.KindMethodSignature && node.Kind != ast.KindFunctionDeclaration && node.Kind != ast.KindFunctionExpression && node.Kind != ast.KindArrowFunction && node.Kind != ast.KindSetAccessor {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_can_only_appear_on_a_function_type)
 				}
 				// mutator and stable cannot combine

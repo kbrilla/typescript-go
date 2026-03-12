@@ -1041,7 +1041,7 @@ func (p *Parser) parseStatement() *ast.Statement {
 	case ast.KindAsyncKeyword, ast.KindInterfaceKeyword, ast.KindTypeKeyword, ast.KindModuleKeyword, ast.KindNamespaceKeyword,
 		ast.KindDeclareKeyword, ast.KindConstKeyword, ast.KindEnumKeyword, ast.KindExportKeyword, ast.KindImportKeyword,
 		ast.KindPrivateKeyword, ast.KindProtectedKeyword, ast.KindPublicKeyword, ast.KindAbstractKeyword, ast.KindAccessorKeyword,
-		ast.KindStaticKeyword, ast.KindReadonlyKeyword, ast.KindGlobalKeyword:
+		ast.KindStaticKeyword, ast.KindReadonlyKeyword, ast.KindGlobalKeyword, ast.KindStableKeyword, ast.KindMutatorKeyword:
 		if p.isStartOfDeclaration() {
 			return p.parseDeclaration()
 		}
@@ -4056,7 +4056,7 @@ func (p *Parser) nextTokenCanFollowDefaultKeyword() bool {
 		return true
 	case ast.KindAbstractKeyword:
 		return p.lookAhead((*Parser).nextTokenIsClassKeywordOnSameLine)
-	case ast.KindAsyncKeyword:
+	case ast.KindAsyncKeyword, ast.KindStableKeyword, ast.KindMutatorKeyword:
 		return p.lookAhead((*Parser).nextTokenIsFunctionKeywordOnSameLine)
 	}
 	return false
@@ -4259,7 +4259,7 @@ func (p *Parser) parseYieldExpression() *ast.Node {
 }
 
 func (p *Parser) isParenthesizedArrowFunctionExpression() core.Tristate {
-	if p.token == ast.KindOpenParenToken || p.token == ast.KindLessThanToken || p.token == ast.KindAsyncKeyword {
+	if p.token == ast.KindOpenParenToken || p.token == ast.KindLessThanToken || p.token == ast.KindAsyncKeyword || p.token == ast.KindStableKeyword || p.token == ast.KindMutatorKeyword {
 		state := p.mark()
 		result := p.nextIsParenthesizedArrowFunctionExpression()
 		p.rewind(state)
@@ -4276,12 +4276,12 @@ func (p *Parser) isParenthesizedArrowFunctionExpression() core.Tristate {
 }
 
 func (p *Parser) nextIsParenthesizedArrowFunctionExpression() core.Tristate {
-	if p.token == ast.KindAsyncKeyword {
+	for p.token == ast.KindAsyncKeyword || p.token == ast.KindStableKeyword || p.token == ast.KindMutatorKeyword {
 		p.nextToken()
 		if p.hasPrecedingLineBreak() {
 			return core.TSFalse
 		}
-		if p.token != ast.KindOpenParenToken && p.token != ast.KindLessThanToken {
+		if p.token != ast.KindOpenParenToken && p.token != ast.KindLessThanToken && p.token != ast.KindAsyncKeyword && p.token != ast.KindStableKeyword && p.token != ast.KindMutatorKeyword {
 			return core.TSFalse
 		}
 	}
@@ -4503,13 +4503,19 @@ func (p *Parser) parseParenthesizedArrowFunctionExpression(allowAmbiguity bool, 
 }
 
 func (p *Parser) parseModifiersForArrowFunction() *ast.ModifierList {
-	if p.token == ast.KindAsyncKeyword {
+	var modifiers []*ast.Node
+	listPos := p.nodePos()
+	for p.token == ast.KindAsyncKeyword || p.token == ast.KindStableKeyword || p.token == ast.KindMutatorKeyword {
 		pos := p.nodePos()
+		kind := p.token
 		p.nextToken()
-		modifier := p.finishNode(p.factory.NewModifier(ast.KindAsyncKeyword), pos)
-		return p.newModifierList(modifier.Loc, p.nodeSlicePool.NewSlice1(modifier))
+		modifier := p.finishNode(p.factory.NewModifier(kind), pos)
+		modifiers = append(modifiers, modifier)
 	}
-	return nil
+	if len(modifiers) == 0 {
+		return nil
+	}
+	return p.newModifierList(core.NewTextRange(listPos, p.nodePos()), p.nodeSlicePool.Clone(modifiers))
 }
 
 // If true, we should abort parsing an error function.
@@ -5618,10 +5624,10 @@ func (p *Parser) parsePrimaryExpression() *ast.Expression {
 		return p.parseArrayLiteralExpression()
 	case ast.KindOpenBraceToken:
 		return p.parseObjectLiteralExpression()
-	case ast.KindAsyncKeyword:
-		// Async arrow functions are parsed earlier in parseAssignmentExpressionOrHigher.
-		// If we encounter `async [no LineTerminator here] function` then this is an async
-		// function; otherwise, its an identifier.
+	case ast.KindAsyncKeyword, ast.KindStableKeyword, ast.KindMutatorKeyword:
+		// Async/stable/mutator arrow functions are parsed earlier in parseAssignmentExpressionOrHigher.
+		// If we encounter one of these [no LineTerminator here] function then this is a
+		// function expression with that modifier; otherwise, its an identifier.
 		if !p.lookAhead((*Parser).nextTokenIsFunctionKeywordOnSameLine) {
 			break
 		}
@@ -5986,6 +5992,10 @@ func (p *Parser) scanTypeMemberStart() bool {
 		idToken = true
 		p.nextToken()
 	}
+	// After consuming modifiers, get/set still indicate accessor declarations
+	if p.token == ast.KindGetKeyword || p.token == ast.KindSetKeyword {
+		return true
+	}
 	// Index signatures and computed property names are type members
 	if p.token == ast.KindOpenBracketToken {
 		return true
@@ -6156,7 +6166,7 @@ func (p *Parser) scanStartOfDeclaration() bool {
 		case ast.KindModuleKeyword, ast.KindNamespaceKeyword:
 			return p.nextTokenIsIdentifierOrStringLiteralOnSameLine()
 		case ast.KindAbstractKeyword, ast.KindAccessorKeyword, ast.KindAsyncKeyword, ast.KindDeclareKeyword, ast.KindPrivateKeyword,
-			ast.KindProtectedKeyword, ast.KindPublicKeyword, ast.KindReadonlyKeyword:
+			ast.KindProtectedKeyword, ast.KindPublicKeyword, ast.KindReadonlyKeyword, ast.KindStableKeyword, ast.KindMutatorKeyword:
 			previousToken := p.token
 			p.nextToken()
 			// ASI takes effect for this modifier.
