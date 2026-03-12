@@ -730,7 +730,7 @@ These are deferred to future phases with rationale:
 | **SYN-6** | `invalidates` exclusive mode (`sort: mutator () => void preserves length`) | Future | Low priority — only useful for partial invalidation |
 | **SEM-1** | How does `stable` propagate through generics, conditional types, mapped types? | Phase 2+ | Complex type-level interactions |
 | **SEM-8** | Should `T extends stable () => any ? true : false` discriminate stable functions? | Future | Conditional type discrimination |
-| **LP-1** | Keyed linked predicates: `has(key: K): this.get(key) is V` — parameter correlation | Phase 9 | ✅ **Implemented** (commit 18f9a1590) |
+| **LP-1** | ~~Keyed linked predicates: `has(key: K): this.get(key) is V` — parameter correlation~~ | ~~Phase 9~~ | ✅ **Already implemented** — moved to DECIDED (commit 18f9a1590) |
 | **LP-2** | Multi-predicate intersection: `isOk(): this.value() is T & this.error() is undefined` | Future | Complex predicate composition |
 | **LP-3** | Getter mutation invalidation: should `invalidates` target getter properties? | Future | Cross-concern between accessor modifiers and invalidation |
 

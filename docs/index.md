@@ -11,8 +11,8 @@ Documentation for the `stable` / `mutator` / `invalidates` modifier feature — 
 | ✅ Implemented | 13 features | Shipped in this PR |
 | 🔮 Future (Not Implemented) | 5 extensions | Designed but deferred |
 | ❓ Open Questions | 12 | Require design decisions |
-| ✅ Decided | 5 | Design decisions made |
-| ⏸️ Deferred | 9 | Postponed to future phases |
+| ✅ Decided | 6 | Design decisions made |
+| ⏸️ Deferred | 8 | Postponed to future phases |
 
 ---
 
@@ -23,7 +23,7 @@ These are the most up-to-date documents reflecting the current state:
 | Document | Purpose |
 |----------|---------|
 | [stable-pr-description.md](stable-pr-description.md) | **PR body** — Complete syntax reference, implementation status, phase roadmap, open questions |
-| [stable-design-decisions.md](stable-design-decisions.md) | **Decision register** — 5 DECIDED, 12 OPEN, 9 DEFERRED decisions |
+| [stable-design-decisions.md](stable-design-decisions.md) | **Decision register** — 6 DECIDED, 12 OPEN, 8 DEFERRED decisions |
 | [stable-internal-design-document.md](stable-internal-design-document.md) | **Internal design doc** — Phase completion status, parity matrices, implementation details |
 
 ---
