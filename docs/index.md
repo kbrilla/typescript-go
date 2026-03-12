@@ -10,7 +10,7 @@ Documentation for the `stable` / `mutator` / `invalidates` modifier feature — 
 - [stable-modifier-research.md](stable-modifier-research.md) — Initial research on the identity/stable modifier concept
 - [signal-proposal-stable-mutator.md](signal-proposal-stable-mutator.md) — TC39 Signals integration proposal
 - [stable-phase1-pr-description.md](stable-phase1-pr-description.md) — PR description for Phase 1 implementation
-- [stable-phase2-proposal.md](stable-phase2-proposal.md) — Phase 2 proposal (linked predicates, advanced patterns)
+- [stable-phase8-proposal.md](stable-phase8-proposal.md) — Phase 8 proposal (linked predicates, advanced patterns)
 
 ## Design Review (Cross-Language Survey)
 

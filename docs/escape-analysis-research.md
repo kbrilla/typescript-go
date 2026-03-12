@@ -6,7 +6,7 @@
 
 **Status**: Research (informational)  
 **Context**: Phase 1 `stable`/`mutator`/`invalidates` system in TypeScript-Go  
-**Related**: [ts-cfa-tradeoffs-research.md](ts-cfa-tradeoffs-research.md), [stable-phase2-proposal.md](stable-phase2-proposal.md)
+**Related**: [ts-cfa-tradeoffs-research.md](ts-cfa-tradeoffs-research.md), [stable-phase8-proposal.md](stable-phase8-proposal.md)
 
 ---
 

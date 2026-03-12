@@ -229,11 +229,11 @@ analyzer in a way that's sound enough to be useful and practical enough to be ad
 
 ---
 
-## 5. Connections to Phase 2
+## 5. Connections to Phase 8
 
 ### 5.1 Linked Predicates Fill Another #9998 Gap
 
-#9998 discusses type guards being invalidated by function calls. Our Phase 2 linked
+#9998 discusses type guards being invalidated by function calls. Our Phase 8 linked
 predicates (`this.value() is T`) extend type guards to work **ACROSS methods** —
 something no proposal in #9998's 598+ comments has addressed.
 
@@ -243,7 +243,7 @@ This means:
 interface Signal<T> {
     stable value(): T;
     mutator set(v: T): void invalidates this.value;
-    // Phase 2: linked predicate
+    // Phase 8: linked predicate
     isString(): this.value() is string;
 }
 
@@ -266,7 +266,7 @@ stable endpoints, narrowing is preserved through the callback boundary.
 
 ### 5.3 Hierarchy/Override Concerns
 
-#9998 discusses `readonly` fields as a mitigation. Our hierarchy rules (Phase 2 deferred)
+#9998 discusses `readonly` fields as a mitigation. Our hierarchy rules (Phase 8 deferred)
 follow the same structural model — `stable` is structural like `readonly`, not inherited
 like `abstract`.
 
@@ -284,10 +284,10 @@ This means:
 | ------ | --------------------------------------- | ---------------------------------- | ----------------------------------------- |
 | #9998  | Trade-offs in CFA                       | Core problem statement             | stable/mutator/invalidates                |
 | #7770  | Pure functions modifier                 | Superseded by our approach         | stable (per-endpoint purity)              |
-| #9619  | Strict null for Map members             | Keyed cross-method guard           | Phase 2b (keyed predicates)               |
-| #13086 | Map.has flow analysis                   | Same as #9619                      | Phase 2b                                  |
-| #30581 | Correlated union types                  | Method-discriminated unions        | Phase 2c (discriminated methods)          |
-| #31376 | Function returning value AND type guard | Cross-method predicates            | Phase 2a (linked predicates)              |
+| #9619  | Strict null for Map members             | Keyed cross-method guard           | Phase 9 (keyed predicates)                |
+| #13086 | Map.has flow analysis                   | Same as #9619                      | Phase 9                                   |
+| #30581 | Correlated union types                  | Method-discriminated unions        | Phase 10 (discriminated methods)          |
+| #31376 | Function returning value AND type guard | Cross-method predicates            | Phase 8 (linked predicates)               |
 | #34596 | asserts can't close over generics       | Early CFA resolution constraint    | Same constraint on stable                 |
 | #8353  | Closure mutation analysis               | Function body analysis             | Replaced by declarative annotations       |
 | #6614  | readonly modifier enhancements          | Property immutability              | stable is for function identity, complements readonly |

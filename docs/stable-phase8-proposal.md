@@ -1,9 +1,9 @@
-# Phase 2 Proposal: Linked Predicates & Advanced Patterns
+# Phase 8 Proposal: Linked Predicates & Advanced Patterns
 
 ## Document Control
 - **Status**: Proposal (Draft)
 - **Audience**: TypeScript language/design contributors, checker implementers, framework authors
-- **Scope**: Phase 2 features building on Phase 1 `stable`/`mutator`/`invalidates` CFA infrastructure
+- **Scope**: Phase 8 features building on Phase 1 `stable`/`mutator`/`invalidates` CFA infrastructure
 - **Prerequisites**: Phase 1 complete and stable (all validation green)
 - **Related documents**:
   - [stable-modifier-spec.md](stable-modifier-spec.md) — Phase 1 SDD
@@ -22,7 +22,7 @@ Phase 1 established `stable`/`mutator`/`invalidates` as CFA primitives for metho
 - `invalidates` links mutators to the stable endpoints they affect
 - Post-call narrowing (`set(42)` narrows `read()`) via `getAssignmentReducedType`
 
-Phase 2 introduces **linked type predicates** — the ability for one method's boolean result to narrow another method's return type. This addresses a 10+ year gap in TypeScript's type system (issues #9619, #13086, #30581, #57725 — 500+ combined upvotes) that no mainstream language has solved.
+Phase 8 introduces **linked type predicates** — the ability for one method's boolean result to narrow another method's return type. This addresses a 10+ year gap in TypeScript's type system (issues #9619, #13086, #30581, #57725 — 500+ combined upvotes) that no mainstream language has solved.
 
 **Core syntax**: `this.method() is Type` — a natural extension of existing `param is T` / `this is T` type predicates.
 
@@ -33,16 +33,16 @@ interface Resource<T> {
 }
 ```
 
-Phase 2 is split into three sub-phases:
-- **2a (MVP)**: Simple linked predicates — `hasValue(): this.value() is T` (~400 LOC)
-- **2b**: Keyed linked predicates — `has(key): this.get(key) is V` (~600 LOC additional)
-- **2c**: Discriminated method unions — multi-predicate intersection (~1000 LOC additional)
+Phases 8-10 cover three areas:
+- **Phase 8 (MVP)**: Simple linked predicates — `hasValue(): this.value() is T` (~400 LOC)
+- **Phase 9**: Keyed linked predicates — `has(key): this.get(key) is V` (~600 LOC additional)
+- **Phase 10**: Discriminated method unions — multi-predicate intersection (~1000 LOC additional)
 
 This document also catalogues deferred items (exclusive invalidates, hierarchy formalization, getter mutation invalidation) with analysis justifying deferral.
 
 ---
 
-## 2. Phase 2a: Linked Type Predicates (MVP)
+## 2. Phase 8: Linked Type Predicates (MVP)
 
 ### 2.1 Problem Statement
 
@@ -483,7 +483,7 @@ if (r.hasValue()) {
 
 ---
 
-## 3. Phase 2b: Keyed Linked Predicates
+## 3. Phase 9: Keyed Linked Predicates
 
 ### 3.1 Problem Statement
 
@@ -498,7 +498,7 @@ if (map.has("x")) {
 }
 ```
 
-This is fundamentally harder than Phase 2a because of **parameter correlation**: the system must track that the same key was used in both `has()` and `get()`.
+This is fundamentally harder than Phase 8 because of **parameter correlation**: the system must track that the same key was used in both `has()` and `get()`.
 
 ### 3.2 Proposed Syntax
 
@@ -523,7 +523,7 @@ ParameterRefList:
 
 The `key` in `this.get(key) is V` references the parameter named `key` from the guard method's signature. This creates an explicit correlation: "when `has(key)` returns true, calling `get` with the same value as `key` returns `V`."
 
-### 3.3 Semantic Rules (Additional to Phase 2a)
+### 3.3 Semantic Rules (Additional to Phase 8)
 
 #### Rule K1: Parameter identity via `isMatchingReference`
 
@@ -569,13 +569,13 @@ if (map.has("foo")) {
 }
 ```
 
-**Implementation complexity**: This requires per-key invalidation tracking, which is significantly more complex than Phase 2a. The `invalidates` clause would need key-correlation awareness. This is the primary reason for separating this into a distinct sub-phase.
+**Implementation complexity**: This requires per-key invalidation tracking, which is significantly more complex than Phase 8. The `invalidates` clause would need key-correlation awareness. This is the primary reason for separating this into a distinct sub-phase.
 
 ### 3.4 Implementation Plan
 
 #### Parser Changes (~100 LOC additional)
 
-Extend the Phase 2a parser to accept parameter references inside the method call in the predicate: `this.get(key) is V`. The parameter reference `key` must resolve to a parameter of the containing signature.
+Extend the Phase 8 parser to accept parameter references inside the method call in the predicate: `this.get(key) is V`. The parameter reference `key` must resolve to a parameter of the containing signature.
 
 #### Checker Changes (~500 LOC additional)
 
@@ -634,7 +634,7 @@ if (map.has("foo")) {
 
 ---
 
-## 4. Phase 2c: Discriminated Method Unions (Stretch)
+## 4. Phase 10: Discriminated Method Unions (Stretch)
 
 ### 4.1 Problem Statement
 
@@ -686,7 +686,7 @@ Or, with discriminant-based narrowing (more powerful but more complex):
 
 ### 4.4 Recommendation
 
-Defer to Phase 3+. The multi-predicate intersection syntax (`this.value() is T & this.error() is undefined`) is implementable as syntactic sugar over multiple independent linked predicates from Phase 2a. The more complex discriminant-based correlation is a research problem.
+Defer to Phase 3+. The multi-predicate intersection syntax (`this.value() is T & this.error() is undefined`) is implementable as syntactic sugar over multiple independent linked predicates from Phase 8. The more complex discriminant-based correlation is a research problem.
 
 ---
 
@@ -736,7 +736,7 @@ interface OrderedStore<T> {
 
 **Syntax**: `preserves` clause in the same position as `invalidates`, with opposite semantics. Mutually exclusive — a mutator uses either `invalidates` (list what's affected) or `preserves` (list what's NOT affected), never both.
 
-**Decision**: Defer to Phase 3+ and re-evaluate based on real-world adoption data from Phase 2.
+**Decision**: Defer to Phase 3+ and re-evaluate based on real-world adoption data from Phase 8.
 
 ---
 
@@ -971,7 +971,7 @@ If conditional type discrimination is ever needed:
 
 ### 8.4 Recommendation
 
-Do not implement in Phase 1 or Phase 2. Monitor for real-world use cases where users need to distinguish `stable () => T` from `() => T` at the type level. If evidence appears, option 2 (`IsStable<T>` intrinsic) is the safest path.
+Do not implement in Phase 1 or Phase 8. Monitor for real-world use cases where users need to distinguish `stable () => T` from `() => T` at the type level. If evidence appears, option 2 (`IsStable<T>` intrinsic) is the safest path.
 
 ---
 
@@ -984,8 +984,8 @@ Do not implement in Phase 1 or Phase 2. Monitor for real-world use cases where u
 | Parser ambiguity with `this.method() is T` | Low | Medium | `is` keyword after `)` disambiguates cleanly |
 | Performance regression from additional predicate checking | Low | High | Predicate resolution is per-signature, not per-call; cache results |
 | Interaction with existing `this is T` predicates | Medium | Medium | Both coexist; method-specific is strictly more precise |
-| Phase 2b key correlation complexity | High | High | Separate sub-phase; can ship 2a independently |
-| Phase 2c scope creep (discriminated method unions) | High | Medium | Strict deferral to Phase 3+; MVP covers most use cases |
+| Phase 9 key correlation complexity | High | High | Separate sub-phase; can ship Phase 8 independently |
+| Phase 10 scope creep (discriminated method unions) | High | Medium | Strict deferral to Phase 3+; MVP covers most use cases |
 
 ### Compatibility Risks
 
@@ -1000,7 +1000,7 @@ Do not implement in Phase 1 or Phase 2. Monitor for real-world use cases where u
 | Risk | Likelihood | Impact | Mitigation |
 |------|-----------|--------|------------|
 | Confusion between `this is T` and `this.method() is T` | Medium | Low | Documentation; compiler suggestions |
-| Users expect keyed predicates in Phase 2a | Medium | Low | Clear messaging; Phase 2b timeline visibility |
+| Users expect keyed predicates in Phase 8 | Medium | Low | Clear messaging; Phase 9 timeline visibility |
 | Guard lies (unsound predicate) | Same as existing | Same as existing | Same trust model as `param is T` |
 
 ---
@@ -1013,18 +1013,18 @@ Do not implement in Phase 1 or Phase 2. Monitor for real-world use cases where u
 Phase 1 (complete)
   └── stable/mutator/invalidates CFA foundation
         │
-        ├── Phase 2a: Linked predicates (MVP)
+        ├── Phase 8: Linked predicates (MVP)
         │     ├── Parser: this.method() is T
         │     ├── Checker: TypePredicateKindMethod
         │     └── CFA: piggyback on stable flow nodes
         │
-        ├── Phase 2b: Keyed linked predicates
-        │     ├── Depends on: Phase 2a
+        ├── Phase 9: Keyed linked predicates
+        │     ├── Depends on: Phase 8
         │     ├── Parser: this.method(param) is T
         │     └── Checker: parameter correlation via isMatchingReference
         │
-        └── Phase 2c: Discriminated method unions (stretch)
-              ├── Depends on: Phase 2a
+        └── Phase 10: Discriminated method unions (stretch)
+              ├── Depends on: Phase 8
               └── Research: method-discriminated object types
 
 Deferred (Phase 3+):
@@ -1037,28 +1037,28 @@ Deferred (Phase 3+):
 
 | Sub-phase | Parser | Checker | Tests | Total LOC | Risk |
 |-----------|--------|---------|-------|-----------|------|
-| **2a (MVP)** | ~200 | ~500 | ~300 | **~1000** | Low |
-| **2b (Keyed)** | ~100 | ~500 | ~200 | **~800** | Medium-High |
-| **2c (Discriminated)** | ~100 | ~700 | ~300 | **~1100** | High |
+| **Phase 8 (MVP)** | ~200 | ~500 | ~300 | **~1000** | Low |
+| **Phase 9 (Keyed)** | ~100 | ~500 | ~200 | **~800** | Medium-High |
+| **Phase 10 (Discriminated)** | ~100 | ~700 | ~300 | **~1100** | High |
 | **Total** | ~400 | ~1700 | ~800 | **~2900** | — |
 
 ### Recommended Implementation Order
 
-1. **Phase 2a first**: Simple linked predicates. Addresses Angular Resource, optional containers, and typed signals. No parameter correlation — clean CFA integration with existing infrastructure.
+1. **Phase 8 first**: Simple linked predicates. Addresses Angular Resource, optional containers, and typed signals. No parameter correlation — clean CFA integration with existing infrastructure.
 
-2. **Phase 2b after 2a stabilizes**: Keyed predicates. Addresses Map/Set `has`/`get`. Higher risk due to parameter correlation. Can be shipped independently or deferred if 2a already provides sufficient value.
+2. **Phase 9 after Phase 8 stabilizes**: Keyed predicates. Addresses Map/Set `has`/`get`. Higher risk due to parameter correlation. Can be shipped independently or deferred if Phase 8 already provides sufficient value.
 
-3. **Phase 2c as research**: Discriminated method unions. Only if community demand justifies the complexity. Most users can work around this with property-based discriminated unions.
+3. **Phase 10 as research**: Discriminated method unions. Only if community demand justifies the complexity. Most users can work around this with property-based discriminated unions.
 
-4. **Deferred items**: Formalize hierarchy rules via test suites (low effort, can happen alongside any phase). Exclusive invalidation and getter mutation invalidation wait for real-world evidence from Phase 2 adoption.
+4. **Deferred items**: Formalize hierarchy rules via test suites (low effort, can happen alongside any phase). Exclusive invalidation and getter mutation invalidation wait for real-world evidence from Phase 8 adoption.
 
-### Entry Criteria for Phase 2a
+### Entry Criteria for Phase 8
 
 - Phase 1 validation green (build, test, lint, format)
 - No outstanding Phase 1 regressions or soundness issues
 - SDD approved (this document)
 
-### Exit Criteria for Phase 2a
+### Exit Criteria for Phase 8
 
 - Parser handles `this.method() is Type` in return type position
 - Checker validates linked predicates (target is stable, type is assignable)
@@ -1104,14 +1104,14 @@ mutator (v: T) => void                                  // mutator function type
 mutator (v: T) => void invalidates endpoint             // mutator with explicit invalidation
 mutator (v: T) => void invalidates a, b                 // mutator invalidating multiple endpoints
 
-// Phase 2a (proposed):
+// Phase 8 (proposed):
 hasValue(): this.value() is T                           // linked type predicate (boolean guard)
 isDefined(): this.get() is Exclude<T, undefined>        // linked type predicate (generic)
 
-// Phase 2b (proposed):
+// Phase 9 (proposed):
 has(key: K): this.get(key) is V                         // keyed linked type predicate
 
-// Phase 2c (stretch):
+// Phase 10 (stretch):
 isResolved(): this.value() is T & this.error() is undefined  // multi-predicate intersection
 
 // Deferred:

@@ -9,7 +9,7 @@
 - [stable-modifier-spec.md](stable-modifier-spec.md) — Phase 1 SDD
 - [escape-analysis-research.md](escape-analysis-research.md) — Escape analysis research
 - [ts-cfa-tradeoffs-research.md](ts-cfa-tradeoffs-research.md) — CFA trade-offs
-- [stable-phase2-proposal.md](stable-phase2-proposal.md) — Phase 2 linked predicates
+- [stable-phase8-proposal.md](stable-phase8-proposal.md) — Phase 8 linked predicates
 
 ---
 
