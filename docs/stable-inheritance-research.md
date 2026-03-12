@@ -96,6 +96,8 @@ class MyStore<T> implements Writable<T> {
 
 **Analysis**: The interface declares `read` as having type `stable () => T` (a function type with the `stable` modifier) and `write` as having type `mutator (value: T) => void invalidates read`. The class `MyStore` declares `read` and `write` as *method declarations* — these are `MethodDeclaration` nodes, not `PropertyDeclaration` nodes with function type annotations.
 
+> **Update:** Full declaration parity is now implemented. `stable`/`mutator` work on method declarations, method signatures, function declarations, function expressions, arrow functions, and get/set accessors.
+
 **Critical distinction**: Currently, `stable`/`mutator` are parsed only on `FunctionTypeNode` — they are syntactic modifiers on function type expressions. Method declarations (`read(): T`) are not function type nodes. So the class method does NOT carry the modifier unless the class uses property syntax:
 
 ```ts
@@ -509,6 +511,8 @@ The current implementation handles `stable`/`mutator` at the `FunctionTypeNode` 
 These scenarios are mostly **Phase 2/3 work**:
 - Phase 1 (current): `stable`/`mutator`/`invalidates` on interface property types, CFA narrowing
 - **Phase 2**: Structural compatibility rules for stable/mutator signatures in the relater
+> **Update:** Super call invalidation is now implemented (SEM-4).
+
 - **Phase 2**: `super` receiver normalization for invalidation
 - **Phase 3**: Method declaration syntax support for `stable`/`mutator` (currently only `FunctionTypeNode`)
 - **Phase 3**: Interface merge validation for `invalidates` clauses

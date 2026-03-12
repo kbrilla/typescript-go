@@ -1,5 +1,7 @@
 # Cross-Binding Invalidation for SolidJS Signal Patterns
 
+> **Update:** Cross-binding invalidation (CBI-1) is now fully implemented via named tuple labels with `invalidates` clause. Post-call argument narrowing also works. The implementation uses `invalidates` syntax (not `mutates`).
+
 ## 1. Problem Statement
 
 SolidJS separates read and write into distinct function bindings:

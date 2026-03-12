@@ -1,7 +1,7 @@
 # Phase 8 Proposal: Linked Predicates & Advanced Patterns
 
 ## Document Control
-- **Status**: Proposal (Draft)
+- **Status**: Implemented ✅ — Linked type predicates are fully functional in this PR.
 - **Audience**: TypeScript language/design contributors, checker implementers, framework authors
 - **Scope**: Phase 8 features building on Phase 1 `stable`/`mutator`/`invalidates` CFA infrastructure
 - **Prerequisites**: Phase 1 complete and stable (all validation green)
@@ -21,6 +21,8 @@ Phase 1 established `stable`/`mutator`/`invalidates` as CFA primitives for metho
 - `mutator` marks functions that change underlying state
 - `invalidates` links mutators to the stable endpoints they affect
 - Post-call narrowing (`set(42)` narrows `read()`) via `getAssignmentReducedType`
+
+> **Update:** Linked type predicates are now fully implemented. The proposal below served as the design specification.
 
 Phase 8 introduces **linked type predicates** — the ability for one method's boolean result to narrow another method's return type. This addresses a 10+ year gap in TypeScript's type system (issues #9619, #13086, #30581, #57725 — 500+ combined upvotes) that no mainstream language has solved.
 

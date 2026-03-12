@@ -410,7 +410,11 @@ if (count() !== undefined) {
 
 **Limitation:** SolidJS's separated accessor/setter pattern does not work with receiver-scoped invalidation. Because `count` and `setCount` are independent bindings (not methods on the same receiver), `mutator` on `setCount` does not invalidate `count()` narrowing. Calling `setCount(undefined)` after a narrowing check will not reset the narrowed type — this is a soundness gap.
 
+> **Update:** Cross-binding invalidation is now implemented (CBI-1) via named tuple labels with `invalidates` clause. The adoption warning below is stale.
+
 SolidJS's API shape requires cross-binding invalidation, which is outside the scope of this proposal. For SolidJS, `stable` enables narrowing on accessors, but `mutator` invalidation cannot prevent unsound narrowing when the setter is a separate binding. Addressing this limitation would likely require API-level coordination with the SolidJS team.
+
+> **Note:** The above example uses outdated syntax. With the current implementation, the return type should be `[read: Accessor<T>, write: mutator (value: T) => T invalidates read]` and setCount would correctly invalidate count() narrowing with post-call argument-type narrowing.
 
 **⚠️ Adoption Warning:** SolidJS authors should **not** ship `stable` on their accessor types until cross-binding invalidation is supported. Shipping `stable` without working `mutator` invalidation would give users false confidence in narrowing that can be silently broken by setter calls. This is not a case of "partial benefit" — it is actively unsound for users who call setters between narrowing checks. Until cross-binding invalidation is designed and implemented, SolidJS accessors should remain unannotated.
 
@@ -538,6 +542,8 @@ These are open design questions. The initial implementation can defer generic in
 
 ### Class Method vs Property Limitation
 
+> **Update:** Full declaration parity is now implemented. `stable`/`mutator` work on method declarations, method signatures, function declarations, function expressions, arrow functions, and get/set accessors.
+
 `stable` and `mutator` modifiers parse only on function type expressions (`FunctionTypeNode`), not on method declarations (`MethodDeclaration`). This means class methods cannot use the modifier directly:
 
 ```ts
@@ -659,6 +665,8 @@ interface Signal<T> {
 ## 14. Future Extensions
 
 The following capabilities are explicitly **not** part of this proposal but could be built on its foundation:
+
+> **Update:** Post-call argument narrowing is now implemented. After `set(42)`, `get()` narrows to `number` via `getAssignmentReducedType`.
 
 - **Constrained-overload narrowing:** After `set(42)`, the compiler could narrow `get()` to `number` based on overload resolution and `getAssignmentReducedType`. This enables "write-then-read" patterns where the written type provides evidence about the stable return type:
   ```ts
@@ -783,6 +791,8 @@ The following design questions remain open and would benefit from TypeScript tea
 7. **Modifier naming.** Existing TypeScript modifiers are adjectives (`readonly`, `abstract`, `static`), while `mutator` is a noun. `mutating` — which follows the adjective pattern and mirrors Swift's `mutating` keyword — may be a better fit. We welcome the team's preference on naming.
 
 8. **Strictness levels.** Should there be a `--strictStable` compiler flag that treats all unmarked method calls on receivers with `stable` methods as potentially invalidating? This would reverse the default from "transparent unless marked `mutator`" to "invalidating unless marked `stable`." It would be too conservative for most codebases, but could be valuable for teams prioritizing soundness over ergonomics.
+
+> **Update:** Super call invalidation is now implemented (SEM-4). `super.mutator()` invalidates `this.stable()` narrowing.
 
 9. **`super` call invalidation.** When a derived class calls `super.set(0)`, the method dispatch changes but the receiver (`this`) does not. Should `super.mutator()` invalidate `this.stable()` narrowing? The answer is likely yes (same receiver), but the implementation requires receiver normalization in `isMutatorCallBoundary`.
 

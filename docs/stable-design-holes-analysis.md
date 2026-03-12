@@ -206,6 +206,8 @@ nothing enforces it on newly added methods.
 **Mitigation:** A lint rule could enforce that all methods in a class with `stable`
 members must be either `stable` or `mutator` (or explicitly opted out).
 
+> **Update:** This hole is now resolved. Cross-binding invalidation (CBI-1) IS implemented via named tuple labels. The `invalidates` clause references tuple label names.
+
 ### Hole 3: Cross-Binding Mutation (SolidJS Pattern)
 
 Frameworks like SolidJS separate accessor and setter into different bindings:
