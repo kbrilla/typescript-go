@@ -8,6 +8,88 @@
 
 TypeScript cannot narrow through repeated function calls. If `value()` returns `string | undefined` and you check `value() !== undefined`, the compiler forgets this on the next `value()` call. This is a major pain point for signal-based frameworks (Angular Signals, Preact Signals, MobX) where state is accessed through getter functions rather than properties. Property narrowing has worked for years — callable getter narrowing has not, despite being the dominant pattern in modern reactive frameworks.
 
+## Real-World Issues Addressed
+
+This proposal addresses a family of long-standing TypeScript issues with **1,350+ combined upvotes**:
+
+### Repeated function call narrowing (TS-60948 — 105 👍, TS-57725 — 351 👍)
+
+```ts
+// TODAY: narrowing lost on second call
+declare const value: () => string | undefined;
+if (value() !== undefined) {
+    value().toUpperCase();  // ❌ Error: 'string | undefined' has no method 'toUpperCase'
+}
+
+// WITH STABLE: narrowing preserved
+declare const value: stable () => string | undefined;
+if (value() !== undefined) {
+    value().toUpperCase();  // ✅ OK — narrowed to string
+}
+```
+
+### Angular Signal narrowing (TS-49161 — 149 👍)
+
+```ts
+// TODAY: Signal narrowing fails in computed expressions
+const count = signal(null as null | number);
+const total: number = count() !== null ? count() : 0;  // ❌ Error: number | null
+
+// WITH STABLE: Signal narrowing works
+const count: stable () => number | null = signal(null as null | number);
+if (count() !== null) {
+    count() + 1;  // ✅ narrowed to number
+}
+```
+
+### Map has/get narrowing (TS-9619 — 179 👍, TS-13086 — 189 👍)
+
+```ts
+// TODAY: has() provides no evidence about get()
+const map = new Map<string, number>();
+if (map.has("x")) {
+    const val = map.get("x");  // ❌ number | undefined — no connection
+}
+
+// WITH LINKED PREDICATES (Phase 9):
+interface TypedMap<K, V> {
+    stable get(key: K): V | undefined;
+    has<K2 extends K>(key: K2): this.get(key) is V;
+}
+declare const map: TypedMap<string, number>;
+if (map.has("x")) {
+    const val = map.get("x");  // ✅ number — linked predicate narrows
+}
+```
+
+### CFA trade-offs formalized (TS-9998 — 130 👍, 598 comments)
+
+ahejlsberg's 2016 design question — "When a function is invoked, what should we assume its side effects are?" — remained unanswered for 9 years. `stable`/`mutator` is the first practical answer: functions can declare their relationship to narrowing explicitly.
+
+### Correlated method types (TS-30581 — 159 👍)
+
+```ts
+// TODAY: no method-to-method type correlation
+interface Resource<T> {
+    value(): T | undefined;
+    hasValue(): boolean;
+}
+if (resource.hasValue()) {
+    resource.value();  // ❌ still T | undefined
+}
+
+// WITH LINKED PREDICATES (Phase 3):
+interface Resource<T> {
+    stable value(): T | undefined;
+    hasValue(): this.value() is Exclude<T, undefined>;
+}
+if (resource.hasValue()) {
+    resource.value();  // ✅ narrowed to T (without undefined)
+}
+```
+
+---
+
 ## What This PR Implements
 
 Four declaration-site type modifiers that enable CFA narrowing through function calls:
