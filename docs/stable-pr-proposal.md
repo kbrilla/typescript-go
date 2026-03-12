@@ -536,6 +536,51 @@ type Mirrored<T> = { [K in keyof T]: T[K] };
 
 These are open design questions. The initial implementation can defer generic interaction to a follow-up proposal, treating `stable` on generic-instantiated types conservatively (no narrowing unless the concrete type is known).
 
+### Class Method vs Property Limitation
+
+`stable` and `mutator` modifiers parse only on function type expressions (`FunctionTypeNode`), not on method declarations (`MethodDeclaration`). This means class methods cannot use the modifier directly:
+
+```ts
+class Store<T> {
+    // ❌ This does NOT work — method syntax doesn't support stable
+    stable getValue(): T { return this._value; }
+
+    // ✅ This works — property with function type
+    getValue: stable () => T = () => this._value;
+}
+```
+
+For interface and type alias declarations, property-style syntax is the supported form:
+
+```ts
+interface Signal<T> {
+    // ✅ Property-style function type
+    (): stable () => T;            // Not supported on call signatures
+    value: stable () => T;         // Supported
+}
+```
+
+This is a parser limitation — extending `stable` to method declaration syntax requires parser/AST changes that are deferred to a future phase.
+
+### Interface Merging
+
+When multiple interface declarations merge and disagree on `stable`:
+
+```ts
+interface A { read: stable () => string; }
+interface B { read: () => string; }
+interface C extends A, B {}  // read: stable is lost — disagreement
+```
+
+Follows intersection semantics: all constituents must agree for the modifier to survive. This matches `readonly` merging behavior.
+
+### Variance
+
+`stable` and `mutator` do not change variance rules:
+- `stable` returns are covariant (same as all return types)
+- `mutator` parameters are contravariant (same as all function parameters under `strictFunctionTypes`)
+- Method declarations remain bivariant (existing TypeScript behavior)
+
 ### Grammar
 
 - `stable` appears as a modifier before the parameter list in function type syntax, or before the method name in method signatures.
@@ -566,19 +611,81 @@ All existing compiler tests pass with zero regressions. A dedicated test suite v
 | **Language service plugin** | Angular developers have reported this approach to be infeasible — narrowing depends on CFA internals that cannot be intercepted from a plugin. |
 | **`readonly` modifier** | `readonly` prevents writes to properties. `stable` preserves narrowing across reads of function return values. Different axis entirely. |
 
+### Alternative Syntax: `mutates` Clause
+
+A viable alternative worth discussing is collapsing `mutator` and `invalidates` into a single `mutates` clause, reducing the keyword count from three to two.
+
+**Current syntax (3 keywords: `stable`, `mutator`, `invalidates`):**
+```ts
+interface Signal<T> {
+    stable get(): T;
+    set: mutator (value: T) => void invalidates get;
+    reset: mutator () => void;
+}
+```
+
+**Alternative syntax (2 keywords: `stable`, `mutates`):**
+```ts
+interface Signal<T> {
+    stable get(): T;
+    set(value: T): void mutates get;    // targeted: only get() narrowing is reset
+    reset(): void mutates this;          // blanket: all stable endpoints on this are reset
+    // equivalently:
+    reset(): void mutates;               // bare: shorthand for mutates this
+}
+```
+
+**Design:**
+- `mutates X` is positioned after the return type, mirroring `asserts x is T`.
+- `mutates name` = targeted invalidation — only `name()` narrowing is reset.
+- `mutates this` = blanket invalidation — all stable endpoints on the receiver are reset.
+- `mutates` bare = shorthand for `mutates this`.
+- A method with a `mutates` clause is implicitly a mutator — no separate `mutator` keyword needed.
+- `stable` remains unchanged.
+
+**Advantages:**
+- Fewer keywords to learn and remember (2 vs 3).
+- Reads as natural English: "this method mutates get" vs "this is a mutator that invalidates get."
+- Collapses two orthogonal concepts (mutator-ness and invalidation target) into a single clause, since in practice they always appear together.
+- Clause-based syntax is familiar from `asserts` and type predicates.
+
+**Open questions for this alternative:**
+- **Linked predicates interaction.** Would `mutates get` compose with linked predicates? E.g., `hasValue(): this.value() is T` — does the linked predicate still bind correctly when the invalidation target is specified via `mutates` rather than `invalidates`?
+- **Modifier vs clause.** Is `mutates` a modifier on the method or a clause on the return type? The positioning after the return type suggests clause, but the semantic is about the method's side effects.
+- **Blanket syntax.** Is `mutates this` or bare `mutates` the better default for blanket invalidation? Bare `mutates` is terser; `mutates this` is more explicit and consistent with `asserts this is T`.
+
 ---
 
 ## 14. Future Extensions
 
 The following capabilities are explicitly **not** part of this proposal but could be built on its foundation:
 
-- **Constrained-overload narrowing:** When `set(42)` is called, the compiler could narrow `get()` to `number` based on overload resolution. This would enable "write-then-read" patterns without re-checking.
+- **Constrained-overload narrowing:** After `set(42)`, the compiler could narrow `get()` to `number` based on overload resolution and `getAssignmentReducedType`. This enables "write-then-read" patterns where the written type provides evidence about the stable return type:
+  ```ts
+  interface WritableSignal<T> {
+      stable (): T;
+      mutator set<U extends T>(value: U): void;
+  }
+  declare const sig: WritableSignal<string | number>;
+  sig.set(42);
+  sig(); // Could narrow to number (U = number extends string | number)
+  ```
 
 - **Parameter support:** Extending `stable` to functions with parameters, promising that the same arguments yield the same result (memoization semantics). Significant design questions remain around argument identity.
 
 - **Standard library annotations:** Adding `stable` and `mutator` to built-in types (e.g., `Map.prototype.get` after `Map.prototype.has`, DOM element accessors). This requires careful API review and is a separate proposal.
 
 - **Companion lint rules:** An ESLint plugin could enforce annotation hygiene — warning when interfaces have `stable` methods but no `mutator` methods, when methods with mutation-suggestive names (`set*`, `clear*`, `reset*`, `delete*`) in classes with `stable` members lack `mutator`, or when subclasses add non-`stable`, non-`mutator` methods to interfaces with `stable` members.
+
+- **Keyed linked predicates:** Extending linked predicates to support parameter forwarding — `has(key: K): this.get(key) is V` — enabling the Map/Set `has()`/`get()` narrowing pattern. This requires parameter correlation between guard and target calls, per-key invalidation tracking, and interaction with `isMatchingReference`. Phase 9 in the roadmap, designed to build on simple linked predicates.
+
+- **Discriminated method unions:** Multi-predicate guards that narrow multiple stable endpoints simultaneously — `isResolved(): this.value() is T & this.error() is undefined`. Enables async result patterns where a single discriminant guard provides evidence about multiple companion methods. Requires new type relationship infrastructure.
+
+- **Exclusive invalidation (`preserves`):** An inverse of `invalidates` — instead of listing what IS affected, list what is NOT: `sort: mutator () => void preserves length`. Covers ~5% of real-world APIs where most endpoints are invalidated and listing exceptions is more concise.
+
+- **Getter mutation invalidation:** Allowing `invalidates` to target getter properties (not just stable methods) when a hybrid API mixes property getters and stable method calls sharing the same underlying state. Requires bridging endpoint-keyed CFA and dotted-name CFA.
+
+- **Conditional type discrimination (`IsStable<T>`):** Currently, `T extends stable () => R ? R : never` does not discriminate — `() => R` also matches because `stable` is a CFA modifier, not a structural type feature. A future `IsStable<T>` intrinsic could provide type-level `stable` detection.
 
 ---
 
@@ -643,6 +750,7 @@ We recognize that introducing three new contextual keywords is significant langu
   }
   // Only mutator calls reset narrowing; non-mutator methods are transparent
   ```
+  An alternative syntax using a single `mutates` clause is under consideration (see §13): `set(value: T): void mutates value` — collapsing `mutator` + `invalidates` into two keywords instead of three.
 - **Phase 3: Linked type predicates** (`this.x() is T`) as an independent proposal, building on the `stable` foundation but addressing a distinct use case (guard-based narrowing of companion methods).
   ```ts
   interface Resource<T> {
@@ -675,6 +783,14 @@ The following design questions remain open and would benefit from TypeScript tea
 7. **Modifier naming.** Existing TypeScript modifiers are adjectives (`readonly`, `abstract`, `static`), while `mutator` is a noun. `mutating` — which follows the adjective pattern and mirrors Swift's `mutating` keyword — may be a better fit. We welcome the team's preference on naming.
 
 8. **Strictness levels.** Should there be a `--strictStable` compiler flag that treats all unmarked method calls on receivers with `stable` methods as potentially invalidating? This would reverse the default from "transparent unless marked `mutator`" to "invalidating unless marked `stable`." It would be too conservative for most codebases, but could be valuable for teams prioritizing soundness over ergonomics.
+
+9. **`super` call invalidation.** When a derived class calls `super.set(0)`, the method dispatch changes but the receiver (`this`) does not. Should `super.mutator()` invalidate `this.stable()` narrowing? The answer is likely yes (same receiver), but the implementation requires receiver normalization in `isMutatorCallBoundary`.
+
+10. **Heuristic vs explicit invalidation.** The current implementation uses heuristic tier-based inference for when to reset narrowing (Tier 1: writes, Tier 2: passthrough helpers). Should the proposal present heuristic inference as a user-facing feature, or should all invalidation be through explicit `mutator` annotations? Heuristic inference is the primary path in the internal design document, while this proposal focuses on explicit contracts.
+
+11. **Map `undefined`-value edge case.** For `Map<K, V | undefined>`, `has(key)` returning `true` means the key exists but the value may be `undefined`. A keyed linked predicate `has(key): this.get(key) is V` would narrow `V | undefined` to `V`, which is incorrect when `V` already includes `undefined`. This requires careful type-level treatment — potentially narrowing to `NonUndefined<V>` is insufficient.
+
+12. **`mutates` as alternative syntax.** Should `mutator` + `invalidates` be collapsed into a single `mutates` clause (e.g., `set(v: T): void mutates get`)? This reduces the keyword count from three to two and reads more naturally as English. The clause-based positioning after the return type mirrors `asserts x is T`. See §13 "Alternative Syntax: `mutates` Clause" for a detailed comparison. Key design questions: should blanket invalidation use `mutates this` or bare `mutates`? Does the clause compose well with linked predicates? Is this a strictly better surface syntax, or are there cases where the separate `mutator` keyword provides value (e.g., marking a method as mutating without specifying a target)?
 
 ---
 

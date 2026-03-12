@@ -63,6 +63,8 @@ if (sig.value() !== undefined) {
 
 **Scope:** Parser + checker for `mutator`/`invalidates`, targeted invalidation lists, multi-endpoint stores.
 
+> **Alternative syntax under consideration:** A single `mutates` clause could replace both `mutator` and `invalidates` — e.g., `set(v: T): void mutates value`. See the full proposal (§13) for details.
+
 ### Phase 3: Linked type predicates (independent extension)
 
 Guard methods that narrow the return type of a stable method on the same receiver.
@@ -152,6 +154,18 @@ The current implementation handles direct usage correctly but does not define be
 ## Angular Template Caveat
 
 Angular template narrowing depends on the Angular compiler's Template Type Check Block (TCB) generation. The TCB translates template expressions into TypeScript-checkable code. For stable narrowing to work in Angular templates (e.g., `@if (sig()) { {{ sig() }} }`), the TCB must generate code that the checker can narrow through stable calls. This may require coordination with the Angular compiler team and is not guaranteed to work out-of-the-box.
+
+---
+
+## Future Extensions (Not In This PR)
+
+The following are explicitly **not** part of this proposal but are documented as future work:
+
+- **Keyed linked predicates** (Phase 9): `has(key: K): this.get(key) is V` — Map/Set `has()`/`get()` narrowing with per-key invalidation tracking
+- **Discriminated method unions** (Phase 10): `isResolved(): this.value() is T & this.error() is undefined` — multi-predicate guards for async result patterns
+- **Exclusive invalidation (`preserves`):** Inverse of `invalidates` for APIs where listing exceptions is more concise
+- **`mutates` alternative syntax:** Collapsing `mutator` + `invalidates` into a single clause (see full proposal §13)
+- **Conditional type discrimination (`IsStable<T>`):** Type-level stable detection
 
 ---
 
