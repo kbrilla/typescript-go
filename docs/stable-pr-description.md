@@ -298,6 +298,204 @@ TypeScript property narrowing already preserves narrowing of `obj.value` across 
 
 ---
 
+## Future Phase Syntax (Under Consideration)
+
+These features are not implemented in this PR but are part of the design roadmap. They demonstrate how the `stable`/`mutator`/`invalidates` foundation supports increasingly powerful narrowing scenarios in future phases.
+
+### Phase 4: Conservative-to-Targeted Migration Path
+
+Start with conservative invalidation (any method call resets narrowing), then gradually opt-in to targeted invalidation with `mutator`:
+
+```ts
+// Phase 1: Conservative — any call on receiver resets narrowing
+interface Signal<T> {
+    stable value(): T;
+    set(v: T): void;        // NOT marked mutator → conservative reset
+}
+// sig.toString() resets narrowing on sig.value() (conservative)
+
+// Phase 2+: Targeted — only mutator calls reset
+interface Signal<T> {
+    stable value(): T;
+    mutator set(v: T): void; // explicitly marked → only this resets
+}
+// sig.toString() does NOT reset narrowing (not a mutator)
+```
+
+### Phase 5: Cross-Binding Invalidation (SolidJS / Preact Signals)
+
+Tuple-destructured APIs where getter and setter are separate bindings:
+
+```ts
+// createSignal returns named tuple — labels enable cross-binding invalidation
+function createSignal<T>(value: T): [
+    read: stable () => T,
+    write: mutator (value: T) => void invalidates read
+];
+
+const [count, setCount] = createSignal<number | undefined>(0);
+if (count() !== undefined) {
+    count() + 1;             // ✅ narrowed to number
+    setCount(undefined);     // invalidates read → resets count() narrowing
+    count();                 // back to number | undefined
+}
+
+// Selective invalidation with multi-element tuples
+function createStore<T>(init: T): [
+    get: stable () => T,
+    set: mutator (v: T) => void invalidates get,
+    subscribe: (cb: () => void) => void,
+    unsubscribe: () => void
+];
+// Only `set` invalidates `get` — `subscribe`/`unsubscribe` are transparent
+```
+
+### Phase 6: `invalidates` on Method Declarations (SYN-4b)
+
+Selective invalidation directly on method declarations/signatures (not just function types):
+
+```ts
+// NOT YET IMPLEMENTED — invalidates clause on methods
+interface Store<T> {
+    stable getValue(): T;
+    stable getLabel(): string;
+    mutator setValue(v: T): void invalidates getValue;  // only resets getValue
+    mutator setLabel(l: string): void invalidates getLabel;  // only resets getLabel
+    mutator reset(): void invalidates getValue, getLabel;  // resets both
+}
+```
+
+Currently, method-level mutators reset ALL stable narrowing on the receiver. Selective `invalidates` on methods requires AST struct changes and is deferred.
+
+### Phase 7: `mutates` Unified Clause (SYN-1)
+
+A single `mutates` keyword could replace both `mutator` and `invalidates`:
+
+```ts
+// Alternative syntax under consideration
+interface Signal<T> {
+    stable value(): T;
+    set(v: T): void mutates value;  // replaces: mutator set(v: T): void invalidates value
+}
+
+// In tuple types
+type Signal<T> = [
+    read: stable () => T,
+    write: (v: T) => void mutates read  // replaces: mutator ... invalidates read
+];
+```
+
+### Phase 8: `--strictStable` Compiler Flag (SEM-5)
+
+An opt-in flag that reverses the default: without the flag, unmarked methods are transparent (don't invalidate); with the flag, unmarked methods are conservatively treated as mutators:
+
+```ts
+// Without --strictStable (current default)
+interface Foo {
+    stable get(): string | undefined;
+    doSomething(): void;  // transparent — does NOT reset narrowing
+}
+
+// With --strictStable
+interface Foo {
+    stable get(): string | undefined;
+    doSomething(): void;  // conservative — DOES reset narrowing (no mutator annotation)
+}
+```
+
+### Phase 9: Keyed Linked Predicates (LP-1)
+
+Guard methods that narrow stable endpoints with per-key parameter correlation:
+
+```ts
+interface TypedMap<K, V> {
+    stable get(key: K): V | undefined;
+    has<K2 extends K>(key: K2): this.get(key) is V;
+    mutator set(key: K, value: V): void invalidates get;
+    mutator delete(key: K): void invalidates get;
+}
+
+declare const map: TypedMap<string, number>;
+if (map.has("x")) {
+    const val = map.get("x");  // ✅ narrowed to number (not number | undefined)
+    map.set("x", 42);          // invalidates get → resets narrowing
+    map.get("x");              // back to number | undefined
+}
+
+// WeakRef pattern
+interface TypedWeakRef<T extends WeakKey> {
+    stable deref(): T | undefined;
+    // Implicit: deref() returns T when the ref is alive
+}
+```
+
+### Phase 10: Discriminated Method Unions / Multi-Predicate Guards (LP-2)
+
+Guard methods that narrow MULTIPLE stable endpoints simultaneously:
+
+```ts
+interface AsyncResult<T, E> {
+    stable value(): T | undefined;
+    stable error(): E | undefined;
+    stable status(): "pending" | "resolved" | "rejected";
+
+    // Multi-predicate guard — narrows all three at once
+    isResolved(): this.value() is T & this.error() is undefined & this.status() is "resolved";
+    isRejected(): this.error() is E & this.value() is undefined & this.status() is "rejected";
+}
+
+declare const result: AsyncResult<Data, Error>;
+if (result.isResolved()) {
+    result.value();    // ✅ narrowed to Data (not Data | undefined)
+    result.error();    // ✅ narrowed to undefined
+    result.status();   // ✅ narrowed to "resolved"
+}
+```
+
+### Phase 11: Getter Property Invalidation (LP-3)
+
+`invalidates` targeting getter properties (not just stable methods):
+
+```ts
+interface FormField<T> {
+    stable get value(): T;
+    stable get isDirty(): boolean;
+    stable get isValid(): boolean;
+    mutator set value(v: T) invalidates isDirty, isValid;
+    mutator reset(): void invalidates value, isDirty, isValid;
+}
+```
+
+### Phase 12: Standard Library Annotations (ADO-1)
+
+Built-in types annotated with `stable`/`mutator`:
+
+```ts
+// Map (potential stdlib annotation)
+interface Map<K, V> {
+    stable get(key: K): V | undefined;
+    stable has(key: K): boolean;
+    mutator set(key: K, value: V): this invalidates get, has;
+    mutator delete(key: K): boolean invalidates get, has;
+    mutator clear(): void invalidates get, has;
+}
+
+// WeakRef
+interface WeakRef<T extends WeakKey> {
+    stable deref(): T | undefined;
+}
+
+// DOM
+interface HTMLElement {
+    stable get classList(): DOMTokenList;
+    stable getAttribute(name: string): string | null;
+    mutator setAttribute(name: string, value: string): void invalidates getAttribute;
+    mutator removeAttribute(name: string): void invalidates getAttribute;
+}
+```
+
+---
+
 ## Recommended Phased Introduction
 
 ### Phase 1: `stable` alone (conservative reset)
