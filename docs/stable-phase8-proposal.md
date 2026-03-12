@@ -192,8 +192,8 @@ interface Resource<T> {
 const r: Resource<string | undefined> = ...;
 if (r.hasValue()) {
   r.value();        // narrowed to string
-  r.set(undefined); // mutator invalidates value's flow node
-  r.value();        // back to string | undefined
+  r.set(undefined); // mutator invalidates value → post-call narrowing from argument
+  r.value();        // narrowed to undefined (argument type propagated)
 }
 ```
 

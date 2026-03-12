@@ -337,7 +337,7 @@ declare const opt: WritableOption<number>;
 if (opt.isDefined()) {
     const n: number = opt.get(); // narrowed by linked predicate
     opt.set(undefined);
-    const n2: number | undefined = opt.get(); // reset — mutator invalidated
+    const n2: undefined = opt.get(); // narrowed to undefined (post-call from argument type)
 }
 ```
 

@@ -494,8 +494,8 @@ interface Resource<T> {
 const r: Resource<string | undefined> = ...;
 if (r.hasValue()) {
   r.value();  // narrowed to string via cross-method guard
-  r.set(undefined);  // mutator invalidates value
-  r.value();  // back to string | undefined — guard is invalidated
+  r.set(undefined);  // mutator invalidates value → post-call narrowing from argument
+  r.value();  // narrowed to undefined (argument type propagated)
 }
 ```
 

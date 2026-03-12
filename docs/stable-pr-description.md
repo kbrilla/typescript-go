@@ -336,8 +336,8 @@ function createSignal<T>(value: T): [
 const [count, setCount] = createSignal<number | undefined>(0);
 if (count() !== undefined) {
     count() + 1;             // ✅ narrowed to number
-    setCount(undefined);     // invalidates read → resets count() narrowing
-    count();                 // back to number | undefined
+    setCount(undefined);     // invalidates read → post-call narrowing from argument
+    count();                 // narrowed to undefined (argument type propagated)
 }
 
 // Selective invalidation with multi-element tuples
@@ -418,8 +418,8 @@ interface TypedMap<K, V> {
 declare const map: TypedMap<string, number>;
 if (map.has("x")) {
     const val = map.get("x");  // ✅ narrowed to number (not number | undefined)
-    map.set("x", 42);          // invalidates get → resets narrowing
-    map.get("x");              // back to number | undefined
+    map.set("x", 42);          // invalidates get → post-call narrowing from argument
+    map.get("x");              // narrowed to number (argument type propagated)
 }
 
 // WeakRef pattern
@@ -531,8 +531,8 @@ declare const sig: Signal<string | undefined>;
 if (sig.value() !== undefined) {
     sig.toString();              // does NOT reset — not a mutator
     sig.value().toUpperCase();   // still narrowed
-    sig.set(undefined);          // resets — mutator targeting value
-    sig.value();                 // back to string | undefined
+    sig.set(undefined);          // mutator targeting value → post-call narrowing from argument
+    sig.value();                 // narrowed to undefined (argument type propagated)
 }
 ```
 

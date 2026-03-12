@@ -392,9 +392,9 @@ interface Store {
 
 function updateView(s: Store) {
   if (s.theme() === 'dark' && s.user() !== undefined) {
-    s.setUser(someUser);  // invalidates user ONLY
+    s.setUser(someUser);  // invalidates user ONLY → post-call narrowing from argument
     s.theme();            // still narrowed to 'dark'
-    s.user();             // back to User | undefined
+    s.user();             // narrowed to User (argument type propagated)
   }
 }
 ```

@@ -940,7 +940,7 @@ const opt: WritableOption<number> = getOption();
 if (opt.isDefined()) {
     opt.get(); // number (narrowed by linked predicate)
     opt.set(undefined);
-    opt.get(); // number | undefined (back to full type after mutator)
+    opt.get(); // undefined (post-call narrowed from argument type)
 }
 ```
 

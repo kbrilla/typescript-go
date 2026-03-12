@@ -856,8 +856,8 @@ if (r.value()) {
   const y: string | undefined = r.value(); // ❌ back to string | undefined
 
   // Explicit mutation — known invalidation
-  r.set("new");                          // mutator → narrowing reset
-  const z: string | undefined = r.value(); // back to full declared type
+  r.set("new");                          // mutator → post-call narrowing from argument
+  const z: string = r.value(); // narrowed to string (argument type propagated)
 }
 ```
 

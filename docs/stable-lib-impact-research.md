@@ -506,8 +506,8 @@ if (map.get("x") !== undefined) {
   map.get("x");  // narrowed to number (same key)
   map.get("y");  // NOT narrowed (different key)
   
-  map.set("x", 42);  // invalidates get("x")
-  map.get("x");      // back to number | undefined
+  map.set("x", 42);  // invalidates get("x") → post-call narrowing from argument
+  map.get("x");      // narrowed to number (argument type propagated)
   
   map.set("y", 10);  // invalidates get("y"), NOT get("x")
   map.get("x");      // ??? depends on whether invalidation is per-key

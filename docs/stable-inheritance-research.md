@@ -428,10 +428,10 @@ class B extends A {
       // this.get() narrowed to `number`
 
       super.set(42);
-      // MUST invalidate this.get() narrowing
       // super.set() mutates the same object
+      // post-call narrowing applies from argument type
 
-      this.get();  // Back to `number | undefined` (unless post-call narrowing applies)
+      this.get();  // narrowed to number (post-call narrowing from argument type)
     }
   }
 }
