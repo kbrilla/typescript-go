@@ -359,12 +359,11 @@ function createStore<T>(init: T): [
 
 ### Phase 6: `invalidates` on Method Declarations (SYN-4b)
 
-> **Status: Not implemented.** Requires AST struct changes to store `invalidates` clause on method declarations.
+> **Status: Already implemented** (commit 61ba366a4). `invalidates` clause is now supported on method declarations and method signatures.
 
 Selective invalidation directly on method declarations/signatures (not just function types):
 
 ```ts
-// NOT YET IMPLEMENTED — invalidates clause on methods
 interface Store<T> {
     stable getValue(): T;
     stable getLabel(): string;
@@ -374,7 +373,7 @@ interface Store<T> {
 }
 ```
 
-Currently, method-level mutators reset ALL stable narrowing on the receiver. Selective `invalidates` on methods requires AST struct changes and is deferred.
+Method-level `invalidates` clauses enable selective invalidation — only the named stable endpoints are reset, not all narrowing on the receiver.
 
 ### Phase 7: `mutates` Unified Clause (SYN-1)
 

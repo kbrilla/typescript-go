@@ -8,8 +8,8 @@ Documentation for the `stable` / `mutator` / `invalidates` modifier feature — 
 
 | Category | Count | Description |
 |----------|-------|-------------|
-| ✅ Implemented | 11 features | Shipped in this PR |
-| 🔮 Future (Not Implemented) | 7 extensions | Designed but deferred |
+| ✅ Implemented | 12 features | Shipped in this PR |
+| 🔮 Future (Not Implemented) | 6 extensions | Designed but deferred |
 | ❓ Open Questions | 12 | Require design decisions |
 | ✅ Decided | 5 | Design decisions made |
 | ⏸️ Deferred | 9 | Postponed to future phases |
@@ -43,6 +43,7 @@ All of these features are functional in this PR:
 9. **Super call invalidation (SEM-4)** — `super.mutator()` invalidates `this.stable()` narrowing
 10. **Full declaration parity** — All function-like declarations accept stable/mutator
 11. **Interface method merging (SEM-3)** — Stable/mutator respected across merged interface declarations
+12. **`invalidates` on method declarations (SYN-4b)** — Selective invalidation directly on method declarations/signatures
 
 ---
 
@@ -52,7 +53,6 @@ Designed and documented but NOT in this PR:
 
 | Phase | Feature | Blocking Reason | Reference |
 |-------|---------|----------------|-----------|
-| 6 | `invalidates` on method declarations | AST struct changes needed | [PR desc §Phase 6](stable-pr-description.md) |
 | 7 | `mutates` unified clause | Alternative syntax decision | [PR desc §Phase 7](stable-pr-description.md) |
 | 8 | `--strictStable` compiler flag | Compiler flag infrastructure | [PR desc §Phase 8](stable-pr-description.md) |
 | 9 | Keyed linked predicates (`stable[key]`) | Parameter binding infrastructure | [PR desc §Phase 9](stable-pr-description.md), [research-map-has-get-narrowing.md](research-map-has-get-narrowing.md) |

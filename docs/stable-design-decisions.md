@@ -56,7 +56,7 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 | **Decision** | `stable` only works on function type expressions, not `MethodDeclaration`. Should `stable getValue(): T {}` be valid? |
 | **Current workaround** | Property syntax: `getValue: stable () => T = () => this._value` |
 | **Recommendation** | Defer to Phase 2+. Requires multi-layer AST changes |
-| **Resolution** | Implemented. `stable` and `mutator` are allowed as modifiers on method declarations and method signatures (class methods, interface methods, type literal methods). `invalidates` clause on methods is deferred to a later phase. |
+| **Resolution** | Implemented. `stable` and `mutator` are allowed as modifiers on method declarations and method signatures (class methods, interface methods, type literal methods). `invalidates` clause on methods is also implemented (Phase 6, commit 61ba366a4). |
 | **Source** | [stable-pr-proposal.md §11](stable-pr-proposal.md) |
 
 ### SYN-5: `stable` on interface call signatures
