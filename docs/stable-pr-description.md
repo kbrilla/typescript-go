@@ -157,6 +157,221 @@ All four are fully erasable (zero runtime overhead), declaration-site only, and 
 
 ---
 
+## Working Examples — What This PR Enables
+
+### 1. Basic Stable Narrowing
+```ts
+type Signal<T> = stable () => T;
+
+declare const count: Signal<number | undefined>;
+if (count() !== undefined) {
+    count().toFixed(2);        // ✅ narrowed to number — second call preserves narrowing
+    console.log(count() + 1);  // ✅ still number — stable means "same value absent mutation"
+}
+```
+
+### 2. Mutator Invalidation
+```ts
+declare const store: {
+    read: stable () => string | undefined;
+    write: mutator (v: string) => void;
+};
+
+if (store.read() !== undefined) {
+    store.read().toUpperCase();  // ✅ narrowed to string
+    store.write("new");          // mutator call → resets narrowing
+    store.read().toUpperCase();  // ❌ Error: narrowing dropped — back to string | undefined
+}
+```
+
+### 3. Targeted Invalidation with `invalidates`
+```ts
+declare const app: {
+    user: stable () => { name: string } | undefined;
+    settings: stable () => { theme: string } | undefined;
+    setUser: mutator (v: { name: string } | undefined) => void invalidates user;
+};
+
+if (app.user() !== undefined && app.settings() !== undefined) {
+    app.setUser({ name: "Alice" });
+    app.user();       // ❌ Error: user() invalidated by setUser
+    app.settings();   // ✅ still narrowed — settings() is NOT in the invalidates list
+}
+```
+
+### 4. Post-Call Argument Narrowing
+```ts
+interface Signal<T> {
+    read: stable () => T;
+    set: mutator (value: T) => void invalidates read;
+}
+
+declare const count: Signal<number | undefined>;
+count.set(42);
+const n: number = count.read();         // ✅ narrowed to number — argument type propagated
+
+count.set(undefined);
+const u: undefined = count.read();      // ✅ narrowed to undefined — argument type propagated
+```
+
+### 5. Linked Type Predicates
+```ts
+interface Resource<T> {
+    value: stable () => T;
+    hasValue(): this.value() is Exclude<T, undefined>;
+}
+
+declare const r: Resource<string | undefined>;
+if (r.hasValue()) {
+    const s: string = r.value();       // ✅ narrowed to string — linked predicate
+}
+```
+
+### 6. Cross-Binding Invalidation (SolidJS Pattern)
+```ts
+declare function createSignal<T>(value: T): [
+    read: stable () => T,
+    write: mutator (value: T) => void invalidates read
+];
+
+const [count, setCount] = createSignal<number | undefined>(0);
+
+if (count() !== undefined) {
+    count().toFixed(2);         // ✅ narrowed to number
+    setCount(undefined);        // cross-binding invalidation: write → read
+    const x: undefined = count();  // ✅ post-call narrowed to undefined
+}
+```
+
+### 7. Exhaustive Switch Narrowing
+```ts
+type Shape =
+    | { kind: "circle"; radius: number }
+    | { kind: "square"; side: number };
+
+declare const readShape: stable () => Shape;
+
+switch (readShape().kind) {
+    case "circle":
+        readShape().radius;     // ✅ narrowed to { kind: "circle"; radius: number }
+        break;
+    case "square":
+        readShape().side;       // ✅ narrowed to { kind: "square"; side: number }
+        break;
+    default:
+        const _: never = readShape();  // ✅ exhaustiveness check
+}
+```
+
+### 8. Loop Narrowing Preservation
+```ts
+declare const readArr: stable () => number[] | undefined;
+
+if (readArr() !== undefined) {
+    for (const item of readArr()) {   // ✅ narrowed to number[] — iterable
+        item.toFixed(2);
+    }
+}
+```
+
+### 9. Callback Argument Transparency
+```ts
+declare const read: stable () => string | undefined;
+declare function invoke(cb: () => void): void;
+
+if (read() !== undefined) {
+    invoke(() => {});                  // empty callback — transparent
+    const s: string = read();          // ✅ narrowing preserved
+}
+```
+
+### 10. Super Call Invalidation
+```ts
+class Base {
+    stable get(): string | undefined { return "hello"; }
+    mutator reset(): void {}
+}
+
+class Derived extends Base {
+    test(): void {
+        if (this.get() !== undefined) {
+            const before: string = this.get();  // ✅ narrowed
+            super.reset();                       // super.mutator() invalidates this.stable()
+            this.get();                          // ❌ Error: narrowing dropped
+        }
+    }
+}
+```
+
+### 11. Method-Level `invalidates`
+```ts
+interface Store<T> {
+    stable getValue(): T;
+    stable getLabel(): string;
+    mutator setValue(v: T): void invalidates getValue;
+    mutator setLabel(l: string): void invalidates getLabel;
+    mutator reset(): void invalidates getValue, getLabel;
+}
+
+declare const store: Store<string | undefined>;
+if (store.getValue() !== undefined) {
+    store.setLabel("test");              // does NOT invalidate getValue
+    store.getValue().toUpperCase();      // ✅ still narrowed
+
+    store.setValue("hello");             // invalidates getValue → post-call narrows to string
+    store.getValue().toUpperCase();      // ✅ narrowed to string via argument
+
+    store.reset();                       // invalidates BOTH getValue and getLabel
+    store.getValue();                    // back to string | undefined
+}
+```
+
+### 12. Keyed Per-Key Narrowing (Map.has / Map.get)
+```ts
+interface TypedMap<K, V> {
+    stable[key] get(key: K): V | undefined;
+    mutator set(key: K, value: V): void invalidates get[key];
+    mutator delete(key: K): boolean invalidates get[key];
+    mutator clear(): void;  // unkeyed → invalidates ALL keys
+}
+
+declare const map: TypedMap<string, number>;
+
+if (map.get("x") !== undefined) {
+    const a: number = map.get("x");       // ✅ narrowed (same key "x")
+    const b = map.get("y");               // number | undefined (different key)
+
+    map.set("y", 42);                     // invalidates only get("y")
+    const c: number = map.get("x");       // ✅ still narrowed — different key
+
+    map.set("x", 99);                     // invalidates get("x")
+    map.get("x");                         // back to number | undefined
+}
+```
+
+### 13. Declaration Parity — All Forms
+```ts
+// All declaration forms support stable/mutator
+stable function getValue(): string | undefined { return "hello"; }
+const getX = stable function(): number | null { return 42; };
+const getY = stable (): string | undefined => "world";
+const fetchData = stable async (): Promise<string | undefined> => undefined;
+
+class Container<T> {
+    stable getValue(): T { return this._value; }
+    mutator setValue(v: T): void invalidates getValue { this._value = v; }
+}
+
+interface Readable<T> { stable get(): T; }
+
+// All forms participate in narrowing
+if (getValue() !== undefined) {
+    getValue().toUpperCase();   // ✅ narrowed
+}
+```
+
+---
+
 ## Complete Syntax Reference
 
 ### `stable` Modifier — Supported Declarations
