@@ -605,3 +605,338 @@ In addition to the open questions from Section 13:
 6. Should we propose a TypeScript checker enhancement for tuple `.at()` precision separately from the `stable[key]` proposal? Having `.at(0)` return `Tuple[0] | undefined` instead of `Tuple[number] | undefined` would be valuable independently.
 
 7. For `ReadonlyArray<T>`, all mutation vectors (methods, element assignment, length assignment) are blocked by the type system. Should `ReadonlyArray.at()` be annotated as `stable[key]` with no corresponding mutators? This would give **completely sound** persistent narrowing.
+
+---
+
+## 19. Tuple Deep Dive: A Near-Perfect `stable[key]` Candidate
+
+### 19.1 Why Tuples Are More Stable Than Arrays
+
+Tuples differ from arrays in critical ways that affect soundness:
+
+| Property | Array | Tuple | Impact on `stable[key]` |
+|----------|-------|-------|------------------------|
+| Length | Dynamic (can push/pop) | Fixed at type level | Negative indices are **sound** for tuples (length can't change) |
+| Element types | Uniform (`T[]`) | Per-index (`[T1, T2, ...]`) | Higher value from per-index narrowing |
+| Index shifting | splice/unshift/shift change indices | Not applicable (no splice on tuples) | No index instability |
+| `.at()` return type | `T \| undefined` | `T1 \| T2 \| ... \| undefined` (union of all elements) | `.at()` loses per-index precision |
+| `.push()` | Allowed (extends array) | Allowed by TypeScript (surprisingly!) but type is fixed | Tuple mutation is possible but uncommon |
+| `readonly` variant | `readonly T[]` — blocks mutation | `readonly [T1, T2]` — blocks mutation | Readonly tuples perfectly sound |
+| `as const` | Produces `readonly [literal...]` | Already fixed-length with literal types | Full stability |
+
+**Key insight**: Tuples have **fixed-length semantics at the type level**. Even though JavaScript allows `tuple.push()` at runtime, TypeScript's type system treats tuple length as known. This makes negative indices **sound** for tuples — `.at(-1)` always refers to the last element, and the last element's position can't change (the type system won't let you `push()` a value that changes the tuple's type).
+
+### 19.2 Empirical Verification: Tuple Behavior
+
+Tested with tsgo (strict mode, noUncheckedIndexedAccess enabled):
+
+```ts
+// === Element access vs .at() on tuples ===
+const pair: [string, number] = ["hello", 42];
+pair[0];      // string           ← precise element type
+pair[1];      // number           ← precise element type
+pair.at(0);   // string | number | undefined  ← LOST precision!
+pair.at(1);   // string | number | undefined  ← LOST precision!
+pair.at(-1);  // string | number | undefined  ← LOST precision!
+
+// === Const assertion tuples ===
+const constArr = [1, 2, 3] as const;  // readonly [1, 2, 3]
+constArr[0];     // 1                       ← literal type!
+constArr.at(0);  // 1 | 2 | 3 | undefined  ← lost literal precision
+
+// === Optional tuple elements ===
+type OptTuple = [string, number?, boolean?];
+// t[0] → string
+// t[1] → number | undefined
+// t[2] → boolean | undefined
+// t.at(0) → string | number | boolean | undefined  ← full union!
+// t.length → 1 | 2 | 3
+
+// === Rest element tuples ===
+type RestTuple = [string, ...number[]];
+// t[0] → string
+// t[1] → number | undefined (with noUncheckedIndexedAccess)
+// t.at(0) → string | number | undefined
+// t.length → number (unknown — has rest)
+
+// === Tuple narrowing ===
+function testTupleNarrow(t: [string | undefined, number]) {
+    if (t[0] !== undefined) {
+        t[0];   // string — NARROWED ✅
+    }
+    if (t.at(0) !== undefined) {
+        t.at(0); // string | number | undefined — NOT narrowed ❌
+    }
+}
+```
+
+### 19.3 What `stable[key]` Would Add for Tuples
+
+#### Scenario A: `.at()` narrowing on tuples
+
+```ts
+// With stable[key] on tuple .at():
+const pair: [string | undefined, number | undefined] = ["hello", undefined];
+if (pair.at(0) !== undefined) {
+    pair.at(0); // Today: string | number | undefined (not narrowed)
+                // With stable[key]: string | number (narrowed — removed undefined)
+}
+```
+
+This narrows the UNION type — removing `undefined` from `string | number | undefined`. It doesn't recover per-index precision (still `string | number`), but the undefined removal is the primary use case.
+
+#### Scenario B: `.at()` on readonly tuples — perfect stability
+
+```ts
+const ro: readonly [string | undefined, number] = ["hello", 42];
+// Readonly tuple has NO mutating methods
+// stable[key] on .at() with no mutators → narrowing NEVER invalidated
+if (ro.at(0) !== undefined) {
+    doSomething();
+    ro.at(0); // string | number — narrowing persists through ANY function call
+    // Because there are no mutators to invalidate it!
+}
+```
+
+This is **completely sound** — readonly tuples can't be mutated, so `.at()` narrowing is permanent within the guard scope.
+
+#### Scenario C: `as const` tuples — already stable
+
+```ts
+const t = [1, "two", true] as const; // readonly [1, 2, 3]
+t[0]; // 1 (literal type — already maximally precise)
+t.at(0); // 1 | "two" | true | undefined (lost precision)
+
+// With stable[key]:
+if (t.at(0) !== undefined) {
+    t.at(0); // 1 | "two" | true (removed undefined)
+    // Still not as precise as t[0] (which is 1), but still useful
+}
+```
+
+### 19.4 The `.at()` Precision Gap: Should the Checker Special-Case Tuples?
+
+The biggest gap is NOT about CFA narrowing — it's about the **initial return type** of `.at()` on tuples.
+
+Currently, `.at(N)` on `[string, number]` returns `string | number | undefined` regardless of `N`. For literal `N`, the checker COULD return the precise element type:
+
+```ts
+// Hypothetical: .at() tuple overload resolution
+interface ReadonlyArray<T> {
+    // When called on a tuple [A, B, C] with literal index:
+    //   .at(0) → A | undefined
+    //   .at(1) → B | undefined
+    //   .at(2) → C | undefined
+    //   .at(-1) → C | undefined
+    //   .at(-2) → B | undefined
+    at(index: number): T | undefined;
+}
+```
+
+This would require the checker to:
+1. Detect that the receiver is a tuple type
+2. Check if the argument is a numeric literal
+3. Resolve the corresponding tuple element type
+4. For negative indices, compute `length + index`
+5. Return `TupleElement[resolvedIndex] | undefined` instead of `T | undefined`
+
+**This is independent of `stable[key]`** — it's a type inference enhancement. It would combine beautifully with `stable[key]` to give tuples the full narrowing experience:
+
+```ts
+const pair: [string | undefined, number] = [undefined, 42];
+// With BOTH enhancements:
+if (pair.at(0) !== undefined) {
+    pair.at(0); // string (precise element type, undefined removed by narrowing)
+}
+```
+
+## 20. Stability Matrix: Array vs Tuple vs ReadonlyArray vs ReadonlyTuple
+
+### 20.1 Soundness Matrix
+
+| Criterion | `T[]` | `[T1, T2]` | `readonly T[]` | `readonly [T1, T2]` | `as const [...]` |
+|-----------|-------|-----------|----------------|---------------------|------------------|
+| Length changes | Yes | Limited (push works at runtime) | No | No | No |
+| Index shifting (splice/unshift) | Yes | Possible but uncommon | No | No | No |
+| Element assignment (`arr[i] = x`) | Yes | Yes | **No** | **No** | **No** |
+| `.at()` return type precision | Low (`T \| undefined`) | Low (union of all elements) | Low | Low | Low (union of literals) |
+| `[i]` return type precision | Low (`T`) | **High** (per-index type) | Low | **High** | **Very High** (literal) |
+| Method mutation | 10+ mutating methods | 10+ (inherited from Array) | **0** | **0** | **0** |
+| Negative index soundness | Low | Medium (length mostly stable) | **High** (no Length changes) | **Perfect** | **Perfect** |
+| Positive index soundness | Medium (splice shifts) | Medium-High | **High** (no mutations) | **Perfect** | **Perfect** |
+| `stable[key]` value for `.at()` | Medium | Medium-High | **Very High** | **Very High** | **Very High** |
+| CFA narrowing for `[i]` today | Works | Works | Works (survives calls) | Works (survives calls) | Trivial (literal types) |
+| CFA narrowing for `.at()` today | None | None | None | None | None |
+
+### 20.2 `stable[key]` Candidate Ranking
+
+| Rank | Type | Soundness | Practical Value | Complexity | Recommendation |
+|------|------|-----------|----------------|------------|----------------|
+| **1** | `readonly [T1, T2, ...]` | Perfect — no mutations possible | High — `.at()` narrowing would be permanently preserved | Very Low — no mutators needed | **Phase 12 candidate** |
+| **2** | `readonly T[]` | Very High — no mutations | High — `.at()` narrowing permanent | Very Low — no mutators needed | **Phase 12 candidate** |
+| **3** | `[T1, T2, ...]` (mutable tuple) | Medium-High — length stable at type level, but mutations possible | Medium-High — `.at()` narrowing with mutator invalidation | Medium — need to annotate push/pop etc. as mutators | **Phase 14 candidate** |
+| **4** | TypedArray (`Int32Array` etc.) | Very High — fixed length, numeric elements only | Medium — `.at()` always returns `number \| undefined` | Low — few mutating methods (`set()`, `fill()`, `copyWithin()`) | **Phase 12 candidate** |
+| **5** | `T[]` (mutable array) | Low-Medium — index shifting, length changes | Medium — `.at()` narrowing with mutator invalidation | High — 10+ mutators, non-method mutations | **Phase 14+ candidate** |
+
+### 20.3 Readonly Types: Already Implicitly "Stable"?
+
+A key observation: **readonly types in TypeScript already behave like `stable` for property narrowing**:
+
+```ts
+function example(obj: { readonly x: string | number }) {
+    if (typeof obj.x === "string") {
+        someFunc();
+        obj.x; // string — narrowing survives function calls!
+    }
+}
+```
+
+TypeScript already preserves narrowing across function calls for `readonly` properties and `const` locals because it knows they can't be reassigned.
+
+**What `stable[key]` adds for readonly types is METHOD CALL narrowing** — `.at()`, `.get()`, etc. The property-based narrowing already works; the method-based narrowing is the gap.
+
+For readonly arrays/tuples, adding `stable[key]` on `.at()` with NO mutators creates a **zero-invalidation scenario** — narrowing persists indefinitely. This is both:
+- **Sound**: no mutations can occur
+- **Maximally useful**: the narrowing is never lost
+
+### 20.4 What About `as const`?
+
+`as const` produces `readonly` tuples with **literal types**:
+
+```ts
+const config = { endpoint: "api", port: 3000, debug: true } as const;
+// Type: { readonly endpoint: "api"; readonly port: 3000; readonly debug: true }
+```
+
+For literal types, narrowing is less needed because the types are already maximally precise. However, `as const` objects can still have union-typed properties in certain scenarios:
+
+```ts
+function getConfig() {
+    return Math.random() > 0.5
+        ? { status: "ok", data: "hello" } as const
+        : { status: "error", message: "fail" } as const;
+}
+// Return type: { readonly status: "ok"; readonly data: "hello" } | { readonly status: "error"; readonly message: "fail" }
+```
+
+Here, discriminated union narrowing works on `result.status` to determine which variant. This already works with property CFA. `stable[key]` doesn't add value here because there are no method-based accessors.
+
+## 21. TypeScript's Existing `const`/`readonly` CFA Behavior (Empirically Verified)
+
+### 21.1 Test Results
+
+| Scenario | Narrowed? | Survives `someFunc()` call? | Notes |
+|----------|-----------|----------------------------|-------|
+| `const x` (local binding) | Yes | Yes (always) | const can never be reassigned |
+| `let y` (local binding) | Yes | Yes (when not captured) | TS tracks closure capture |
+| `const obj.a` (const local object) | Yes | Yes | Object is const, property narrowed |
+| `readonly obj.a` (readonly property) | Yes | Yes | Readonly properties preserve across calls |
+| `readonly arr[0]` (readonly array) | Yes | Yes | Index access on readonly preserves |
+| `Object.freeze(obj).x` | Yes | Yes | Freeze → Readonly → preserved |
+| Discriminated `readonly` unions | Yes | Yes | Discrimination + readonly = stable |
+| `map.get("x")` (method call) | **No** | N/A | Method call re-evaluates every time |
+| `arr.at(0)` (method call) | **No** | N/A | Method call re-evaluates every time |
+
+### 21.2 The One Gap: Method Returns
+
+TypeScript handles `const`/`readonly` narrowing **perfectly** for:
+- Local variable bindings
+- Property access expressions
+- Element access expressions
+- Discriminated unions
+
+The ONLY gap is **method call returns** — `.get()`, `.at()`, `.has()`, etc. This is EXACTLY what `stable[key]` addresses. The proposal fills the one remaining hole in TypeScript's const/readonly CFA story.
+
+### 21.3 Visualization
+
+```
+                          Already Narrowable          Needs stable[key]
+                          ─────────────────          ─────────────────
+Property access (obj.x)        ✅                         ─
+Element access (arr[0])        ✅                         ─
+Local const binding            ✅                         ─
+Readonly property              ✅                         ─
+Method call (.get())           ❌                         ✅
+Method call (.at())            ❌                         ✅
+Method call (.has())           ❌                         ✅
+```
+
+## 22. Could Tuples Be "Automatically Stable"?
+
+### 22.1 The Question
+
+The user asks: "maybe in tuples everything is stable as it is const?"
+
+Could tuples (or readonly tuples) automatically get `stable` narrowing on `.at()` without explicit annotations?
+
+### 22.2 Analysis
+
+**For `readonly` tuples/arrays**: Yes, this would be sound and require zero configuration. Since there are no mutating methods, `.at()` on readonly types could implicitly behave as `stable[key]`:
+
+```ts
+// Hypothetical: implicit stable on readonly types
+// No annotation needed — readonly implies stable
+const ro: readonly [string | undefined, number] = [undefined, 42];
+if (ro.at(0) !== undefined) {
+    ro.at(0); // string | number — automatically preserved (no mutators exist)
+}
+```
+
+**Implementation approach**: The checker could detect that the receiver type is `readonly` and automatically treat `.at()` calls as stable — no `stable` keyword annotation required.
+
+**For mutable tuples**: No, automatic stability would be unsound. Even though tuples have fixed-length types, mutable tuples allow element assignment and inherited Array methods:
+
+```ts
+const t: [string | undefined, number] = [undefined, 42];
+t[0] = "hello";  // Legal — mutable element assignment
+t.push("extra"); // Legal at runtime! TypeScript allows it (though type doesn't change)
+```
+
+### 22.3 Proposal: Implicit `stable` for Readonly Types
+
+A potential enhancement proposal extending beyond explicit annotations:
+
+```
+For any type T:
+  - If T is readonly (readonly property, readonly array, readonly tuple):
+    - Method calls returning property-like values (get, at, etc.) could be
+      implicitly treated as stable when:
+      1. The receiver type has no mutating methods available
+      2. The method is a "pure accessor" (deterministic for same arguments)
+    - This would require a way to identify "pure accessor" methods
+      (which is essentially what the `stable` keyword does)
+```
+
+**Verdict**: Implicit stability for readonly types is **theoretically sound but practically complex**. The compiler would need to determine which methods are "pure accessors" without explicit annotations. The `stable` keyword exists precisely to provide this information explicitly. However, for well-known stdlib types like `ReadonlyArray.at()` and `ReadonlyMap.get()`, the compiler could hard-code implicit stability.
+
+### 22.4 Hard-Coded Implicit Stability for Stdlib Types
+
+A pragmatic middle ground: instead of a general "readonly implies stable" rule, hard-code specific stdlib methods as implicitly stable:
+
+```
+// Implicit stable methods (no annotation needed):
+ReadonlyArray<T>.at(index)     → stable[index]
+ReadonlyMap<K,V>.get(key)      → stable[key]
+ReadonlyMap<K,V>.has(key)      → stable[key]  (linked predicate)
+ReadonlySet<T>.has(value)      → stable[value] (linked predicate)
+```
+
+This avoids the general inference problem while covering the highest-value use cases. Mutable variants (`Array`, `Map`, `Set`) would still need explicit annotations with corresponding `mutator` declarations.
+
+## 23. Summary: What `stable[key]` Adds to TypeScript's Const/Readonly Story
+
+| Feature | Without `stable[key]` | With `stable[key]` | Gain |
+|---------|----------------------|---------------------|------|
+| `const obj.x` narrowing | Works | Works | None |
+| `readonly prop` narrowing | Works, survives calls | Works, survives calls | None |
+| `arr[0]` narrowing | Works | Works | None |
+| `readonly arr[0]` narrowing | Works, survives calls | Works, survives calls | None |
+| `arr.at(0)` narrowing | **Doesn't work** | **Works** | **New capability** |
+| `readonly arr.at(0)` narrowing | **Doesn't work** | **Works, never invalidated** | **New capability** |
+| `map.get(key)` narrowing | **Doesn't work** | **Works** | **New capability** |
+| `readonly map.get(key)` narrowing | **Doesn't work** | **Works, never invalidated** | **New capability** |
+| Tuple `[i]` precision | Per-index types | Per-index types | None |
+| Tuple `.at(i)` precision | Union of all + undefined | Union of all (narrow removes undefined) | **Partial gain** |
+| Tuple `.at(i)` + checker fix | Union of all + undefined | Per-index type + undefined, then narrowed | **Full gain** |
+
+**Bottom line**: `stable[key]` fills the **method call gap** in TypeScript's const/readonly narrowing. For readonly types specifically, it provides **zero-cost permanent narrowing** because no mutators exist to invalidate it.
