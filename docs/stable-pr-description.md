@@ -301,9 +301,11 @@ TypeScript property narrowing already preserves narrowing of `obj.value` across 
 
 ## Future Phase Syntax (Under Consideration)
 
-These features are not implemented in this PR but are part of the design roadmap. They demonstrate how the `stable`/`mutator`/`invalidates` foundation supports increasingly powerful narrowing scenarios in future phases.
+These entries show the design roadmap for `stable`/`mutator`/`invalidates`. Phases 4–5 are **already implemented** in this PR; Phases 6–12 are future extensions under consideration.
 
 ### Phase 4: Conservative-to-Targeted Migration Path
+
+> **Status: Already implemented.** Both conservative (Phase 1) and targeted (Phase 2) modes are functional in this PR.
 
 Start with conservative invalidation (any method call resets narrowing), then gradually opt-in to targeted invalidation with `mutator`:
 
@@ -357,6 +359,8 @@ function createStore<T>(init: T): [
 
 ### Phase 6: `invalidates` on Method Declarations (SYN-4b)
 
+> **Status: Not implemented.** Requires AST struct changes to store `invalidates` clause on method declarations.
+
 Selective invalidation directly on method declarations/signatures (not just function types):
 
 ```ts
@@ -373,6 +377,8 @@ interface Store<T> {
 Currently, method-level mutators reset ALL stable narrowing on the receiver. Selective `invalidates` on methods requires AST struct changes and is deferred.
 
 ### Phase 7: `mutates` Unified Clause (SYN-1)
+
+> **Status: Not implemented.** Alternative syntax proposal under consideration.
 
 A single `mutates` keyword could replace both `mutator` and `invalidates`:
 
@@ -392,6 +398,8 @@ type Signal<T> = [
 
 ### Phase 8: `--strictStable` Compiler Flag (SEM-5)
 
+> **Status: Not implemented.** Requires compiler flag infrastructure.
+
 An opt-in flag that reverses the default: without the flag, unmarked methods are transparent (don't invalidate); with the flag, unmarked methods are conservatively treated as mutators:
 
 ```ts
@@ -410,31 +418,37 @@ interface Foo {
 
 ### Phase 9: Keyed Linked Predicates (LP-1)
 
-Guard methods that narrow stable endpoints with per-key parameter correlation:
+Guard methods that narrow stable endpoints with per-key parameter correlation. Uses `stable[key]`/`mutator[key]` bracket notation to scope narrowing to specific key arguments, and `invalidates get[key]` for per-key invalidation (vs `invalidates get` which invalidates ALL keys):
 
 ```ts
 interface TypedMap<K, V> {
-    stable get(key: K): V | undefined;
+    stable[key] get(key: K): V | undefined;
     has<K2 extends K>(key: K2): this.get(key) is V;
-    mutator set(key: K, value: V): void invalidates get;
-    mutator delete(key: K): void invalidates get;
+    mutator[key] set(key: K, value: V): this invalidates get[key], has[key];
+    mutator[key] delete(key: K): boolean invalidates get[key], has[key];
+    mutator clear(): void invalidates get, has;  // no key — invalidates ALL
 }
 
 declare const map: TypedMap<string, number>;
 if (map.has("x")) {
     const val = map.get("x");  // ✅ narrowed to number (not number | undefined)
-    map.set("x", 42);          // invalidates get → post-call narrowing from argument
-    map.get("x");              // narrowed to number (argument type propagated)
+    map.set("x", 42);          // invalidates get["x"] only → post-call narrowing
+    map.get("x");              // ✅ narrowed to number (argument type propagated)
+    map.get("y");              // ❌ still number | undefined (not invalidated by set("x"))
+    map.delete("x");           // invalidates get["x"], has["x"]
+    map.get("x");              // back to number | undefined
+    map.clear();               // invalidates ALL get/has narrowing
 }
 
-// WeakRef pattern
+// WeakRef pattern (no key parameter needed)
 interface TypedWeakRef<T extends WeakKey> {
     stable deref(): T | undefined;
-    // Implicit: deref() returns T when the ref is alive
 }
 ```
 
 ### Phase 10: Discriminated Method Unions / Multi-Predicate Guards (LP-2)
+
+> **Status: Not implemented.** Requires multi-target linked predicate infrastructure.
 
 Guard methods that narrow MULTIPLE stable endpoints simultaneously:
 
@@ -459,6 +473,8 @@ if (result.isResolved()) {
 
 ### Phase 11: Getter Property Invalidation (LP-3)
 
+> **Status: Not implemented.** Requires `invalidates` to target getter properties.
+
 `invalidates` targeting getter properties (not just stable methods):
 
 ```ts
@@ -473,16 +489,18 @@ interface FormField<T> {
 
 ### Phase 12: Standard Library Annotations (ADO-1)
 
+> **Status: Not implemented.** Requires TC39/TypeScript team buy-in for stdlib changes.
+
 Built-in types annotated with `stable`/`mutator`:
 
 ```ts
-// Map (potential stdlib annotation)
+// Map (potential stdlib annotation — uses per-key invalidation)
 interface Map<K, V> {
-    stable get(key: K): V | undefined;
-    stable has(key: K): boolean;
-    mutator set(key: K, value: V): this invalidates get, has;
-    mutator delete(key: K): boolean invalidates get, has;
-    mutator clear(): void invalidates get, has;
+    stable[key] get(key: K): V | undefined;
+    stable[key] has(key: K): boolean;
+    mutator[key] set(key: K, value: V): this invalidates get[key], has[key];
+    mutator[key] delete(key: K): boolean invalidates get[key], has[key];
+    mutator clear(): void invalidates get, has;  // no key — invalidates ALL
 }
 
 // WeakRef
