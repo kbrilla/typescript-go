@@ -138,7 +138,7 @@ Four declaration-site type modifiers that enable CFA narrowing through function 
 - **Post-call argument narrowing** — after a `mutator invalidates` call, the stable getter is narrowed to the argument's type (e.g., `setCount(20)` narrows `count()` to `number`)
 - **Linked type predicates** — `this.value() is T` syntax for guard methods that narrow stable call results
 
-All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (46 test files) with zero regressions against the existing test baseline.
+All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (47 test files) with zero regressions against the existing test baseline.
 
 **Implementation milestones:**
 - **SYN-4** ✅ — `stable`/`mutator` modifiers on method declarations and method signatures (class methods, interface methods, type literal methods)
@@ -146,6 +146,7 @@ All four are fully erasable (zero runtime overhead), declaration-site only, and 
 - **CBI-1** ✅ — Cross-binding invalidation via named tuple label references: `invalidates read` on a destructured setter targets the sibling `read` accessor, with full post-call narrowing and selective invalidation
 - **SEM-3** ✅ — Interface merging behavior codified: 10-section test documenting how `stable`/`mutator` modifiers behave across merged interfaces, intersections, and interface extension
 - **TYPEREF** ✅ — `mutator TypeRef invalidates <targets>` syntax: wrap existing callable interfaces (like SolidJS's `Setter<T>`) with mutator/invalidates semantics without rewriting signatures
+- **DECL-EMIT** ✅ — Full `.d.ts` declaration output for all custom syntax: `stable`/`mutator` modifiers, `invalidates` clause, `[key]` bracket notation, `mutator TypeRef`, method-level `invalidates`, and cross-binding tuples
 
 ### Declaration Parity
 - `stable`/`mutator` now supported on ALL function-like declarations:
@@ -402,6 +403,37 @@ directly with `mutator` — no need to rewrite overloaded signatures as inline f
 The `mutator TypeRef invalidates <targets>` syntax wraps any type reference with mutator/invalidates
 semantics while preserving the full type identity of the referenced interface.
 
+### 15. Declaration Emit — `.d.ts` Output
+
+All `stable`, `mutator`, `invalidates`, `[key]`, and `mutator TypeRef` syntax is correctly preserved in `.d.ts` declaration output. This means downstream consumers of a library get full narrowing support:
+
+```ts
+// Source: signal-lib.ts
+export type Accessor<T> = stable () => T;
+export type LinkedSetter<T> = mutator (v: T) => void invalidates get;
+export type KeyedGetter<K, V> = stable[key] (key: K) => V | undefined;
+export type KeyedSetter<K, V> = mutator[key] (key: K, value: V) => void invalidates get[key];
+
+export interface Store<T> {
+    mutator setValue(v: T): void invalidates getValue;
+    mutator reset(): void invalidates getValue, getLabel;
+}
+
+export interface TypedMap<K, V> {
+    stable[key] get(key: K): V | undefined;
+    mutator[key] set(key: K, value: V): void invalidates get[key];
+}
+
+export type WrappedSignal<T> = [get: Accessor<T>, set: mutator Setter<T> invalidates get];
+
+export class Container<T> {
+    stable getValue(): T;
+    mutator setValue(v: T): void invalidates getValue;
+}
+
+// Generated .d.ts preserves ALL syntax exactly as written ✅
+```
+
 ---
 
 ## Complete Syntax Reference
@@ -510,7 +542,7 @@ interface Writable<T> {
 }
 ```
 
-**Note:** `invalidates` clause is supported on function type syntax and on `mutator TypeRef` (type reference) syntax. It is not yet supported on method declarations or method signatures. For methods, the mutator resets all stable endpoints on the same receiver.
+**Note:** `invalidates` clause is supported on function type syntax, on `mutator TypeRef` (type reference) syntax, and on method declarations/method signatures (since Phase 6).
 
 ### Linked Type Predicates
 
@@ -978,12 +1010,13 @@ These are deferred to future phases with rationale:
 | ID | Question | Phase | Rationale |
 |---|---|---|---|
 | **SYN-2** | Is `stable` the right name? Alternatives: `getter`, `pure`, `cached`, `memo` | Post-review | Naming should be finalized after team feedback |
-| **SYN-4** | `invalidates` clause on method declarations (currently only on function types) | Future | AST struct changes needed; method-level selective invalidation can wait |
+| **SYN-4** | ~~`invalidates` clause on method declarations~~ | ~~Future~~ | ✅ **DECIDED & IMPLEMENTED** — Phase 6 (commit 61ba366a4) |
 | **SYN-5** | `stable` on interface call signatures (`interface { stable (): T; }`) | Future | Parser ambiguity — `stable` is treated as method name |
 | **SYN-6** | `invalidates` exclusive mode (`sort: mutator () => void preserves length`) | Future | Low priority — only useful for partial invalidation |
 | **SEM-1** | How does `stable` propagate through generics, conditional types, mapped types? | Phase 2+ | Complex type-level interactions |
 | **SEM-8** | Should `T extends stable () => any ? true : false` discriminate stable functions? | Future | Conditional type discrimination |
 | **LP-1** | ~~Keyed linked predicates: `has(key: K): this.get(key) is V` — parameter correlation~~ | ~~Phase 9~~ | ✅ **Already implemented** — moved to DECIDED (commit 18f9a1590) |
+| **DECL-EMIT** | Declaration emit for all custom syntax | — | ✅ **DECIDED & IMPLEMENTED** — commit 35e576367 |
 | **LP-2** | Multi-predicate intersection: `isOk(): this.value() is T & this.error() is undefined` | Future | Complex predicate composition |
 | **LP-3** | Getter mutation invalidation: should `invalidates` target getter properties? | Future | Cross-concern between accessor modifiers and invalidation |
 
@@ -1025,7 +1058,7 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 
 ## Key Test Files
 
-46 test files in `testdata/tests/cases/compiler/`:
+47 test files in `testdata/tests/cases/compiler/`:
 
 **Core narrowing:**
 - `stableModifierNarrowing.ts` — basic stable narrowing and reset
@@ -1083,6 +1116,12 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 
 **Type references:**
 - `stableModifierMutatorTypeReference.ts` — mutator applied to type references (complex callable interfaces like SolidJS Setter)
+
+**Declaration emit:**
+- `stableModifierDeclarationEmit.ts` — full `.d.ts` output verification: all 11 syntax variants (stable/mutator function types, invalidates clause, keyed types, keyed methods, mutator TypeRef, class methods)
+
+**Store patterns:**
+- `stableModifierStorePattern.ts` — keyed store access patterns with per-key narrowing
 
 **Diagnostics and edge cases:**
 - `stableModifierBareParameter.ts` — bare parameter diagnostics
