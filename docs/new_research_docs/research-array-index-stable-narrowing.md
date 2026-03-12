@@ -386,3 +386,222 @@ interface TypedArray {
 3. Could the `noUncheckedIndexedAccess` compiler flag interact with `stable[key]`? When enabled, all element access returns `T | undefined`. With `stable[key]` on `.at()`, the narrowing would then have a more meaningful effect (removing the `| undefined`).
 
 4. Should `ReadonlyArray<T>` inherit the stable annotations? Since ReadonlyArray has no mutating methods, ALL `.at()` narrowings would be preserved (no invalidation possible). This is completely sound.
+
+## 14. CFA Implementation Details: How `arr[0]` Narrowing Works Internally
+
+Understanding the implementation helps evaluate whether `.at()` and `[]` can be linked.
+
+### 14.1 `isMatchingReference` — Identity Matching
+
+Element access (`arr[0]`) is treated identically to property access in CFA. In `flow.go`, `isMatchingReference` handles both `PropertyAccessExpression` and `ElementAccessExpression` in the same case:
+
+```go
+case ast.KindPropertyAccessExpression, ast.KindElementAccessExpression:
+    if sourcePropertyName, ok := c.getAccessedPropertyName(source); ok {
+        if ast.IsAccessExpression(target) {
+            if targetPropertyName, ok := c.getAccessedPropertyName(target); ok {
+                return targetPropertyName == sourcePropertyName &&
+                    c.isMatchingReference(source.Expression(), target.Expression())
+            }
+        }
+    }
+```
+
+`getAccessedPropertyName` delegates to `tryGetElementAccessExpressionName`, which extracts literal names from numeric/string literal indices. So `arr[0]` gets property name `"0"`, making it equivalent to `arr.0` for CFA purposes.
+
+### 14.2 CFA Cache Keys
+
+Both property and element access produce identical cache keys:
+
+```go
+case ast.KindPropertyAccessExpression, ast.KindElementAccessExpression:
+    if propName, ok := c.getAccessedPropertyName(node); ok {
+        b.writeByte('.')
+        b.writeString(propName) // arr[0] → "symbol.0", arr.foo → "symbol.foo"
+        return true
+    }
+```
+
+Meanwhile, `stable[key]` call references produce different cache keys:
+
+```go
+case ast.KindCallExpression:
+    b.writeByte('(')
+    if argCount == 1 {
+        c.writeFlowCacheKey(b, node.Arguments()[0], ...)
+    }
+    b.writeByte(')') // arr.at(0) → "symbol.at(0)"
+```
+
+So `arr[0]` → key `"symbol.0"` and `arr.at(0)` → key `"symbol.at(0)"`. These are **completely separate cache entries** and **completely separate references** in CFA.
+
+### 14.3 Why Linking `.at()` and `[]` Is Architecturally Expensive
+
+To link them, we would need:
+
+1. **Cross-type matching in `isMatchingReference`**: Add a case where `source` is `CallExpression` (`.at(0)`) and `target` is `ElementAccessExpression` (`[0]`), check if the call is to a `stable[key]` method named `at` on the same receiver, and the key argument matches the element access index. And vice versa.
+
+2. **Cache key unification or aliasing**: Either generate the same cache key for both (losing distinguishability), or maintain a cache alias map (complexity).
+
+3. **Different declared types**: `arr[0]` on `[string, number]` returns `string`, while `arr.at(0)` returns `string | number | undefined`. Cross-narrowing would need type-level awareness that these access the same slot — a fundamentally different semantic layer.
+
+4. **No `[]` equivalent for negative indices**: `arr[-1]` doesn't access the last element in JavaScript (it accesses property `"-1"`), so `.at(-1)` has no corresponding element access.
+
+**Verdict: Not recommended.** The CFA mechanisms are fundamentally different (property-based vs call-based) and unifying them would introduce significant complexity for marginal benefit.
+
+## 15. Tuple-Specific Analysis
+
+### 15.1 Tuple Element Access Precision
+
+For tuples, `getTupleElementType` returns the precise element type:
+
+```ts
+type Pair = [string, number];
+const p: Pair = ["hello", 42];
+p[0];    // string (precise tuple element type)
+p[1];    // number (precise tuple element type)
+p.at(0); // string | number | undefined (union of ALL elements + undefined)
+```
+
+The precision loss happens at the `.at()` signature level — `.at(index: number): T | undefined` where `T` is the union of all element types.
+
+### 15.2 Can `stable[key]` Recover Tuple Precision for `.at()`?
+
+**No.** `stable[key]` preserves narrowing of method return values through CFA, but it doesn't change the **initial return type**. The type checker resolves `arr.at(0)` as `string | number | undefined` before CFA even begins.
+
+To recover per-index precision, the checker itself would need to special-case `.at()` on tuple types, returning the precise element type for literal index arguments. This is a **type-checking feature** independent of CFA/narrowing:
+
+```ts
+// Hypothetical checker special-case:
+// When calling .at(N) on Tuple where N is a numeric literal:
+//   - Return Tuple[N] | undefined instead of Tuple[number] | undefined
+type Pair = [string, number];
+const p: Pair = ["hello", 42];
+p.at(0); // Would return: string | undefined (instead of string | number | undefined)
+p.at(1); // Would return: number | undefined
+p.at(2); // Would return: undefined (out of bounds)
+```
+
+This would be a valuable feature but is orthogonal to `stable[key]`. It could be proposed as a separate TypeScript enhancement.
+
+### 15.3 Tuple Narrowing with `stable[key]` — What Would Actually Help?
+
+Even without per-index precision, `stable[key]` on `.at()` still helps tuples:
+
+```ts
+type MaybePair = [string | undefined, number | undefined];
+const p: MaybePair = ["hello", undefined];
+
+// Today: .at() narrows nothing — fresh call each time
+if (p.at(0) !== undefined) {
+    p.at(0); // string | number | undefined — not narrowed
+}
+
+// With stable[key] on .at():
+if (p.at(0) !== undefined) {
+    p.at(0); // string | number — narrowed (removed undefined)
+    // Not as precise as p[0] (which would be string), but still useful
+}
+```
+
+The narrowing removes `undefined` from the union, which is the primary use case for undefined-checking.
+
+## 16. Negative Indices: Complete Soundness Analysis with Full Mutator Coverage
+
+The user asks: "Can't we annotate ALL mutating methods so we will know when length and array itself changes?"
+
+### 16.1 Method-Based Mutations (Coverable by `mutator`)
+
+All Array mutation methods can be annotated as `mutator`, which would invalidate `.at(-1)` narrowing:
+
+| Method | Effect on `.at(-1)` | Covered by `mutator`? |
+|--------|--------------------|-----------------------|
+| `push(x)` | Changes last element | ✅ Yes |
+| `pop()` | Changes last element | ✅ Yes |
+| `splice(...)` | May change last element | ✅ Yes |
+| `unshift(x)` | Shifts all, changes last | ✅ Yes |
+| `shift()` | Shifts all, changes last | ✅ Yes |
+| `reverse()` | Changes all indices | ✅ Yes |
+| `sort()` | Changes all indices | ✅ Yes |
+| `fill(...)` | May change elements | ✅ Yes |
+| `copyWithin(...)` | May change elements | ✅ Yes |
+
+### 16.2 Non-Method Mutations (NOT Coverable by `mutator`)
+
+These are the **soundness gaps** that mutator annotations cannot close:
+
+| Mutation Vector | Effect | Why Not Covered |
+|----------------|--------|-----------------|
+| `arr[i] = x` | Changes element at index i | Direct property assignment, not a method call. CFA generates a `FlowAssignment` node but `isStableReceiverWriteBoundaryForCallReference` only handles no-arg calls — keyed stable references (`.at(-1)`) are not invalidated by element assignments on the same array. |
+| `arr.length = 0` | Empties entire array | Property assignment to `.length`, not a method call. CFA does not link `.length` assignment to `.at()` invalidation. |
+| `delete arr[i]` | Creates sparse hole | `delete` is a `DeleteExpression` — CFA generates **no flow nodes** for delete. Completely invisible. |
+| `someFunc(arr)` | External mutation via alias | The function could `push`, `splice`, or modify `arr` internally. Alias escape detection covers some cases but not all. |
+| `Object.assign(arr, {...})` | Overwrites elements | Static method call on `Object`, not on `arr`. Not detected as mutation of `arr`. |
+| `arr2 = arr; arr2.push(x)` | Alias mutation | CFA doesn't track alias relationships between array bindings. |
+
+### 16.3 How Bad Are These Gaps?
+
+**`arr[i] = x`** — This is the most important gap. Setting `arr[arr.length - 1] = undefined` directly changes what `.at(-1)` returns without any method call. However, this pattern is relatively uncommon — most developers use `arr[i]` for known-index writes and `.at(-1)` for "get the last element" reads, rarely mixing them in the same flow.
+
+**`arr.length = 0`** — A common pattern for clearing arrays. After `arr.length = 0`, `.at(-1)` returns `undefined`. If narrowing survives this, it's unsound. But `arr.length = 0` is typically not used in code that also narrows `.at(-1)` — the patterns don't naturally co-occur.
+
+**`delete arr[i]`** — Already unsound for existing property narrowing (`arr[0]` stays narrowed after `delete arr[0]`). Adding `.at()` narrowing doesn't make this worse.
+
+### 16.4 Revised Assessment
+
+With full mutator annotations on all Array methods, the remaining soundness gaps for negative indices are:
+
+1. **Direct element assignment** (`arr[i] = x`) — not caught
+2. **Length property assignment** (`arr.length = N`) — not caught
+3. **`delete`** — not caught (same unsoundness as existing property narrowing)
+4. **Alias mutations** — partially caught by alias escape detection
+
+These are the **same gaps** that already exist for positive index narrowing via `arr[0]` property CFA. The `stable[key]` system with mutator annotations would be **no less sound** than existing `arr[0]` narrowing for positive indices, and **strictly better** for method-based mutations (splice, unshift, etc. would correctly invalidate).
+
+For negative indices specifically, the additional unsoundness from length changes via `arr.length = N` is a real concern. However, the pattern `guard .at(-1) → mutate length → use .at(-1)` is rare in practice.
+
+### 16.5 Updated Recommendation
+
+Given this deeper analysis, the recommendation shifts:
+
+**Option B (allow negative indices, invalidate on mutator calls) is viable** if we accept the same level of unsoundness as existing property narrowing for `arr[0]`. The `direct element assignment` and `length assignment` gaps exist for ALL array narrowing today, not just `.at(-1)`.
+
+However, **Option A (positive-only) remains the safer initial choice** for a shipping implementation. Option B can be enabled as a follow-up after validating the soundness in practice.
+
+## 17. Angular `computed()` dependsOn — Reconfirmed Rejection
+
+### 17.1 Context
+
+Proposal 2 (explicit `dependsOn` declaration on `computed`) was previously rejected in the Angular computed research document. The user asked whether this maps to something concrete in Angular ("soa exactly as in ngextension?").
+
+### 17.2 Angular's Actual Architecture
+
+**`DependsOnSlotContextOpTrait`** — The only `dependsOn` in Angular's codebase is in the compiler IR, and it's about **template rendering slot management** (which DOM slot to `advance()` to), not signal reactive dependencies.
+
+**`linkedSignal()`** — The closest to explicit dependency declaration, with a `source: () => S` parameter. But the source is a runtime function, not a type-level reference. The type system only sees `LinkedSignalGetter<S, D>` — no dependency metadata in the type.
+
+**Angular DevTools** — Angular CAN extract the full dependency graph at runtime via `getSignalGraph()`, walking `ReactiveNode.producers` linked lists. But this is runtime-only, dev-mode-only, and has zero type-level visibility.
+
+**Angular Language Service** — Has no signal dependency tracking. Treats `count()` and `doubled()` as ordinary function calls.
+
+### 17.3 Why Rejection Stands
+
+The `dependsOn` rejection stands for three reasons:
+
+1. **Cross-binding problem**: `stable[key]` tracks narrowing within a single object's properties. `computed()` dependencies are cross-binding (`count` → `doubled`), which `stable[key]` cannot express.
+
+2. **Dynamic dependencies**: `computed(() => cond ? a() : b())` changes deps per-run — impossible to represent statically.
+
+3. **Same result, more complexity**: Blanket invalidation (when any `mutator` is called, invalidate all `stable` narrowings in scope) already handles the `count.set() → doubled invalidated` case correctly, without requiring explicit dependency declarations.
+
+The `dependsOn` pattern adds DX burden and unsoundness risk for zero additional narrowing benefit over conservative blanket invalidation.
+
+## 18. Updated Open Questions
+
+In addition to the open questions from Section 13:
+
+5. Should `arr[i] = x` (direct element assignment) invalidate the corresponding `.at(i)` stable narrowing? This would require detecting that `arr` is the same receiver as the `.at()` callee and that `i` matches the key argument. Currently, element assignments only invalidate element access narrowing (not call-based narrowing).
+
+6. Should we propose a TypeScript checker enhancement for tuple `.at()` precision separately from the `stable[key]` proposal? Having `.at(0)` return `Tuple[0] | undefined` instead of `Tuple[number] | undefined` would be valuable independently.
+
+7. For `ReadonlyArray<T>`, all mutation vectors (methods, element assignment, length assignment) are blocked by the type system. Should `ReadonlyArray.at()` be annotated as `stable[key]` with no corresponding mutators? This would give **completely sound** persistent narrowing.
