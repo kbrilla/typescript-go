@@ -138,13 +138,14 @@ Four declaration-site type modifiers that enable CFA narrowing through function 
 - **Post-call argument narrowing** — after a `mutator invalidates` call, the stable getter is narrowed to the argument's type (e.g., `setCount(20)` narrows `count()` to `number`)
 - **Linked type predicates** — `this.value() is T` syntax for guard methods that narrow stable call results
 
-All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (42 test files) with zero regressions against the existing test baseline.
+All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (46 test files) with zero regressions against the existing test baseline.
 
 **Implementation milestones:**
 - **SYN-4** ✅ — `stable`/`mutator` modifiers on method declarations and method signatures (class methods, interface methods, type literal methods)
 - **SEM-4** ✅ — Super call invalidation: `super.mutator()` correctly invalidates `this.stable()` narrowing in class hierarchies
 - **CBI-1** ✅ — Cross-binding invalidation via named tuple label references: `invalidates read` on a destructured setter targets the sibling `read` accessor, with full post-call narrowing and selective invalidation
 - **SEM-3** ✅ — Interface merging behavior codified: 10-section test documenting how `stable`/`mutator` modifiers behave across merged interfaces, intersections, and interface extension
+- **TYPEREF** ✅ — `mutator TypeRef invalidates <targets>` syntax: wrap existing callable interfaces (like SolidJS's `Setter<T>`) with mutator/invalidates semantics without rewriting signatures
 
 ### Declaration Parity
 - `stable`/`mutator` now supported on ALL function-like declarations:
@@ -370,6 +371,37 @@ if (getValue() !== undefined) {
 }
 ```
 
+### 14. Mutator on Type References (SolidJS Setter Pattern)
+```ts
+// SolidJS's Setter<T> is a complex overloaded callable interface:
+interface Setter<T> {
+    (value: (prev: T) => T): T;
+    (value: Exclude<T, Function> | ((prev: T) => T)): T;
+    (value: T): T;
+}
+
+// With mutator on type reference, you can wrap it directly:
+type Signal<T> = [
+    get: stable () => T,
+    set: mutator Setter<T> invalidates get
+];
+
+declare function createSignal<T>(value: T): Signal<T>;
+
+const [count, setCount] = createSignal<number | undefined>(0);
+if (count() !== undefined) {
+    setCount(42);                    // cross-binding invalidation via TypeRef
+    count().toFixed(2);              // ✅ post-call narrowed to number
+    setCount(undefined);             // invalidates get again
+    count();                         // ✅ narrowed to undefined
+}
+```
+
+This enables SolidJS and similar frameworks to use their existing complex callable interfaces
+directly with `mutator` — no need to rewrite overloaded signatures as inline function types.
+The `mutator TypeRef invalidates <targets>` syntax wraps any type reference with mutator/invalidates
+semantics while preserving the full type identity of the referenced interface.
+
 ---
 
 ## Complete Syntax Reference
@@ -419,6 +451,12 @@ const fetchData = stable async (): Promise<Data | null> => { ... };
 ```ts
 // Function type
 type Setter<T> = mutator (v: T) => void;
+
+// Type reference — wraps an existing callable type with mutator semantics
+type Signal<T> = [
+    get: stable () => T,
+    set: mutator Setter<T> invalidates get  // Setter<T> can be any callable interface
+];
 
 // Method declaration (class)
 class Store<T> {
@@ -472,7 +510,7 @@ interface Writable<T> {
 }
 ```
 
-**Note:** `invalidates` clause is currently only supported on function type syntax, not on method declarations or method signatures. For methods, the mutator resets all stable endpoints on the same receiver.
+**Note:** `invalidates` clause is supported on function type syntax and on `mutator TypeRef` (type reference) syntax. It is not yet supported on method declarations or method signatures. For methods, the mutator resets all stable endpoints on the same receiver.
 
 ### Linked Type Predicates
 
@@ -877,7 +915,7 @@ The current implementation handles direct usage correctly but does not define be
 | **Angular Signals** | `signal<T>()` returns object with `.set()` | ✅ Yes | Receiver-scoped, natural fit |
 | **Preact Signals** | `.value` property + `.peek()` | ✅ Yes | Works for `.peek()` callable getter |
 | **MobX** | Computed/observable with getter methods | ✅ Yes | Receiver-scoped |
-| **SolidJS** | `const [get, set] = createSignal()` | ✅ **Yes** | Cross-binding invalidation via named tuple labels |
+| **SolidJS** | `const [get, set] = createSignal()` | ✅ **Yes** | Cross-binding invalidation via named tuple labels + `mutator TypeRef` for complex Setter interfaces |
 | **Vue `ref()`** | `.value` property access | N/A | Property, not callable — existing narrowing works |
 
 ---
@@ -987,7 +1025,7 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 
 ## Key Test Files
 
-42 test files in `testdata/tests/cases/compiler/`:
+46 test files in `testdata/tests/cases/compiler/`:
 
 **Core narrowing:**
 - `stableModifierNarrowing.ts` — basic stable narrowing and reset
@@ -1042,6 +1080,9 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 - `stableModifierConstrainedOverload.ts` — constrained overload resolution
 - `stableModifierGenericDiscriminant.ts` — generic discriminant narrowing
 - `stableModifierInOperator.ts` — `in` operator narrowing with stable
+
+**Type references:**
+- `stableModifierMutatorTypeReference.ts` — mutator applied to type references (complex callable interfaces like SolidJS Setter)
 
 **Diagnostics and edge cases:**
 - `stableModifierBareParameter.ts` — bare parameter diagnostics

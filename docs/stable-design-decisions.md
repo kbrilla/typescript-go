@@ -56,7 +56,7 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 | **Decision** | `stable` only works on function type expressions, not `MethodDeclaration`. Should `stable getValue(): T {}` be valid? |
 | **Current workaround** | Property syntax: `getValue: stable () => T = () => this._value` |
 | **Recommendation** | Defer to Phase 2+. Requires multi-layer AST changes |
-| **Resolution** | Implemented. `stable` and `mutator` are allowed as modifiers on method declarations and method signatures (class methods, interface methods, type literal methods). `invalidates` clause on methods is also implemented (Phase 6, commit 61ba366a4). |
+| **Resolution** | Implemented. `stable` and `mutator` are allowed as modifiers on method declarations and method signatures (class methods, interface methods, type literal methods). `invalidates` clause on methods is also implemented (Phase 6, commit 61ba366a4). Additionally, `mutator TypeRef invalidates <targets>` syntax on type references is now supported (see SYN-7). |
 | **Source** | [stable-pr-proposal.md §11](stable-pr-proposal.md) |
 
 ### SYN-5: `stable` on interface call signatures
@@ -79,6 +79,18 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 | **Analysis** | ~5% real-world need. Inclusive `invalidates` covers 95%+ |
 | **Recommendation** | Defer to Phase 3+. Re-evaluate based on real-world adoption data |
 | **Source** | [stable-phase8-proposal.md §5](stable-phase8-proposal.md) |
+
+### SYN-7: `mutator TypeRef invalidates <targets>` AST representation
+
+| Aspect | Detail |
+|--------|--------|
+| **Status** | DECIDED |
+| **Phase Impact** | Current (implemented) |
+| **Decision** | How should `mutator TypeRef invalidates <targets>` be represented in the AST? Create a new `KindMutatorType` node, or reuse the existing `FunctionTypeNode` with a `WrappedType` field? |
+| **Options** | 1. New `KindMutatorType` AST node kind — requires ~19 registration points across 12+ files  2. Reuse `FunctionTypeNode` with `WrappedType` field — simpler, leverages existing modifier/invalidates infrastructure |
+| **Recommendation** | Reuse `FunctionTypeNode` with `WrappedType` field |
+| **Resolution** | Implemented. `FunctionTypeNode` is reused with a `WrappedType` field rather than creating a new AST node kind. The type resolution simply returns the wrapped type since `mutator`/`invalidates` are CFA annotations, not type-level modifications. This avoids the complexity of registering a new node kind across the codebase while fully supporting `mutator TypeRef invalidates <targets>` syntax on type references. |
+| **Source** | SYN-4 (extension) |
 
 ---
 
@@ -318,8 +330,8 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 |--------|-------|-----|
 | **OPEN** | 12 | SYN-1, SYN-3, SEM-2, SEM-5, SEM-6, SEM-7, CBI-4, CBI-5, ADO-1, ADO-2, ADO-3, ADO-4 |
 | **RECOMMENDED** | 0 | — |
-| **DEFERRED** | 8 | SYN-2, SYN-4, SYN-5, SYN-6, SEM-1, SEM-8, LP-2, LP-3 |
-| **DECIDED** | 6 | CBI-1, SEM-3, SEM-4, CBI-2, CBI-3, LP-1 |
+| **DEFERRED** | 7 | SYN-2, SYN-5, SYN-6, SEM-1, SEM-8, LP-2, LP-3 |
+| **DECIDED** | 8 | SYN-4, SYN-7, CBI-1, SEM-3, SEM-4, CBI-2, CBI-3, LP-1 |
 
 ### By Phase Impact
 
