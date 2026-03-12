@@ -5882,8 +5882,9 @@ type MethodSignatureDeclaration struct {
 	FunctionLikeBase
 	TypeElementBase
 	typeSyntaxBase
-	KeyParameter *Node     // Optional: identifier from stable[key] or mutator[key] bracket syntax
-	LinksClause  *NodeList // Optional: stable endpoint names for mutator invalidates clause
+	KeyParameter             *Node     // Optional: identifier from stable[key] or mutator[key] bracket syntax
+	LinksClause              *NodeList // Optional: stable endpoint names for mutator invalidates clause
+	LinksClauseKeyParamNames []string  // Parallel to LinksClause.Nodes: param name for per-key targets, "" for unkeyed
 }
 
 func (f *NodeFactory) NewMethodSignatureDeclaration(modifiers *ModifierList, name *PropertyName, postfixToken *TokenNode, typeParameters *NodeList, parameters *NodeList, returnType *TypeNode) *Node {
@@ -5919,6 +5920,7 @@ func (node *MethodSignatureDeclaration) Clone(f NodeFactoryCoercible) *Node {
 		result.AsMethodSignatureDeclaration().LinksClause = node.LinksClause
 	}
 	result.AsMethodSignatureDeclaration().KeyParameter = node.KeyParameter
+	result.AsMethodSignatureDeclaration().LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
 	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
@@ -5936,8 +5938,9 @@ type MethodDeclaration struct {
 	ClassElementBase
 	ObjectLiteralElementBase
 	compositeNodeBase
-	KeyParameter *Node     // Optional: identifier from stable[key] or mutator[key] bracket syntax
-	LinksClause  *NodeList // Optional: stable endpoint names for mutator invalidates clause
+	KeyParameter             *Node     // Optional: identifier from stable[key] or mutator[key] bracket syntax
+	LinksClause              *NodeList // Optional: stable endpoint names for mutator invalidates clause
+	LinksClauseKeyParamNames []string  // Parallel to LinksClause.Nodes: param name for per-key targets, "" for unkeyed
 }
 
 func (f *NodeFactory) NewMethodDeclaration(modifiers *ModifierList, asteriskToken *TokenNode, name *PropertyName, postfixToken *TokenNode, typeParameters *NodeList, parameters *NodeList, returnType *TypeNode, fullSignature *TypeNode, body *BlockNode) *Node {
@@ -5976,6 +5979,7 @@ func (node *MethodDeclaration) Clone(f NodeFactoryCoercible) *Node {
 		result.AsMethodDeclaration().LinksClause = node.LinksClause
 	}
 	result.AsMethodDeclaration().KeyParameter = node.KeyParameter
+	result.AsMethodDeclaration().LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
 	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
@@ -8783,7 +8787,8 @@ type FunctionOrConstructorTypeNodeBase struct {
 	DeclarationBase
 	ModifiersBase
 	FunctionLikeBase
-	LinksClause *NodeList // Optional: stable endpoint names for mutator invalidates clause
+	LinksClause              *NodeList // Optional: stable endpoint names for mutator invalidates clause
+	LinksClauseKeyParamNames []string  // Parallel to LinksClause.Nodes: param name for per-key targets, "" for unkeyed
 }
 
 func (node *FunctionOrConstructorTypeNodeBase) ForEachChild(v Visitor) bool {
@@ -8827,6 +8832,7 @@ func (node *FunctionTypeNode) Clone(f NodeFactoryCoercible) *Node {
 		result.AsFunctionTypeNode().LinksClause = node.LinksClause
 	}
 	result.AsFunctionTypeNode().KeyParameter = node.KeyParameter
+	result.AsFunctionTypeNode().LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
 	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
@@ -8865,6 +8871,7 @@ func (node *ConstructorTypeNode) Clone(f NodeFactoryCoercible) *Node {
 	if node.LinksClause != nil {
 		result.AsConstructorTypeNode().LinksClause = node.LinksClause
 	}
+	result.AsConstructorTypeNode().LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
 	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 

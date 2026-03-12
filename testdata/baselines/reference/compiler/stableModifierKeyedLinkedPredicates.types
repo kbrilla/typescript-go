@@ -10,17 +10,15 @@ interface TypedMap<K, V> {
 >key : K
 >key : any
 
-    mutator[key] set(key: K, value: V): void invalidates get[key];
+    mutator set(key: K, value: V): void invalidates get[key];
 >set : (key: K, value: V) => void
 >key : K
 >value : V
->key : any
 >get : any
 
-    mutator[key] delete(key: K): boolean invalidates get[key];
+    mutator delete(key: K): boolean invalidates get[key];
 >delete : (key: K) => boolean
 >key : K
->key : any
 >get : any
 
     mutator clear(): void;  // unkeyed → invalidates ALL
@@ -215,7 +213,7 @@ interface FuncMap<K, V> {
 >get : (key: K) => V | undefined
 >key : K
 
-    set: mutator[key] (key: K, value: V) => void invalidates get[key];
+    set: mutator (key: K, value: V) => void invalidates get[key];
 >set : (key: K, value: V) => void
 >key : K
 >value : V
@@ -256,5 +254,117 @@ if (fmap.get("z") !== undefined) {
 >fmap : FuncMap<string, number>
 >get : (key: string) => number | undefined
 >"z" : "z"
+}
+
+// === 6. Multi-stable per-key invalidation — explicit control ===
+interface MultiStore {
+    stable[key] getA(key: string): number | undefined;
+>getA : (key: string) => number | undefined
+>key : string
+>key : any
+
+    stable[key] getB(key: string): number | undefined;
+>getB : (key: string) => number | undefined
+>key : string
+>key : any
+
+    mutator setA(key: string, value: number): void invalidates getA[key];
+>setA : (key: string, value: number) => void
+>key : string
+>value : number
+>getA : any
+
+    mutator setAll(key: string): void invalidates getA[key], getB[key];
+>setAll : (key: string) => void
+>key : string
+>getA : any
+>getB : any
+
+    mutator reset(): void invalidates getA, getB;  // unkeyed → all keys
+>reset : () => void
+>getA : any
+>getB : any
+}
+
+declare const ms: MultiStore;
+>ms : MultiStore
+
+if (ms.getA("x") !== undefined && ms.getB("x") !== undefined && ms.getA("y") !== undefined) {
+>ms.getA("x") !== undefined && ms.getB("x") !== undefined && ms.getA("y") !== undefined : boolean
+>ms.getA("x") !== undefined && ms.getB("x") !== undefined : boolean
+>ms.getA("x") !== undefined : boolean
+>ms.getA("x") : number | undefined
+>ms.getA : (key: string) => number | undefined
+>ms : MultiStore
+>getA : (key: string) => number | undefined
+>"x" : "x"
+>undefined : undefined
+>ms.getB("x") !== undefined : boolean
+>ms.getB("x") : number | undefined
+>ms.getB : (key: string) => number | undefined
+>ms : MultiStore
+>getB : (key: string) => number | undefined
+>"x" : "x"
+>undefined : undefined
+>ms.getA("y") !== undefined : boolean
+>ms.getA("y") : number | undefined
+>ms.getA : (key: string) => number | undefined
+>ms : MultiStore
+>getA : (key: string) => number | undefined
+>"y" : "y"
+>undefined : undefined
+
+    ms.setA("x", 42);          // only invalidates getA("x"), NOT getB("x") or getA("y")
+>ms.setA("x", 42) : void
+>ms.setA : (key: string, value: number) => void
+>ms : MultiStore
+>setA : (key: string, value: number) => void
+>"x" : "x"
+>42 : 42
+
+    const msb: number = ms.getB("x");    // still narrowed
+>msb : number
+>ms.getB("x") : number | undefined
+>ms.getB : (key: string) => number | undefined
+>ms : MultiStore
+>getB : (key: string) => number | undefined
+>"x" : "x"
+
+    const msa: number = ms.getA("y");    // still narrowed (different key)
+>msa : number
+>ms.getA("y") : number | undefined
+>ms.getA : (key: string) => number | undefined
+>ms : MultiStore
+>getA : (key: string) => number | undefined
+>"y" : "y"
+
+    ms.setAll("y");            // invalidates getA("y") AND getB("y")
+>ms.setAll("y") : void
+>ms.setAll : (key: string) => void
+>ms : MultiStore
+>setAll : (key: string) => void
+>"y" : "y"
+
+    const msa2 = ms.getA("x");           // number | undefined — already invalidated by setA("x") above
+>msa2 : number | undefined
+>ms.getA("x") : number | undefined
+>ms.getA : (key: string) => number | undefined
+>ms : MultiStore
+>getA : (key: string) => number | undefined
+>"x" : "x"
+
+    ms.reset();                // invalidates ALL keys of both getA and getB
+>ms.reset() : void
+>ms.reset : () => void
+>ms : MultiStore
+>reset : () => void
+
+    const msa3 = ms.getA("x");           // number | undefined — should error if assigned to number
+>msa3 : number | undefined
+>ms.getA("x") : number | undefined
+>ms.getA : (key: string) => number | undefined
+>ms : MultiStore
+>getA : (key: string) => number | undefined
+>"x" : "x"
 }
 

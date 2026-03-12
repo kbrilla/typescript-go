@@ -916,6 +916,17 @@ func (c *Checker) isMatchingKeyArgument(source *ast.Node, target *ast.Node) bool
 	return false
 }
 
+// findParamIndexByName returns the index of the parameter with the given name
+// in the signature's parameter list, or -1 if not found.
+func (c *Checker) findParamIndexByName(signature *Signature, paramName string) int {
+	for i, param := range signature.parameters {
+		if param.Name == paramName {
+			return i
+		}
+	}
+	return -1
+}
+
 // isMutatorCallBoundary checks if the boundary is a mutator call on the same
 // receiver as the stable reference. If the mutator has an invalidates clause, only
 // invalidates if the reference endpoint is among the linked targets.
@@ -952,29 +963,34 @@ func (c *Checker) isMutatorCallBoundary(reference *ast.Node, boundary *ast.Node)
 		return false
 	}
 
-	// Per-key invalidation: if both the mutator and stable reference have keyed parameters,
-	// only invalidate when the key arguments match.
-	if c.signatureHasKeyParameter(signature) && len(reference.Arguments()) > 0 && len(boundary.Arguments()) > 0 {
-		if !c.isMatchingKeyArgument(reference.Arguments()[0], boundary.Arguments()[0]) {
-			return false // Different key — don't invalidate this stable reference
-		}
-	}
-
 	// Same receiver, it's a mutator call. Check invalidates clause for selective invalidation.
 	if declaration := signature.declaration; declaration != nil {
 		var linksClause *ast.NodeList
+		var keyParamNames []string
 		if ast.IsFunctionTypeNode(declaration) {
 			linksClause = declaration.AsFunctionTypeNode().LinksClause
+			keyParamNames = declaration.AsFunctionTypeNode().LinksClauseKeyParamNames
 		} else if ast.IsMethodDeclaration(declaration) {
 			linksClause = declaration.AsMethodDeclaration().LinksClause
+			keyParamNames = declaration.AsMethodDeclaration().LinksClauseKeyParamNames
 		} else if ast.IsMethodSignatureDeclaration(declaration) {
 			linksClause = declaration.AsMethodSignatureDeclaration().LinksClause
+			keyParamNames = declaration.AsMethodSignatureDeclaration().LinksClauseKeyParamNames
 		}
 		if linksClause != nil && len(linksClause.Nodes) > 0 {
 			// Invalidates clause exists — only invalidate if reference endpoint is linked
-			for _, link := range linksClause.Nodes {
+			for i, link := range linksClause.Nodes {
 				if ast.IsIdentifier(link) && link.Text() == refName {
-					return true // Linked endpoint — invalidate
+					// Check for per-key invalidation
+					if i < len(keyParamNames) && keyParamNames[i] != "" {
+						// Per-key: resolve param name to argument index and compare
+						paramIndex := c.findParamIndexByName(signature, keyParamNames[i])
+						if paramIndex >= 0 && len(reference.Arguments()) > 0 && paramIndex < len(boundary.Arguments()) {
+							return c.isMatchingKeyArgument(reference.Arguments()[0], boundary.Arguments()[paramIndex])
+						}
+						return true // can't resolve — conservatively invalidate
+					}
+					return true // Unkeyed target — always invalidate
 				}
 			}
 			return false // NOT a linked endpoint — preserve narrowing

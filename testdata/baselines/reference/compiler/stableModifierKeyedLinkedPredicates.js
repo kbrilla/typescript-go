@@ -6,8 +6,8 @@
 // === 1. Basic per-key stable with literal keys ===
 interface TypedMap<K, V> {
     stable[key] get(key: K): V | undefined;
-    mutator[key] set(key: K, value: V): void invalidates get[key];
-    mutator[key] delete(key: K): boolean invalidates get[key];
+    mutator set(key: K, value: V): void invalidates get[key];
+    mutator delete(key: K): boolean invalidates get[key];
     mutator clear(): void;  // unkeyed → invalidates ALL
 }
 
@@ -52,7 +52,7 @@ if (map.get("x") !== undefined && map.get("y") !== undefined) {
 // === 5. Function type syntax with keyed stable ===
 interface FuncMap<K, V> {
     get: stable[key] (key: K) => V | undefined;
-    set: mutator[key] (key: K, value: V) => void invalidates get[key];
+    set: mutator (key: K, value: V) => void invalidates get[key];
 }
 
 declare const fmap: FuncMap<string, number>;
@@ -60,6 +60,28 @@ if (fmap.get("z") !== undefined) {
     const j: number = fmap.get("z");      // narrowed
     fmap.set("w", 5);                     // different key
     const k: number = fmap.get("z");      // still narrowed
+}
+
+// === 6. Multi-stable per-key invalidation — explicit control ===
+interface MultiStore {
+    stable[key] getA(key: string): number | undefined;
+    stable[key] getB(key: string): number | undefined;
+    mutator setA(key: string, value: number): void invalidates getA[key];
+    mutator setAll(key: string): void invalidates getA[key], getB[key];
+    mutator reset(): void invalidates getA, getB;  // unkeyed → all keys
+}
+
+declare const ms: MultiStore;
+if (ms.getA("x") !== undefined && ms.getB("x") !== undefined && ms.getA("y") !== undefined) {
+    ms.setA("x", 42);          // only invalidates getA("x"), NOT getB("x") or getA("y")
+    const msb: number = ms.getB("x");    // still narrowed
+    const msa: number = ms.getA("y");    // still narrowed (different key)
+
+    ms.setAll("y");            // invalidates getA("y") AND getB("y")
+    const msa2 = ms.getA("x");           // number | undefined — already invalidated by setA("x") above
+
+    ms.reset();                // invalidates ALL keys of both getA and getB
+    const msa3 = ms.getA("x");           // number | undefined — should error if assigned to number
 }
 
 
@@ -96,4 +118,13 @@ if (fmap.get("z") !== undefined) {
     const j = fmap.get("z"); // narrowed
     fmap.set("w", 5); // different key
     const k = fmap.get("z"); // still narrowed
+}
+if (ms.getA("x") !== undefined && ms.getB("x") !== undefined && ms.getA("y") !== undefined) {
+    ms.setA("x", 42); // only invalidates getA("x"), NOT getB("x") or getA("y")
+    const msb = ms.getB("x"); // still narrowed
+    const msa = ms.getA("y"); // still narrowed (different key)
+    ms.setAll("y"); // invalidates getA("y") AND getB("y")
+    const msa2 = ms.getA("x"); // number | undefined — already invalidated by setA("x") above
+    ms.reset(); // invalidates ALL keys of both getA and getB
+    const msa3 = ms.getA("x"); // number | undefined — should error if assigned to number
 }

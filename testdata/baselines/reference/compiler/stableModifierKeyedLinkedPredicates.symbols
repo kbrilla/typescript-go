@@ -15,20 +15,20 @@ interface TypedMap<K, V> {
 >K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 19))
 >V : Symbol(V, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 21))
 
-    mutator[key] set(key: K, value: V): void invalidates get[key];
+    mutator set(key: K, value: V): void invalidates get[key];
 >set : Symbol(TypedMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 4, 43))
->key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 21))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 16))
 >K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 19))
->value : Symbol(value, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 28))
+>value : Symbol(value, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 23))
 >V : Symbol(V, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 21))
 
-    mutator[key] delete(key: K): boolean invalidates get[key];
->delete : Symbol(TypedMap.delete, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 66))
->key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 24))
+    mutator delete(key: K): boolean invalidates get[key];
+>delete : Symbol(TypedMap.delete, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 61))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 19))
 >K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 19))
 
     mutator clear(): void;  // unkeyed → invalidates ALL
->clear : Symbol(TypedMap.clear, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 62))
+>clear : Symbol(TypedMap.clear, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 57))
 }
 
 declare const map: TypedMap<string, number>;
@@ -77,9 +77,9 @@ if (map.get("x") !== undefined) {
 >get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
 
     map.clear();                          // invalidates ALL keys
->map.clear : Symbol(TypedMap.clear, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 62))
+>map.clear : Symbol(TypedMap.clear, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 57))
 >map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
->clear : Symbol(TypedMap.clear, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 62))
+>clear : Symbol(TypedMap.clear, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 57))
 
     map.get("x");                         // number | undefined
 >map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
@@ -153,9 +153,9 @@ if (map.get("x") !== undefined && map.get("y") !== undefined) {
 >undefined : Symbol(undefined)
 
     map.delete("y");                      // invalidates get("y") only
->map.delete : Symbol(TypedMap.delete, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 66))
+>map.delete : Symbol(TypedMap.delete, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 61))
 >map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
->delete : Symbol(TypedMap.delete, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 66))
+>delete : Symbol(TypedMap.delete, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 61))
 
     const i: number = map.get("x");       // still narrowed
 >i : Symbol(i, Decl(stableModifierKeyedLinkedPredicates.ts, 45, 9))
@@ -176,11 +176,11 @@ interface FuncMap<K, V> {
 >K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 18))
 >V : Symbol(V, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 20))
 
-    set: mutator[key] (key: K, value: V) => void invalidates get[key];
+    set: mutator (key: K, value: V) => void invalidates get[key];
 >set : Symbol(FuncMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 50, 47))
->key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 51, 23))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 51, 18))
 >K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 18))
->value : Symbol(value, Decl(stableModifierKeyedLinkedPredicates.ts, 51, 30))
+>value : Symbol(value, Decl(stableModifierKeyedLinkedPredicates.ts, 51, 25))
 >V : Symbol(V, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 20))
 }
 
@@ -210,5 +210,88 @@ if (fmap.get("z") !== undefined) {
 >fmap.get : Symbol(FuncMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 25))
 >fmap : Symbol(fmap, Decl(stableModifierKeyedLinkedPredicates.ts, 54, 13))
 >get : Symbol(FuncMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 25))
+}
+
+// === 6. Multi-stable per-key invalidation — explicit control ===
+interface MultiStore {
+>MultiStore : Symbol(MultiStore, Decl(stableModifierKeyedLinkedPredicates.ts, 59, 1))
+
+    stable[key] getA(key: string): number | undefined;
+>getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 63, 21))
+
+    stable[key] getB(key: string): number | undefined;
+>getB : Symbol(MultiStore.getB, Decl(stableModifierKeyedLinkedPredicates.ts, 63, 54))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 64, 21))
+
+    mutator setA(key: string, value: number): void invalidates getA[key];
+>setA : Symbol(MultiStore.setA, Decl(stableModifierKeyedLinkedPredicates.ts, 64, 54))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 65, 17))
+>value : Symbol(value, Decl(stableModifierKeyedLinkedPredicates.ts, 65, 29))
+
+    mutator setAll(key: string): void invalidates getA[key], getB[key];
+>setAll : Symbol(MultiStore.setAll, Decl(stableModifierKeyedLinkedPredicates.ts, 65, 73))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 66, 19))
+
+    mutator reset(): void invalidates getA, getB;  // unkeyed → all keys
+>reset : Symbol(MultiStore.reset, Decl(stableModifierKeyedLinkedPredicates.ts, 66, 71))
+}
+
+declare const ms: MultiStore;
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>MultiStore : Symbol(MultiStore, Decl(stableModifierKeyedLinkedPredicates.ts, 59, 1))
+
+if (ms.getA("x") !== undefined && ms.getB("x") !== undefined && ms.getA("y") !== undefined) {
+>ms.getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
+>undefined : Symbol(undefined)
+>ms.getB : Symbol(MultiStore.getB, Decl(stableModifierKeyedLinkedPredicates.ts, 63, 54))
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>getB : Symbol(MultiStore.getB, Decl(stableModifierKeyedLinkedPredicates.ts, 63, 54))
+>undefined : Symbol(undefined)
+>ms.getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
+>undefined : Symbol(undefined)
+
+    ms.setA("x", 42);          // only invalidates getA("x"), NOT getB("x") or getA("y")
+>ms.setA : Symbol(MultiStore.setA, Decl(stableModifierKeyedLinkedPredicates.ts, 64, 54))
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>setA : Symbol(MultiStore.setA, Decl(stableModifierKeyedLinkedPredicates.ts, 64, 54))
+
+    const msb: number = ms.getB("x");    // still narrowed
+>msb : Symbol(msb, Decl(stableModifierKeyedLinkedPredicates.ts, 73, 9))
+>ms.getB : Symbol(MultiStore.getB, Decl(stableModifierKeyedLinkedPredicates.ts, 63, 54))
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>getB : Symbol(MultiStore.getB, Decl(stableModifierKeyedLinkedPredicates.ts, 63, 54))
+
+    const msa: number = ms.getA("y");    // still narrowed (different key)
+>msa : Symbol(msa, Decl(stableModifierKeyedLinkedPredicates.ts, 74, 9))
+>ms.getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
+
+    ms.setAll("y");            // invalidates getA("y") AND getB("y")
+>ms.setAll : Symbol(MultiStore.setAll, Decl(stableModifierKeyedLinkedPredicates.ts, 65, 73))
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>setAll : Symbol(MultiStore.setAll, Decl(stableModifierKeyedLinkedPredicates.ts, 65, 73))
+
+    const msa2 = ms.getA("x");           // number | undefined — already invalidated by setA("x") above
+>msa2 : Symbol(msa2, Decl(stableModifierKeyedLinkedPredicates.ts, 77, 9))
+>ms.getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
+
+    ms.reset();                // invalidates ALL keys of both getA and getB
+>ms.reset : Symbol(MultiStore.reset, Decl(stableModifierKeyedLinkedPredicates.ts, 66, 71))
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>reset : Symbol(MultiStore.reset, Decl(stableModifierKeyedLinkedPredicates.ts, 66, 71))
+
+    const msa3 = ms.getA("x");           // number | undefined — should error if assigned to number
+>msa3 : Symbol(msa3, Decl(stableModifierKeyedLinkedPredicates.ts, 80, 9))
+>ms.getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
+>ms : Symbol(ms, Decl(stableModifierKeyedLinkedPredicates.ts, 70, 13))
+>getA : Symbol(MultiStore.getA, Decl(stableModifierKeyedLinkedPredicates.ts, 62, 22))
 }
 
