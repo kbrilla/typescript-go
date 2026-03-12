@@ -88,6 +88,44 @@ if (resource.hasValue()) {
 }
 ```
 
+### Method Declaration Syntax (NEW — SYN-4)
+
+`stable` and `mutator` now work as method modifiers on method declarations and method signatures — not just function type annotations. This enables natural usage in classes, interfaces, and type literals:
+
+```ts
+// stable/mutator as method modifiers (class declarations)
+class Store<T> {
+    stable get(): T { return this._value; }
+    mutator set(value: T): void { this._value = value; }
+    mutator reset(): void { this._value = undefined as any; }
+}
+
+// Also works on interfaces and type literals
+interface ReadableStore<T> {
+    stable get(): T;
+}
+
+interface WritableStore<T> extends ReadableStore<T> {
+    mutator set(value: T): void;
+    mutator reset(): void;
+}
+```
+
+### Super Call Invalidation (NEW — SEM-4)
+
+In class hierarchies, `super.mutator()` correctly invalidates `this.stable()` narrowing. Since `super` and `this` refer to the same object instance, a super call to a mutator method must reset narrowing:
+
+```ts
+class Derived extends Base {
+    test(): void {
+        if (this.get() !== undefined) {
+            super.reset(); // ✅ super.mutator() invalidates this.stable()
+            this.get();    // back to T | undefined
+        }
+    }
+}
+```
+
 ---
 
 ## What This PR Implements
@@ -99,7 +137,11 @@ Four declaration-site type modifiers that enable CFA narrowing through function 
 - **`invalidates`** — refines `mutator` to target specific stable endpoints
 - **Linked type predicates** — `this.value() is T` syntax for guard methods that narrow stable call results
 
-All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (37 test files) with zero regressions against the existing test baseline.
+All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (39 test files) with zero regressions against the existing test baseline.
+
+**Implementation milestones:**
+- **SYN-4** ✅ — `stable`/`mutator` modifiers on method declarations and method signatures (class methods, interface methods, type literal methods)
+- **SEM-4** ✅ — Super call invalidation: `super.mutator()` correctly invalidates `this.stable()` narrowing in class hierarchies
 
 ---
 
@@ -286,6 +328,10 @@ The following are explicitly **not** part of this proposal but are documented as
 **Linked predicates:**
 - `stableModifierLinkedPredicates.ts` — `this.value() is T` linked type predicates
 - `stableModifierAssertionGuards.ts` — assertion-style guards
+
+**Method declarations and super calls:**
+- `stableModifierMethodDeclarations.ts` — stable/mutator on method declarations and method signatures
+- `stableModifierSuperCalls.ts` — super call invalidation in class hierarchies
 
 **Edge cases:**
 - `stableModifierClosures.ts` — closure capture behavior

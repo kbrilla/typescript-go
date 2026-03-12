@@ -51,11 +51,12 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 
 | Aspect | Detail |
 |--------|--------|
-| **Status** | DEFERRED |
+| **Status** | DECIDED |
 | **Phase Impact** | Phase 2+ |
 | **Decision** | `stable` only works on function type expressions, not `MethodDeclaration`. Should `stable getValue(): T {}` be valid? |
 | **Current workaround** | Property syntax: `getValue: stable () => T = () => this._value` |
 | **Recommendation** | Defer to Phase 2+. Requires multi-layer AST changes |
+| **Resolution** | Implemented. `stable` and `mutator` are allowed as modifiers on method declarations and method signatures (class methods, interface methods, type literal methods). `invalidates` clause on methods is deferred to a later phase. |
 | **Source** | [stable-pr-proposal.md §11](stable-pr-proposal.md) |
 
 ### SYN-5: `stable` on interface call signatures
@@ -118,10 +119,11 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 
 | Aspect | Detail |
 |--------|--------|
-| **Status** | RECOMMENDED |
+| **Status** | DECIDED |
 | **Phase Impact** | Medium (hierarchy correctness) |
 | **Decision** | Should `super.set(0)` invalidate `this.get()` narrowing? |
 | **Recommendation** | Yes — same receiver. Implementation requires receiver normalization in `isMutatorCallBoundary` |
+| **Resolution** | Implemented. `super` is normalized to `this` in `isMutatorCallBoundary`, so `super.mutator()` correctly invalidates `this.stable()` narrowing. |
 | **Source** | [stable-pr-proposal.md §17 Q9](stable-pr-proposal.md), [stable-phase8-proposal.md §6 Rule H4](stable-phase8-proposal.md) |
 
 ### SEM-5: `--strictStable` compiler flag
