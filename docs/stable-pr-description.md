@@ -419,15 +419,15 @@ interface Foo {
 
 > **Status: Already implemented** (commit 18f9a1590).
 
-Guard methods that narrow stable endpoints with per-key parameter correlation. Uses `stable[key]`/`mutator[key]` bracket notation to scope narrowing to specific key arguments, and `invalidates get[key]` for per-key invalidation (vs `invalidates get` which invalidates ALL keys):
+Guard methods that narrow stable endpoints with per-key parameter correlation. Uses `stable[key]` bracket notation on stable declarations to scope return stability to specific key arguments, and `invalidates get[key]` on mutators for per-key invalidation (vs `invalidates get` which invalidates ALL keys). The `[key]` bracket does NOT appear on `mutator` — per-key invalidation is expressed solely via the `invalidates` clause:
 
 ```ts
 interface TypedMap<K, V> {
     stable[key] get(key: K): V | undefined;
     has<K2 extends K>(key: K2): this.get(key) is V;
-    mutator[key] set(key: K, value: V): this invalidates get[key], has[key];
-    mutator[key] delete(key: K): boolean invalidates get[key], has[key];
-    mutator clear(): void invalidates get, has;  // no key — invalidates ALL
+    mutator set(key: K, value: V): void invalidates get[key];
+    mutator delete(key: K): boolean invalidates get[key];
+    mutator clear(): void;  // unkeyed → invalidates ALL
 }
 
 declare const map: TypedMap<string, number>;
@@ -499,9 +499,9 @@ Built-in types annotated with `stable`/`mutator`:
 interface Map<K, V> {
     stable[key] get(key: K): V | undefined;
     stable[key] has(key: K): boolean;
-    mutator[key] set(key: K, value: V): this invalidates get[key], has[key];
-    mutator[key] delete(key: K): boolean invalidates get[key], has[key];
-    mutator clear(): void invalidates get, has;  // no key — invalidates ALL
+    mutator set(key: K, value: V): void invalidates get[key], has[key];
+    mutator delete(key: K): boolean invalidates get[key], has[key];
+    mutator clear(): void;  // unkeyed → invalidates ALL
 }
 
 // WeakRef
