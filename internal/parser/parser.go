@@ -1868,9 +1868,9 @@ func (p *Parser) nextTokenIsOpenParen() bool {
 }
 
 func (p *Parser) parsePropertyOrMethodDeclaration(pos int, jsdoc jsdocScannerInfo, modifiers *ast.ModifierList) *ast.Node {
-	// Parse optional [key] bracket syntax after stable modifier
+	// Parse optional [key] bracket syntax after stable or mutator modifier
 	var keyParameter *ast.Node
-	if p.hasStableModifier(modifiers) && p.token == ast.KindOpenBracketToken {
+	if (p.hasStableModifier(modifiers) || p.hasMutatorModifier(modifiers)) && p.token == ast.KindOpenBracketToken {
 		keyParameter = p.parseKeyParameterBinding()
 	}
 	asteriskToken := p.parseOptionalToken(ast.KindAsteriskToken)
@@ -3566,9 +3566,9 @@ func (p *Parser) parseIndexSignatureDeclaration(pos int, jsdoc jsdocScannerInfo,
 }
 
 func (p *Parser) parsePropertyOrMethodSignature(pos int, jsdoc jsdocScannerInfo, modifiers *ast.ModifierList) *ast.Node {
-	// Parse optional [key] bracket syntax after stable modifier
+	// Parse optional [key] bracket syntax after stable or mutator modifier
 	var keyParameter *ast.Node
-	if p.hasStableModifier(modifiers) && p.token == ast.KindOpenBracketToken {
+	if (p.hasStableModifier(modifiers) || p.hasMutatorModifier(modifiers)) && p.token == ast.KindOpenBracketToken {
 		keyParameter = p.parseKeyParameterBinding()
 	}
 	name := p.parsePropertyName()
@@ -3793,9 +3793,9 @@ func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 	pos := p.nodePos()
 	jsdoc := p.jsdocScannerInfo()
 	modifiers := p.parseModifiersForFunctionOrConstructorType()
-	// Parse optional [key] bracket syntax after stable modifier
+	// Parse optional [key] bracket syntax after stable or mutator modifier
 	var keyParameter *ast.Node
-	if p.hasStableModifier(modifiers) && p.token == ast.KindOpenBracketToken {
+	if (p.hasStableModifier(modifiers) || p.hasMutatorModifier(modifiers)) && p.token == ast.KindOpenBracketToken {
 		keyParameter = p.parseKeyParameterBinding()
 	}
 	// Check for mutator wrapping a type reference: mutator Setter<T> invalidates get

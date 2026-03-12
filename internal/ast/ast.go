@@ -5911,7 +5911,14 @@ func (node *MethodSignatureDeclaration) ForEachChild(v Visitor) bool {
 }
 
 func (node *MethodSignatureDeclaration) VisitEachChild(v *NodeVisitor) *Node {
-	return v.Factory.UpdateMethodSignatureDeclaration(node, v.visitModifiers(node.modifiers), v.visitNode(node.name), v.visitToken(node.PostfixToken), v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
+	result := v.Factory.UpdateMethodSignatureDeclaration(node, v.visitModifiers(node.modifiers), v.visitNode(node.name), v.visitToken(node.PostfixToken), v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
+	if result != node.AsNode() {
+		resultNode := result.AsMethodSignatureDeclaration()
+		resultNode.KeyParameter = node.KeyParameter
+		resultNode.LinksClause = node.LinksClause
+		resultNode.LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
+	}
+	return result
 }
 
 func (node *MethodSignatureDeclaration) Clone(f NodeFactoryCoercible) *Node {
@@ -5970,7 +5977,14 @@ func (node *MethodDeclaration) ForEachChild(v Visitor) bool {
 }
 
 func (node *MethodDeclaration) VisitEachChild(v *NodeVisitor) *Node {
-	return v.Factory.UpdateMethodDeclaration(node, v.visitModifiers(node.modifiers), v.visitToken(node.AsteriskToken), v.visitNode(node.name), v.visitToken(node.PostfixToken), v.visitNodes(node.TypeParameters), v.visitParameters(node.Parameters), v.visitNode(node.Type), v.visitNode(node.FullSignature), v.visitFunctionBody(node.Body))
+	result := v.Factory.UpdateMethodDeclaration(node, v.visitModifiers(node.modifiers), v.visitToken(node.AsteriskToken), v.visitNode(node.name), v.visitToken(node.PostfixToken), v.visitNodes(node.TypeParameters), v.visitParameters(node.Parameters), v.visitNode(node.Type), v.visitNode(node.FullSignature), v.visitFunctionBody(node.Body))
+	if result != node.AsNode() {
+		resultNode := result.AsMethodDeclaration()
+		resultNode.KeyParameter = node.KeyParameter
+		resultNode.LinksClause = node.LinksClause
+		resultNode.LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
+	}
+	return result
 }
 
 func (node *MethodDeclaration) Clone(f NodeFactoryCoercible) *Node {
@@ -8824,7 +8838,15 @@ func (node *FunctionTypeNode) ForEachChild(v Visitor) bool {
 }
 
 func (node *FunctionTypeNode) VisitEachChild(v *NodeVisitor) *Node {
-	return v.Factory.UpdateFunctionTypeNode(node, v.visitModifiers(node.Modifiers()), v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
+	result := v.Factory.UpdateFunctionTypeNode(node, v.visitModifiers(node.Modifiers()), v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
+	if result != node.AsNode() {
+		resultFn := result.AsFunctionTypeNode()
+		resultFn.KeyParameter = node.KeyParameter
+		resultFn.WrappedType = node.WrappedType
+		resultFn.LinksClause = node.LinksClause
+		resultFn.LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
+	}
+	return result
 }
 
 func (node *FunctionTypeNode) Clone(f NodeFactoryCoercible) *Node {

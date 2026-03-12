@@ -669,13 +669,25 @@ func (tx *DeclarationTransformer) transformConstructorTypeNode(input *ast.Constr
 }
 
 func (tx *DeclarationTransformer) transformFunctionTypeNode(input *ast.FunctionTypeNode) *ast.Node {
-	return tx.Factory().UpdateFunctionTypeNode(
+	// mutator TypeRef wrapper nodes have nil Parameters/TypeParameters/Type;
+	// they only carry WrappedType, so pass them through unchanged.
+	if input.Parameters == nil {
+		return input.AsNode()
+	}
+	result := tx.Factory().UpdateFunctionTypeNode(
 		input,
 		input.Modifiers(),
 		tx.Visitor().VisitNodes(input.TypeParameters),
 		tx.updateParamList(input.AsNode(), input.Parameters),
 		tx.Visitor().Visit(input.Type),
 	)
+	if result != input.AsNode() {
+		resultFn := result.AsFunctionTypeNode()
+		resultFn.KeyParameter = input.KeyParameter
+		resultFn.LinksClause = input.LinksClause
+		resultFn.LinksClauseKeyParamNames = input.LinksClauseKeyParamNames
+	}
+	return result
 }
 
 func (tx *DeclarationTransformer) transformConditionalTypeNode(input *ast.ConditionalTypeNode) *ast.Node {
@@ -943,7 +955,7 @@ func (tx *DeclarationTransformer) transformMethodSignatureDeclaration(input *ast
 	} else if ast.IsPrivateIdentifier(input.Name()) {
 		return nil
 	} else {
-		return tx.Factory().UpdateMethodSignatureDeclaration(
+		result := tx.Factory().UpdateMethodSignatureDeclaration(
 			input,
 			tx.ensureModifiers(input.AsNode()),
 			input.Name(),
@@ -952,6 +964,13 @@ func (tx *DeclarationTransformer) transformMethodSignatureDeclaration(input *ast
 			tx.updateParamList(input.AsNode(), input.Parameters),
 			tx.ensureType(input.AsNode(), false),
 		)
+		if result != input.AsNode() {
+			resultNode := result.AsMethodSignatureDeclaration()
+			resultNode.KeyParameter = input.KeyParameter
+			resultNode.LinksClause = input.LinksClause
+			resultNode.LinksClauseKeyParamNames = input.LinksClauseKeyParamNames
+		}
+		return result
 	}
 }
 
@@ -961,7 +980,7 @@ func (tx *DeclarationTransformer) transformMethodDeclaration(input *ast.MethodDe
 	} else if ast.IsPrivateIdentifier(input.Name()) {
 		return nil
 	} else {
-		return tx.Factory().UpdateMethodDeclaration(
+		result := tx.Factory().UpdateMethodDeclaration(
 			input,
 			tx.ensureModifiers(input.AsNode()),
 			nil,
@@ -973,6 +992,13 @@ func (tx *DeclarationTransformer) transformMethodDeclaration(input *ast.MethodDe
 			nil,
 			nil,
 		)
+		if result != input.AsNode() {
+			resultNode := result.AsMethodDeclaration()
+			resultNode.KeyParameter = input.KeyParameter
+			resultNode.LinksClause = input.LinksClause
+			resultNode.LinksClauseKeyParamNames = input.LinksClauseKeyParamNames
+		}
+		return result
 	}
 }
 

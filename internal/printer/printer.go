@@ -133,6 +133,7 @@ type Printer struct {
 	declarationListContainerEnd       int
 	detachedCommentsInfo              core.Stack[detachedCommentsInfo]
 	commentsDisabled                  bool
+	suppressNextTrailingSpace         bool // set before emitModifierList to suppress the trailing space when [key] follows
 	inExtends                         bool // whether we are emitting the `extends` clause of a ConditionalType or InferType
 	nameGenerator                     NameGenerator
 	makeFileLevelOptimisticUniqueName func(string) string
@@ -1547,6 +1548,39 @@ func (p *Printer) emitSignature(node *ast.Node) {
 	p.emitTypeAnnotation(n.Type)
 }
 
+// emitKeyParameterBracket emits the [key] bracket syntax for stable[key] or mutator[key] notation.
+func (p *Printer) emitKeyParameterBracket(keyParam *ast.Node) {
+	if keyParam == nil {
+		return
+	}
+	p.writePunctuation("[")
+	p.emitIdentifierName(keyParam.AsIdentifier())
+	p.writePunctuation("]")
+	p.writeSpace()
+}
+
+// emitLinksClause emits the "invalidates target1, target2" clause.
+func (p *Printer) emitLinksClause(linksClause *ast.NodeList, keyParamNames []string) {
+	if linksClause == nil || len(linksClause.Nodes) == 0 {
+		return
+	}
+	p.writeSpace()
+	p.writeKeyword("invalidates")
+	p.writeSpace()
+	for i, link := range linksClause.Nodes {
+		if i > 0 {
+			p.writePunctuation(",")
+			p.writeSpace()
+		}
+		p.emitIdentifierName(link.AsIdentifier())
+		if i < len(keyParamNames) && keyParamNames[i] != "" {
+			p.writePunctuation("[")
+			p.writeLiteral(keyParamNames[i])
+			p.writePunctuation("]")
+		}
+	}
+}
+
 func (p *Printer) emitFunctionBody(body *ast.Block) {
 	p.emitContext.AddEmitFlags(body.AsNode(), EFNoSourceMap)
 
@@ -1627,13 +1661,18 @@ func (p *Printer) emitPropertyDeclaration(node *ast.PropertyDeclaration) {
 
 func (p *Printer) emitMethodSignature(node *ast.MethodSignatureDeclaration) {
 	state := p.enterNode(node.AsNode())
+	if node.KeyParameter != nil {
+		p.suppressNextTrailingSpace = true
+	}
 	p.emitModifierList(node.AsNode(), node.Modifiers(), false /*allowDecorators*/)
+	p.emitKeyParameterBracket(node.KeyParameter)
 	p.emitPropertyName(node.Name())
 	p.emitTokenNode(node.PostfixToken)
 	indented := p.shouldEmitIndented(node.AsNode())
 	p.increaseIndentIf(indented)
 	p.pushNameGenerationScope(node.AsNode())
 	p.emitSignature(node.AsNode())
+	p.emitLinksClause(node.LinksClause, node.LinksClauseKeyParamNames)
 	p.writeTrailingSemicolon()
 	p.popNameGenerationScope(node.AsNode())
 	p.decreaseIndentIf(indented)
@@ -1642,7 +1681,11 @@ func (p *Printer) emitMethodSignature(node *ast.MethodSignatureDeclaration) {
 
 func (p *Printer) emitMethodDeclaration(node *ast.MethodDeclaration) {
 	state := p.enterNode(node.AsNode())
+	if node.KeyParameter != nil {
+		p.suppressNextTrailingSpace = true
+	}
 	p.emitModifierList(node.AsNode(), node.Modifiers(), true /*allowDecorators*/)
+	p.emitKeyParameterBracket(node.KeyParameter)
 	p.emitTokenNode(node.AsteriskToken)
 	p.emitPropertyName(node.Name())
 	p.emitTokenNode(node.PostfixToken)
@@ -1650,6 +1693,7 @@ func (p *Printer) emitMethodDeclaration(node *ast.MethodDeclaration) {
 	p.increaseIndentIf(indented)
 	p.pushNameGenerationScope(node.AsNode())
 	p.emitSignature(node.AsNode())
+	p.emitLinksClause(node.LinksClause, node.LinksClauseKeyParamNames)
 	p.emitFunctionBodyNode(node.Body)
 	p.popNameGenerationScope(node.AsNode())
 	p.decreaseIndentIf(indented)
@@ -1899,22 +1943,15 @@ func (p *Printer) emitFunctionType(node *ast.FunctionTypeNode) {
 	if node.WrappedType != nil {
 		p.emitModifierList(node.AsNode(), node.Modifiers(), false /*allowDecorators*/)
 		p.emitTypeNode(node.WrappedType, ast.TypePrecedenceNonArray)
-		if node.LinksClause != nil && len(node.LinksClause.Nodes) > 0 {
-			p.writeSpace()
-			p.writeKeyword("invalidates")
-			p.writeSpace()
-			for i, link := range node.LinksClause.Nodes {
-				if i > 0 {
-					p.writePunctuation(",")
-					p.writeSpace()
-				}
-				p.emitIdentifierName(link.AsIdentifier())
-			}
-		}
+		p.emitLinksClause(node.LinksClause, node.LinksClauseKeyParamNames)
 		p.exitNode(node.AsNode(), state)
 		return
 	}
+	if node.KeyParameter != nil {
+		p.suppressNextTrailingSpace = true
+	}
 	p.emitModifierList(node.AsNode(), node.Modifiers(), false /*allowDecorators*/)
+	p.emitKeyParameterBracket(node.KeyParameter)
 	indented := p.shouldEmitIndented(node.AsNode())
 	p.increaseIndentIf(indented)
 	p.pushNameGenerationScope(node.AsNode())
@@ -1923,6 +1960,7 @@ func (p *Printer) emitFunctionType(node *ast.FunctionTypeNode) {
 	p.emitParameters(node.AsNode(), node.Parameters)
 	p.writeSpace()
 	p.emitReturnType(node.Type)
+	p.emitLinksClause(node.LinksClause, node.LinksClauseKeyParamNames)
 	p.popNameGenerationScope(node.AsNode())
 	p.decreaseIndentIf(indented)
 	p.exitNode(node.AsNode(), state)
@@ -4924,7 +4962,10 @@ func (p *Printer) emitListItems(
 			p.writeLine()
 		}
 	} else if format&(LFSpaceAfterList|LFSpaceBetweenBraces) != 0 {
-		p.writeSpace()
+		if !p.suppressNextTrailingSpace {
+			p.writeSpace()
+		}
+		p.suppressNextTrailingSpace = false
 	}
 }
 

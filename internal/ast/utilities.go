@@ -3269,6 +3269,12 @@ func CreateModifiersFromModifierFlags(flags ModifierFlags, createModifier func(k
 	if flags&ModifierFlagsOut != 0 {
 		result = append(result, createModifier(KindOutKeyword))
 	}
+	if flags&ModifierFlagsStable != 0 {
+		result = append(result, createModifier(KindStableKeyword))
+	}
+	if flags&ModifierFlagsMutator != 0 {
+		result = append(result, createModifier(KindMutatorKeyword))
+	}
 	return result
 }
 
