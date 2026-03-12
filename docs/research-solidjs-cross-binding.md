@@ -8,14 +8,17 @@ SolidJS separates read and write into distinct function bindings:
 type Accessor<T> = stable () => T;
 type Setter<T> = (value: T) => T;
 
-function createSignal<T>(value: T): [Accessor<T>, Setter<T>];
+function createSignal<T>(value: T): [
+    read: Accessor<T>,
+    write: Setter<T> // ❌ No invalidates clause — setCount can't invalidate count
+];
 
 const [count, setCount] = createSignal<number | undefined>(0);
 
 if (count() !== undefined) {
     count() + 1;         // ✅ Narrowed — stable accessor preserves narrowing
-    setCount(undefined); // ❌ Should reset narrowing but DOESN'T
-    count() + 1;         // ⚠️ Still narrowed — UNSOUND
+    setCount(undefined); // ❌ Should reset narrowing but DOESN'T (no cross-binding)
+    count() + 1;         // ⚠️ Still narrowed — UNSOUND without CBI-1
 }
 ```
 

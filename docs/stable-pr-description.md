@@ -137,11 +137,12 @@ Four declaration-site type modifiers that enable CFA narrowing through function 
 - **`invalidates`** — refines `mutator` to target specific stable endpoints
 - **Linked type predicates** — `this.value() is T` syntax for guard methods that narrow stable call results
 
-All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (39 test files) with zero regressions against the existing test baseline.
+All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (40 test files) with zero regressions against the existing test baseline.
 
 **Implementation milestones:**
 - **SYN-4** ✅ — `stable`/`mutator` modifiers on method declarations and method signatures (class methods, interface methods, type literal methods)
 - **SEM-4** ✅ — Super call invalidation: `super.mutator()` correctly invalidates `this.stable()` narrowing in class hierarchies
+- **CBI-1** ✅ — Cross-binding invalidation via named tuple label references: `invalidates read` on a destructured setter targets the sibling `read` accessor, with full post-call narrowing and selective invalidation
 
 ---
 
@@ -231,7 +232,22 @@ SolidJS separates accessor and setter into different bindings:
 const [count, setCount] = createSignal<number | undefined>(0);
 ```
 
-The stable system tracks narrowing per-receiver. `count` and `setCount` are independent function bindings — `setCount()` cannot be recognized as a mutator of `count()`. The `invalidates` clause has no way to reference a separate binding. **SolidJS should NOT ship `stable` until cross-binding invalidation is designed.** This is a fundamental limitation of the receiver-scoped approach. A recommended solution using named tuple label references (`mutates read`) is analyzed in detail below (see Companion Documents section), estimated at ~300-500 LOC additional (Phase 2.5).
+**Cross-binding invalidation is now implemented.** Using named tuple label references in the `invalidates` clause, SolidJS-style APIs can express the read/write relationship:
+
+```ts
+function createSignal<T>(value: T): [
+    read: stable () => T,
+    write: mutator (value: T) => void invalidates read
+];
+
+const [count, setCount] = createSignal<number | undefined>(0);
+if (count() !== undefined) {
+    setCount(undefined); // invalidates read → resets count() narrowing
+    count();             // post-call narrowed to undefined
+}
+```
+
+This uses destructuring provenance tracking — the checker maps `count` to tuple label `read` and `setCount` to label `write`, so `invalidates read` on `write` correctly targets `count`. See the Companion Documents section for the full research on 6 approaches evaluated.
 
 ### 4. Structural Assignability Gap
 
@@ -270,7 +286,7 @@ The current implementation handles direct usage correctly but does not define be
 | **Angular Signals** | `signal<T>()` returns object with `.set()` | ✅ Yes | Receiver-scoped, natural fit |
 | **Preact Signals** | `.value` property + `.peek()` | ✅ Yes | Works for `.peek()` callable getter |
 | **MobX** | Computed/observable with getter methods | ✅ Yes | Receiver-scoped |
-| **SolidJS** | `const [get, set] = createSignal()` | ⚠️ **No** | Separated bindings — cross-binding invalidation needed |
+| **SolidJS** | `const [get, set] = createSignal()` | ✅ **Yes** | Cross-binding invalidation via named tuple labels |
 | **Vue `ref()`** | `.value` property access | N/A | Property, not callable — existing narrowing works |
 
 ---
@@ -329,7 +345,7 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 
 ## Key Test Files
 
-37 test files in `testdata/tests/cases/compiler/`:
+40 test files in `testdata/tests/cases/compiler/`:
 
 **Core narrowing:**
 - `stableModifierNarrowing.ts` — basic stable narrowing and reset
@@ -347,6 +363,7 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 - `stableModifierMutatorLinks.ts` — `invalidates` clause with targeted reset
 - `stableModifierMutatorErrors.ts` — validation diagnostics
 - `stableModifierPostCallNarrowing.ts` — post-call narrowing after constrained writes
+- `stableModifierCrossBinding.ts` — cross-binding invalidation via named tuple labels (SolidJS pattern)
 
 **Linked predicates:**
 - `stableModifierLinkedPredicates.ts` — `this.value() is T` linked type predicates

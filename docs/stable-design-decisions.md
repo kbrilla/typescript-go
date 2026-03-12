@@ -176,11 +176,12 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 
 | Aspect | Detail |
 |--------|--------|
-| **Status** | RECOMMENDED |
+| **Status** | DECIDED |
 | **Phase Impact** | **Blocking SolidJS adoption** (Phase 2.5) |
 | **Decision** | How should `setCount()` invalidate `count()` when they are separate tuple-destructured bindings? |
 | **Approaches** | A: `mutates [0]` (tuple index) — viable fallback B: `links "channel"` (named groups) — rejected, architecturally questionable C: Source interface extraction — rejected, violates structural typing D: `mutates read` (named tuple label) — **RECOMMENDED** E: Heuristic inference — rejected, no annotation precedent F: Object pattern (change SolidJS API) — not a solution |
 | **Recommendation** | Approach D (named tuple label reference) with Approach A (index) as fallback. ~300-500 LOC |
+| **Resolution** | Implemented. Named tuple label references (`invalidates read`) enable cross-binding invalidation. Parser enhanced with look-ahead to resolve comma ambiguity in tuple contexts. `isCrossBindingMutatorBoundary` in flow.go tracks destructuring provenance and matches invalidation targets against tuple labels. Post-call narrowing works through cross-binding (e.g., `setCount(undefined)` narrows sibling `count()` to `undefined`). |
 | **Source** | [research-solidjs-cross-binding.md](research-solidjs-cross-binding.md) |
 
 ### CBI-2: Destructuring provenance depth
@@ -312,9 +313,9 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 | Status | Count | IDs |
 |--------|-------|-----|
 | **OPEN** | 12 | SYN-1, SYN-3, SEM-2, SEM-5, SEM-6, SEM-7, CBI-4, CBI-5, ADO-1, ADO-2, ADO-3, ADO-4 |
-| **RECOMMENDED** | 5 | SEM-3, SEM-4, CBI-1, CBI-2, CBI-3 |
+| **RECOMMENDED** | 4 | SEM-3, SEM-4, CBI-2, CBI-3 |
 | **DEFERRED** | 9 | SYN-2, SYN-4, SYN-5, SYN-6, SEM-1, SEM-8, LP-1, LP-2, LP-3 |
-| **DECIDED** | 0 | (Nothing formally decided yet — all pending TS team review) |
+| **DECIDED** | 1 | CBI-1 |
 
 ### By Phase Impact
 
