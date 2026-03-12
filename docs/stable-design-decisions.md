@@ -189,20 +189,22 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 
 | Aspect | Detail |
 |--------|--------|
-| **Status** | RECOMMENDED |
+| **Status** | DECIDED |
 | **Phase Impact** | Phase 2.5 implementation detail |
 | **Decision** | Should `mutates` in tuple position be limited to direct destructuring, or work through any indirection level? |
 | **Recommendation** | Direct destructuring only (covers 99% of usage). Limit complexity |
+| **Resolution** | Direct destructuring only — already implemented in CBI-1 (`isCrossBindingMutatorBoundary` only checks ArrayBindingPattern) |
 | **Source** | [research-solidjs-cross-binding.md §7 Q1](research-solidjs-cross-binding.md) |
 
 ### CBI-3: React `useState` annotation
 
 | Aspect | Detail |
 |--------|--------|
-| **Status** | RECOMMENDED |
+| **Status** | DECIDED |
 | **Phase Impact** | None |
 | **Decision** | Should React `useState` be annotated with `mutates`? (Getter is a value, not a function) |
 | **Recommendation** | No — `stable` applies to callable getters only. Property narrowing already handles values |
+| **Resolution** | No — stable only applies to callable getters. React `useState` returns a value, not a function, so property narrowing handles it |
 | **Source** | [research-solidjs-cross-binding.md §7 Q2](research-solidjs-cross-binding.md) |
 
 ### CBI-4: SolidJS object-based API recommendation
@@ -314,9 +316,9 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 | Status | Count | IDs |
 |--------|-------|-----|
 | **OPEN** | 12 | SYN-1, SYN-3, SEM-2, SEM-5, SEM-6, SEM-7, CBI-4, CBI-5, ADO-1, ADO-2, ADO-3, ADO-4 |
-| **RECOMMENDED** | 3 | SEM-4, CBI-2, CBI-3 |
+| **RECOMMENDED** | 0 | — |
 | **DEFERRED** | 9 | SYN-2, SYN-4, SYN-5, SYN-6, SEM-1, SEM-8, LP-1, LP-2, LP-3 |
-| **DECIDED** | 2 | CBI-1, SEM-3 |
+| **DECIDED** | 5 | CBI-1, SEM-3, SEM-4, CBI-2, CBI-3 |
 
 ### By Phase Impact
 
