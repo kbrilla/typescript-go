@@ -23,9 +23,9 @@ TypeScript cannot narrow types through repeated function calls. When a parameter
 The `stable` modifier marks stable callable read endpoints, enabling getter-parity CFA for call expressions. Tiered heuristics infer mutator impact for unannotated APIs, while explicit contracts (final phase) handle remaining ambiguous cases.
 
 Related issues:
-- TypeScript #60948 — `stable` modifier proposal
-- Angular #49161 — Signals and nullability
-- TypeScript #57725 — Allow specifying narrowing for function calls
+- microsoft/TypeScript issue 60948 — `stable` modifier proposal
+- angular/angular issue 49161 — Signals and nullability
+- microsoft/TypeScript issue 57725 — Allow specifying narrowing for function calls
 
 For full problem analysis and language survey, see [docs/stable-modifier-research.md](stable-modifier-research.md).
 
@@ -962,7 +962,7 @@ if (shape().kind === "circle") {
 
 ### B.8 Issue-Driven Examples
 
-**TS #60948 — Repeated read after guard:**
+**TS-60948 — Repeated read after guard:**
 ```ts
 declare const value: stable () => string | undefined;
 if (value() !== undefined) {
@@ -970,7 +970,7 @@ if (value() !== undefined) {
 }
 ```
 
-**TS #60948 — Callback boundary invalidation:**
+**TS-60948 — Callback boundary invalidation:**
 ```ts
 declare const value: stable () => string | undefined;
 declare function invoke(cb: () => void): void;
@@ -980,13 +980,13 @@ if (value() !== undefined) {
 }
 ```
 
-**Angular #49161 — Ternary/computed one-liner:**
+**Angular-49161 — Ternary/computed one-liner:**
 ```ts
 declare const count: stable () => number | null;
 const x = count() !== null ? count() : 0;
 ```
 
-**Angular #62181 — Template-like guard pattern (plain TS):**
+**Angular-62181 — Template-like guard pattern (plain TS):**
 ```ts
 type User = { name: string };
 declare const user: stable () => User | null;
