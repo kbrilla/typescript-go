@@ -1,0 +1,333 @@
+//// [tests/cases/compiler/stableModifierMethodDeclarations.ts] ////
+
+=== stableModifierMethodDeclarations.ts ===
+// === Section 1: Basic stable method on class declarations ===
+class Store<T> {
+>Store : Symbol(Store, Decl(stableModifierMethodDeclarations.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierMethodDeclarations.ts, 1, 12))
+
+    private _value: T;
+>_value : Symbol(Store._value, Decl(stableModifierMethodDeclarations.ts, 1, 16))
+>T : Symbol(T, Decl(stableModifierMethodDeclarations.ts, 1, 12))
+
+    constructor(value: T) { this._value = value; }
+>value : Symbol(value, Decl(stableModifierMethodDeclarations.ts, 3, 16))
+>T : Symbol(T, Decl(stableModifierMethodDeclarations.ts, 1, 12))
+>this._value : Symbol(Store._value, Decl(stableModifierMethodDeclarations.ts, 1, 16))
+>this : Symbol(Store, Decl(stableModifierMethodDeclarations.ts, 0, 0))
+>_value : Symbol(Store._value, Decl(stableModifierMethodDeclarations.ts, 1, 16))
+>value : Symbol(value, Decl(stableModifierMethodDeclarations.ts, 3, 16))
+
+    stable get(): T { return this._value; }
+>get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>T : Symbol(T, Decl(stableModifierMethodDeclarations.ts, 1, 12))
+>this._value : Symbol(Store._value, Decl(stableModifierMethodDeclarations.ts, 1, 16))
+>this : Symbol(Store, Decl(stableModifierMethodDeclarations.ts, 0, 0))
+>_value : Symbol(Store._value, Decl(stableModifierMethodDeclarations.ts, 1, 16))
+
+    mutator set(value: T): void { this._value = value; }
+>set : Symbol(Store.set, Decl(stableModifierMethodDeclarations.ts, 4, 43))
+>value : Symbol(value, Decl(stableModifierMethodDeclarations.ts, 5, 16))
+>T : Symbol(T, Decl(stableModifierMethodDeclarations.ts, 1, 12))
+>this._value : Symbol(Store._value, Decl(stableModifierMethodDeclarations.ts, 1, 16))
+>this : Symbol(Store, Decl(stableModifierMethodDeclarations.ts, 0, 0))
+>_value : Symbol(Store._value, Decl(stableModifierMethodDeclarations.ts, 1, 16))
+>value : Symbol(value, Decl(stableModifierMethodDeclarations.ts, 5, 16))
+
+    mutator reset(): void { this._value = undefined as any; }
+>reset : Symbol(Store.reset, Decl(stableModifierMethodDeclarations.ts, 5, 56))
+>this._value : Symbol(Store._value, Decl(stableModifierMethodDeclarations.ts, 1, 16))
+>this : Symbol(Store, Decl(stableModifierMethodDeclarations.ts, 0, 0))
+>_value : Symbol(Store._value, Decl(stableModifierMethodDeclarations.ts, 1, 16))
+>undefined : Symbol(undefined)
+}
+
+declare const store: Store<string | undefined>;
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>Store : Symbol(Store, Decl(stableModifierMethodDeclarations.ts, 0, 0))
+
+// Stable narrowing should work with method declarations
+if (store.get() !== undefined) {
+>store.get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>undefined : Symbol(undefined)
+
+    const s: string = store.get(); // OK — narrowed
+>s : Symbol(s, Decl(stableModifierMethodDeclarations.ts, 13, 9))
+>store.get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+}
+
+// === Section 2: Post-call narrowing — mutator with string argument ===
+if (store.get() !== undefined) {
+>store.get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>undefined : Symbol(undefined)
+
+    store.set("new"); // mutator sets string → post-call narrowing gives string
+>store.set : Symbol(Store.set, Decl(stableModifierMethodDeclarations.ts, 4, 43))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>set : Symbol(Store.set, Decl(stableModifierMethodDeclarations.ts, 4, 43))
+
+    const afterSet: string = store.get(); // OK — post-call narrowed to string
+>afterSet : Symbol(afterSet, Decl(stableModifierMethodDeclarations.ts, 19, 9))
+>store.get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+
+    afterSet;
+>afterSet : Symbol(afterSet, Decl(stableModifierMethodDeclarations.ts, 19, 9))
+}
+
+// === Section 3: Full invalidation — parameterless mutator ===
+if (store.get() !== undefined) {
+>store.get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>undefined : Symbol(undefined)
+
+    store.reset(); // parameterless mutator — fully invalidates
+>store.reset : Symbol(Store.reset, Decl(stableModifierMethodDeclarations.ts, 5, 56))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>reset : Symbol(Store.reset, Decl(stableModifierMethodDeclarations.ts, 5, 56))
+
+    const afterReset: string = store.get(); // error — back to string | undefined
+>afterReset : Symbol(afterReset, Decl(stableModifierMethodDeclarations.ts, 26, 9))
+>store.get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+
+    afterReset;
+>afterReset : Symbol(afterReset, Decl(stableModifierMethodDeclarations.ts, 26, 9))
+}
+
+// === Section 4: Mutator with undefined argument ===
+if (store.get() !== undefined) {
+>store.get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>undefined : Symbol(undefined)
+
+    store.set(undefined); // mutator sets undefined → post-call narrows to undefined
+>store.set : Symbol(Store.set, Decl(stableModifierMethodDeclarations.ts, 4, 43))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>set : Symbol(Store.set, Decl(stableModifierMethodDeclarations.ts, 4, 43))
+>undefined : Symbol(undefined)
+
+    const afterSetUndefined: string = store.get(); // error — narrowed to undefined
+>afterSetUndefined : Symbol(afterSetUndefined, Decl(stableModifierMethodDeclarations.ts, 33, 9))
+>store.get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+>store : Symbol(store, Decl(stableModifierMethodDeclarations.ts, 9, 13))
+>get : Symbol(Store.get, Decl(stableModifierMethodDeclarations.ts, 3, 50))
+
+    afterSetUndefined;
+>afterSetUndefined : Symbol(afterSetUndefined, Decl(stableModifierMethodDeclarations.ts, 33, 9))
+}
+
+// === Section 5: Stable modifier on interface method signatures ===
+interface ReadableStore<T> {
+>ReadableStore : Symbol(ReadableStore, Decl(stableModifierMethodDeclarations.ts, 35, 1))
+>T : Symbol(T, Decl(stableModifierMethodDeclarations.ts, 38, 24))
+
+    stable get(): T;
+>get : Symbol(ReadableStore.get, Decl(stableModifierMethodDeclarations.ts, 38, 28))
+>T : Symbol(T, Decl(stableModifierMethodDeclarations.ts, 38, 24))
+}
+
+interface WritableStore<T> extends ReadableStore<T> {
+>WritableStore : Symbol(WritableStore, Decl(stableModifierMethodDeclarations.ts, 40, 1))
+>T : Symbol(T, Decl(stableModifierMethodDeclarations.ts, 42, 24))
+>ReadableStore : Symbol(ReadableStore, Decl(stableModifierMethodDeclarations.ts, 35, 1))
+>T : Symbol(T, Decl(stableModifierMethodDeclarations.ts, 42, 24))
+
+    mutator set(value: T): void;
+>set : Symbol(WritableStore.set, Decl(stableModifierMethodDeclarations.ts, 42, 53))
+>value : Symbol(value, Decl(stableModifierMethodDeclarations.ts, 43, 16))
+>T : Symbol(T, Decl(stableModifierMethodDeclarations.ts, 42, 24))
+
+    mutator reset(): void;
+>reset : Symbol(WritableStore.reset, Decl(stableModifierMethodDeclarations.ts, 43, 32))
+}
+
+declare const ws: WritableStore<string | undefined>;
+>ws : Symbol(ws, Decl(stableModifierMethodDeclarations.ts, 47, 13))
+>WritableStore : Symbol(WritableStore, Decl(stableModifierMethodDeclarations.ts, 40, 1))
+
+if (ws.get() !== undefined) {
+>ws.get : Symbol(ReadableStore.get, Decl(stableModifierMethodDeclarations.ts, 38, 28))
+>ws : Symbol(ws, Decl(stableModifierMethodDeclarations.ts, 47, 13))
+>get : Symbol(ReadableStore.get, Decl(stableModifierMethodDeclarations.ts, 38, 28))
+>undefined : Symbol(undefined)
+
+    const s: string = ws.get(); // OK — narrowed
+>s : Symbol(s, Decl(stableModifierMethodDeclarations.ts, 49, 9))
+>ws.get : Symbol(ReadableStore.get, Decl(stableModifierMethodDeclarations.ts, 38, 28))
+>ws : Symbol(ws, Decl(stableModifierMethodDeclarations.ts, 47, 13))
+>get : Symbol(ReadableStore.get, Decl(stableModifierMethodDeclarations.ts, 38, 28))
+
+    ws.reset();
+>ws.reset : Symbol(WritableStore.reset, Decl(stableModifierMethodDeclarations.ts, 43, 32))
+>ws : Symbol(ws, Decl(stableModifierMethodDeclarations.ts, 47, 13))
+>reset : Symbol(WritableStore.reset, Decl(stableModifierMethodDeclarations.ts, 43, 32))
+
+    const afterReset: string = ws.get(); // error — invalidated
+>afterReset : Symbol(afterReset, Decl(stableModifierMethodDeclarations.ts, 51, 9))
+>ws.get : Symbol(ReadableStore.get, Decl(stableModifierMethodDeclarations.ts, 38, 28))
+>ws : Symbol(ws, Decl(stableModifierMethodDeclarations.ts, 47, 13))
+>get : Symbol(ReadableStore.get, Decl(stableModifierMethodDeclarations.ts, 38, 28))
+
+    afterReset;
+>afterReset : Symbol(afterReset, Decl(stableModifierMethodDeclarations.ts, 51, 9))
+}
+
+// === Section 6: Stable modifier on type literal method signatures ===
+declare const obj: {
+>obj : Symbol(obj, Decl(stableModifierMethodDeclarations.ts, 56, 13))
+
+    stable get(): string | undefined;
+>get : Symbol(get, Decl(stableModifierMethodDeclarations.ts, 56, 20))
+
+    mutator set(value: string): void;
+>set : Symbol(set, Decl(stableModifierMethodDeclarations.ts, 57, 37))
+>value : Symbol(value, Decl(stableModifierMethodDeclarations.ts, 58, 16))
+
+    mutator reset(): void;
+>reset : Symbol(reset, Decl(stableModifierMethodDeclarations.ts, 58, 37))
+
+};
+
+if (obj.get() !== undefined) {
+>obj.get : Symbol(get, Decl(stableModifierMethodDeclarations.ts, 56, 20))
+>obj : Symbol(obj, Decl(stableModifierMethodDeclarations.ts, 56, 13))
+>get : Symbol(get, Decl(stableModifierMethodDeclarations.ts, 56, 20))
+>undefined : Symbol(undefined)
+
+    const s: string = obj.get(); // OK — narrowed
+>s : Symbol(s, Decl(stableModifierMethodDeclarations.ts, 63, 9))
+>obj.get : Symbol(get, Decl(stableModifierMethodDeclarations.ts, 56, 20))
+>obj : Symbol(obj, Decl(stableModifierMethodDeclarations.ts, 56, 13))
+>get : Symbol(get, Decl(stableModifierMethodDeclarations.ts, 56, 20))
+
+    obj.reset();
+>obj.reset : Symbol(reset, Decl(stableModifierMethodDeclarations.ts, 58, 37))
+>obj : Symbol(obj, Decl(stableModifierMethodDeclarations.ts, 56, 13))
+>reset : Symbol(reset, Decl(stableModifierMethodDeclarations.ts, 58, 37))
+
+    const afterReset: string = obj.get(); // error — invalidated
+>afterReset : Symbol(afterReset, Decl(stableModifierMethodDeclarations.ts, 65, 9))
+>obj.get : Symbol(get, Decl(stableModifierMethodDeclarations.ts, 56, 20))
+>obj : Symbol(obj, Decl(stableModifierMethodDeclarations.ts, 56, 13))
+>get : Symbol(get, Decl(stableModifierMethodDeclarations.ts, 56, 20))
+
+    afterReset;
+>afterReset : Symbol(afterReset, Decl(stableModifierMethodDeclarations.ts, 65, 9))
+}
+
+// === Section 7: Method named 'mutator' should still work as identifier ===
+class Foo {
+>Foo : Symbol(Foo, Decl(stableModifierMethodDeclarations.ts, 67, 1))
+
+    mutator(): void {}
+>mutator : Symbol(Foo.mutator, Decl(stableModifierMethodDeclarations.ts, 70, 11))
+}
+
+const foo = new Foo();
+>foo : Symbol(foo, Decl(stableModifierMethodDeclarations.ts, 74, 5))
+>Foo : Symbol(Foo, Decl(stableModifierMethodDeclarations.ts, 67, 1))
+
+foo.mutator(); // OK — just calling a method named "mutator"
+>foo.mutator : Symbol(Foo.mutator, Decl(stableModifierMethodDeclarations.ts, 70, 11))
+>foo : Symbol(foo, Decl(stableModifierMethodDeclarations.ts, 74, 5))
+>mutator : Symbol(Foo.mutator, Decl(stableModifierMethodDeclarations.ts, 70, 11))
+
+// === Section 8: stable + mutator cannot combine on methods ===
+interface BadStore {
+>BadStore : Symbol(BadStore, Decl(stableModifierMethodDeclarations.ts, 75, 14))
+
+    stable mutator bad(): string; // error — can't combine
+>bad : Symbol(BadStore.bad, Decl(stableModifierMethodDeclarations.ts, 78, 20))
+}
+
+// === Section 9: stable method must have no parameters ===
+interface BadGetter {
+>BadGetter : Symbol(BadGetter, Decl(stableModifierMethodDeclarations.ts, 80, 1))
+
+    stable get(key: string): string; // error — stable methods must have no parameters
+>get : Symbol(BadGetter.get, Decl(stableModifierMethodDeclarations.ts, 83, 21))
+>key : Symbol(key, Decl(stableModifierMethodDeclarations.ts, 84, 15))
+}
+
+// === Section 10: Super call invalidation with method declarations ===
+class Base {
+>Base : Symbol(Base, Decl(stableModifierMethodDeclarations.ts, 85, 1))
+
+    stable get(): string | undefined { return "hello"; }
+>get : Symbol(Base.get, Decl(stableModifierMethodDeclarations.ts, 88, 12))
+
+    mutator set(value: string | undefined): void {}
+>set : Symbol(Base.set, Decl(stableModifierMethodDeclarations.ts, 89, 56))
+>value : Symbol(value, Decl(stableModifierMethodDeclarations.ts, 90, 16))
+
+    mutator reset(): void {}
+>reset : Symbol(Base.reset, Decl(stableModifierMethodDeclarations.ts, 90, 51))
+}
+
+class Derived extends Base {
+>Derived : Symbol(Derived, Decl(stableModifierMethodDeclarations.ts, 92, 1))
+>Base : Symbol(Base, Decl(stableModifierMethodDeclarations.ts, 85, 1))
+
+    override stable get(): string | undefined { return super.get(); }
+>get : Symbol(Derived.get, Decl(stableModifierMethodDeclarations.ts, 94, 28))
+>super.get : Symbol(Base.get, Decl(stableModifierMethodDeclarations.ts, 88, 12))
+>super : Symbol(Base, Decl(stableModifierMethodDeclarations.ts, 85, 1))
+>get : Symbol(Base.get, Decl(stableModifierMethodDeclarations.ts, 88, 12))
+
+    override mutator set(value: string | undefined): void { super.set(value); }
+>set : Symbol(Derived.set, Decl(stableModifierMethodDeclarations.ts, 95, 69))
+>value : Symbol(value, Decl(stableModifierMethodDeclarations.ts, 96, 25))
+>super.set : Symbol(Base.set, Decl(stableModifierMethodDeclarations.ts, 89, 56))
+>super : Symbol(Base, Decl(stableModifierMethodDeclarations.ts, 85, 1))
+>set : Symbol(Base.set, Decl(stableModifierMethodDeclarations.ts, 89, 56))
+>value : Symbol(value, Decl(stableModifierMethodDeclarations.ts, 96, 25))
+
+    override mutator reset(): void { super.reset(); }
+>reset : Symbol(Derived.reset, Decl(stableModifierMethodDeclarations.ts, 96, 79))
+>super.reset : Symbol(Base.reset, Decl(stableModifierMethodDeclarations.ts, 90, 51))
+>super : Symbol(Base, Decl(stableModifierMethodDeclarations.ts, 85, 1))
+>reset : Symbol(Base.reset, Decl(stableModifierMethodDeclarations.ts, 90, 51))
+
+    test(): void {
+>test : Symbol(Derived.test, Decl(stableModifierMethodDeclarations.ts, 97, 53))
+
+        if (this.get() !== undefined) {
+>this.get : Symbol(Derived.get, Decl(stableModifierMethodDeclarations.ts, 94, 28))
+>this : Symbol(Derived, Decl(stableModifierMethodDeclarations.ts, 92, 1))
+>get : Symbol(Derived.get, Decl(stableModifierMethodDeclarations.ts, 94, 28))
+>undefined : Symbol(undefined)
+
+            const before: string = this.get(); // OK — narrowed
+>before : Symbol(before, Decl(stableModifierMethodDeclarations.ts, 101, 17))
+>this.get : Symbol(Derived.get, Decl(stableModifierMethodDeclarations.ts, 94, 28))
+>this : Symbol(Derived, Decl(stableModifierMethodDeclarations.ts, 92, 1))
+>get : Symbol(Derived.get, Decl(stableModifierMethodDeclarations.ts, 94, 28))
+
+            this.reset(); // parameterless mutator invalidates
+>this.reset : Symbol(Derived.reset, Decl(stableModifierMethodDeclarations.ts, 96, 79))
+>this : Symbol(Derived, Decl(stableModifierMethodDeclarations.ts, 92, 1))
+>reset : Symbol(Derived.reset, Decl(stableModifierMethodDeclarations.ts, 96, 79))
+
+            const afterReset: string = this.get(); // error — invalidated
+>afterReset : Symbol(afterReset, Decl(stableModifierMethodDeclarations.ts, 103, 17))
+>this.get : Symbol(Derived.get, Decl(stableModifierMethodDeclarations.ts, 94, 28))
+>this : Symbol(Derived, Decl(stableModifierMethodDeclarations.ts, 92, 1))
+>get : Symbol(Derived.get, Decl(stableModifierMethodDeclarations.ts, 94, 28))
+
+            afterReset;
+>afterReset : Symbol(afterReset, Decl(stableModifierMethodDeclarations.ts, 103, 17))
+        }
+    }
+}
+

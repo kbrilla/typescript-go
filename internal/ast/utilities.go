@@ -111,6 +111,7 @@ func IsModifierKind(token Kind) bool {
 		KindDefaultKeyword,
 		KindExportKeyword,
 		KindStableKeyword,
+		KindMutatorKeyword,
 		KindInKeyword,
 		KindPublicKeyword,
 		KindPrivateKeyword,

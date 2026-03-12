@@ -19292,10 +19292,10 @@ func (c *Checker) getSignatureFromDeclaration(declaration *ast.Node) *Signature 
 	if ast.IsConstructorTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsAbstract) || ast.IsConstructorDeclaration(declaration) && ast.HasSyntacticModifier(declaration.Parent, ast.ModifierFlagsAbstract) {
 		flags |= SignatureFlagsAbstract
 	}
-	if ast.IsFunctionTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsStable) {
+	if (ast.IsFunctionTypeNode(declaration) || ast.IsMethodDeclaration(declaration) || ast.IsMethodSignatureDeclaration(declaration)) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsStable) {
 		flags |= SignatureFlagsStable
 	}
-	if ast.IsFunctionTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsMutator) {
+	if (ast.IsFunctionTypeNode(declaration) || ast.IsMethodDeclaration(declaration) || ast.IsMethodSignatureDeclaration(declaration)) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsMutator) {
 		flags |= SignatureFlagsMutator
 	}
 	links.resolvedSignature = c.newSignature(flags, declaration, typeParameters, thisParameter, parameters, nil /*resolvedReturnType*/, nil /*resolvedTypePredicate*/, minArgumentCount)

@@ -280,7 +280,7 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				firstDecorator = modifier
 			}
 		} else {
-			if modifier.Kind != ast.KindReadonlyKeyword {
+			if modifier.Kind != ast.KindReadonlyKeyword && modifier.Kind != ast.KindStableKeyword && modifier.Kind != ast.KindMutatorKeyword {
 				if node.Kind == ast.KindPropertySignature || node.Kind == ast.KindMethodSignature {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_cannot_appear_on_a_type_member, scanner.TokenToString(modifier.Kind))
 				}
@@ -519,10 +519,10 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				if flags&ast.ModifierFlagsStable != 0 {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "stable")
 				}
-				if node.Kind != ast.KindFunctionType {
+				if node.Kind != ast.KindFunctionType && node.Kind != ast.KindMethodDeclaration && node.Kind != ast.KindMethodSignature {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_stable_modifier_can_only_appear_on_a_function_type_with_no_parameters)
 				}
-				// Check that the function type has no parameters
+				// Check that the function type/method has no parameters
 				if len(node.Parameters()) > 0 {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_stable_modifier_can_only_appear_on_a_function_type_with_no_parameters)
 				}
@@ -535,7 +535,7 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				if flags&ast.ModifierFlagsMutator != 0 {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "mutator")
 				}
-				if node.Kind != ast.KindFunctionType {
+				if node.Kind != ast.KindFunctionType && node.Kind != ast.KindMethodDeclaration && node.Kind != ast.KindMethodSignature {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_can_only_appear_on_a_function_type)
 				}
 				// mutator and stable cannot combine
@@ -659,7 +659,11 @@ func (c *Checker) findFirstIllegalModifier(node *ast.Node) *ast.Node {
 			ast.KindConstructorType:
 			return c.findFirstModifierExcept(node, ast.KindAbstractKeyword)
 		case ast.KindFunctionType:
-			return c.findFirstModifierExcept(node, ast.KindStableKeyword)
+			mod := core.Find(node.ModifierNodes(), ast.IsModifier)
+			if mod != nil && mod.Kind != ast.KindStableKeyword && mod.Kind != ast.KindMutatorKeyword {
+				return mod
+			}
+			return nil
 		case ast.KindClassExpression,
 			ast.KindInterfaceDeclaration,
 			ast.KindTypeAliasDeclaration:
