@@ -7,7 +7,7 @@
 - **Prerequisites**: Phase 1 complete and stable (all validation green)
 - **Related documents**:
   - [stable-modifier-spec.md](stable-modifier-spec.md) — Phase 1 SDD
-  - [stable-phase1-pr-description.md](stable-phase1-pr-description.md) — Phase 1 status & roadmap
+  - [stable-internal-design-document.md](stable-internal-design-document.md) — Internal design document & roadmap
   - [cross-method-type-guards-research.md](cross-method-type-guards-research.md) — Linked predicates research
   - [stable-inheritance-research.md](stable-inheritance-research.md) — Hierarchy/override rules
   - [research-map-has-get-narrowing.md](research-map-has-get-narrowing.md) — Map/Set analysis

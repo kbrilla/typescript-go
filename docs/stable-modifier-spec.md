@@ -282,7 +282,7 @@ Performance guardrails:
 | Class member `this.stable()` pattern | `this.read()` narrows in method body after guard | Local compiler baseline |
 
 ## 14. Rollout Plan (Impact Before Contracts)
-The single authoritative phase table is maintained in [docs/stable-phase1-pr-description.md](stable-phase1-pr-description.md) (Section 4). All phase assignments are governed by that table. Key invariant: `mutator`/`invalidates` contracts appear **only** in Phase 5 (Final).
+The single authoritative phase table is maintained in [docs/stable-internal-design-document.md](stable-internal-design-document.md) (Section 4). All phase assignments are governed by that table. Key invariant: `mutator`/`invalidates` contracts appear **only** in Phase 5 (Final).
 
 Ordered rationale:
 - Phase 1 first captures largest practical value without new declaration contracts.
@@ -335,7 +335,7 @@ DDR-2026-03-10: Multi-perspective Phase 1 re-review.
 
 ## 19. References
 - docs/stable-modifier-research.md
-- docs/stable-phase1-pr-description.md
+- docs/stable-internal-design-document.md
 - docs/stable-heuristic-tdd-plan.md
 - https://www.typescriptlang.org/docs/handbook/2/narrowing.html
 - https://flow.org/en/docs/lang/refinements/
@@ -358,7 +358,7 @@ Reevaluation trigger:
 
 ## 20. Forward Roadmap Alignment
 Roadmap source of truth:
-- The forward candidate list and parity matrices are maintained in `docs/stable-phase1-pr-description.md`.
+- The forward candidate list and parity matrices are maintained in `docs/stable-internal-design-document.md`.
 
 Phase mapping:
 - Phase 2 targets: parity breadth expansion — callback breadth parity, write-form matrix breadth, Tier 2 guarded forwarding breadth, submodule parity expansion, equality-chain reuse, discriminant-preserving nested access.

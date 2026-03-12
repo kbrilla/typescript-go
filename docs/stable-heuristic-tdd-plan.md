@@ -17,7 +17,7 @@ Constrained-overload scope decision:
 - Phase 1 carries readiness planning only (guardrails and test inventory) so the final-phase explicit-contract slice can land narrowly and safely.
 
 ## Reordered Phase Sequence (Impact Before Contracts)
-The single authoritative phase table is maintained in [docs/stable-phase1-pr-description.md](stable-phase1-pr-description.md) (Section 4). All phase assignments are governed by that table. Key invariant: `mutator`/`invalidates` contracts appear **only** in Phase 5 (Final).
+The single authoritative phase table is maintained in [docs/stable-internal-design-document.md](stable-internal-design-document.md) (Section 4). All phase assignments are governed by that table. Key invariant: `mutator`/`invalidates` contracts appear **only** in Phase 5 (Final).
 
 Ordering rationale:
 - Lead with write and parity behavior that delivers immediate user impact and does not require contracts.
@@ -115,7 +115,7 @@ Expected result:
 Add and expand parity-focused tests mirroring property getter/setter CFA scenarios.
 
 Documentation guardrail:
-- Maintain the getter-vs-stable flow graphs in `docs/stable-phase1-pr-description.md` as binder/checker flow logic changes.
+- Maintain the getter-vs-stable flow graphs in `docs/stable-internal-design-document.md` as binder/checker flow logic changes.
 - Any PR that changes flow entry/invalidation for either path should update the Mermaid graphs and the "Can stable use getter flow line directly?" comparison section.
 
 Run:
@@ -179,7 +179,7 @@ Verification:
 - inspect hot paths if checker regressions appear
 
 Benchmark evidence note:
-- See `docs/stable-phase1-pr-description.md` section `Benchmark: tsgo main vs this branch`.
+- See `docs/stable-internal-design-document.md` section `Benchmark: tsgo main vs this branch`.
 - Current snapshot on the TypeScript-main workload shows this branch at `+4.51%` wall time and `-2.24%` RSS versus tsgo main.
 - Treat this as directional only until additional runs are collected to reduce measurement noise.
 
@@ -228,7 +228,7 @@ npx hereby format
 ```
 
 ## Forward Roadmap Alignment
-- Detailed Phase 2/3 candidate features and parity matrices are tracked in `docs/stable-phase1-pr-description.md` under next-phase roadmap sections.
+- Detailed Phase 2/3 candidate features and parity matrices are tracked in `docs/stable-internal-design-document.md` under next-phase roadmap sections.
 - This Phase 1 plan remains implementation-focused; roadmap entries are planning guidance until promoted into explicit red/green slices.
 - Value-type invalidation relaxation ideas are Phase 2/3 candidates only and must ship behind strict shape guardrails with conservative defaults.
 - `Phase X` labels in the PR description denote exploratory post-Phase-3 ideas and are intentionally non-committal until converted into concrete TDD slices.

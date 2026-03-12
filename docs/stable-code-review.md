@@ -215,7 +215,7 @@ Two call expressions `a.foo()` and `a.foo()` are considered matching references 
 
 | Document | Lines | Purpose |
 |----------|-------|---------|
-| `docs/stable-phase1-pr-description.md` | ~850 | PR description + SDD + status tracker |
+| `docs/stable-internal-design-document.md` | ~850 | Internal design document + SDD + status tracker |
 | `docs/stable-modifier-spec.md` | ~500 | Normative specification (all 5 phases) |
 | `docs/stable-heuristic-tdd-plan.md` | ~600 | TDD plan + implementation journal |
 | `docs/stable-modifier-research.md` | ~350 | Background research + language survey |

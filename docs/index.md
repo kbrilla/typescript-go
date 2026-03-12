@@ -9,7 +9,8 @@ Documentation for the `stable` / `mutator` / `invalidates` modifier feature — 
 - [stable-modifier-spec.md](stable-modifier-spec.md) — Main SDD (Software Design Document) for the stable/mutator/invalidates feature
 - [stable-modifier-research.md](stable-modifier-research.md) — Initial research on the identity/stable modifier concept
 - [signal-proposal-stable-mutator.md](signal-proposal-stable-mutator.md) — TC39 Signals integration proposal
-- [stable-phase1-pr-description.md](stable-phase1-pr-description.md) — PR description for Phase 1 implementation
+- [stable-internal-design-document.md](stable-internal-design-document.md) — Internal design document (implementation status, phase roadmap, parity matrices)
+- [stable-pr-proposal.md](stable-pr-proposal.md) — Research-grade PR proposal for the stable/mutator/invalidates feature
 - [stable-phase8-proposal.md](stable-phase8-proposal.md) — Phase 8 proposal (linked predicates, advanced patterns)
 
 ## Design Review (Cross-Language Survey)
