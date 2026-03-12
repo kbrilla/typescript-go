@@ -1,0 +1,274 @@
+//// [tests/cases/compiler/stableModifierSuperCalls.ts] ////
+
+=== stableModifierSuperCalls.ts ===
+// Tests that super.mutator() calls correctly invalidate this.stable() narrowing
+
+// === Section 1: Base class with stable/mutator ===
+class Base<T> {
+>Base : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierSuperCalls.ts, 3, 11))
+
+    private _value: T;
+>_value : Symbol(Base._value, Decl(stableModifierSuperCalls.ts, 3, 15))
+>T : Symbol(T, Decl(stableModifierSuperCalls.ts, 3, 11))
+
+    constructor(value: T) { this._value = value; }
+>value : Symbol(value, Decl(stableModifierSuperCalls.ts, 5, 16))
+>T : Symbol(T, Decl(stableModifierSuperCalls.ts, 3, 11))
+>this._value : Symbol(Base._value, Decl(stableModifierSuperCalls.ts, 3, 15))
+>this : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+>_value : Symbol(Base._value, Decl(stableModifierSuperCalls.ts, 3, 15))
+>value : Symbol(value, Decl(stableModifierSuperCalls.ts, 5, 16))
+
+    get: stable () => T = () => this._value;
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>T : Symbol(T, Decl(stableModifierSuperCalls.ts, 3, 11))
+>this._value : Symbol(Base._value, Decl(stableModifierSuperCalls.ts, 3, 15))
+>this : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+>_value : Symbol(Base._value, Decl(stableModifierSuperCalls.ts, 3, 15))
+
+    set: mutator (value: T) => void invalidates get = (v) => { this._value = v; };
+>set : Symbol(Base.set, Decl(stableModifierSuperCalls.ts, 6, 44))
+>value : Symbol(value, Decl(stableModifierSuperCalls.ts, 7, 18))
+>T : Symbol(T, Decl(stableModifierSuperCalls.ts, 3, 11))
+>v : Symbol(v, Decl(stableModifierSuperCalls.ts, 7, 55))
+>this._value : Symbol(Base._value, Decl(stableModifierSuperCalls.ts, 3, 15))
+>this : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+>_value : Symbol(Base._value, Decl(stableModifierSuperCalls.ts, 3, 15))
+>v : Symbol(v, Decl(stableModifierSuperCalls.ts, 7, 55))
+
+    reset: mutator () => void = () => { this._value = undefined as any; };
+>reset : Symbol(Base.reset, Decl(stableModifierSuperCalls.ts, 7, 82))
+>this._value : Symbol(Base._value, Decl(stableModifierSuperCalls.ts, 3, 15))
+>this : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+>_value : Symbol(Base._value, Decl(stableModifierSuperCalls.ts, 3, 15))
+>undefined : Symbol(undefined)
+}
+
+// === Section 2: super.mutator() should invalidate this.stable() narrowing ===
+class DerivedInvalidation extends Base<string | undefined> {
+>DerivedInvalidation : Symbol(DerivedInvalidation, Decl(stableModifierSuperCalls.ts, 9, 1))
+>Base : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+
+    superInvalidatesGet(): void {
+>superInvalidatesGet : Symbol(DerivedInvalidation.superInvalidatesGet, Decl(stableModifierSuperCalls.ts, 12, 60))
+
+        if (this.get() !== undefined) {
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedInvalidation, Decl(stableModifierSuperCalls.ts, 9, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>undefined : Symbol(undefined)
+
+            const before: string = this.get(); // OK — narrowed to string
+>before : Symbol(before, Decl(stableModifierSuperCalls.ts, 15, 17))
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedInvalidation, Decl(stableModifierSuperCalls.ts, 9, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+
+            before;
+>before : Symbol(before, Decl(stableModifierSuperCalls.ts, 15, 17))
+
+            super.set("new value");
+>super.set : Symbol(Base.set, Decl(stableModifierSuperCalls.ts, 6, 44))
+>super : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+>set : Symbol(Base.set, Decl(stableModifierSuperCalls.ts, 6, 44))
+
+            const after: string = this.get(); // should error — super.set() resets this.get()
+>after : Symbol(after, Decl(stableModifierSuperCalls.ts, 20, 17))
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedInvalidation, Decl(stableModifierSuperCalls.ts, 9, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+
+            after;
+>after : Symbol(after, Decl(stableModifierSuperCalls.ts, 20, 17))
+        }
+    }
+}
+
+// === Section 3: super.reset() (blanket mutator) should invalidate ===
+class DerivedBlanket extends Base<string | undefined> {
+>DerivedBlanket : Symbol(DerivedBlanket, Decl(stableModifierSuperCalls.ts, 24, 1))
+>Base : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+
+    superResetInvalidates(): void {
+>superResetInvalidates : Symbol(DerivedBlanket.superResetInvalidates, Decl(stableModifierSuperCalls.ts, 27, 55))
+
+        if (this.get() !== undefined) {
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedBlanket, Decl(stableModifierSuperCalls.ts, 24, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>undefined : Symbol(undefined)
+
+            const before: string = this.get(); // OK — narrowed
+>before : Symbol(before, Decl(stableModifierSuperCalls.ts, 30, 17))
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedBlanket, Decl(stableModifierSuperCalls.ts, 24, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+
+            before;
+>before : Symbol(before, Decl(stableModifierSuperCalls.ts, 30, 17))
+
+            super.reset();
+>super.reset : Symbol(Base.reset, Decl(stableModifierSuperCalls.ts, 7, 82))
+>super : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+>reset : Symbol(Base.reset, Decl(stableModifierSuperCalls.ts, 7, 82))
+
+            const after: string = this.get(); // should error — super.reset() resets narrowing
+>after : Symbol(after, Decl(stableModifierSuperCalls.ts, 35, 17))
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedBlanket, Decl(stableModifierSuperCalls.ts, 24, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+
+            after;
+>after : Symbol(after, Decl(stableModifierSuperCalls.ts, 35, 17))
+        }
+    }
+}
+
+// === Section 4: super.mutator with invalidates clause respects targeting ===
+class DerivedTargeted extends Base<string | undefined> {
+>DerivedTargeted : Symbol(DerivedTargeted, Decl(stableModifierSuperCalls.ts, 39, 1))
+>Base : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+
+    extra: stable () => number | undefined = () => 42;
+>extra : Symbol(DerivedTargeted.extra, Decl(stableModifierSuperCalls.ts, 42, 56))
+
+    superSetTargeted(): void {
+>superSetTargeted : Symbol(DerivedTargeted.superSetTargeted, Decl(stableModifierSuperCalls.ts, 43, 54))
+
+        if (this.get() !== undefined && this.extra() !== undefined) {
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedTargeted, Decl(stableModifierSuperCalls.ts, 39, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>undefined : Symbol(undefined)
+>this.extra : Symbol(DerivedTargeted.extra, Decl(stableModifierSuperCalls.ts, 42, 56))
+>this : Symbol(DerivedTargeted, Decl(stableModifierSuperCalls.ts, 39, 1))
+>extra : Symbol(DerivedTargeted.extra, Decl(stableModifierSuperCalls.ts, 42, 56))
+>undefined : Symbol(undefined)
+
+            const getVal: string = this.get(); // OK — narrowed
+>getVal : Symbol(getVal, Decl(stableModifierSuperCalls.ts, 47, 17))
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedTargeted, Decl(stableModifierSuperCalls.ts, 39, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+
+            const extraVal: number = this.extra(); // OK — narrowed
+>extraVal : Symbol(extraVal, Decl(stableModifierSuperCalls.ts, 48, 17))
+>this.extra : Symbol(DerivedTargeted.extra, Decl(stableModifierSuperCalls.ts, 42, 56))
+>this : Symbol(DerivedTargeted, Decl(stableModifierSuperCalls.ts, 39, 1))
+>extra : Symbol(DerivedTargeted.extra, Decl(stableModifierSuperCalls.ts, 42, 56))
+
+            getVal;
+>getVal : Symbol(getVal, Decl(stableModifierSuperCalls.ts, 47, 17))
+
+            extraVal;
+>extraVal : Symbol(extraVal, Decl(stableModifierSuperCalls.ts, 48, 17))
+
+            // super.set() invalidates get, but NOT extra (targeted via invalidates clause)
+            super.set("new");
+>super.set : Symbol(Base.set, Decl(stableModifierSuperCalls.ts, 6, 44))
+>super : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+>set : Symbol(Base.set, Decl(stableModifierSuperCalls.ts, 6, 44))
+
+            const getAfter: string = this.get(); // should error — invalidated
+>getAfter : Symbol(getAfter, Decl(stableModifierSuperCalls.ts, 55, 17))
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedTargeted, Decl(stableModifierSuperCalls.ts, 39, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+
+            const extraAfter: number = this.extra(); // OK — NOT invalidated (set only targets get)
+>extraAfter : Symbol(extraAfter, Decl(stableModifierSuperCalls.ts, 56, 17))
+>this.extra : Symbol(DerivedTargeted.extra, Decl(stableModifierSuperCalls.ts, 42, 56))
+>this : Symbol(DerivedTargeted, Decl(stableModifierSuperCalls.ts, 39, 1))
+>extra : Symbol(DerivedTargeted.extra, Decl(stableModifierSuperCalls.ts, 42, 56))
+
+            getAfter;
+>getAfter : Symbol(getAfter, Decl(stableModifierSuperCalls.ts, 55, 17))
+
+            extraAfter;
+>extraAfter : Symbol(extraAfter, Decl(stableModifierSuperCalls.ts, 56, 17))
+        }
+    }
+}
+
+// === Section 5: Non-mutator super call should NOT invalidate ===
+class DerivedNonMutator extends Base<string | undefined> {
+>DerivedNonMutator : Symbol(DerivedNonMutator, Decl(stableModifierSuperCalls.ts, 61, 1))
+>Base : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+
+    superNonMutator(): void {
+>superNonMutator : Symbol(DerivedNonMutator.superNonMutator, Decl(stableModifierSuperCalls.ts, 64, 58))
+
+        if (this.get() !== undefined) {
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedNonMutator, Decl(stableModifierSuperCalls.ts, 61, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>undefined : Symbol(undefined)
+
+            const before: string = this.get(); // OK — narrowed
+>before : Symbol(before, Decl(stableModifierSuperCalls.ts, 67, 17))
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedNonMutator, Decl(stableModifierSuperCalls.ts, 61, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+
+            before;
+>before : Symbol(before, Decl(stableModifierSuperCalls.ts, 67, 17))
+
+            // super.toString() is NOT a mutator — should not reset narrowing
+            super.toString();
+>super.toString : Symbol(Object.toString, Decl(lib.es5.d.ts, --, --))
+>super : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+>toString : Symbol(Object.toString, Decl(lib.es5.d.ts, --, --))
+
+            const after: string = this.get(); // OK — still narrowed (toString is not mutator)
+>after : Symbol(after, Decl(stableModifierSuperCalls.ts, 73, 17))
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedNonMutator, Decl(stableModifierSuperCalls.ts, 61, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+
+            after;
+>after : Symbol(after, Decl(stableModifierSuperCalls.ts, 73, 17))
+        }
+    }
+}
+
+// === Section 6: this.mutator() still works (control case) ===
+class DerivedThis extends Base<string | undefined> {
+>DerivedThis : Symbol(DerivedThis, Decl(stableModifierSuperCalls.ts, 77, 1))
+>Base : Symbol(Base, Decl(stableModifierSuperCalls.ts, 0, 0))
+
+    thisInvalidatesGet(): void {
+>thisInvalidatesGet : Symbol(DerivedThis.thisInvalidatesGet, Decl(stableModifierSuperCalls.ts, 80, 52))
+
+        if (this.get() !== undefined) {
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedThis, Decl(stableModifierSuperCalls.ts, 77, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>undefined : Symbol(undefined)
+
+            const before: string = this.get(); // OK — narrowed
+>before : Symbol(before, Decl(stableModifierSuperCalls.ts, 83, 17))
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedThis, Decl(stableModifierSuperCalls.ts, 77, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+
+            before;
+>before : Symbol(before, Decl(stableModifierSuperCalls.ts, 83, 17))
+
+            this.set("new");
+>this.set : Symbol(Base.set, Decl(stableModifierSuperCalls.ts, 6, 44))
+>this : Symbol(DerivedThis, Decl(stableModifierSuperCalls.ts, 77, 1))
+>set : Symbol(Base.set, Decl(stableModifierSuperCalls.ts, 6, 44))
+
+            const after: string = this.get(); // should error — this.set() resets
+>after : Symbol(after, Decl(stableModifierSuperCalls.ts, 88, 17))
+>this.get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+>this : Symbol(DerivedThis, Decl(stableModifierSuperCalls.ts, 77, 1))
+>get : Symbol(Base.get, Decl(stableModifierSuperCalls.ts, 5, 50))
+
+            after;
+>after : Symbol(after, Decl(stableModifierSuperCalls.ts, 88, 17))
+        }
+    }
+}
+
