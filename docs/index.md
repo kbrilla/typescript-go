@@ -120,6 +120,8 @@ These are research documents that explored design space. They may contain outdat
 | [research-solidjs-cross-binding.md](research-solidjs-cross-binding.md) | SolidJS cross-binding analysis — ⚠️ CBI-1 now implemented |
 | [stable-lib-impact-research.md](stable-lib-impact-research.md) | Impact on JS/DOM built-in types |
 | [pre_post_validation.md](pre_post_validation.md) | Whole-proposal impact assessment on codebases |
+| [new_research_docs/research-angular-computed-integration.md](new_research_docs/research-angular-computed-integration.md) | Angular `computed()` integration with stable/mutator CFA |
+| [new_research_docs/research-ngxtension-stable-mutator-integration.md](new_research_docs/research-ngxtension-stable-mutator-integration.md) | ngxtension signal utilities integration with stable/mutator CFA |
 
 ---
 
