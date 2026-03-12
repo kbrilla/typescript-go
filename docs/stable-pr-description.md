@@ -137,13 +137,22 @@ Four declaration-site type modifiers that enable CFA narrowing through function 
 - **`invalidates`** — refines `mutator` to target specific stable endpoints
 - **Linked type predicates** — `this.value() is T` syntax for guard methods that narrow stable call results
 
-All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (41 test files) with zero regressions against the existing test baseline.
+All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (42 test files) with zero regressions against the existing test baseline.
 
 **Implementation milestones:**
 - **SYN-4** ✅ — `stable`/`mutator` modifiers on method declarations and method signatures (class methods, interface methods, type literal methods)
 - **SEM-4** ✅ — Super call invalidation: `super.mutator()` correctly invalidates `this.stable()` narrowing in class hierarchies
 - **CBI-1** ✅ — Cross-binding invalidation via named tuple label references: `invalidates read` on a destructured setter targets the sibling `read` accessor, with full post-call narrowing and selective invalidation
 - **SEM-3** ✅ — Interface merging behavior codified: 10-section test documenting how `stable`/`mutator` modifiers behave across merged interfaces, intersections, and interface extension
+
+### Declaration Parity
+- `stable`/`mutator` now supported on ALL function-like declarations:
+  - Function declarations: `stable function getValue(): T {}`
+  - Function expressions: `const f = stable function(): T {}`
+  - Arrow functions: `const f = stable (): T => {}`
+  - Get accessors: `stable get value(): T` (class + interface)
+  - Set accessors: `mutator set value(v: T)` (class + interface)
+- Grammar restrictions preserved: `stable` requires zero params (rejects setters), `mutator` rejects getters
 
 ---
 
@@ -346,7 +355,7 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 
 ## Key Test Files
 
-41 test files in `testdata/tests/cases/compiler/`:
+42 test files in `testdata/tests/cases/compiler/`:
 
 **Core narrowing:**
 - `stableModifierNarrowing.ts` — basic stable narrowing and reset
@@ -381,6 +390,7 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 - `stableModifierCrossModule.ts` — cross-module stable references
 - `stableModifierErrors.ts` / `stableModifierDiagnostics.ts` — error reporting
 - `stableModifierEmit.ts` — erasure correctness
+- `stableModifierDeclarationParity.ts` — 11 sections: all declaration kinds, grammar errors, namespace support
 
 ---
 
