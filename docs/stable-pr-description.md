@@ -137,12 +137,13 @@ Four declaration-site type modifiers that enable CFA narrowing through function 
 - **`invalidates`** — refines `mutator` to target specific stable endpoints
 - **Linked type predicates** — `this.value() is T` syntax for guard methods that narrow stable call results
 
-All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (40 test files) with zero regressions against the existing test baseline.
+All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (41 test files) with zero regressions against the existing test baseline.
 
 **Implementation milestones:**
 - **SYN-4** ✅ — `stable`/`mutator` modifiers on method declarations and method signatures (class methods, interface methods, type literal methods)
 - **SEM-4** ✅ — Super call invalidation: `super.mutator()` correctly invalidates `this.stable()` narrowing in class hierarchies
 - **CBI-1** ✅ — Cross-binding invalidation via named tuple label references: `invalidates read` on a destructured setter targets the sibling `read` accessor, with full post-call narrowing and selective invalidation
+- **SEM-3** ✅ — Interface merging behavior codified: 10-section test documenting how `stable`/`mutator` modifiers behave across merged interfaces, intersections, and interface extension
 
 ---
 
@@ -345,7 +346,7 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 
 ## Key Test Files
 
-40 test files in `testdata/tests/cases/compiler/`:
+41 test files in `testdata/tests/cases/compiler/`:
 
 **Core narrowing:**
 - `stableModifierNarrowing.ts` — basic stable narrowing and reset
@@ -374,6 +375,7 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 - `stableModifierSuperCalls.ts` — super call invalidation in class hierarchies
 
 **Edge cases:**
+- `stableModifierInterfaceMerging.ts` — interface merging and intersection behavior with stable/mutator modifiers
 - `stableModifierClosures.ts` — closure capture behavior
 - `stableModifierOptionalChaining.ts` / `stableModifierAdvancedOptionalChain.ts`
 - `stableModifierCrossModule.ts` — cross-module stable references

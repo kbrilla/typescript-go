@@ -109,10 +109,11 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 
 | Aspect | Detail |
 |--------|--------|
-| **Status** | RECOMMENDED |
+| **Status** | DECIDED |
 | **Phase Impact** | Low |
 | **Decision** | When merged interfaces disagree on `stable`, modifier is lost (intersection semantics). Correct? |
 | **Recommendation** | Yes — follows intersection semantics (matches `readonly` merging). Needs test codification |
+| **Resolution** | Codified via test `stableModifierInterfaceMerging.ts` (10 sections). Behavior: first-declaration-wins for interface merging (stable survives if first decl has it, lost otherwise). For intersections, stable from first constituent survives. For interface extension, derived declaration takes priority. Matches `readonly` merging precedent. |
 | **Source** | [stable-pr-proposal.md §11](stable-pr-proposal.md), [stable-phase8-proposal.md §6](stable-phase8-proposal.md) |
 
 ### SEM-4: `super` call invalidation
@@ -313,9 +314,9 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 | Status | Count | IDs |
 |--------|-------|-----|
 | **OPEN** | 12 | SYN-1, SYN-3, SEM-2, SEM-5, SEM-6, SEM-7, CBI-4, CBI-5, ADO-1, ADO-2, ADO-3, ADO-4 |
-| **RECOMMENDED** | 4 | SEM-3, SEM-4, CBI-2, CBI-3 |
+| **RECOMMENDED** | 3 | SEM-4, CBI-2, CBI-3 |
 | **DEFERRED** | 9 | SYN-2, SYN-4, SYN-5, SYN-6, SEM-1, SEM-8, LP-1, LP-2, LP-3 |
-| **DECIDED** | 1 | CBI-1 |
+| **DECIDED** | 2 | CBI-1, SEM-3 |
 
 ### By Phase Impact
 
