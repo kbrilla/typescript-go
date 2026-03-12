@@ -135,6 +135,7 @@ Four declaration-site type modifiers that enable CFA narrowing through function 
 - **`stable`** — marks a callable getter as returning the same value on consecutive calls (absent mutation)
 - **`mutator`** — marks a function as mutating backing state, resetting narrowing
 - **`invalidates`** — refines `mutator` to target specific stable endpoints
+- **Post-call argument narrowing** — after a `mutator invalidates` call, the stable getter is narrowed to the argument's type (e.g., `setCount(20)` narrows `count()` to `number`)
 - **Linked type predicates** — `this.value() is T` syntax for guard methods that narrow stable call results
 
 All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (42 test files) with zero regressions against the existing test baseline.
@@ -324,6 +325,8 @@ interface Signal<T> {
 
 ### Phase 5: Cross-Binding Invalidation (SolidJS / Preact Signals)
 
+> **Status: Already implemented** (CBI-1). Cross-binding invalidation via named tuple labels and post-call argument-type narrowing are fully functional in this PR.
+
 Tuple-destructured APIs where getter and setter are separate bindings:
 
 ```ts
@@ -336,8 +339,10 @@ function createSignal<T>(value: T): [
 const [count, setCount] = createSignal<number | undefined>(0);
 if (count() !== undefined) {
     count() + 1;             // ✅ narrowed to number
-    setCount(undefined);     // invalidates read → post-call narrowing from argument
-    count();                 // narrowed to undefined (argument type propagated)
+    setCount(20);            // invalidates read → post-call narrowing from argument
+    count();                 // ✅ narrowed to number (argument type: number)
+    setCount(undefined);     // post-call narrowing from argument
+    count();                 // narrowed to undefined (argument type: undefined)
 }
 
 // Selective invalidation with multi-element tuples
@@ -531,8 +536,10 @@ declare const sig: Signal<string | undefined>;
 if (sig.value() !== undefined) {
     sig.toString();              // does NOT reset — not a mutator
     sig.value().toUpperCase();   // still narrowed
-    sig.set(undefined);          // mutator targeting value → post-call narrowing from argument
-    sig.value();                 // narrowed to undefined (argument type propagated)
+    sig.set("hello");            // mutator → post-call narrowing from argument
+    sig.value();                 // ✅ narrowed to string (argument type: string)
+    sig.set(undefined);          // post-call narrowing from argument
+    sig.value();                 // narrowed to undefined (argument type: undefined)
 }
 ```
 
