@@ -224,7 +224,7 @@ In practice, "I forgot to add `mutator` to a state-changing method" is a more li
 
 Both `stable` AND `mutator` must be correctly annotated for soundness. The compiler trusts the developer's annotations mechanically. If a method mutates backing state but isn't marked `mutator`, narrowing survives incorrectly. This is analogous to TypeScript's general trust model for type annotations (`x: string` when `x` is actually a `number`), but the blast radius of a missing `mutator` is larger because it affects all stable narrowing on that receiver.
 
-### 3. SolidJS Cannot Safely Adopt
+### 3. SolidJS Cross-Binding Invalidation (Resolved)
 
 SolidJS separates accessor and setter into different bindings:
 
