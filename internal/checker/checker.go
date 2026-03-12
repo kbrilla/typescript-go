@@ -2635,6 +2635,15 @@ func (c *Checker) checkPropertySignature(node *ast.Node) {
 }
 
 func (c *Checker) checkSignatureDeclaration(node *ast.Node) {
+	// Handle mutator wrapping a type reference: mutator Setter<T> invalidates get
+	// For wrapped type nodes, check the wrapped type instead of normal signature parts
+	if ast.IsFunctionTypeNode(node) {
+		fnType := node.AsFunctionTypeNode()
+		if fnType.WrappedType != nil {
+			c.checkSourceElement(fnType.WrappedType)
+			return
+		}
+	}
 	// Grammar checking
 	switch node.Kind {
 	case ast.KindIndexSignature:
@@ -22359,6 +22368,14 @@ func (c *Checker) getTypeFromLiteralTypeNode(node *ast.Node) *Type {
 func (c *Checker) getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode(node *ast.Node) *Type {
 	links := c.typeNodeLinks.Get(node)
 	if links.resolvedType == nil {
+		// Handle mutator wrapping a type reference: mutator Setter<T> invalidates get
+		if ast.IsFunctionTypeNode(node) {
+			fnType := node.AsFunctionTypeNode()
+			if fnType.WrappedType != nil {
+				links.resolvedType = c.getTypeFromMutatorWrappedTypeNode(node, fnType)
+				return links.resolvedType
+			}
+		}
 		// Deferred resolution of members is handled by resolveObjectTypeMembers
 		alias := c.getAliasForTypeNode(node)
 		if sym := node.Symbol(); sym == nil || len(c.getMembersOfSymbol(sym)) == 0 && alias == nil {
@@ -22370,6 +22387,13 @@ func (c *Checker) getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode(node *as
 		}
 	}
 	return links.resolvedType
+}
+
+// getTypeFromMutatorWrappedTypeNode resolves a `mutator TypeRef invalidates ...` node.
+// It simply resolves the wrapped type reference and returns it directly.
+// The mutator/invalidates semantics are handled at the CFA level.
+func (c *Checker) getTypeFromMutatorWrappedTypeNode(node *ast.Node, fnType *ast.FunctionTypeNode) *Type {
+	return c.getTypeFromTypeNode(fnType.WrappedType)
 }
 
 func (c *Checker) getTypeFromIndexedAccessTypeNode(node *ast.Node) *Type {

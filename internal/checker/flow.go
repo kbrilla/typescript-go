@@ -1014,26 +1014,11 @@ func (c *Checker) isCrossBindingMutatorBoundary(reference *ast.Node, boundary *a
 		return false
 	}
 
-	signature := c.getResolvedSignature(boundary, nil, CheckModeTypeOnly)
-	if signature == nil || signature == c.resolvingSignature || signature.flags&SignatureFlagsMutator == 0 {
-		return false
-	}
-
 	// Both must be calls through identifiers (standalone function bindings)
 	referenceCallee := ast.SkipParentheses(reference.Expression())
 	boundaryCallee := ast.SkipParentheses(boundary.Expression())
 
 	if !ast.IsIdentifier(referenceCallee) || !ast.IsIdentifier(boundaryCallee) {
-		return false
-	}
-
-	// Must have an explicit invalidates clause with targets
-	declaration := signature.declaration
-	if declaration == nil || !ast.IsFunctionTypeNode(declaration) {
-		return false
-	}
-	fnType := declaration.AsFunctionTypeNode()
-	if fnType.LinksClause == nil || len(fnType.LinksClause.Nodes) == 0 {
 		return false
 	}
 
@@ -1076,23 +1061,26 @@ func (c *Checker) isCrossBindingMutatorBoundary(reference *ast.Node, boundary *a
 		return false
 	}
 
-	// Find the index of the reference element in the binding pattern
+	// Find the index of the reference and boundary elements in the binding pattern
 	elements := refPattern.AsBindingPattern().Elements
 	refIndex := -1
+	boundIndex := -1
 	for i, elem := range elements.Nodes {
 		if elem == refDecl {
 			refIndex = i
-			break
+		}
+		if elem == boundDecl {
+			boundIndex = i
 		}
 	}
-	if refIndex < 0 {
+	if refIndex < 0 || boundIndex < 0 {
 		return false
 	}
 
-	// Get the tuple target to access element labels
+	// Get the tuple target to access element labels and declarations
 	tupleTarget := parentType.TargetTupleType()
 	elementInfos := tupleTarget.ElementInfos()
-	if refIndex >= len(elementInfos) {
+	if refIndex >= len(elementInfos) || boundIndex >= len(elementInfos) {
 		return false
 	}
 
@@ -1103,8 +1091,40 @@ func (c *Checker) isCrossBindingMutatorBoundary(reference *ast.Node, boundary *a
 	}
 	refLabel := refInfo.LabeledDeclaration().Name().Text()
 
+	// Find the LinksClause for the boundary element.
+	// First check the resolved signature's declaration (works for inline mutator function types).
+	// Then check the boundary's tuple element declaration (works for mutator wrapping type references).
+	var linksClause *ast.NodeList
+	signature := c.getResolvedSignature(boundary, nil, CheckModeTypeOnly)
+	if signature != nil && signature != c.resolvingSignature && signature.flags&SignatureFlagsMutator != 0 {
+		if declaration := signature.declaration; declaration != nil && ast.IsFunctionTypeNode(declaration) {
+			fnType := declaration.AsFunctionTypeNode()
+			if fnType.LinksClause != nil && len(fnType.LinksClause.Nodes) > 0 {
+				linksClause = fnType.LinksClause
+			}
+		}
+	}
+	// If no LinksClause from signature, check the tuple element's type annotation
+	if linksClause == nil {
+		boundInfo := elementInfos[boundIndex]
+		if boundInfo.LabeledDeclaration() != nil && ast.IsNamedTupleMember(boundInfo.LabeledDeclaration()) {
+			typeNode := boundInfo.LabeledDeclaration().AsNamedTupleMember().Type
+			if typeNode != nil && ast.IsFunctionTypeNode(typeNode) {
+				fnType := typeNode.AsFunctionTypeNode()
+				if fnType.WrappedType != nil && ast.HasSyntacticModifier(typeNode, ast.ModifierFlagsMutator) {
+					if fnType.LinksClause != nil && len(fnType.LinksClause.Nodes) > 0 {
+						linksClause = fnType.LinksClause
+					}
+				}
+			}
+		}
+	}
+	if linksClause == nil {
+		return false
+	}
+
 	// Check if any target in the invalidates clause matches the reference's label
-	for _, link := range fnType.LinksClause.Nodes {
+	for _, link := range linksClause.Nodes {
 		if ast.IsIdentifier(link) && link.Text() == refLabel {
 			return true
 		}

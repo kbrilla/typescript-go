@@ -1895,6 +1895,25 @@ func (p *Printer) emitReturnType(node *ast.TypeNode) {
 
 func (p *Printer) emitFunctionType(node *ast.FunctionTypeNode) {
 	state := p.enterNode(node.AsNode())
+	// Handle mutator wrapping a type reference: mutator Setter<T> invalidates get
+	if node.WrappedType != nil {
+		p.emitModifierList(node.AsNode(), node.Modifiers(), false /*allowDecorators*/)
+		p.emitTypeNode(node.WrappedType, ast.TypePrecedenceNonArray)
+		if node.LinksClause != nil && len(node.LinksClause.Nodes) > 0 {
+			p.writeSpace()
+			p.writeKeyword("invalidates")
+			p.writeSpace()
+			for i, link := range node.LinksClause.Nodes {
+				if i > 0 {
+					p.writePunctuation(",")
+					p.writeSpace()
+				}
+				p.emitIdentifierName(link.AsIdentifier())
+			}
+		}
+		p.exitNode(node.AsNode(), state)
+		return
+	}
 	p.emitModifierList(node.AsNode(), node.Modifiers(), false /*allowDecorators*/)
 	indented := p.shouldEmitIndented(node.AsNode())
 	p.increaseIndentIf(indented)

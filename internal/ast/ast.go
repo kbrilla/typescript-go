@@ -8799,7 +8799,8 @@ func (node *FunctionOrConstructorTypeNodeBase) ForEachChild(v Visitor) bool {
 
 type FunctionTypeNode struct {
 	FunctionOrConstructorTypeNodeBase
-	KeyParameter *Node // Optional: identifier from stable[key] or mutator[key] bracket syntax
+	KeyParameter *Node     // Optional: identifier from stable[key] or mutator[key] bracket syntax
+	WrappedType  *TypeNode // Optional: type reference for `mutator TypeRef invalidates ...` syntax
 }
 
 func (f *NodeFactory) NewFunctionTypeNode(modifiers *ModifierList, typeParameters *NodeList, parameters *NodeList, returnType *TypeNode) *Node {
@@ -8819,7 +8820,7 @@ func (f *NodeFactory) UpdateFunctionTypeNode(node *FunctionTypeNode, modifiers *
 }
 
 func (node *FunctionTypeNode) ForEachChild(v Visitor) bool {
-	return visitModifiers(v, node.modifiers) || visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type) || visit(v, node.KeyParameter) || visitNodeList(v, node.LinksClause)
+	return visitModifiers(v, node.modifiers) || visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type) || visit(v, node.KeyParameter) || visit(v, node.WrappedType) || visitNodeList(v, node.LinksClause)
 }
 
 func (node *FunctionTypeNode) VisitEachChild(v *NodeVisitor) *Node {
@@ -8832,6 +8833,7 @@ func (node *FunctionTypeNode) Clone(f NodeFactoryCoercible) *Node {
 		result.AsFunctionTypeNode().LinksClause = node.LinksClause
 	}
 	result.AsFunctionTypeNode().KeyParameter = node.KeyParameter
+	result.AsFunctionTypeNode().WrappedType = node.WrappedType
 	result.AsFunctionTypeNode().LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
 	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }

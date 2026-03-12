@@ -3798,6 +3798,25 @@ func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 	if p.hasStableModifier(modifiers) && p.token == ast.KindOpenBracketToken {
 		keyParameter = p.parseKeyParameterBinding()
 	}
+	// Check for mutator wrapping a type reference: mutator Setter<T> invalidates get
+	if p.hasMutatorModifier(modifiers) && p.token != ast.KindOpenParenToken && p.token != ast.KindLessThanToken && p.token != ast.KindNewKeyword {
+		wrappedType := p.parseTypeReference()
+		// Parse optional invalidates clause
+		var linksClause *ast.NodeList
+		var linksClauseKeyParamNames []string
+		if p.token == ast.KindInvalidatesKeyword {
+			linksClause, linksClauseKeyParamNames = p.parseInvalidatesClause()
+		}
+		result := p.factory.NewFunctionTypeNode(modifiers, nil, nil, nil)
+		result.AsFunctionTypeNode().WrappedType = wrappedType
+		if linksClause != nil {
+			result.AsFunctionTypeNode().LinksClause = linksClause
+			result.AsFunctionTypeNode().LinksClauseKeyParamNames = linksClauseKeyParamNames
+		}
+		p.finishNode(result, pos)
+		p.withJSDoc(result, jsdoc)
+		return result
+	}
 	isConstructorType := p.parseOptional(ast.KindNewKeyword)
 	debug.Assert(modifiers == nil || isConstructorType || p.hasStableModifier(modifiers) || p.hasMutatorModifier(modifiers), "Per isStartOfFunctionOrConstructorType, a function type can only have the stable or mutator modifier.")
 	typeParameters := p.parseTypeParameters()
@@ -3952,6 +3971,10 @@ func (p *Parser) nextTokenStartsMutatorFunctionType() bool {
 			return false
 		}
 		return p.nextIsUnambiguouslyStartOfFunctionType()
+	}
+	// After mutator, an identifier starts a wrapped type reference: mutator Setter<T> invalidates get
+	if tokenIsIdentifierOrKeyword(p.token) {
+		return true
 	}
 	return false
 }

@@ -1,0 +1,258 @@
+//// [tests/cases/compiler/stableModifierMutatorTypeReference.ts] ////
+
+=== stableModifierMutatorTypeReference.ts ===
+// Tests: `mutator` applied to type references (not inline function types).
+// Currently `mutator` only works before function type syntax: `mutator (value: T) => void`.
+// These scenarios test extending it to support: `mutator Setter<T>`.
+
+// === Scenario 1: mutator on a callable interface type reference in a tuple ===
+
+type Accessor<T> = stable () => T;
+>Accessor : Accessor<T>
+
+interface Setter<T> {
+    (value: T): void;
+>value : T
+
+    (fn: (prev: T) => T): void;
+>fn : (prev: T) => T
+>prev : T
+}
+
+// mutator before a type reference, with cross-binding invalidates
+type Signal<T> = [get: Accessor<T>, set: mutator Setter<T> invalidates get];
+>Signal : Signal<T>
+
+declare function createSignal<T>(value: T): Signal<T>;
+>createSignal : <T>(value: T) => Signal<T>
+>value : T
+
+const [count, setCount] = createSignal<number | undefined>(0);
+>count : Accessor<number | undefined>
+>setCount : Setter<number | undefined>
+>createSignal<number | undefined>(0) : Signal<number | undefined>
+>createSignal : <T>(value: T) => Signal<T>
+>0 : 0
+
+if (count() !== undefined) {
+>count() !== undefined : boolean
+>count() : number | undefined
+>count : Accessor<number | undefined>
+>undefined : undefined
+
+    count().toFixed(2);   // narrowed to number
+>count().toFixed(2) : string
+>count().toFixed : (fractionDigits?: number | undefined) => string
+>count() : number | undefined
+>count : Accessor<number | undefined>
+>toFixed : (fractionDigits?: number | undefined) => string
+>2 : 2
+
+    setCount(42);          // invalidates + post-call narrowing
+>setCount(42) : void
+>setCount : Setter<number | undefined>
+>42 : 42
+
+    count().toFixed(2);    // still narrowed (post-call: number)
+>count().toFixed(2) : string
+>count().toFixed : (fractionDigits?: number | undefined) => string
+>count() : number | undefined
+>count : Accessor<number | undefined>
+>toFixed : (fractionDigits?: number | undefined) => string
+>2 : 2
+
+    setCount(undefined);   // post-call narrowing to undefined
+>setCount(undefined) : void
+>setCount : Setter<number | undefined>
+>undefined : undefined
+}
+
+// === Scenario 2: Complex overloaded setter (SolidJS-style) ===
+
+type SolidSetter<in out T> = {
+>SolidSetter : SolidSetter<T>
+
+    <U extends T>(...args: undefined extends T ? [] : [value: Exclude<U, Function> | ((prev: T) => U)]): undefined extends T ? undefined : U;
+>args : undefined extends T ? [] : [value: ((prev: T) => U) | Exclude<U, Function>]
+>prev : T
+
+    <U extends T>(value: (prev: T) => U): U;
+>value : (prev: T) => U
+>prev : T
+
+    <U extends T>(value: Exclude<U, Function>): U;
+>value : Exclude<U, Function>
+
+    <U extends T>(value: Exclude<U, Function> | ((prev: T) => U)): U;
+>value : ((prev: T) => U) | Exclude<U, Function>
+>prev : T
+
+};
+
+type SolidSignal<T> = [get: stable () => T, set: mutator SolidSetter<T> invalidates get];
+>SolidSignal : SolidSignal<T>
+
+declare function createSolidSignal<T>(value: T): SolidSignal<T>;
+>createSolidSignal : <T>(value: T) => SolidSignal<T>
+>value : T
+
+const [value, setValue] = createSolidSignal<string | null>("hello");
+>value : () => string | null
+>setValue : SolidSetter<string | null>
+>createSolidSignal<string | null>("hello") : SolidSignal<string | null>
+>createSolidSignal : <T>(value: T) => SolidSignal<T>
+>"hello" : "hello"
+
+if (value() !== null) {
+>value() !== null : boolean
+>value() : string | null
+>value : () => string | null
+
+    value().toUpperCase();  // narrowed to string
+>value().toUpperCase() : string
+>value().toUpperCase : () => string
+>value() : string | null
+>value : () => string | null
+>toUpperCase : () => string
+
+    setValue(null);          // invalidates
+>setValue(null) : null
+>setValue : SolidSetter<string | null>
+}
+
+// === Scenario 3: mutator on a type alias that resolves to a function type ===
+
+type UpdateFn<T> = (value: T) => void;
+>UpdateFn : UpdateFn<T>
+>value : T
+
+// mutator on a type alias reference (not a callable interface)
+declare function createCell<T>(init: T): [
+>createCell : <T>(init: T) => [read: () => T, write: UpdateFn<T>]
+>init : T
+
+    read: stable () => T,
+    write: mutator UpdateFn<T> invalidates read
+];
+
+const [getCell, setCell] = createCell<boolean | undefined>(true);
+>getCell : () => boolean | undefined
+>setCell : UpdateFn<boolean | undefined>
+>createCell<boolean | undefined>(true) : [read: () => boolean | undefined, write: UpdateFn<boolean | undefined>]
+>createCell : <T>(init: T) => [read: () => T, write: UpdateFn<T>]
+>true : true
+
+if (getCell() !== undefined) {
+>getCell() !== undefined : boolean
+>getCell() : boolean | undefined
+>getCell : () => boolean | undefined
+>undefined : undefined
+
+    getCell() === true;    // narrowed to boolean
+>getCell() === true : boolean
+>getCell() : boolean | undefined
+>getCell : () => boolean | undefined
+>true : true
+
+    setCell(undefined);     // invalidates
+>setCell(undefined) : void
+>setCell : UpdateFn<boolean | undefined>
+>undefined : undefined
+}
+
+// === Scenario 4: mutator on a generic constraint ===
+
+interface Writer<T> {
+    (value: T): void;
+>value : T
+}
+
+// mutator applied to a generic type parameter with a callable constraint
+declare function createPair<T, W extends Writer<T>>(init: T): [
+>createPair : <T, W extends Writer<T>>(init: T) => [read: () => T, write: W]
+>init : T
+
+    read: stable () => T,
+    write: mutator W invalidates read
+];
+
+const [getPair, setPair] = createPair<number | undefined, Writer<number | undefined>>(10);
+>getPair : () => number | undefined
+>setPair : Writer<number | undefined>
+>createPair<number | undefined, Writer<number | undefined>>(10) : [read: () => number | undefined, write: Writer<number | undefined>]
+>createPair : <T, W extends Writer<T>>(init: T) => [read: () => T, write: W]
+>10 : 10
+
+if (getPair() !== undefined) {
+>getPair() !== undefined : boolean
+>getPair() : number | undefined
+>getPair : () => number | undefined
+>undefined : undefined
+
+    getPair().toFixed(2);  // narrowed to number
+>getPair().toFixed(2) : string
+>getPair().toFixed : (fractionDigits?: number | undefined) => string
+>getPair() : number | undefined
+>getPair : () => number | undefined
+>toFixed : (fractionDigits?: number | undefined) => string
+>2 : 2
+
+    setPair(undefined);     // invalidates
+>setPair(undefined) : void
+>setPair : Writer<number | undefined>
+>undefined : undefined
+}
+
+// === Scenario 5: Explicit invalidation verification ===
+// This scenario explicitly verifies that cross-binding invalidation works:
+// after setCount2() is called, count2()'s narrowing should be reset.
+
+interface SimpleSetter<T> {
+    (value: T): void;
+>value : T
+}
+
+type Signal2<T> = [get: stable () => T, set: mutator SimpleSetter<T> invalidates get];
+>Signal2 : Signal2<T>
+
+declare function createSignal2<T>(value: T): Signal2<T>;
+>createSignal2 : <T>(value: T) => Signal2<T>
+>value : T
+
+const [count2, setCount2] = createSignal2<number | undefined>(0);
+>count2 : () => number | undefined
+>setCount2 : SimpleSetter<number | undefined>
+>createSignal2<number | undefined>(0) : Signal2<number | undefined>
+>createSignal2 : <T>(value: T) => Signal2<T>
+>0 : 0
+
+if (count2() !== undefined) {
+>count2() !== undefined : boolean
+>count2() : number | undefined
+>count2 : () => number | undefined
+>undefined : undefined
+
+    count2().toFixed(2);   // OK: narrowed to number
+>count2().toFixed(2) : string
+>count2().toFixed : (fractionDigits?: number | undefined) => string
+>count2() : number | undefined
+>count2 : () => number | undefined
+>toFixed : (fractionDigits?: number | undefined) => string
+>2 : 2
+
+    setCount2(undefined);  // invalidates: resets count2() narrowing
+>setCount2(undefined) : void
+>setCount2 : SimpleSetter<number | undefined>
+>undefined : undefined
+
+    // After invalidation, count2() should be back to number | undefined
+    // so calling .toFixed() without a check should be an error:
+    count2().toFixed(2);   // Error expected: count2() is number | undefined again
+>count2().toFixed(2) : any
+>count2().toFixed : any
+>count2() : number | undefined
+>count2 : () => number | undefined
+>toFixed : any
+>2 : 2
+}
+
