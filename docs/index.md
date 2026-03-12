@@ -54,12 +54,14 @@ Documentation for the `stable` / `mutator` / `invalidates` modifier feature — 
 
 ## Related Research
 
+- [stable-lib-impact-research.md](stable-lib-impact-research.md) — Impact analysis: `stable`/`mutator` on JS/DOM built-in types
 - [cross-method-type-guards-research.md](cross-method-type-guards-research.md) — Cross-method type guard patterns
 - [research-map-has-get-narrowing.md](research-map-has-get-narrowing.md) — `Map.has()` → `Map.get()` narrowing pattern
 - [stable-inheritance-research.md](stable-inheritance-research.md) — How `stable` interacts with class inheritance
 - [ts-cfa-tradeoffs-research.md](ts-cfa-tradeoffs-research.md) — TypeScript CFA design trade-offs (issues #9998 / #7770)
 - [lying-setter-mutator-soundness-research.md](lying-setter-mutator-soundness-research.md) — "Lying setter/mutator" soundness analysis: getter/setter and stable/mutator CFA unsoundness
 - [lying-setter-prevention-research.md](lying-setter-prevention-research.md) — Prevention strategies for lying setter/mutator patterns
+- [pre_post_validation.md](pre_post_validation.md) — Pre/post validation: whole-proposal impact assessment on existing codebases
 
 ## Implementation Notes & Reviews
 
