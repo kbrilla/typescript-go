@@ -1,0 +1,208 @@
+# `stable`, `mutator`, `invalidates`, and Linked Type Predicates
+
+**CFA narrowing through function calls — four cooperative mechanisms**
+
+---
+
+## Problem
+
+TypeScript cannot narrow through repeated function calls. If `value()` returns `string | undefined` and you check `value() !== undefined`, the compiler forgets this on the next `value()` call. This is a major pain point for signal-based frameworks (Angular Signals, Preact Signals, MobX) where state is accessed through getter functions rather than properties. Property narrowing has worked for years — callable getter narrowing has not, despite being the dominant pattern in modern reactive frameworks.
+
+## What This PR Implements
+
+Four declaration-site type modifiers that enable CFA narrowing through function calls:
+
+- **`stable`** — marks a callable getter as returning the same value on consecutive calls (absent mutation)
+- **`mutator`** — marks a function as mutating backing state, resetting narrowing
+- **`invalidates`** — refines `mutator` to target specific stable endpoints
+- **Linked type predicates** — `this.value() is T` syntax for guard methods that narrow stable call results
+
+All four are fully erasable (zero runtime overhead), declaration-site only, and structurally checked. The implementation includes a full test suite (37 test files) with zero regressions against the existing test baseline.
+
+---
+
+## Recommended Phased Introduction
+
+### Phase 1: `stable` alone (conservative reset)
+
+Introduce `stable` with a conservative invalidation policy: any method call on the same receiver resets all stable narrowing on that receiver.
+
+```ts
+interface Signal<T> {
+    value: stable () => T;
+}
+
+declare const sig: Signal<string | undefined>;
+if (sig.value() !== undefined) {
+    sig.value().toUpperCase(); // OK — narrowed to string
+}
+```
+
+Conservative reset means that even non-mutating calls like `sig.toString()` would reset narrowing. This is safe by default — it's the same approach TypeScript uses for property narrowing (any call might invalidate).
+
+**Scope:** Parser + checker changes for `stable` modifier, conservative flow analysis.
+
+### Phase 2: `mutator` and `invalidates` for precise invalidation
+
+Replace conservative reset with explicit mutation marking. Only calls to `mutator`-annotated methods reset narrowing.
+
+```ts
+interface Signal<T> {
+    value: stable () => T;
+    set: mutator (v: T) => void invalidates value;
+}
+
+declare const sig: Signal<string | undefined>;
+if (sig.value() !== undefined) {
+    sig.toString();              // does NOT reset — not a mutator
+    sig.value().toUpperCase();   // still narrowed
+    sig.set(undefined);          // resets — mutator targeting value
+    sig.value();                 // back to string | undefined
+}
+```
+
+**Scope:** Parser + checker for `mutator`/`invalidates`, targeted invalidation lists, multi-endpoint stores.
+
+### Phase 3: Linked type predicates (independent extension)
+
+Guard methods that narrow the return type of a stable method on the same receiver.
+
+```ts
+interface Resource<T> {
+    value: stable () => T;
+    hasValue(): this.value() is Exclude<T, undefined>;
+}
+
+declare const r: Resource<string | undefined>;
+if (r.hasValue()) {
+    r.value(); // narrowed to string
+}
+```
+
+**Scope:** Parser for `this.method() is T` return type syntax, checker predicate linking, guard invalidation rules.
+
+---
+
+## ⚠️ Key Soundness Disclosures
+
+These are the design's known weaknesses. They should be evaluated openly.
+
+### 1. Inverted Default — Optimistic vs. Pessimistic
+
+Property narrowing is **pessimistic**: any function call resets narrowing on properties. The `stable` system (with `mutator`) is **optimistic**: narrowing persists unless a method is explicitly marked `mutator`. This inverted default means forgetting `mutator` silently preserves narrowing that should be reset — a type hole. The property narrowing default is safer because it errs on the side of over-resetting.
+
+In practice, "I forgot to add `mutator` to a state-changing method" is a more likely developer error than "a Proxy changed the value behind my back." The optimistic default makes the common mistake silent.
+
+### 2. Two-Sided Trust Model
+
+Both `stable` AND `mutator` must be correctly annotated for soundness. The compiler trusts the developer's annotations mechanically. If a method mutates backing state but isn't marked `mutator`, narrowing survives incorrectly. This is analogous to TypeScript's general trust model for type annotations (`x: string` when `x` is actually a `number`), but the blast radius of a missing `mutator` is larger because it affects all stable narrowing on that receiver.
+
+### 3. SolidJS Cannot Safely Adopt
+
+SolidJS separates accessor and setter into different bindings:
+
+```ts
+const [count, setCount] = createSignal<number | undefined>(0);
+```
+
+The stable system tracks narrowing per-receiver. `count` and `setCount` are independent function bindings — `setCount()` cannot be recognized as a mutator of `count()`. The `invalidates` clause has no way to reference a separate binding. **SolidJS should NOT ship `stable` until cross-binding invalidation is designed.** This is a fundamental limitation of the receiver-scoped approach.
+
+### 4. Structural Assignability Gap
+
+`mutator` markers can be lost through structural widening. A structurally compatible assignment strips the mutation contract:
+
+```ts
+interface Signal<T> {
+    value: stable () => T;
+    set: mutator (v: T) => void;
+}
+
+declare const sig: Signal<string | undefined>;
+const setter: (v: string | undefined) => void = sig.set.bind(sig);
+// setter() is no longer a mutator — structural type lost the modifier
+// Calling setter(undefined) does NOT reset narrowing on sig.value()
+```
+
+This is the same category of issue as `readonly` being lost through structural compatibility, but with soundness implications for CFA.
+
+### 5. Generic Interaction Unresolved
+
+How `stable` propagates through generics, conditional types, and mapped types is an open question. For example:
+
+- Does `Partial<Signal<T>>` preserve `stable` on `value`?
+- Does `Pick<Signal<T>, 'value'>` preserve `stable`?
+- Does `ReturnType<Signal<T>['value']>` understand stable call semantics?
+
+The current implementation handles direct usage correctly but does not define behavior for all type-level operations on stable types.
+
+---
+
+## Framework Coverage
+
+| Framework | Pattern | `stable` Works? | Notes |
+|-----------|---------|-----------------|-------|
+| **Angular Signals** | `signal<T>()` returns object with `.set()` | ✅ Yes | Receiver-scoped, natural fit |
+| **Preact Signals** | `.value` property + `.peek()` | ✅ Yes | Works for `.peek()` callable getter |
+| **MobX** | Computed/observable with getter methods | ✅ Yes | Receiver-scoped |
+| **SolidJS** | `const [get, set] = createSignal()` | ⚠️ **No** | Separated bindings — cross-binding invalidation needed |
+| **Vue `ref()`** | `.value` property access | N/A | Property, not callable — existing narrowing works |
+
+---
+
+## Angular Template Caveat
+
+Angular template narrowing depends on the Angular compiler's Template Type Check Block (TCB) generation. The TCB translates template expressions into TypeScript-checkable code. For stable narrowing to work in Angular templates (e.g., `@if (sig()) { {{ sig() }} }`), the TCB must generate code that the checker can narrow through stable calls. This may require coordination with the Angular compiler team and is not guaranteed to work out-of-the-box.
+
+---
+
+## Companion Documents
+
+- [docs/stable-pr-proposal.md](stable-pr-proposal.md) — Full external proposal with design rationale
+- [docs/stable-design-holes-analysis.md](stable-design-holes-analysis.md) — Design holes and trust model analysis
+- [docs/stable-internal-design-document.md](stable-internal-design-document.md) — Internal technical SDD
+- [docs/stable-modifier-spec.md](stable-modifier-spec.md) — Formal SDD specification
+- [docs/ts-rejection-risk-assessment.md](ts-rejection-risk-assessment.md) — Rejection risk assessment
+
+---
+
+## Key Test Files
+
+37 test files in `testdata/tests/cases/compiler/`:
+
+**Core narrowing:**
+- `stableModifierNarrowing.ts` — basic stable narrowing and reset
+- `stableModifierBoundaries.ts` — uncertainty boundaries and reset points
+- `stableModifierSignalPatterns.ts` — real-world signal API patterns
+- `stableModifierParity.ts` / `stableModifierSubmoduleParity.ts` — getter/setter parity
+
+**Equality and control flow:**
+- `stableModifierEqualityChain.ts` — discriminant-style narrowing
+- `stableModifierExhaustiveSwitch.ts` — exhaustive switch on stable calls
+- `stableModifierAdvancedLoops.ts` — loop narrowing behavior
+
+**Mutator and invalidation:**
+- `stableModifierMutatorBasic.ts` — basic mutator reset
+- `stableModifierMutatorLinks.ts` — `invalidates` clause with targeted reset
+- `stableModifierMutatorErrors.ts` — validation diagnostics
+- `stableModifierPostCallNarrowing.ts` — post-call narrowing after constrained writes
+
+**Linked predicates:**
+- `stableModifierLinkedPredicates.ts` — `this.value() is T` linked type predicates
+- `stableModifierAssertionGuards.ts` — assertion-style guards
+
+**Edge cases:**
+- `stableModifierClosures.ts` — closure capture behavior
+- `stableModifierOptionalChaining.ts` / `stableModifierAdvancedOptionalChain.ts`
+- `stableModifierCrossModule.ts` — cross-module stable references
+- `stableModifierErrors.ts` / `stableModifierDiagnostics.ts` — error reporting
+- `stableModifierEmit.ts` — erasure correctness
+
+---
+
+## Pipeline Status
+
+All pass:
+- ✅ `npx hereby build`
+- ✅ `npx hereby test`
+- ✅ `npx hereby lint`
+- ✅ `npx hereby format`
