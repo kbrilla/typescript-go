@@ -231,7 +231,7 @@ SolidJS separates accessor and setter into different bindings:
 const [count, setCount] = createSignal<number | undefined>(0);
 ```
 
-The stable system tracks narrowing per-receiver. `count` and `setCount` are independent function bindings — `setCount()` cannot be recognized as a mutator of `count()`. The `invalidates` clause has no way to reference a separate binding. **SolidJS should NOT ship `stable` until cross-binding invalidation is designed.** This is a fundamental limitation of the receiver-scoped approach. A recommended solution using named tuple label references (`mutates read`) is analyzed in [research-solidjs-cross-binding.md](research-solidjs-cross-binding.md), estimated at ~300-500 LOC additional (Phase 2.5).
+The stable system tracks narrowing per-receiver. `count` and `setCount` are independent function bindings — `setCount()` cannot be recognized as a mutator of `count()`. The `invalidates` clause has no way to reference a separate binding. **SolidJS should NOT ship `stable` until cross-binding invalidation is designed.** This is a fundamental limitation of the receiver-scoped approach. A recommended solution using named tuple label references (`mutates read`) is analyzed in detail below (see Companion Documents section), estimated at ~300-500 LOC additional (Phase 2.5).
 
 ### 4. Structural Assignability Gap
 
@@ -295,12 +295,35 @@ The following are explicitly **not** part of this proposal but are documented as
 
 ## Companion Documents
 
-- [docs/stable-pr-proposal.md](stable-pr-proposal.md) — Full external proposal with design rationale
-- [docs/stable-design-holes-analysis.md](stable-design-holes-analysis.md) — Design holes and trust model analysis
-- [docs/stable-internal-design-document.md](stable-internal-design-document.md) — Internal technical SDD
-- [docs/stable-modifier-spec.md](stable-modifier-spec.md) — Formal SDD specification
-- [docs/ts-rejection-risk-assessment.md](ts-rejection-risk-assessment.md) — Rejection risk assessment
-- [docs/research-solidjs-cross-binding.md](research-solidjs-cross-binding.md) — SolidJS cross-binding invalidation research (6 approaches analyzed)
+All companion documents are located in the `docs/` directory of this repository.
+
+### `docs/stable-pr-proposal.md` — Full External Proposal
+The primary proposal document (~2000 lines). Covers motivation from 5 real-world TypeScript issues (1,350+ combined upvotes), the three-modifier design (`stable`, `mutator`, `invalidates`), linked type predicates, phased introduction plan (10 phases), soundness analysis, framework compatibility matrix, and 17 open design questions for the TypeScript team. This is the document intended for upstream submission.
+
+### `docs/stable-design-holes-analysis.md` — Design Holes & Trust Model
+Analyzes the "default transparent" rule — why unmarked methods do NOT invalidate stable narrowing, the soundness implications of this optimistic default, and what `mutator`/`invalidates` actually provide beyond `stable` alone. Covers the lying-setter problem, structural assignability gaps, and the two-sided trust model.
+
+### `docs/stable-internal-design-document.md` — Internal Technical SDD
+The authoritative internal design document covering all 5+ implementation phases, parity tracking against TypeScript's property narrowing, conservative uncertainty-boundary invalidation, and tiered heuristic inference. This guided the actual Go implementation in `internal/checker/flow.go` and `internal/checker/checker.go`.
+
+### `docs/stable-modifier-spec.md` — Formal SDD Specification
+Formal specification in SDD format with normative statements, phase boundary decisions, and checker behavior requirements. Defines exactly when narrowing is preserved, when it resets, how linked predicates interact with stable endpoints, and the constraint-overload post-call narrowing rules.
+
+### `docs/ts-rejection-risk-assessment.md` — Rejection Risk Assessment
+Risk analysis of each proposal component against TypeScript Design Goals, TS team member quotes, and precedent from accepted features. Assesses `stable` core narrowing as low-risk (RyanCavanaugh actively engaged with upstream identity modifier proposal), with advanced features (linked predicates, constrained-overload) carrying higher risk.
+
+### `docs/research-solidjs-cross-binding.md` — SolidJS Cross-Binding Invalidation Research
+Deep analysis of why SolidJS's `const [count, setCount] = createSignal()` pattern cannot safely adopt `stable` — the read and write functions are separate bindings with no shared receiver. Evaluates 6 approaches: tuple index (`mutates [0]`), named channels, source interface extraction, **named tuple label reference (`mutates read`)** (recommended), heuristic inference, and object pattern. Estimates ~300-500 LOC for the recommended approach.
+
+### `docs/stable-design-decisions.md` — Design Decisions Register
+Consolidated register of 30 open design decisions across 5 categories (Syntax, Semantics, Cross-Binding, Linked Predicates, Adoption). Each decision tracked with status (OPEN/RECOMMENDED/DEFERRED/DECIDED), phase impact, alternatives, and recommendation. Two decisions (SYN-4: method declarations, SEM-4: super call invalidation) are now DECIDED and implemented.
+
+### Other Research Documents (in `docs/`)
+- `stable-phase8-proposal.md` — Phase 8+ proposal covering keyed linked predicates, discriminated method unions, exclusive invalidation (`preserves`), and conditional type discrimination
+- `stable-modifier-research.md` — Initial research: cross-language survey (Rust, Kotlin, Swift, C++), prior art analysis, and modifier naming alternatives
+- `stable-inheritance-research.md` — Class hierarchy behavior: virtual dispatch, override narrowing, covariant/contravariant method overrides
+- `research-map-has-get-narrowing.md` — Map `has()`/`get()` narrowing analysis for Phase 9 keyed predicates
+- `stable-heuristic-uncertainty-boundaries-research.md` — Uncertainty boundary classification: which constructs reset stable narrowing and why
 
 ---
 
