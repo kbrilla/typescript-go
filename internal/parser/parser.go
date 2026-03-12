@@ -3810,6 +3810,10 @@ func (p *Parser) hasMutatorModifier(modifiers *ast.ModifierList) bool {
 
 func (p *Parser) parseInvalidatesClause() *ast.NodeList {
 	// Parse: invalidates <identifier> [, <identifier>]*
+	// When inside a tuple type, commas can be ambiguous — they could separate
+	// invalidation targets or tuple elements. Use look-ahead to disambiguate:
+	// if comma is followed by identifier+colon (named tuple member) or by ],
+	// the comma belongs to the enclosing tuple, not the invalidates clause.
 	pos := p.nodePos()
 	p.parseExpected(ast.KindInvalidatesKeyword)
 	list := make([]*ast.Node, 0, 2)
@@ -3818,11 +3822,31 @@ func (p *Parser) parseInvalidatesClause() *ast.NodeList {
 		name := p.parseIdentifierName()
 		p.finishNode(name, identPos)
 		list = append(list, name)
-		if !p.parseOptional(ast.KindCommaToken) {
+		if p.token != ast.KindCommaToken {
 			break
 		}
+		// Look ahead to check if the comma belongs to the enclosing tuple context
+		if p.lookAhead((*Parser).isInvalidatesClauseCommaTerminator) {
+			break
+		}
+		p.parseExpected(ast.KindCommaToken)
 	}
 	return p.newNodeList(core.NewTextRange(pos, p.nodePos()), p.nodeSlicePool.Clone(list))
+}
+
+// isInvalidatesClauseCommaTerminator checks if a comma following an invalidates
+// target is a tuple element separator rather than an invalidates list continuation.
+// Returns true if the comma should NOT be consumed by the invalidates clause.
+func (p *Parser) isInvalidatesClauseCommaTerminator() bool {
+	p.nextToken() // skip the comma
+	if p.token == ast.KindCloseBracketToken || p.token == ast.KindSemicolonToken {
+		return true // trailing comma before ] or ; — not an invalidates target
+	}
+	if !p.isIdentifier() {
+		return true // non-identifier follows — can't be an invalidates target
+	}
+	p.nextToken()                        // skip identifier
+	return p.token == ast.KindColonToken // identifier: = named tuple member, not a target
 }
 
 func (p *Parser) nextTokenStartsMutatorFunctionType() bool {

@@ -1,0 +1,273 @@
+//// [tests/cases/compiler/stableModifierCrossBinding.ts] ////
+
+=== stableModifierCrossBinding.ts ===
+// Section 1: Basic cross-binding invalidation with named tuple labels
+// A factory returns a [getter, setter] tuple. The setter's invalidates clause
+// targets the tuple label "read", connecting it to the getter binding.
+
+declare function createSignal<T>(value: T): [
+>createSignal : Symbol(createSignal, Decl(stableModifierCrossBinding.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 4, 30))
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 4, 33))
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 4, 30))
+
+    read: stable () => T,
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 4, 30))
+
+    write: mutator (value: T) => void invalidates read
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 6, 20))
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 4, 30))
+
+];
+
+const [count, setCount] = createSignal<number | undefined>(0);
+>count : Symbol(count, Decl(stableModifierCrossBinding.ts, 9, 7))
+>setCount : Symbol(setCount, Decl(stableModifierCrossBinding.ts, 9, 13))
+>createSignal : Symbol(createSignal, Decl(stableModifierCrossBinding.ts, 0, 0))
+
+if (count() !== undefined) {
+>count : Symbol(count, Decl(stableModifierCrossBinding.ts, 9, 7))
+>undefined : Symbol(undefined)
+
+    count().toFixed(2); // OK — narrowed to number
+>count().toFixed : Symbol(Number.toFixed, Decl(lib.es5.d.ts, --, --))
+>count : Symbol(count, Decl(stableModifierCrossBinding.ts, 9, 7))
+>toFixed : Symbol(Number.toFixed, Decl(lib.es5.d.ts, --, --))
+
+    setCount(undefined); // mutator: invalidates read → resets count() narrowing
+>setCount : Symbol(setCount, Decl(stableModifierCrossBinding.ts, 9, 13))
+>undefined : Symbol(undefined)
+
+    // Post-call narrowing: argument is undefined → count() narrows to undefined
+    const x: undefined = count();
+>x : Symbol(x, Decl(stableModifierCrossBinding.ts, 15, 9))
+>count : Symbol(count, Decl(stableModifierCrossBinding.ts, 9, 7))
+}
+
+// Section 2: Post-call narrowing preserves type through cross-binding
+const [value, setValue] = createSignal<string | undefined>("hello");
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 19, 7))
+>setValue : Symbol(setValue, Decl(stableModifierCrossBinding.ts, 19, 13))
+>createSignal : Symbol(createSignal, Decl(stableModifierCrossBinding.ts, 0, 0))
+
+if (value() !== undefined) {
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 19, 7))
+>undefined : Symbol(undefined)
+
+    value().toUpperCase(); // OK — narrowed to string
+>value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 19, 7))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    setValue("world"); // arg is string → post-call narrows value() to string
+>setValue : Symbol(setValue, Decl(stableModifierCrossBinding.ts, 19, 13))
+
+    value().toUpperCase(); // Should still work — narrowed to string
+>value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 19, 7))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    setValue(undefined); // arg is undefined → post-call narrows to undefined
+>setValue : Symbol(setValue, Decl(stableModifierCrossBinding.ts, 19, 13))
+>undefined : Symbol(undefined)
+
+    const y: undefined = value();
+>y : Symbol(y, Decl(stableModifierCrossBinding.ts, 26, 9))
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 19, 7))
+}
+
+// Section 3: Selective cross-binding — only invalidates targeted sibling
+declare function createDualSignal<A, B>(a: A, b: B): [
+>createDualSignal : Symbol(createDualSignal, Decl(stableModifierCrossBinding.ts, 27, 1))
+>A : Symbol(A, Decl(stableModifierCrossBinding.ts, 30, 34))
+>B : Symbol(B, Decl(stableModifierCrossBinding.ts, 30, 36))
+>a : Symbol(a, Decl(stableModifierCrossBinding.ts, 30, 40))
+>A : Symbol(A, Decl(stableModifierCrossBinding.ts, 30, 34))
+>b : Symbol(b, Decl(stableModifierCrossBinding.ts, 30, 45))
+>B : Symbol(B, Decl(stableModifierCrossBinding.ts, 30, 36))
+
+    readA: stable () => A,
+>A : Symbol(A, Decl(stableModifierCrossBinding.ts, 30, 34))
+
+    readB: stable () => B,
+>B : Symbol(B, Decl(stableModifierCrossBinding.ts, 30, 36))
+
+    writeA: mutator (value: A) => void invalidates readA,
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 33, 21))
+>A : Symbol(A, Decl(stableModifierCrossBinding.ts, 30, 34))
+
+    writeB: mutator (value: B) => void invalidates readB,
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 34, 21))
+>B : Symbol(B, Decl(stableModifierCrossBinding.ts, 30, 36))
+
+];
+
+const [getA, getB, setA, setB] = createDualSignal<string | undefined, number | undefined>("hello", 42);
+>getA : Symbol(getA, Decl(stableModifierCrossBinding.ts, 37, 7))
+>getB : Symbol(getB, Decl(stableModifierCrossBinding.ts, 37, 12))
+>setA : Symbol(setA, Decl(stableModifierCrossBinding.ts, 37, 18))
+>setB : Symbol(setB, Decl(stableModifierCrossBinding.ts, 37, 24))
+>createDualSignal : Symbol(createDualSignal, Decl(stableModifierCrossBinding.ts, 27, 1))
+
+if (getA() !== undefined && getB() !== undefined) {
+>getA : Symbol(getA, Decl(stableModifierCrossBinding.ts, 37, 7))
+>undefined : Symbol(undefined)
+>getB : Symbol(getB, Decl(stableModifierCrossBinding.ts, 37, 12))
+>undefined : Symbol(undefined)
+
+    getA().toUpperCase(); // OK
+>getA().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>getA : Symbol(getA, Decl(stableModifierCrossBinding.ts, 37, 7))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    getB().toFixed(2); // OK
+>getB().toFixed : Symbol(Number.toFixed, Decl(lib.es5.d.ts, --, --))
+>getB : Symbol(getB, Decl(stableModifierCrossBinding.ts, 37, 12))
+>toFixed : Symbol(Number.toFixed, Decl(lib.es5.d.ts, --, --))
+
+    setB(undefined); // invalidates readB ONLY — NOT readA
+>setB : Symbol(setB, Decl(stableModifierCrossBinding.ts, 37, 24))
+>undefined : Symbol(undefined)
+
+    getA().toUpperCase(); // Should still work — setB doesn't target readA
+>getA().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>getA : Symbol(getA, Decl(stableModifierCrossBinding.ts, 37, 7))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    // getB() is now invalidated
+    const z: undefined = getB(); // post-call narrowing from setB(undefined)
+>z : Symbol(z, Decl(stableModifierCrossBinding.ts, 45, 9))
+>getB : Symbol(getB, Decl(stableModifierCrossBinding.ts, 37, 12))
+}
+
+// Section 4: Cross-binding without narrowing (non-union type)
+declare function createCounter(): [
+>createCounter : Symbol(createCounter, Decl(stableModifierCrossBinding.ts, 46, 1))
+
+    read: stable () => number,
+    increment: mutator () => void invalidates read
+];
+
+const [getCount, increment] = createCounter();
+>getCount : Symbol(getCount, Decl(stableModifierCrossBinding.ts, 54, 7))
+>increment : Symbol(increment, Decl(stableModifierCrossBinding.ts, 54, 16))
+>createCounter : Symbol(createCounter, Decl(stableModifierCrossBinding.ts, 46, 1))
+
+const n1: number = getCount(); // number — no union, no narrowing benefit
+>n1 : Symbol(n1, Decl(stableModifierCrossBinding.ts, 55, 5))
+>getCount : Symbol(getCount, Decl(stableModifierCrossBinding.ts, 54, 7))
+
+increment(); // invalidates read
+>increment : Symbol(increment, Decl(stableModifierCrossBinding.ts, 54, 16))
+
+const n2: number = getCount(); // still number
+>n2 : Symbol(n2, Decl(stableModifierCrossBinding.ts, 57, 5))
+>getCount : Symbol(getCount, Decl(stableModifierCrossBinding.ts, 54, 7))
+
+// Section 5: Grammar — invalidates clause on non-mutator should error
+declare function createBadSignal<T>(value: T): [
+>createBadSignal : Symbol(createBadSignal, Decl(stableModifierCrossBinding.ts, 57, 30))
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 60, 33))
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 60, 36))
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 60, 33))
+
+    read: stable () => T,
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 60, 33))
+
+    write: (value: T) => void invalidates read // Error: invalidates requires mutator
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 62, 12))
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 60, 33))
+>invalidates : Symbol(invalidates)
+>read : Symbol(read)
+
+];
+
+// Section 6: Cross-binding with null narrowing and sequential mutations
+declare function createNullable(): [
+>createNullable : Symbol(createNullable, Decl(stableModifierCrossBinding.ts, 63, 2))
+
+    read: stable () => string | null,
+    write: mutator (value: string | null) => void invalidates read,
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 68, 20))
+
+];
+
+const [getText, setText] = createNullable();
+>getText : Symbol(getText, Decl(stableModifierCrossBinding.ts, 71, 7))
+>setText : Symbol(setText, Decl(stableModifierCrossBinding.ts, 71, 15))
+>createNullable : Symbol(createNullable, Decl(stableModifierCrossBinding.ts, 63, 2))
+
+if (getText() !== null) {
+>getText : Symbol(getText, Decl(stableModifierCrossBinding.ts, 71, 7))
+
+    getText().length; // OK — narrowed to string
+>getText().length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>getText : Symbol(getText, Decl(stableModifierCrossBinding.ts, 71, 7))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+    setText(null); // post-call narrows getText() to null
+>setText : Symbol(setText, Decl(stableModifierCrossBinding.ts, 71, 15))
+
+    const nullVal: null = getText(); // correctly null
+>nullVal : Symbol(nullVal, Decl(stableModifierCrossBinding.ts, 76, 9))
+>getText : Symbol(getText, Decl(stableModifierCrossBinding.ts, 71, 7))
+
+    setText("hello"); // post-call narrows getText() back to string
+>setText : Symbol(setText, Decl(stableModifierCrossBinding.ts, 71, 15))
+
+    getText().length; // OK — narrowed back to string
+>getText().length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>getText : Symbol(getText, Decl(stableModifierCrossBinding.ts, 71, 7))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+}
+
+// Section 7: Multiple mutators targeting same stable endpoint
+declare function createMultiMutator<T>(): [
+>createMultiMutator : Symbol(createMultiMutator, Decl(stableModifierCrossBinding.ts, 79, 1))
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 82, 36))
+
+    read: stable () => T | undefined,
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 82, 36))
+
+    set: mutator (value: T) => void invalidates read,
+>value : Symbol(value, Decl(stableModifierCrossBinding.ts, 84, 18))
+>T : Symbol(T, Decl(stableModifierCrossBinding.ts, 82, 36))
+
+    clear: mutator () => void invalidates read,
+];
+
+const [getVal, setVal, clearVal] = createMultiMutator<string>();
+>getVal : Symbol(getVal, Decl(stableModifierCrossBinding.ts, 88, 7))
+>setVal : Symbol(setVal, Decl(stableModifierCrossBinding.ts, 88, 14))
+>clearVal : Symbol(clearVal, Decl(stableModifierCrossBinding.ts, 88, 22))
+>createMultiMutator : Symbol(createMultiMutator, Decl(stableModifierCrossBinding.ts, 79, 1))
+
+if (getVal() !== undefined) {
+>getVal : Symbol(getVal, Decl(stableModifierCrossBinding.ts, 88, 7))
+>undefined : Symbol(undefined)
+
+    getVal().toUpperCase(); // OK — narrowed to string
+>getVal().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>getVal : Symbol(getVal, Decl(stableModifierCrossBinding.ts, 88, 7))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    clearVal(); // invalidates read — no args, full reset
+>clearVal : Symbol(clearVal, Decl(stableModifierCrossBinding.ts, 88, 22))
+
+    getVal(); // back to string | undefined (no post-call narrowing without args)
+>getVal : Symbol(getVal, Decl(stableModifierCrossBinding.ts, 88, 7))
+}
+
+if (getVal() !== undefined) {
+>getVal : Symbol(getVal, Decl(stableModifierCrossBinding.ts, 88, 7))
+>undefined : Symbol(undefined)
+
+    setVal("new"); // invalidates read, post-call narrows to string
+>setVal : Symbol(setVal, Decl(stableModifierCrossBinding.ts, 88, 14))
+
+    getVal().toUpperCase(); // OK — post-call narrowed to string
+>getVal().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>getVal : Symbol(getVal, Decl(stableModifierCrossBinding.ts, 88, 7))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+

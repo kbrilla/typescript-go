@@ -706,6 +706,11 @@ func (c *Checker) classifyStableBoundary(reference *ast.Node, boundary *ast.Node
 		return stableBoundaryKindMutatorCall
 	}
 
+	// Cross-binding invalidation: destructured tuple siblings linked via invalidates clause
+	if c.isCrossBindingMutatorBoundary(reference, boundary) {
+		return stableBoundaryKindMutatorCall
+	}
+
 	if c.isAliasEscapeAssignmentForCallReference(reference, boundary) {
 		return stableBoundaryKindAliasEscape
 	}
@@ -911,6 +916,118 @@ func (c *Checker) isMutatorCallBoundary(reference *ast.Node, boundary *ast.Node)
 
 	// No invalidates clause — conservatively invalidate all stable endpoints on same receiver
 	return true
+}
+
+// isCrossBindingMutatorBoundary checks if the boundary is a mutator call on a
+// destructured tuple binding that invalidates a sibling stable binding via the
+// invalidates clause targeting a named tuple label. This enables patterns like:
+//
+//	const [count, setCount] = createSignal<number | undefined>(0);
+//	if (count() !== undefined) {
+//	    setCount(undefined); // invalidates 'read' label → resets count() narrowing
+//	}
+func (c *Checker) isCrossBindingMutatorBoundary(reference *ast.Node, boundary *ast.Node) bool {
+	if !ast.IsCallExpression(boundary) {
+		return false
+	}
+
+	signature := c.getResolvedSignature(boundary, nil, CheckModeTypeOnly)
+	if signature == nil || signature == c.resolvingSignature || signature.flags&SignatureFlagsMutator == 0 {
+		return false
+	}
+
+	// Both must be calls through identifiers (standalone function bindings)
+	referenceCallee := ast.SkipParentheses(reference.Expression())
+	boundaryCallee := ast.SkipParentheses(boundary.Expression())
+
+	if !ast.IsIdentifier(referenceCallee) || !ast.IsIdentifier(boundaryCallee) {
+		return false
+	}
+
+	// Must have an explicit invalidates clause with targets
+	declaration := signature.declaration
+	if declaration == nil || !ast.IsFunctionTypeNode(declaration) {
+		return false
+	}
+	fnType := declaration.AsFunctionTypeNode()
+	if fnType.LinksClause == nil || len(fnType.LinksClause.Nodes) == 0 {
+		return false
+	}
+
+	// Both callees must resolve to binding elements in the same array binding pattern
+	refSymbol := c.getResolvedSymbol(referenceCallee)
+	boundSymbol := c.getResolvedSymbol(boundaryCallee)
+	if refSymbol == nil || boundSymbol == nil || refSymbol == c.unknownSymbol || boundSymbol == c.unknownSymbol {
+		return false
+	}
+
+	refDecl := refSymbol.ValueDeclaration
+	boundDecl := boundSymbol.ValueDeclaration
+	if refDecl == nil || boundDecl == nil {
+		return false
+	}
+	if refDecl.Kind != ast.KindBindingElement || boundDecl.Kind != ast.KindBindingElement {
+		return false
+	}
+
+	refPattern := refDecl.Parent
+	boundPattern := boundDecl.Parent
+	if refPattern == nil || boundPattern == nil || refPattern != boundPattern {
+		return false
+	}
+	if refPattern.Kind != ast.KindArrayBindingPattern {
+		return false
+	}
+
+	// Get the tuple type from the parent variable declaration
+	varDecl := refPattern.Parent
+	if varDecl == nil || !ast.IsVariableDeclaration(varDecl) {
+		return false
+	}
+
+	var parentType *Type
+	if varDecl.AsVariableDeclaration().Initializer != nil {
+		parentType = c.getTypeOfExpression(varDecl.AsVariableDeclaration().Initializer)
+	}
+	if parentType == nil || !isTupleType(parentType) {
+		return false
+	}
+
+	// Find the index of the reference element in the binding pattern
+	elements := refPattern.AsBindingPattern().Elements
+	refIndex := -1
+	for i, elem := range elements.Nodes {
+		if elem == refDecl {
+			refIndex = i
+			break
+		}
+	}
+	if refIndex < 0 {
+		return false
+	}
+
+	// Get the tuple target to access element labels
+	tupleTarget := parentType.TargetTupleType()
+	elementInfos := tupleTarget.ElementInfos()
+	if refIndex >= len(elementInfos) {
+		return false
+	}
+
+	// Get the label name of the reference element
+	refInfo := elementInfos[refIndex]
+	if refInfo.LabeledDeclaration() == nil {
+		return false
+	}
+	refLabel := refInfo.LabeledDeclaration().Name().Text()
+
+	// Check if any target in the invalidates clause matches the reference's label
+	for _, link := range fnType.LinksClause.Nodes {
+		if ast.IsIdentifier(link) && link.Text() == refLabel {
+			return true
+		}
+	}
+
+	return false
 }
 
 func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *ast.Node) bool {
