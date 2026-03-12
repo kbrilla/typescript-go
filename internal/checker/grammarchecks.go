@@ -522,8 +522,9 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				if node.Kind != ast.KindFunctionType && node.Kind != ast.KindMethodDeclaration && node.Kind != ast.KindMethodSignature && node.Kind != ast.KindFunctionDeclaration && node.Kind != ast.KindFunctionExpression && node.Kind != ast.KindArrowFunction && node.Kind != ast.KindGetAccessor {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_stable_modifier_can_only_appear_on_a_function_type_with_no_parameters)
 				}
-				// Check that the function type/method has no parameters
-				if len(node.Parameters()) > 0 {
+				// Check that the function type/method has no parameters (unkeyed stable)
+				// or has a KeyParameter (keyed stable[key] allows parameters)
+				if len(node.Parameters()) > 0 && !c.nodeHasKeyParameter(node) {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_stable_modifier_can_only_appear_on_a_function_type_with_no_parameters)
 				}
 				// stable and mutator cannot combine
@@ -2247,6 +2248,20 @@ func (c *Checker) checkGrammarImportCallExpression(node *ast.Node) bool {
 	spreadElement := core.Find(argumentNodes, ast.IsSpreadElement)
 	if spreadElement != nil {
 		return c.grammarErrorOnNode(spreadElement, diagnostics.Argument_of_dynamic_import_cannot_be_spread_element)
+	}
+	return false
+}
+
+// nodeHasKeyParameter checks whether a declaration node has a KeyParameter
+// (i.e. uses stable[key] or mutator[key] bracket syntax).
+func (c *Checker) nodeHasKeyParameter(node *ast.Node) bool {
+	switch {
+	case ast.IsFunctionTypeNode(node):
+		return node.AsFunctionTypeNode().KeyParameter != nil
+	case ast.IsMethodDeclaration(node):
+		return node.AsMethodDeclaration().KeyParameter != nil
+	case ast.IsMethodSignatureDeclaration(node):
+		return node.AsMethodSignatureDeclaration().KeyParameter != nil
 	}
 	return false
 }

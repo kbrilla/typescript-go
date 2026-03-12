@@ -8142,7 +8142,7 @@ func (c *Checker) checkCallExpression(node *ast.Node, checkMode CheckMode) *Type
 	// For stable function calls (stable return value), use flow analysis to narrow the return type.
 	// Stable functions guarantee that parameterless calls return a stable value, so we can track
 	// the call expression as a reference through the control flow graph for type narrowing.
-	if signature.flags&SignatureFlagsStable != 0 && ast.IsCallExpression(node) && len(node.Arguments()) == 0 {
+	if signature.flags&SignatureFlagsStable != 0 && ast.IsCallExpression(node) && c.isStableCallArgCountValid(signature, node) {
 		narrowableReturnType := c.getNarrowableTypeForReference(returnType, node, checkMode)
 		flowType := c.getFlowTypeOfReference(node, narrowableReturnType)
 		if flowType != narrowableReturnType {

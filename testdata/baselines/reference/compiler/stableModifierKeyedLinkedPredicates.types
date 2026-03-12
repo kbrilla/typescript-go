@@ -1,0 +1,260 @@
+//// [tests/cases/compiler/stableModifierKeyedLinkedPredicates.ts] ////
+
+=== stableModifierKeyedLinkedPredicates.ts ===
+// Phase 9: Keyed Linked Predicates — per-key stable tracking
+
+// === 1. Basic per-key stable with literal keys ===
+interface TypedMap<K, V> {
+    stable[key] get(key: K): V | undefined;
+>get : (key: K) => V | undefined
+>key : K
+>key : any
+
+    mutator[key] set(key: K, value: V): void invalidates get[key];
+>set : (key: K, value: V) => void
+>key : K
+>value : V
+>key : any
+>get : any
+
+    mutator[key] delete(key: K): boolean invalidates get[key];
+>delete : (key: K) => boolean
+>key : K
+>key : any
+>get : any
+
+    mutator clear(): void;  // unkeyed → invalidates ALL
+>clear : () => void
+}
+
+declare const map: TypedMap<string, number>;
+>map : TypedMap<string, number>
+
+// Per-key narrowing with string literals
+if (map.get("x") !== undefined) {
+>map.get("x") !== undefined : boolean
+>map.get("x") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"x" : "x"
+>undefined : undefined
+
+    const a: number = map.get("x");       // narrowed (same key "x")
+>a : number
+>map.get("x") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"x" : "x"
+
+    const b = map.get("y");               // number | undefined (different key)
+>b : number | undefined
+>map.get("y") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"y" : "y"
+
+    map.set("y", 42);                     // invalidates only get("y")
+>map.set("y", 42) : void
+>map.set : (key: string, value: number) => void
+>map : TypedMap<string, number>
+>set : (key: string, value: number) => void
+>"y" : "y"
+>42 : 42
+
+    const c: number = map.get("x");       // still narrowed
+>c : number
+>map.get("x") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"x" : "x"
+
+    map.set("x", 99);                     // invalidates get("x")
+>map.set("x", 99) : void
+>map.set : (key: string, value: number) => void
+>map : TypedMap<string, number>
+>set : (key: string, value: number) => void
+>"x" : "x"
+>99 : 99
+
+    const d = map.get("x");               // number | undefined (narrowing dropped)
+>d : number | undefined
+>map.get("x") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"x" : "x"
+
+    map.clear();                          // invalidates ALL keys
+>map.clear() : void
+>map.clear : () => void
+>map : TypedMap<string, number>
+>clear : () => void
+
+    map.get("x");                         // number | undefined
+>map.get("x") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"x" : "x"
+}
+
+// === 2. Variable key reference ===
+declare const key: string;
+>key : string
+
+if (map.get(key) !== undefined) {
+>map.get(key) !== undefined : boolean
+>map.get(key) : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>key : string
+>undefined : undefined
+
+    const e: number = map.get(key);       // narrowed (same variable ref)
+>e : number
+>map.get(key) : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>key : string
+}
+
+// === 3. Independent keys narrowed simultaneously ===
+if (map.get("a") !== undefined && map.get("b") !== undefined) {
+>map.get("a") !== undefined && map.get("b") !== undefined : boolean
+>map.get("a") !== undefined : boolean
+>map.get("a") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"a" : "a"
+>undefined : undefined
+>map.get("b") !== undefined : boolean
+>map.get("b") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"b" : "b"
+>undefined : undefined
+
+    const f: number = map.get("a");       // narrowed
+>f : number
+>map.get("a") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"a" : "a"
+
+    const g: number = map.get("b");       // narrowed
+>g : number
+>map.get("b") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"b" : "b"
+
+    map.set("a", 10);                     // only invalidates get("a")
+>map.set("a", 10) : void
+>map.set : (key: string, value: number) => void
+>map : TypedMap<string, number>
+>set : (key: string, value: number) => void
+>"a" : "a"
+>10 : 10
+
+    const h: number = map.get("b");       // still narrowed
+>h : number
+>map.get("b") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"b" : "b"
+}
+
+// === 4. delete per-key invalidation ===
+if (map.get("x") !== undefined && map.get("y") !== undefined) {
+>map.get("x") !== undefined && map.get("y") !== undefined : boolean
+>map.get("x") !== undefined : boolean
+>map.get("x") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"x" : "x"
+>undefined : undefined
+>map.get("y") !== undefined : boolean
+>map.get("y") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"y" : "y"
+>undefined : undefined
+
+    map.delete("y");                      // invalidates get("y") only
+>map.delete("y") : boolean
+>map.delete : (key: string) => boolean
+>map : TypedMap<string, number>
+>delete : (key: string) => boolean
+>"y" : "y"
+
+    const i: number = map.get("x");       // still narrowed
+>i : number
+>map.get("x") : number | undefined
+>map.get : (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : (key: string) => number | undefined
+>"x" : "x"
+}
+
+// === 5. Function type syntax with keyed stable ===
+interface FuncMap<K, V> {
+    get: stable[key] (key: K) => V | undefined;
+>get : (key: K) => V | undefined
+>key : K
+
+    set: mutator[key] (key: K, value: V) => void invalidates get[key];
+>set : (key: K, value: V) => void
+>key : K
+>value : V
+}
+
+declare const fmap: FuncMap<string, number>;
+>fmap : FuncMap<string, number>
+
+if (fmap.get("z") !== undefined) {
+>fmap.get("z") !== undefined : boolean
+>fmap.get("z") : number | undefined
+>fmap.get : (key: string) => number | undefined
+>fmap : FuncMap<string, number>
+>get : (key: string) => number | undefined
+>"z" : "z"
+>undefined : undefined
+
+    const j: number = fmap.get("z");      // narrowed
+>j : number
+>fmap.get("z") : number | undefined
+>fmap.get : (key: string) => number | undefined
+>fmap : FuncMap<string, number>
+>get : (key: string) => number | undefined
+>"z" : "z"
+
+    fmap.set("w", 5);                     // different key
+>fmap.set("w", 5) : void
+>fmap.set : (key: string, value: number) => void
+>fmap : FuncMap<string, number>
+>set : (key: string, value: number) => void
+>"w" : "w"
+>5 : 5
+
+    const k: number = fmap.get("z");      // still narrowed
+>k : number
+>fmap.get("z") : number | undefined
+>fmap.get : (key: string) => number | undefined
+>fmap : FuncMap<string, number>
+>get : (key: string) => number | undefined
+>"z" : "z"
+}
+

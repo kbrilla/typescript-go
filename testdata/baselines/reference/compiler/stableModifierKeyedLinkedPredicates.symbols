@@ -1,0 +1,214 @@
+//// [tests/cases/compiler/stableModifierKeyedLinkedPredicates.ts] ////
+
+=== stableModifierKeyedLinkedPredicates.ts ===
+// Phase 9: Keyed Linked Predicates — per-key stable tracking
+
+// === 1. Basic per-key stable with literal keys ===
+interface TypedMap<K, V> {
+>TypedMap : Symbol(TypedMap, Decl(stableModifierKeyedLinkedPredicates.ts, 0, 0))
+>K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 19))
+>V : Symbol(V, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 21))
+
+    stable[key] get(key: K): V | undefined;
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 4, 20))
+>K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 19))
+>V : Symbol(V, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 21))
+
+    mutator[key] set(key: K, value: V): void invalidates get[key];
+>set : Symbol(TypedMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 4, 43))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 21))
+>K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 19))
+>value : Symbol(value, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 28))
+>V : Symbol(V, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 21))
+
+    mutator[key] delete(key: K): boolean invalidates get[key];
+>delete : Symbol(TypedMap.delete, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 66))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 24))
+>K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 19))
+
+    mutator clear(): void;  // unkeyed → invalidates ALL
+>clear : Symbol(TypedMap.clear, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 62))
+}
+
+declare const map: TypedMap<string, number>;
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>TypedMap : Symbol(TypedMap, Decl(stableModifierKeyedLinkedPredicates.ts, 0, 0))
+
+// Per-key narrowing with string literals
+if (map.get("x") !== undefined) {
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>undefined : Symbol(undefined)
+
+    const a: number = map.get("x");       // narrowed (same key "x")
+>a : Symbol(a, Decl(stableModifierKeyedLinkedPredicates.ts, 14, 9))
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+
+    const b = map.get("y");               // number | undefined (different key)
+>b : Symbol(b, Decl(stableModifierKeyedLinkedPredicates.ts, 15, 9))
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+
+    map.set("y", 42);                     // invalidates only get("y")
+>map.set : Symbol(TypedMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 4, 43))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>set : Symbol(TypedMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 4, 43))
+
+    const c: number = map.get("x");       // still narrowed
+>c : Symbol(c, Decl(stableModifierKeyedLinkedPredicates.ts, 18, 9))
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+
+    map.set("x", 99);                     // invalidates get("x")
+>map.set : Symbol(TypedMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 4, 43))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>set : Symbol(TypedMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 4, 43))
+
+    const d = map.get("x");               // number | undefined (narrowing dropped)
+>d : Symbol(d, Decl(stableModifierKeyedLinkedPredicates.ts, 21, 9))
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+
+    map.clear();                          // invalidates ALL keys
+>map.clear : Symbol(TypedMap.clear, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 62))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>clear : Symbol(TypedMap.clear, Decl(stableModifierKeyedLinkedPredicates.ts, 6, 62))
+
+    map.get("x");                         // number | undefined
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+}
+
+// === 2. Variable key reference ===
+declare const key: string;
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 28, 13))
+
+if (map.get(key) !== undefined) {
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 28, 13))
+>undefined : Symbol(undefined)
+
+    const e: number = map.get(key);       // narrowed (same variable ref)
+>e : Symbol(e, Decl(stableModifierKeyedLinkedPredicates.ts, 30, 9))
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 28, 13))
+}
+
+// === 3. Independent keys narrowed simultaneously ===
+if (map.get("a") !== undefined && map.get("b") !== undefined) {
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>undefined : Symbol(undefined)
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>undefined : Symbol(undefined)
+
+    const f: number = map.get("a");       // narrowed
+>f : Symbol(f, Decl(stableModifierKeyedLinkedPredicates.ts, 35, 9))
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+
+    const g: number = map.get("b");       // narrowed
+>g : Symbol(g, Decl(stableModifierKeyedLinkedPredicates.ts, 36, 9))
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+
+    map.set("a", 10);                     // only invalidates get("a")
+>map.set : Symbol(TypedMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 4, 43))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>set : Symbol(TypedMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 4, 43))
+
+    const h: number = map.get("b");       // still narrowed
+>h : Symbol(h, Decl(stableModifierKeyedLinkedPredicates.ts, 39, 9))
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+}
+
+// === 4. delete per-key invalidation ===
+if (map.get("x") !== undefined && map.get("y") !== undefined) {
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>undefined : Symbol(undefined)
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>undefined : Symbol(undefined)
+
+    map.delete("y");                      // invalidates get("y") only
+>map.delete : Symbol(TypedMap.delete, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 66))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>delete : Symbol(TypedMap.delete, Decl(stableModifierKeyedLinkedPredicates.ts, 5, 66))
+
+    const i: number = map.get("x");       // still narrowed
+>i : Symbol(i, Decl(stableModifierKeyedLinkedPredicates.ts, 45, 9))
+>map.get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+>map : Symbol(map, Decl(stableModifierKeyedLinkedPredicates.ts, 10, 13))
+>get : Symbol(TypedMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 3, 26))
+}
+
+// === 5. Function type syntax with keyed stable ===
+interface FuncMap<K, V> {
+>FuncMap : Symbol(FuncMap, Decl(stableModifierKeyedLinkedPredicates.ts, 46, 1))
+>K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 18))
+>V : Symbol(V, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 20))
+
+    get: stable[key] (key: K) => V | undefined;
+>get : Symbol(FuncMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 25))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 50, 22))
+>K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 18))
+>V : Symbol(V, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 20))
+
+    set: mutator[key] (key: K, value: V) => void invalidates get[key];
+>set : Symbol(FuncMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 50, 47))
+>key : Symbol(key, Decl(stableModifierKeyedLinkedPredicates.ts, 51, 23))
+>K : Symbol(K, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 18))
+>value : Symbol(value, Decl(stableModifierKeyedLinkedPredicates.ts, 51, 30))
+>V : Symbol(V, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 20))
+}
+
+declare const fmap: FuncMap<string, number>;
+>fmap : Symbol(fmap, Decl(stableModifierKeyedLinkedPredicates.ts, 54, 13))
+>FuncMap : Symbol(FuncMap, Decl(stableModifierKeyedLinkedPredicates.ts, 46, 1))
+
+if (fmap.get("z") !== undefined) {
+>fmap.get : Symbol(FuncMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 25))
+>fmap : Symbol(fmap, Decl(stableModifierKeyedLinkedPredicates.ts, 54, 13))
+>get : Symbol(FuncMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 25))
+>undefined : Symbol(undefined)
+
+    const j: number = fmap.get("z");      // narrowed
+>j : Symbol(j, Decl(stableModifierKeyedLinkedPredicates.ts, 56, 9))
+>fmap.get : Symbol(FuncMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 25))
+>fmap : Symbol(fmap, Decl(stableModifierKeyedLinkedPredicates.ts, 54, 13))
+>get : Symbol(FuncMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 25))
+
+    fmap.set("w", 5);                     // different key
+>fmap.set : Symbol(FuncMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 50, 47))
+>fmap : Symbol(fmap, Decl(stableModifierKeyedLinkedPredicates.ts, 54, 13))
+>set : Symbol(FuncMap.set, Decl(stableModifierKeyedLinkedPredicates.ts, 50, 47))
+
+    const k: number = fmap.get("z");      // still narrowed
+>k : Symbol(k, Decl(stableModifierKeyedLinkedPredicates.ts, 58, 9))
+>fmap.get : Symbol(FuncMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 25))
+>fmap : Symbol(fmap, Decl(stableModifierKeyedLinkedPredicates.ts, 54, 13))
+>get : Symbol(FuncMap.get, Decl(stableModifierKeyedLinkedPredicates.ts, 49, 25))
+}
+

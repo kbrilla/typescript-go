@@ -644,7 +644,7 @@ func (c *Checker) isNonMatchingCallBoundary(reference *ast.Node, boundary *ast.N
 }
 
 func (c *Checker) isUnknownCallBoundaryForStableReference(reference *ast.Node, boundary *ast.Node) bool {
-	return isNoArgCallExpression(reference) && isNoArgCallExpression(boundary) && !c.isMatchingReference(reference, boundary)
+	return ast.IsCallExpression(reference) && c.isStableCallReference(reference) && ast.IsCallExpression(boundary) && !c.isMatchingReference(reference, boundary)
 }
 
 // isUnrelatedCallForStableReference returns true when the boundary call
@@ -856,12 +856,64 @@ func (c *Checker) shouldPreserveAmbientNoArgVoidUnknownCallNarrowing(reference *
 }
 
 func (c *Checker) isStableCallReference(reference *ast.Node) bool {
-	if !isNoArgCallExpression(reference) {
+	if !ast.IsCallExpression(reference) {
 		return false
 	}
-
 	signature := c.getResolvedSignature(reference, nil /*candidatesOutArray*/, CheckModeTypeOnly)
-	return signature != nil && signature != c.resolvingSignature && signature.flags&SignatureFlagsStable != 0
+	if signature == nil || signature == c.resolvingSignature || signature.flags&SignatureFlagsStable == 0 {
+		return false
+	}
+	if len(reference.Arguments()) == 0 {
+		return true // unkeyed stable call
+	}
+	if len(reference.Arguments()) == 1 && c.signatureHasKeyParameter(signature) {
+		return true // keyed stable call with one key argument
+	}
+	return false
+}
+
+func (c *Checker) isStableCallArgCountValid(signature *Signature, node *ast.Node) bool {
+	if len(node.Arguments()) == 0 {
+		return true // unkeyed stable — always valid
+	}
+	if len(node.Arguments()) == 1 && c.signatureHasKeyParameter(signature) {
+		return true // keyed stable with one key argument
+	}
+	return false
+}
+
+func (c *Checker) signatureHasKeyParameter(signature *Signature) bool {
+	if signature.declaration == nil {
+		return false
+	}
+	switch {
+	case ast.IsFunctionTypeNode(signature.declaration):
+		return signature.declaration.AsFunctionTypeNode().KeyParameter != nil
+	case ast.IsMethodDeclaration(signature.declaration):
+		return signature.declaration.AsMethodDeclaration().KeyParameter != nil
+	case ast.IsMethodSignatureDeclaration(signature.declaration):
+		return signature.declaration.AsMethodSignatureDeclaration().KeyParameter != nil
+	}
+	return false
+}
+
+// isMatchingKeyArgument checks if two key arguments (from keyed stable/mutator calls)
+// refer to the same key. Handles both identifier references (variable keys) and
+// string/numeric literal values.
+func (c *Checker) isMatchingKeyArgument(source *ast.Node, target *ast.Node) bool {
+	// Try standard reference matching first (handles identifiers, property accesses, etc.)
+	if c.isMatchingReference(source, target) {
+		return true
+	}
+	// For string literals, compare the text values directly
+	if ast.IsStringLiteral(source) && ast.IsStringLiteral(target) {
+		return source.Text() == target.Text()
+	}
+	// For numeric literals, compare the text values directly
+	if ast.IsNumericLiteral(source) && ast.IsNumericLiteral(target) {
+		return source.Text() == target.Text()
+	}
+	return false
 }
 
 // isMutatorCallBoundary checks if the boundary is a mutator call on the same
@@ -898,6 +950,14 @@ func (c *Checker) isMutatorCallBoundary(reference *ast.Node, boundary *ast.Node)
 
 	if !superThisMatch && !c.isMatchingReference(normalizedRef, normalizedBound) {
 		return false
+	}
+
+	// Per-key invalidation: if both the mutator and stable reference have keyed parameters,
+	// only invalidate when the key arguments match.
+	if c.signatureHasKeyParameter(signature) && len(reference.Arguments()) > 0 && len(boundary.Arguments()) > 0 {
+		if !c.isMatchingKeyArgument(reference.Arguments()[0], boundary.Arguments()[0]) {
+			return false // Different key — don't invalidate this stable reference
+		}
 	}
 
 	// Same receiver, it's a mutator call. Check invalidates clause for selective invalidation.
@@ -2956,10 +3016,24 @@ func (c *Checker) isMatchingReference(source *ast.Node, target *ast.Node) bool {
 	case ast.KindBinaryExpression:
 		return ast.IsBinaryExpression(source) && source.AsBinaryExpression().OperatorToken.Kind == ast.KindCommaToken && c.isMatchingReference(source.AsBinaryExpression().Right, target)
 	case ast.KindCallExpression:
-		// Stable function calls: two parameterless calls to the same stable function are matching references.
+		// Stable function calls: calls to the same stable function are matching references.
 		// This enables type narrowing across repeated calls to stable functions.
-		if ast.IsCallExpression(target) && len(source.Arguments()) == 0 && len(target.Arguments()) == 0 {
-			return c.isMatchingReference(source.Expression(), target.Expression())
+		if ast.IsCallExpression(target) {
+			// Unkeyed stable: both zero-arg
+			if len(source.Arguments()) == 0 && len(target.Arguments()) == 0 {
+				return c.isMatchingReference(source.Expression(), target.Expression())
+			}
+			// Keyed stable: both single-arg, compare callees AND key arguments
+			if len(source.Arguments()) == 1 && len(target.Arguments()) == 1 {
+				if c.isMatchingReference(source.Expression(), target.Expression()) &&
+					c.isMatchingKeyArgument(source.Arguments()[0], target.Arguments()[0]) {
+					// Verify this is actually a keyed stable call
+					sig := c.getResolvedSignature(source, nil, CheckModeTypeOnly)
+					if sig != nil && sig != c.resolvingSignature && sig.flags&SignatureFlagsStable != 0 && c.signatureHasKeyParameter(sig) {
+						return true
+					}
+				}
+			}
 		}
 	}
 	return false
@@ -3037,13 +3111,28 @@ func (c *Checker) writeFlowCacheKey(b *keyBuilder, node *ast.Node, declaredType 
 		b.writeByte('#')
 		b.writeType(declaredType)
 		return true
+	case ast.KindStringLiteral:
+		b.writeString("\"")
+		b.writeString(node.Text())
+		b.writeString("\"")
+		return true
+	case ast.KindNumericLiteral:
+		b.writeString(node.Text())
+		return true
 	case ast.KindCallExpression:
 		// For stable function calls, generate a cache key based on the callee expression
-		if len(node.Arguments()) == 0 {
+		argCount := len(node.Arguments())
+		if argCount == 0 || argCount == 1 {
 			if !c.writeFlowCacheKey(b, node.Expression(), declaredType, initialType, flowContainer) {
 				return false
 			}
-			b.writeString("()")
+			b.writeByte('(')
+			if argCount == 1 {
+				if !c.writeFlowCacheKey(b, node.Arguments()[0], declaredType, initialType, flowContainer) {
+					return false
+				}
+			}
+			b.writeByte(')')
 			return true
 		}
 	}
