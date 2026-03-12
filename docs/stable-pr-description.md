@@ -417,6 +417,8 @@ interface Foo {
 
 ### Phase 9: Keyed Linked Predicates (LP-1)
 
+> **Status: Already implemented** (commit 18f9a1590).
+
 Guard methods that narrow stable endpoints with per-key parameter correlation. Uses `stable[key]`/`mutator[key]` bracket notation to scope narrowing to specific key arguments, and `invalidates get[key]` for per-key invalidation (vs `invalidates get` which invalidates ALL keys):
 
 ```ts
@@ -675,7 +677,6 @@ Angular template narrowing depends on the Angular compiler's Template Type Check
 
 The following are explicitly **not** part of this proposal but are documented as future work:
 
-- **Keyed linked predicates** (Phase 9): `has(key: K): this.get(key) is V` — Map/Set `has()`/`get()` narrowing with per-key invalidation tracking
 - **Discriminated method unions** (Phase 10): `isResolved(): this.value() is T & this.error() is undefined` — multi-predicate guards for async result patterns
 - **Exclusive invalidation (`preserves`):** Inverse of `invalidates` for APIs where listing exceptions is more concise
 - **`mutates` alternative syntax:** Collapsing `mutator` + `invalidates` into a single clause (see full proposal §13)
@@ -729,7 +730,7 @@ These are deferred to future phases with rationale:
 | **SYN-6** | `invalidates` exclusive mode (`sort: mutator () => void preserves length`) | Future | Low priority — only useful for partial invalidation |
 | **SEM-1** | How does `stable` propagate through generics, conditional types, mapped types? | Phase 2+ | Complex type-level interactions |
 | **SEM-8** | Should `T extends stable () => any ? true : false` discriminate stable functions? | Future | Conditional type discrimination |
-| **LP-1** | Keyed linked predicates: `has(key: K): this.get(key) is V` — parameter correlation | Phase 9 | Requires parameter binding infrastructure |
+| **LP-1** | Keyed linked predicates: `has(key: K): this.get(key) is V` — parameter correlation | Phase 9 | ✅ **Implemented** (commit 18f9a1590) |
 | **LP-2** | Multi-predicate intersection: `isOk(): this.value() is T & this.error() is undefined` | Future | Complex predicate composition |
 | **LP-3** | Getter mutation invalidation: should `invalidates` target getter properties? | Future | Cross-concern between accessor modifiers and invalidation |
 

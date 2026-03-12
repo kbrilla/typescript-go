@@ -235,11 +235,12 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 
 | Aspect | Detail |
 |--------|--------|
-| **Status** | DEFERRED |
+| **Status** | DECIDED |
 | **Phase Impact** | Phase 9 (Map/Set `has`/`get`) |
 | **Decision** | `has(key: K): this.get(key) is V` — how does parameter correlation work? |
 | **Risk** | High — parameter correlation + per-key invalidation + `isMatchingReference` interaction |
 | **Recommendation** | Ship Phase 8 independently first. Phase 9 builds on proven foundation |
+| **Resolution** | Implemented (commit 18f9a1590). Per-key stable tracking via `stable[key]`/`mutator[key]` bracket notation. `invalidates get[key]` for per-key invalidation. Parameter correlation resolved through argument-matched reference tracking. |
 | **Source** | [stable-phase8-proposal.md §3](stable-phase8-proposal.md) |
 
 ### LP-2: Discriminated method unions (Phase 10)
@@ -317,8 +318,8 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 |--------|-------|-----|
 | **OPEN** | 12 | SYN-1, SYN-3, SEM-2, SEM-5, SEM-6, SEM-7, CBI-4, CBI-5, ADO-1, ADO-2, ADO-3, ADO-4 |
 | **RECOMMENDED** | 0 | — |
-| **DEFERRED** | 9 | SYN-2, SYN-4, SYN-5, SYN-6, SEM-1, SEM-8, LP-1, LP-2, LP-3 |
-| **DECIDED** | 5 | CBI-1, SEM-3, SEM-4, CBI-2, CBI-3 |
+| **DEFERRED** | 8 | SYN-2, SYN-4, SYN-5, SYN-6, SEM-1, SEM-8, LP-2, LP-3 |
+| **DECIDED** | 6 | CBI-1, SEM-3, SEM-4, CBI-2, CBI-3, LP-1 |
 
 ### By Phase Impact
 
@@ -327,7 +328,7 @@ This document consolidates all open design decisions for the `stable`/`mutator`/
 | Phase 1 | 0 | (Phase 1 is complete) |
 | Phase 2 | 2 | SYN-1, SYN-4 |
 | Phase 2.5 (SolidJS) | 1 | CBI-1 |
-| Phase 9 | 2 | SEM-7, LP-1 |
+| Phase 9 | 1 | SEM-7 |
 | Framework adoption | 1 | ADO-2 |
 | Could redirect everything | 1 | ADO-4 |
 
