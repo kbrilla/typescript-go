@@ -1,0 +1,517 @@
+//// [tests/cases/compiler/stableModifierStorePattern.ts] ////
+
+=== stableModifierStorePattern.ts ===
+// --- 1. Basic Keyed Store Get/Set ---
+
+interface StoreAccessor<T> {
+    stable[key] get<K extends keyof T & string>(key: K): T[K];
+>get : <K extends keyof T & string>(key: K) => T[K]
+>key : K
+>key : any
+}
+
+interface StoreWriter<T> {
+    mutator set<K extends keyof T & string>(key: K, value: T[K]): void invalidates get[key];
+>set : <K extends keyof T & string>(key: K, value: T[K]) => void
+>key : K
+>value : T[K]
+>get : any
+}
+
+interface AppState {
+    user: string | undefined;
+>user : string | undefined
+
+    count: number;
+>count : number
+
+    status: "loading" | "ready" | "error";
+>status : "error" | "loading" | "ready"
+}
+
+declare const reader: StoreAccessor<AppState>;
+>reader : StoreAccessor<AppState>
+
+declare const writer: StoreWriter<AppState>;
+>writer : StoreWriter<AppState>
+
+if (reader.get("user") !== undefined) {
+>reader.get("user") !== undefined : boolean
+>reader.get("user") : string | undefined
+>reader.get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>reader : StoreAccessor<AppState>
+>get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>"user" : "user"
+>undefined : undefined
+
+    const u: string = reader.get("user");
+>u : string
+>reader.get("user") : string
+>reader.get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>reader : StoreAccessor<AppState>
+>get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>"user" : "user"
+
+    writer.set("count", 99);
+>writer.set("count", 99) : void
+>writer.set : <K extends "count" | "status" | "user">(key: K, value: AppState[K]) => void
+>writer : StoreWriter<AppState>
+>set : <K extends "count" | "status" | "user">(key: K, value: AppState[K]) => void
+>"count" : "count"
+>99 : 99
+
+    const u2: string = reader.get("user");
+>u2 : string
+>reader.get("user") : string
+>reader.get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>reader : StoreAccessor<AppState>
+>get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>"user" : "user"
+
+    writer.set("user", "bob");
+>writer.set("user", "bob") : void
+>writer.set : <K extends "count" | "status" | "user">(key: K, value: AppState[K]) => void
+>writer : StoreWriter<AppState>
+>set : <K extends "count" | "status" | "user">(key: K, value: AppState[K]) => void
+>"user" : "user"
+>"bob" : "bob"
+
+    const u3: string = reader.get("user");
+>u3 : string
+>reader.get("user") : string
+>reader.get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>reader : StoreAccessor<AppState>
+>get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>"user" : "user"
+}
+
+// --- 2. createTypedStore factory returning tuple ---
+
+interface TypedStoreReader<T> {
+    stable[key] get<K extends keyof T & string>(key: K): T[K];
+>get : <K extends keyof T & string>(key: K) => T[K]
+>key : K
+>key : any
+}
+
+interface TypedStoreWriter<T> {
+    mutator set<K extends keyof T & string>(key: K, value: T[K]): void invalidates get[key];
+>set : <K extends keyof T & string>(key: K, value: T[K]) => void
+>key : K
+>value : T[K]
+>get : any
+}
+
+declare function createTypedStore<T>(initial: T): [TypedStoreReader<T>, TypedStoreWriter<T>];
+>createTypedStore : <T>(initial: T) => [TypedStoreReader<T>, TypedStoreWriter<T>]
+>initial : T
+
+interface CounterState {
+    x: number;
+>x : number
+
+    y: number;
+>y : number
+
+    label: string | undefined;
+>label : string | undefined
+}
+
+const [rd, wr] = createTypedStore<CounterState>({ x: 0, y: 0, label: undefined });
+>rd : TypedStoreReader<CounterState>
+>wr : TypedStoreWriter<CounterState>
+>createTypedStore<CounterState>({ x: 0, y: 0, label: undefined }) : [TypedStoreReader<CounterState>, TypedStoreWriter<CounterState>]
+>createTypedStore : <T>(initial: T) => [TypedStoreReader<T>, TypedStoreWriter<T>]
+>{ x: 0, y: 0, label: undefined } : { x: number; y: number; label: undefined; }
+>x : number
+>0 : 0
+>y : number
+>0 : 0
+>label : undefined
+>undefined : undefined
+
+if (rd.get("label") !== undefined) {
+>rd.get("label") !== undefined : boolean
+>rd.get("label") : string | undefined
+>rd.get : <K extends "label" | "x" | "y">(key: K) => CounterState[K]
+>rd : TypedStoreReader<CounterState>
+>get : <K extends "label" | "x" | "y">(key: K) => CounterState[K]
+>"label" : "label"
+>undefined : undefined
+
+    const lbl: string = rd.get("label");
+>lbl : string
+>rd.get("label") : string
+>rd.get : <K extends "label" | "x" | "y">(key: K) => CounterState[K]
+>rd : TypedStoreReader<CounterState>
+>get : <K extends "label" | "x" | "y">(key: K) => CounterState[K]
+>"label" : "label"
+
+    wr.set("x", 10);
+>wr.set("x", 10) : void
+>wr.set : <K extends "label" | "x" | "y">(key: K, value: CounterState[K]) => void
+>wr : TypedStoreWriter<CounterState>
+>set : <K extends "label" | "x" | "y">(key: K, value: CounterState[K]) => void
+>"x" : "x"
+>10 : 10
+
+    const lbl2: string = rd.get("label");
+>lbl2 : string
+>rd.get("label") : string
+>rd.get : <K extends "label" | "x" | "y">(key: K) => CounterState[K]
+>rd : TypedStoreReader<CounterState>
+>get : <K extends "label" | "x" | "y">(key: K) => CounterState[K]
+>"label" : "label"
+
+    wr.set("label", "hello");
+>wr.set("label", "hello") : void
+>wr.set : <K extends "label" | "x" | "y">(key: K, value: CounterState[K]) => void
+>wr : TypedStoreWriter<CounterState>
+>set : <K extends "label" | "x" | "y">(key: K, value: CounterState[K]) => void
+>"label" : "label"
+>"hello" : "hello"
+
+    const lbl3: string = rd.get("label");
+>lbl3 : string
+>rd.get("label") : string
+>rd.get : <K extends "label" | "x" | "y">(key: K) => CounterState[K]
+>rd : TypedStoreReader<CounterState>
+>get : <K extends "label" | "x" | "y">(key: K) => CounterState[K]
+>"label" : "label"
+}
+
+// --- 3. Exhaustive switch on keyed store field ---
+
+switch (reader.get("status")) {
+>reader.get("status") : "error" | "loading" | "ready"
+>reader.get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>reader : StoreAccessor<AppState>
+>get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>"status" : "status"
+
+    case "loading":
+>"loading" : "loading"
+
+        const s1: "loading" = reader.get("status");
+>s1 : "loading"
+>reader.get("status") : "loading"
+>reader.get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>reader : StoreAccessor<AppState>
+>get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>"status" : "status"
+
+        break;
+    case "ready":
+>"ready" : "ready"
+
+        const s2: "ready" = reader.get("status");
+>s2 : "ready"
+>reader.get("status") : "ready"
+>reader.get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>reader : StoreAccessor<AppState>
+>get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>"status" : "status"
+
+        break;
+    case "error":
+>"error" : "error"
+
+        const s3: "error" = reader.get("status");
+>s3 : "error"
+>reader.get("status") : "error"
+>reader.get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>reader : StoreAccessor<AppState>
+>get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>"status" : "status"
+
+        break;
+    default:
+        const _exhaustive: never = reader.get("status");
+>_exhaustive : never
+>reader.get("status") : never
+>reader.get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>reader : StoreAccessor<AppState>
+>get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>"status" : "status"
+}
+
+// --- 4. Nested state — array field narrowing ---
+
+interface NestedState {
+    users: string[] | undefined;
+>users : string[] | undefined
+
+    active: boolean;
+>active : boolean
+}
+
+declare const nested: StoreAccessor<NestedState>;
+>nested : StoreAccessor<NestedState>
+
+declare const nestedWriter: StoreWriter<NestedState>;
+>nestedWriter : StoreWriter<NestedState>
+
+if (reader.get("user") !== undefined && nested.get("users") !== undefined) {
+>reader.get("user") !== undefined && nested.get("users") !== undefined : boolean
+>reader.get("user") !== undefined : boolean
+>reader.get("user") : string | undefined
+>reader.get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>reader : StoreAccessor<AppState>
+>get : <K extends "count" | "status" | "user">(key: K) => AppState[K]
+>"user" : "user"
+>undefined : undefined
+>nested.get("users") !== undefined : boolean
+>nested.get("users") : string[] | undefined
+>nested.get : <K extends "active" | "users">(key: K) => NestedState[K]
+>nested : StoreAccessor<NestedState>
+>get : <K extends "active" | "users">(key: K) => NestedState[K]
+>"users" : "users"
+>undefined : undefined
+
+    const arr: string[] = nested.get("users");
+>arr : string[]
+>nested.get("users") : string[]
+>nested.get : <K extends "active" | "users">(key: K) => NestedState[K]
+>nested : StoreAccessor<NestedState>
+>get : <K extends "active" | "users">(key: K) => NestedState[K]
+>"users" : "users"
+
+    const len: number = nested.get("users").length;
+>len : number
+>nested.get("users").length : number
+>nested.get("users") : string[]
+>nested.get : <K extends "active" | "users">(key: K) => NestedState[K]
+>nested : StoreAccessor<NestedState>
+>get : <K extends "active" | "users">(key: K) => NestedState[K]
+>"users" : "users"
+>length : number
+
+    const first: string = nested.get("users")[0];
+>first : string
+>nested.get("users")[0] : string
+>nested.get("users") : string[]
+>nested.get : <K extends "active" | "users">(key: K) => NestedState[K]
+>nested : StoreAccessor<NestedState>
+>get : <K extends "active" | "users">(key: K) => NestedState[K]
+>"users" : "users"
+>0 : 0
+
+    nestedWriter.set("active", true);
+>nestedWriter.set("active", true) : void
+>nestedWriter.set : <K extends "active" | "users">(key: K, value: NestedState[K]) => void
+>nestedWriter : StoreWriter<NestedState>
+>set : <K extends "active" | "users">(key: K, value: NestedState[K]) => void
+>"active" : "active"
+>true : true
+
+    const arr2: string[] = nested.get("users");
+>arr2 : string[]
+>nested.get("users") : string[]
+>nested.get : <K extends "active" | "users">(key: K) => NestedState[K]
+>nested : StoreAccessor<NestedState>
+>get : <K extends "active" | "users">(key: K) => NestedState[K]
+>"users" : "users"
+}
+
+// --- 5. Independent stores — cross-store writes don't interfere ---
+
+interface StoreA {
+    foo: string | undefined;
+>foo : string | undefined
+}
+
+interface StoreB {
+    bar: number | undefined;
+>bar : number | undefined
+}
+
+declare const readerA: StoreAccessor<StoreA>;
+>readerA : StoreAccessor<StoreA>
+
+declare const writerA: StoreWriter<StoreA>;
+>writerA : StoreWriter<StoreA>
+
+declare const readerB: StoreAccessor<StoreB>;
+>readerB : StoreAccessor<StoreB>
+
+declare const writerB: StoreWriter<StoreB>;
+>writerB : StoreWriter<StoreB>
+
+if (readerA.get("foo") !== undefined) {
+>readerA.get("foo") !== undefined : boolean
+>readerA.get("foo") : string | undefined
+>readerA.get : <K extends "foo">(key: K) => StoreA[K]
+>readerA : StoreAccessor<StoreA>
+>get : <K extends "foo">(key: K) => StoreA[K]
+>"foo" : "foo"
+>undefined : undefined
+
+    const f1: string = readerA.get("foo");
+>f1 : string
+>readerA.get("foo") : string
+>readerA.get : <K extends "foo">(key: K) => StoreA[K]
+>readerA : StoreAccessor<StoreA>
+>get : <K extends "foo">(key: K) => StoreA[K]
+>"foo" : "foo"
+
+    writerB.set("bar", 42);
+>writerB.set("bar", 42) : void
+>writerB.set : <K extends "bar">(key: K, value: StoreB[K]) => void
+>writerB : StoreWriter<StoreB>
+>set : <K extends "bar">(key: K, value: StoreB[K]) => void
+>"bar" : "bar"
+>42 : 42
+
+    const f2: string = readerA.get("foo");
+>f2 : string
+>readerA.get("foo") : string
+>readerA.get : <K extends "foo">(key: K) => StoreA[K]
+>readerA : StoreAccessor<StoreA>
+>get : <K extends "foo">(key: K) => StoreA[K]
+>"foo" : "foo"
+}
+
+if (readerB.get("bar") !== undefined) {
+>readerB.get("bar") !== undefined : boolean
+>readerB.get("bar") : number | undefined
+>readerB.get : <K extends "bar">(key: K) => StoreB[K]
+>readerB : StoreAccessor<StoreB>
+>get : <K extends "bar">(key: K) => StoreB[K]
+>"bar" : "bar"
+>undefined : undefined
+
+    const b1: number = readerB.get("bar");
+>b1 : number
+>readerB.get("bar") : number
+>readerB.get : <K extends "bar">(key: K) => StoreB[K]
+>readerB : StoreAccessor<StoreB>
+>get : <K extends "bar">(key: K) => StoreB[K]
+>"bar" : "bar"
+
+    writerA.set("foo", "hello");
+>writerA.set("foo", "hello") : void
+>writerA.set : <K extends "foo">(key: K, value: StoreA[K]) => void
+>writerA : StoreWriter<StoreA>
+>set : <K extends "foo">(key: K, value: StoreA[K]) => void
+>"foo" : "foo"
+>"hello" : "hello"
+
+    const b2: number = readerB.get("bar");
+>b2 : number
+>readerB.get("bar") : number
+>readerB.get : <K extends "bar">(key: K) => StoreB[K]
+>readerB : StoreAccessor<StoreB>
+>get : <K extends "bar">(key: K) => StoreB[K]
+>"bar" : "bar"
+}
+
+// --- 6. Discriminated union via keyed store ---
+
+interface TextEntry {
+    kind: "text";
+>kind : "text"
+
+    content: string;
+>content : string
+}
+
+interface ImageEntry {
+    kind: "image";
+>kind : "image"
+
+    url: string;
+>url : string
+
+    width: number;
+>width : number
+}
+
+type Entry = TextEntry | ImageEntry;
+>Entry : Entry
+
+interface EntryState {
+    entry: Entry;
+>entry : Entry
+
+    title: string | undefined;
+>title : string | undefined
+}
+
+declare const entryReader: StoreAccessor<EntryState>;
+>entryReader : StoreAccessor<EntryState>
+
+declare const entryWriter: StoreWriter<EntryState>;
+>entryWriter : StoreWriter<EntryState>
+
+if (entryReader.get("entry").kind === "text") {
+>entryReader.get("entry").kind === "text" : boolean
+>entryReader.get("entry").kind : "image" | "text"
+>entryReader.get("entry") : Entry
+>entryReader.get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>entryReader : StoreAccessor<EntryState>
+>get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>"entry" : "entry"
+>kind : "image" | "text"
+>"text" : "text"
+
+    const txt: string = entryReader.get("entry").content;
+>txt : string
+>entryReader.get("entry").content : string
+>entryReader.get("entry") : TextEntry
+>entryReader.get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>entryReader : StoreAccessor<EntryState>
+>get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>"entry" : "entry"
+>content : string
+
+    entryWriter.set("title", "hi");
+>entryWriter.set("title", "hi") : void
+>entryWriter.set : <K extends "entry" | "title">(key: K, value: EntryState[K]) => void
+>entryWriter : StoreWriter<EntryState>
+>set : <K extends "entry" | "title">(key: K, value: EntryState[K]) => void
+>"title" : "title"
+>"hi" : "hi"
+
+    const txt2: string = entryReader.get("entry").content;
+>txt2 : string
+>entryReader.get("entry").content : string
+>entryReader.get("entry") : TextEntry
+>entryReader.get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>entryReader : StoreAccessor<EntryState>
+>get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>"entry" : "entry"
+>content : string
+}
+
+if (entryReader.get("entry").kind === "image") {
+>entryReader.get("entry").kind === "image" : boolean
+>entryReader.get("entry").kind : "image" | "text"
+>entryReader.get("entry") : Entry
+>entryReader.get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>entryReader : StoreAccessor<EntryState>
+>get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>"entry" : "entry"
+>kind : "image" | "text"
+>"image" : "image"
+
+    const src: string = entryReader.get("entry").url;
+>src : string
+>entryReader.get("entry").url : string
+>entryReader.get("entry") : ImageEntry
+>entryReader.get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>entryReader : StoreAccessor<EntryState>
+>get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>"entry" : "entry"
+>url : string
+
+    const w: number = entryReader.get("entry").width;
+>w : number
+>entryReader.get("entry").width : number
+>entryReader.get("entry") : ImageEntry
+>entryReader.get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>entryReader : StoreAccessor<EntryState>
+>get : <K extends "entry" | "title">(key: K) => EntryState[K]
+>"entry" : "entry"
+>width : number
+}
+

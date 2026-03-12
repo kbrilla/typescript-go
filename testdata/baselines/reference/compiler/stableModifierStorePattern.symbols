@@ -1,0 +1,482 @@
+//// [tests/cases/compiler/stableModifierStorePattern.ts] ////
+
+=== stableModifierStorePattern.ts ===
+// --- 1. Basic Keyed Store Get/Set ---
+
+interface StoreAccessor<T> {
+>StoreAccessor : Symbol(StoreAccessor, Decl(stableModifierStorePattern.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 2, 24))
+
+    stable[key] get<K extends keyof T & string>(key: K): T[K];
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 3, 20))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 2, 24))
+>key : Symbol(key, Decl(stableModifierStorePattern.ts, 3, 48))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 3, 20))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 2, 24))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 3, 20))
+}
+
+interface StoreWriter<T> {
+>StoreWriter : Symbol(StoreWriter, Decl(stableModifierStorePattern.ts, 4, 1))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 6, 22))
+
+    mutator set<K extends keyof T & string>(key: K, value: T[K]): void invalidates get[key];
+>set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 7, 16))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 6, 22))
+>key : Symbol(key, Decl(stableModifierStorePattern.ts, 7, 44))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 7, 16))
+>value : Symbol(value, Decl(stableModifierStorePattern.ts, 7, 51))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 6, 22))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 7, 16))
+}
+
+interface AppState {
+>AppState : Symbol(AppState, Decl(stableModifierStorePattern.ts, 8, 1))
+
+    user: string | undefined;
+>user : Symbol(AppState.user, Decl(stableModifierStorePattern.ts, 10, 20))
+
+    count: number;
+>count : Symbol(AppState.count, Decl(stableModifierStorePattern.ts, 11, 29))
+
+    status: "loading" | "ready" | "error";
+>status : Symbol(AppState.status, Decl(stableModifierStorePattern.ts, 12, 18))
+}
+
+declare const reader: StoreAccessor<AppState>;
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>StoreAccessor : Symbol(StoreAccessor, Decl(stableModifierStorePattern.ts, 0, 0))
+>AppState : Symbol(AppState, Decl(stableModifierStorePattern.ts, 8, 1))
+
+declare const writer: StoreWriter<AppState>;
+>writer : Symbol(writer, Decl(stableModifierStorePattern.ts, 17, 13))
+>StoreWriter : Symbol(StoreWriter, Decl(stableModifierStorePattern.ts, 4, 1))
+>AppState : Symbol(AppState, Decl(stableModifierStorePattern.ts, 8, 1))
+
+if (reader.get("user") !== undefined) {
+>reader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>undefined : Symbol(undefined)
+
+    const u: string = reader.get("user");
+>u : Symbol(u, Decl(stableModifierStorePattern.ts, 20, 9))
+>reader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+
+    writer.set("count", 99);
+>writer.set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+>writer : Symbol(writer, Decl(stableModifierStorePattern.ts, 17, 13))
+>set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+
+    const u2: string = reader.get("user");
+>u2 : Symbol(u2, Decl(stableModifierStorePattern.ts, 22, 9))
+>reader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+
+    writer.set("user", "bob");
+>writer.set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+>writer : Symbol(writer, Decl(stableModifierStorePattern.ts, 17, 13))
+>set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+
+    const u3: string = reader.get("user");
+>u3 : Symbol(u3, Decl(stableModifierStorePattern.ts, 24, 9))
+>reader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+}
+
+// --- 2. createTypedStore factory returning tuple ---
+
+interface TypedStoreReader<T> {
+>TypedStoreReader : Symbol(TypedStoreReader, Decl(stableModifierStorePattern.ts, 25, 1))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 29, 27))
+
+    stable[key] get<K extends keyof T & string>(key: K): T[K];
+>get : Symbol(TypedStoreReader.get, Decl(stableModifierStorePattern.ts, 29, 31))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 30, 20))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 29, 27))
+>key : Symbol(key, Decl(stableModifierStorePattern.ts, 30, 48))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 30, 20))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 29, 27))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 30, 20))
+}
+
+interface TypedStoreWriter<T> {
+>TypedStoreWriter : Symbol(TypedStoreWriter, Decl(stableModifierStorePattern.ts, 31, 1))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 33, 27))
+
+    mutator set<K extends keyof T & string>(key: K, value: T[K]): void invalidates get[key];
+>set : Symbol(TypedStoreWriter.set, Decl(stableModifierStorePattern.ts, 33, 31))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 34, 16))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 33, 27))
+>key : Symbol(key, Decl(stableModifierStorePattern.ts, 34, 44))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 34, 16))
+>value : Symbol(value, Decl(stableModifierStorePattern.ts, 34, 51))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 33, 27))
+>K : Symbol(K, Decl(stableModifierStorePattern.ts, 34, 16))
+}
+
+declare function createTypedStore<T>(initial: T): [TypedStoreReader<T>, TypedStoreWriter<T>];
+>createTypedStore : Symbol(createTypedStore, Decl(stableModifierStorePattern.ts, 35, 1))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 37, 34))
+>initial : Symbol(initial, Decl(stableModifierStorePattern.ts, 37, 37))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 37, 34))
+>TypedStoreReader : Symbol(TypedStoreReader, Decl(stableModifierStorePattern.ts, 25, 1))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 37, 34))
+>TypedStoreWriter : Symbol(TypedStoreWriter, Decl(stableModifierStorePattern.ts, 31, 1))
+>T : Symbol(T, Decl(stableModifierStorePattern.ts, 37, 34))
+
+interface CounterState {
+>CounterState : Symbol(CounterState, Decl(stableModifierStorePattern.ts, 37, 93))
+
+    x: number;
+>x : Symbol(CounterState.x, Decl(stableModifierStorePattern.ts, 39, 24))
+
+    y: number;
+>y : Symbol(CounterState.y, Decl(stableModifierStorePattern.ts, 40, 14))
+
+    label: string | undefined;
+>label : Symbol(CounterState.label, Decl(stableModifierStorePattern.ts, 41, 14))
+}
+
+const [rd, wr] = createTypedStore<CounterState>({ x: 0, y: 0, label: undefined });
+>rd : Symbol(rd, Decl(stableModifierStorePattern.ts, 45, 7))
+>wr : Symbol(wr, Decl(stableModifierStorePattern.ts, 45, 10))
+>createTypedStore : Symbol(createTypedStore, Decl(stableModifierStorePattern.ts, 35, 1))
+>CounterState : Symbol(CounterState, Decl(stableModifierStorePattern.ts, 37, 93))
+>x : Symbol(x, Decl(stableModifierStorePattern.ts, 45, 49))
+>y : Symbol(y, Decl(stableModifierStorePattern.ts, 45, 55))
+>label : Symbol(label, Decl(stableModifierStorePattern.ts, 45, 61))
+>undefined : Symbol(undefined)
+
+if (rd.get("label") !== undefined) {
+>rd.get : Symbol(TypedStoreReader.get, Decl(stableModifierStorePattern.ts, 29, 31))
+>rd : Symbol(rd, Decl(stableModifierStorePattern.ts, 45, 7))
+>get : Symbol(TypedStoreReader.get, Decl(stableModifierStorePattern.ts, 29, 31))
+>undefined : Symbol(undefined)
+
+    const lbl: string = rd.get("label");
+>lbl : Symbol(lbl, Decl(stableModifierStorePattern.ts, 48, 9))
+>rd.get : Symbol(TypedStoreReader.get, Decl(stableModifierStorePattern.ts, 29, 31))
+>rd : Symbol(rd, Decl(stableModifierStorePattern.ts, 45, 7))
+>get : Symbol(TypedStoreReader.get, Decl(stableModifierStorePattern.ts, 29, 31))
+
+    wr.set("x", 10);
+>wr.set : Symbol(TypedStoreWriter.set, Decl(stableModifierStorePattern.ts, 33, 31))
+>wr : Symbol(wr, Decl(stableModifierStorePattern.ts, 45, 10))
+>set : Symbol(TypedStoreWriter.set, Decl(stableModifierStorePattern.ts, 33, 31))
+
+    const lbl2: string = rd.get("label");
+>lbl2 : Symbol(lbl2, Decl(stableModifierStorePattern.ts, 50, 9))
+>rd.get : Symbol(TypedStoreReader.get, Decl(stableModifierStorePattern.ts, 29, 31))
+>rd : Symbol(rd, Decl(stableModifierStorePattern.ts, 45, 7))
+>get : Symbol(TypedStoreReader.get, Decl(stableModifierStorePattern.ts, 29, 31))
+
+    wr.set("label", "hello");
+>wr.set : Symbol(TypedStoreWriter.set, Decl(stableModifierStorePattern.ts, 33, 31))
+>wr : Symbol(wr, Decl(stableModifierStorePattern.ts, 45, 10))
+>set : Symbol(TypedStoreWriter.set, Decl(stableModifierStorePattern.ts, 33, 31))
+
+    const lbl3: string = rd.get("label");
+>lbl3 : Symbol(lbl3, Decl(stableModifierStorePattern.ts, 52, 9))
+>rd.get : Symbol(TypedStoreReader.get, Decl(stableModifierStorePattern.ts, 29, 31))
+>rd : Symbol(rd, Decl(stableModifierStorePattern.ts, 45, 7))
+>get : Symbol(TypedStoreReader.get, Decl(stableModifierStorePattern.ts, 29, 31))
+}
+
+// --- 3. Exhaustive switch on keyed store field ---
+
+switch (reader.get("status")) {
+>reader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+
+    case "loading":
+        const s1: "loading" = reader.get("status");
+>s1 : Symbol(s1, Decl(stableModifierStorePattern.ts, 59, 13))
+>reader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+
+        break;
+    case "ready":
+        const s2: "ready" = reader.get("status");
+>s2 : Symbol(s2, Decl(stableModifierStorePattern.ts, 62, 13))
+>reader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+
+        break;
+    case "error":
+        const s3: "error" = reader.get("status");
+>s3 : Symbol(s3, Decl(stableModifierStorePattern.ts, 65, 13))
+>reader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+
+        break;
+    default:
+        const _exhaustive: never = reader.get("status");
+>_exhaustive : Symbol(_exhaustive, Decl(stableModifierStorePattern.ts, 68, 13))
+>reader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+}
+
+// --- 4. Nested state — array field narrowing ---
+
+interface NestedState {
+>NestedState : Symbol(NestedState, Decl(stableModifierStorePattern.ts, 69, 1))
+
+    users: string[] | undefined;
+>users : Symbol(NestedState.users, Decl(stableModifierStorePattern.ts, 73, 23))
+
+    active: boolean;
+>active : Symbol(NestedState.active, Decl(stableModifierStorePattern.ts, 74, 32))
+}
+
+declare const nested: StoreAccessor<NestedState>;
+>nested : Symbol(nested, Decl(stableModifierStorePattern.ts, 78, 13))
+>StoreAccessor : Symbol(StoreAccessor, Decl(stableModifierStorePattern.ts, 0, 0))
+>NestedState : Symbol(NestedState, Decl(stableModifierStorePattern.ts, 69, 1))
+
+declare const nestedWriter: StoreWriter<NestedState>;
+>nestedWriter : Symbol(nestedWriter, Decl(stableModifierStorePattern.ts, 79, 13))
+>StoreWriter : Symbol(StoreWriter, Decl(stableModifierStorePattern.ts, 4, 1))
+>NestedState : Symbol(NestedState, Decl(stableModifierStorePattern.ts, 69, 1))
+
+if (reader.get("user") !== undefined && nested.get("users") !== undefined) {
+>reader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>reader : Symbol(reader, Decl(stableModifierStorePattern.ts, 16, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>undefined : Symbol(undefined)
+>nested.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>nested : Symbol(nested, Decl(stableModifierStorePattern.ts, 78, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>undefined : Symbol(undefined)
+
+    const arr: string[] = nested.get("users");
+>arr : Symbol(arr, Decl(stableModifierStorePattern.ts, 82, 9))
+>nested.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>nested : Symbol(nested, Decl(stableModifierStorePattern.ts, 78, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+
+    const len: number = nested.get("users").length;
+>len : Symbol(len, Decl(stableModifierStorePattern.ts, 83, 9))
+>nested.get("users").length : Symbol(Array.length, Decl(lib.es5.d.ts, --, --))
+>nested.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>nested : Symbol(nested, Decl(stableModifierStorePattern.ts, 78, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>length : Symbol(Array.length, Decl(lib.es5.d.ts, --, --))
+
+    const first: string = nested.get("users")[0];
+>first : Symbol(first, Decl(stableModifierStorePattern.ts, 84, 9))
+>nested.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>nested : Symbol(nested, Decl(stableModifierStorePattern.ts, 78, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+
+    nestedWriter.set("active", true);
+>nestedWriter.set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+>nestedWriter : Symbol(nestedWriter, Decl(stableModifierStorePattern.ts, 79, 13))
+>set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+
+    const arr2: string[] = nested.get("users");
+>arr2 : Symbol(arr2, Decl(stableModifierStorePattern.ts, 86, 9))
+>nested.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>nested : Symbol(nested, Decl(stableModifierStorePattern.ts, 78, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+}
+
+// --- 5. Independent stores — cross-store writes don't interfere ---
+
+interface StoreA {
+>StoreA : Symbol(StoreA, Decl(stableModifierStorePattern.ts, 87, 1))
+
+    foo: string | undefined;
+>foo : Symbol(StoreA.foo, Decl(stableModifierStorePattern.ts, 91, 18))
+}
+
+interface StoreB {
+>StoreB : Symbol(StoreB, Decl(stableModifierStorePattern.ts, 93, 1))
+
+    bar: number | undefined;
+>bar : Symbol(StoreB.bar, Decl(stableModifierStorePattern.ts, 95, 18))
+}
+
+declare const readerA: StoreAccessor<StoreA>;
+>readerA : Symbol(readerA, Decl(stableModifierStorePattern.ts, 99, 13))
+>StoreAccessor : Symbol(StoreAccessor, Decl(stableModifierStorePattern.ts, 0, 0))
+>StoreA : Symbol(StoreA, Decl(stableModifierStorePattern.ts, 87, 1))
+
+declare const writerA: StoreWriter<StoreA>;
+>writerA : Symbol(writerA, Decl(stableModifierStorePattern.ts, 100, 13))
+>StoreWriter : Symbol(StoreWriter, Decl(stableModifierStorePattern.ts, 4, 1))
+>StoreA : Symbol(StoreA, Decl(stableModifierStorePattern.ts, 87, 1))
+
+declare const readerB: StoreAccessor<StoreB>;
+>readerB : Symbol(readerB, Decl(stableModifierStorePattern.ts, 101, 13))
+>StoreAccessor : Symbol(StoreAccessor, Decl(stableModifierStorePattern.ts, 0, 0))
+>StoreB : Symbol(StoreB, Decl(stableModifierStorePattern.ts, 93, 1))
+
+declare const writerB: StoreWriter<StoreB>;
+>writerB : Symbol(writerB, Decl(stableModifierStorePattern.ts, 102, 13))
+>StoreWriter : Symbol(StoreWriter, Decl(stableModifierStorePattern.ts, 4, 1))
+>StoreB : Symbol(StoreB, Decl(stableModifierStorePattern.ts, 93, 1))
+
+if (readerA.get("foo") !== undefined) {
+>readerA.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>readerA : Symbol(readerA, Decl(stableModifierStorePattern.ts, 99, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>undefined : Symbol(undefined)
+
+    const f1: string = readerA.get("foo");
+>f1 : Symbol(f1, Decl(stableModifierStorePattern.ts, 105, 9))
+>readerA.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>readerA : Symbol(readerA, Decl(stableModifierStorePattern.ts, 99, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+
+    writerB.set("bar", 42);
+>writerB.set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+>writerB : Symbol(writerB, Decl(stableModifierStorePattern.ts, 102, 13))
+>set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+
+    const f2: string = readerA.get("foo");
+>f2 : Symbol(f2, Decl(stableModifierStorePattern.ts, 107, 9))
+>readerA.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>readerA : Symbol(readerA, Decl(stableModifierStorePattern.ts, 99, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+}
+
+if (readerB.get("bar") !== undefined) {
+>readerB.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>readerB : Symbol(readerB, Decl(stableModifierStorePattern.ts, 101, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>undefined : Symbol(undefined)
+
+    const b1: number = readerB.get("bar");
+>b1 : Symbol(b1, Decl(stableModifierStorePattern.ts, 111, 9))
+>readerB.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>readerB : Symbol(readerB, Decl(stableModifierStorePattern.ts, 101, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+
+    writerA.set("foo", "hello");
+>writerA.set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+>writerA : Symbol(writerA, Decl(stableModifierStorePattern.ts, 100, 13))
+>set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+
+    const b2: number = readerB.get("bar");
+>b2 : Symbol(b2, Decl(stableModifierStorePattern.ts, 113, 9))
+>readerB.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>readerB : Symbol(readerB, Decl(stableModifierStorePattern.ts, 101, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+}
+
+// --- 6. Discriminated union via keyed store ---
+
+interface TextEntry {
+>TextEntry : Symbol(TextEntry, Decl(stableModifierStorePattern.ts, 114, 1))
+
+    kind: "text";
+>kind : Symbol(TextEntry.kind, Decl(stableModifierStorePattern.ts, 118, 21))
+
+    content: string;
+>content : Symbol(TextEntry.content, Decl(stableModifierStorePattern.ts, 119, 17))
+}
+
+interface ImageEntry {
+>ImageEntry : Symbol(ImageEntry, Decl(stableModifierStorePattern.ts, 121, 1))
+
+    kind: "image";
+>kind : Symbol(ImageEntry.kind, Decl(stableModifierStorePattern.ts, 123, 22))
+
+    url: string;
+>url : Symbol(ImageEntry.url, Decl(stableModifierStorePattern.ts, 124, 18))
+
+    width: number;
+>width : Symbol(ImageEntry.width, Decl(stableModifierStorePattern.ts, 125, 16))
+}
+
+type Entry = TextEntry | ImageEntry;
+>Entry : Symbol(Entry, Decl(stableModifierStorePattern.ts, 127, 1))
+>TextEntry : Symbol(TextEntry, Decl(stableModifierStorePattern.ts, 114, 1))
+>ImageEntry : Symbol(ImageEntry, Decl(stableModifierStorePattern.ts, 121, 1))
+
+interface EntryState {
+>EntryState : Symbol(EntryState, Decl(stableModifierStorePattern.ts, 129, 36))
+
+    entry: Entry;
+>entry : Symbol(EntryState.entry, Decl(stableModifierStorePattern.ts, 131, 22))
+>Entry : Symbol(Entry, Decl(stableModifierStorePattern.ts, 127, 1))
+
+    title: string | undefined;
+>title : Symbol(EntryState.title, Decl(stableModifierStorePattern.ts, 132, 17))
+}
+
+declare const entryReader: StoreAccessor<EntryState>;
+>entryReader : Symbol(entryReader, Decl(stableModifierStorePattern.ts, 136, 13))
+>StoreAccessor : Symbol(StoreAccessor, Decl(stableModifierStorePattern.ts, 0, 0))
+>EntryState : Symbol(EntryState, Decl(stableModifierStorePattern.ts, 129, 36))
+
+declare const entryWriter: StoreWriter<EntryState>;
+>entryWriter : Symbol(entryWriter, Decl(stableModifierStorePattern.ts, 137, 13))
+>StoreWriter : Symbol(StoreWriter, Decl(stableModifierStorePattern.ts, 4, 1))
+>EntryState : Symbol(EntryState, Decl(stableModifierStorePattern.ts, 129, 36))
+
+if (entryReader.get("entry").kind === "text") {
+>entryReader.get("entry").kind : Symbol(kind, Decl(stableModifierStorePattern.ts, 123, 22), Decl(stableModifierStorePattern.ts, 118, 21))
+>entryReader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>entryReader : Symbol(entryReader, Decl(stableModifierStorePattern.ts, 136, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>kind : Symbol(kind, Decl(stableModifierStorePattern.ts, 123, 22), Decl(stableModifierStorePattern.ts, 118, 21))
+
+    const txt: string = entryReader.get("entry").content;
+>txt : Symbol(txt, Decl(stableModifierStorePattern.ts, 140, 9))
+>entryReader.get("entry").content : Symbol(TextEntry.content, Decl(stableModifierStorePattern.ts, 119, 17))
+>entryReader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>entryReader : Symbol(entryReader, Decl(stableModifierStorePattern.ts, 136, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>content : Symbol(TextEntry.content, Decl(stableModifierStorePattern.ts, 119, 17))
+
+    entryWriter.set("title", "hi");
+>entryWriter.set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+>entryWriter : Symbol(entryWriter, Decl(stableModifierStorePattern.ts, 137, 13))
+>set : Symbol(StoreWriter.set, Decl(stableModifierStorePattern.ts, 6, 26))
+
+    const txt2: string = entryReader.get("entry").content;
+>txt2 : Symbol(txt2, Decl(stableModifierStorePattern.ts, 142, 9))
+>entryReader.get("entry").content : Symbol(TextEntry.content, Decl(stableModifierStorePattern.ts, 119, 17))
+>entryReader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>entryReader : Symbol(entryReader, Decl(stableModifierStorePattern.ts, 136, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>content : Symbol(TextEntry.content, Decl(stableModifierStorePattern.ts, 119, 17))
+}
+
+if (entryReader.get("entry").kind === "image") {
+>entryReader.get("entry").kind : Symbol(kind, Decl(stableModifierStorePattern.ts, 123, 22), Decl(stableModifierStorePattern.ts, 118, 21))
+>entryReader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>entryReader : Symbol(entryReader, Decl(stableModifierStorePattern.ts, 136, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>kind : Symbol(kind, Decl(stableModifierStorePattern.ts, 123, 22), Decl(stableModifierStorePattern.ts, 118, 21))
+
+    const src: string = entryReader.get("entry").url;
+>src : Symbol(src, Decl(stableModifierStorePattern.ts, 146, 9))
+>entryReader.get("entry").url : Symbol(ImageEntry.url, Decl(stableModifierStorePattern.ts, 124, 18))
+>entryReader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>entryReader : Symbol(entryReader, Decl(stableModifierStorePattern.ts, 136, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>url : Symbol(ImageEntry.url, Decl(stableModifierStorePattern.ts, 124, 18))
+
+    const w: number = entryReader.get("entry").width;
+>w : Symbol(w, Decl(stableModifierStorePattern.ts, 147, 9))
+>entryReader.get("entry").width : Symbol(ImageEntry.width, Decl(stableModifierStorePattern.ts, 125, 16))
+>entryReader.get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>entryReader : Symbol(entryReader, Decl(stableModifierStorePattern.ts, 136, 13))
+>get : Symbol(StoreAccessor.get, Decl(stableModifierStorePattern.ts, 2, 28))
+>width : Symbol(ImageEntry.width, Decl(stableModifierStorePattern.ts, 125, 16))
+}
+
