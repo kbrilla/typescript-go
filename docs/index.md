@@ -64,6 +64,10 @@ Documentation for the `stable` / `mutator` / `invalidates` modifier feature — 
 - [lying-setter-prevention-research.md](lying-setter-prevention-research.md) — Prevention strategies for lying setter/mutator patterns
 - [pre_post_validation.md](pre_post_validation.md) — Pre/post validation: whole-proposal impact assessment on existing codebases
 
+## Design Analysis
+
+- [stable-design-holes-analysis.md](stable-design-holes-analysis.md) — Design holes and value proposition analysis for stable/mutator/invalidates
+
 ## Risk & Feasibility Analysis
 
 - [ts-rejection-risk-assessment.md](ts-rejection-risk-assessment.md) — TS team rejection risk assessment for the stable/mutator/invalidates proposal

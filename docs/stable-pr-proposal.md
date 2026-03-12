@@ -49,7 +49,7 @@ This works for simple cases but fails in the contexts where the problem is most 
 
 1. **Reactive tracking is broken.** In signal-based frameworks (Angular, SolidJS, the TC39 Signals proposal), calling a signal registers a reactive dependency. Extracting to a temporary captures a snapshot and severs the reactive subscription. The code compiles, but the component stops updating.
 
-2. **Templates prohibit temporaries.** Angular templates and JSX expressions cannot declare local variables. The call-site *is* the only expression site available.
+2. **Templates discourage temporaries.** While Angular 18.1 introduced `@let` for local template variables, signal patterns are designed around direct signal calls — `user()` — throughout the template. Extracting temporaries via `@let` breaks the reactive contract by capturing a snapshot, and produces verbose templates in components with many signals.
 
 3. **Semantic drift.** Replacing `count()` with `const c = count()` changes the program's meaning. In reactive systems, the getter *is* the API — it is not an incidental call that can be hoisted.
 
@@ -180,6 +180,8 @@ Narrowing through `stable` calls is reset at well-defined boundaries inspired by
 
 This is intentionally more permissive than property narrowing, where any function call resets narrowing. The rationale: since `stable` is opt-in and requires explicit annotation, the companion `mutator` annotation provides a reliable enumeration of mutation points. The compiler does not need to conservatively assume arbitrary calls could mutate state.
 
+**Default-transparent rule:** All method calls not covered by the boundaries above — including unmarked methods on the same receiver — are treated as non-invalidating. Only calls explicitly marked `mutator` reset narrowing. This is the single most important design decision: the system defaults to transparency and requires explicit opt-in for invalidation. A developer who omits `mutator` from a mutating method will see narrowing preserved incorrectly. See the Soundness Analysis (§10) for the trust model implications of this design choice.
+
 Within a single synchronous block — between such boundaries — narrowing is preserved:
 
 ```ts
@@ -296,7 +298,54 @@ The `invalidates` clause is purely a precision tool. Code is correct without it;
 
 ---
 
-## 8. Real-World Impact
+## 8. Linked Type Predicates
+
+Linked type predicates allow a method to declare a type predicate that narrows the return type of a *different* `stable` method on the same receiver. The syntax uses `this.method() is T` in the return type position:
+
+```ts
+hasValue(): this.value() is Exclude<T, undefined>
+```
+
+This enables patterns where a boolean guard method controls the narrowed type of a companion getter — most notably the `has`/`get` pattern on Map-like containers and optional resource wrappers.
+
+### Resource Pattern
+
+```ts
+interface Resource<T> {
+    value: stable () => T;
+    hasValue(): this.value() is Exclude<T, undefined>;
+}
+
+declare const r: Resource<string | undefined>;
+if (r.hasValue()) {
+    const s: string = r.value(); // narrowed via linked predicate
+}
+```
+
+### Guard + Mutator Interaction
+
+Linked predicates compose with `mutator` and `invalidates` — a mutator call resets the narrowing established by a linked predicate:
+
+```ts
+interface WritableOption<T> {
+    get: stable () => T | undefined;
+    isDefined(): this.get() is T;
+    set: mutator (v: T | undefined) => void invalidates get;
+}
+
+declare const opt: WritableOption<number>;
+if (opt.isDefined()) {
+    const n: number = opt.get(); // narrowed by linked predicate
+    opt.set(undefined);
+    const n2: number | undefined = opt.get(); // reset — mutator invalidated
+}
+```
+
+This mechanism enables Map-like `has`/`get` patterns where `has(key)` narrows the return type of `get(key)` on the same receiver, bringing function-call narrowing to parity with property narrowing for discriminated access patterns.
+
+---
+
+## 9. Real-World Impact
 
 ### Angular Signals
 
@@ -363,6 +412,8 @@ if (count() !== undefined) {
 
 SolidJS's API shape requires cross-binding invalidation, which is outside the scope of this proposal. For SolidJS, `stable` enables narrowing on accessors, but `mutator` invalidation cannot prevent unsound narrowing when the setter is a separate binding. Addressing this limitation would likely require API-level coordination with the SolidJS team.
 
+**⚠️ Adoption Warning:** SolidJS authors should **not** ship `stable` on their accessor types until cross-binding invalidation is supported. Shipping `stable` without working `mutator` invalidation would give users false confidence in narrowing that can be silently broken by setter calls. This is not a case of "partial benefit" — it is actively unsound for users who call setters between narrowing checks. Until cross-binding invalidation is designed and implemented, SolidJS accessors should remain unannotated.
+
 ### TC39 Signals (Stage 1)
 
 The TC39 Signals proposal defines `Signal.State` and `Signal.Computed`:
@@ -384,7 +435,7 @@ The `invalidates` clause provides precise modeling: `set()` invalidates `get()` 
 
 ---
 
-## 9. Soundness Analysis
+## 10. Soundness Analysis
 
 ### The Property Narrowing Precedent
 
@@ -406,6 +457,8 @@ The `stable` modifier extends property narrowing's tradeoff to function calls, w
 
 However, the trust models differ in an important way. Property narrowing uses a *one-sided trust model* — the compiler can mechanically observe writes (`obj.prop = x`) and resets narrowing when it sees them. No annotation from the developer is required for reset. `stable` uses a *two-sided trust model* — the compiler trusts annotations for BOTH narrowing (via `stable`) AND reset (via `mutator`). If a developer forgets to mark a mutating function as `mutator`, narrowing is never reset, and the compiler will silently assume narrowed types remain valid.
 
+The compiler's correctness depends on both sides being honored. `stable` alone, without corresponding `mutator` annotations on all mutation points, creates the same class of type hole as an incorrect type annotation.
+
 ### `mutator` Restores Soundness at Mutation Points
 
 Without `mutator`, TypeScript would have to either:
@@ -416,13 +469,17 @@ Without `mutator`, TypeScript would have to either:
 
 ### Risk Profile
 
-The total risk profile is comparable to property narrowing: in one direction (opt-in vs default), `stable` is more conservative — properties are narrowed by default, while function calls require explicit `stable` annotation. In another direction (reset enforcement), property narrowing is stronger — the compiler mechanically detects writes, while `stable` relies on developers correctly applying `mutator`. Both accept unsoundness for ergonomic benefit.
+Unlike property narrowing, `stable` inverts the default assumption about invalidation. Property narrowing is *pessimistic*: any function call resets narrowed property types, because the compiler cannot prove the call didn't mutate the property. `stable` is *optimistic*: narrowing persists through all calls unless a `mutator` annotation explicitly declares invalidation. The burden is on the developer to annotate mutation points, not on the compiler to detect them.
 
-A developer who writes `stable` on a non-stable function, or omits `mutator` from a mutating function, gets the same class of error as writing any incorrect type annotation — the compiler trusts the declaration and may narrow incorrectly. The gap is real, but it is the same gap TypeScript has always accepted.
+This inversion means the most likely failure mode is different. With property narrowing, unsoundness requires an exotic scenario — aliased mutation, a Proxy, or a side-effecting getter — that the compiler conservatively guards against anyway. With `stable`, unsoundness occurs when a developer simply forgets to mark a mutating method as `mutator`. This is a more common mistake than encountering aliased Proxy mutation, and the compiler provides no automatic safety net for it.
+
+Despite this asymmetry, the default-transparent design is chosen deliberately, because the alternative makes the feature nearly useless (see below). A developer who writes `stable` on a non-stable function, or omits `mutator` from a mutating function, gets the same class of error as writing any incorrect type annotation — the compiler trusts the declaration and may narrow incorrectly. The gap is real, but it is the same gap TypeScript has always accepted.
+
+**Why default-transparent?** The alternative — treating all unmarked calls as potentially invalidating — would make `stable` nearly useless. Any unrelated function call would destroy narrowing, forcing developers to annotate every method in the system as either `stable` or `mutator`. The default-transparent design matches property narrowing's assumption (method calls don't reset property narrowing) and keeps the annotation burden proportional to the mutation surface rather than the entire API.
 
 ---
 
-## 10. Type System Integration
+## 11. Type System Integration
 
 ### Structural Compatibility
 
@@ -435,6 +492,50 @@ The modifiers integrate into TypeScript's structural type system through standar
 | `mutator (x: T) => void` → `(x: T) => void` | ⚠️ | Allowed — dropping the mutator marker means the call won't reset narrowing. This is an accepted soundness gap analogous to method parameter bivariance: the assigned function may mutate state without triggering narrowing reset. Developers should be aware that structural widening can suppress invalidation. |
 | `(x: T) => void` → `mutator (x: T) => void` | ✅ | Conservatively marking as mutating is safe — may cause unnecessary narrowing resets but cannot cause unsound narrowing |
 
+The `mutator → plain function` row deserves a concrete example of the soundness gap:
+
+```ts
+// ⚠️ Structural widening can suppress invalidation
+function callIt(fn: (v: number) => void, sig: Signal<number | undefined>) {
+    if (sig() !== undefined) {
+        fn(42);    // fn may be sig.set — but narrowing is NOT reset
+        sig() + 1; // 💥 Potential runtime error
+    }
+}
+callIt(sig.set.bind(sig), sig); // mutator marker lost through structural widening
+```
+
+This is the same class of issue as method parameter bivariance — structural subtyping accepts this gap for practical reasons. Requiring exact `mutator` assignability would break too many existing patterns to be worth the soundness gain.
+
+### Generic Interaction
+
+Several open questions remain about how `stable` and `mutator` interact with generic types. These require TypeScript team input:
+
+**1. Does `stable` propagate through generic parameters?**
+
+```ts
+function wrap<T>(fn: stable () => T): T {
+    return fn(); // Is fn() narrowable inside wrap?
+}
+```
+
+**2. Does `stable` participate in conditional type inference?**
+
+```ts
+type StableReturn<F> = F extends stable () => infer R ? R : never;
+// Does this infer R from stable callables only?
+```
+
+**3. Do mapped types preserve `stable`?**
+
+```ts
+type Signals<T> = { [K in keyof T]: stable () => T[K] };
+type Mirrored<T> = { [K in keyof T]: T[K] };
+// If T has stable methods, does Mirrored<T> preserve the modifier?
+```
+
+These are open design questions. The initial implementation can defer generic interaction to a follow-up proposal, treating `stable` on generic-instantiated types conservatively (no narrowing unless the concrete type is known).
+
 ### Grammar
 
 - `stable` appears as a modifier before the parameter list in function type syntax, or before the method name in method signatures.
@@ -445,15 +546,15 @@ All three are contextual keywords — they are only treated as keywords in modif
 
 ---
 
-## 11. Implementation
+## 12. Implementation
 
-A working implementation exists in a fork of the TypeScript compiler (typescript-go), spanning scanner/parser (contextual keyword recognition), binder (flow nodes for stable call references), checker (CFA narrowing, modifier consistency, structural assignability), printer (modifier syntax emission), and diagnostics (error messages for invalid placement and incompatible assignments).
+A working implementation exists in a fork of the TypeScript compiler (typescript-go), spanning scanner/parser (contextual keyword recognition), binder (flow nodes for stable call references), checker (CFA narrowing, modifier consistency, structural assignability), printer (modifier syntax emission), and diagnostics (error messages for invalid placement and incompatible assignments). This proposal encompasses four distinct mechanisms — `stable`, `mutator`, `invalidates`, and linked predicates — and phased review of each is welcome.
 
 All existing compiler tests pass with zero regressions. A dedicated test suite validates: basic narrowing, control flow boundaries, callback interactions, loop narrowing, exhaustive switch patterns, mutator invalidation, targeted invalidates, cross-receiver independence, and linked predicates.
 
 ---
 
-## 12. Alternatives Considered
+## 13. Alternatives Considered
 
 | Alternative | Reason for Rejection |
 |-------------|---------------------|
@@ -467,11 +568,9 @@ All existing compiler tests pass with zero regressions. A dedicated test suite v
 
 ---
 
-## 13. Future Extensions
+## 14. Future Extensions
 
-The following capabilities are explicitly **not** part of this proposal but are enabled by it:
-
-- **Linked type predicates:** `hasValue(): this.value() is string` — a type predicate that narrows the return type of a different stable method on the same receiver. This enables `has`/`get` patterns on maps and optional containers.
+The following capabilities are explicitly **not** part of this proposal but could be built on its foundation:
 
 - **Constrained-overload narrowing:** When `set(42)` is called, the compiler could narrow `get()` to `number` based on overload resolution. This would enable "write-then-read" patterns without re-checking.
 
@@ -479,9 +578,11 @@ The following capabilities are explicitly **not** part of this proposal but are 
 
 - **Standard library annotations:** Adding `stable` and `mutator` to built-in types (e.g., `Map.prototype.get` after `Map.prototype.has`, DOM element accessors). This requires careful API review and is a separate proposal.
 
+- **Companion lint rules:** An ESLint plugin could enforce annotation hygiene — warning when interfaces have `stable` methods but no `mutator` methods, when methods with mutation-suggestive names (`set*`, `clear*`, `reset*`, `delete*`) in classes with `stable` members lack `mutator`, or when subclasses add non-`stable`, non-`mutator` methods to interfaces with `stable` members.
+
 ---
 
-## 14. FAQ
+## 15. FAQ
 
 **Q: Isn't this just `readonly`?**
 
@@ -509,25 +610,32 @@ JSDoc annotations are not part of the structural type system. A JSDoc comment on
 
 **Q: What happens if someone lies — marks a non-stable function as `stable`?**
 
-The same thing that happens with an incorrect type annotation: the compiler trusts the declaration and may narrow incorrectly. See §9 (Soundness Analysis) for a detailed comparison with property narrowing's trust model.
+The same thing that happens with an incorrect type annotation: the compiler trusts the declaration and may narrow incorrectly. See §10 (Soundness Analysis) for a detailed comparison with property narrowing's trust model.
 
 ---
 
-## 15. Summary
+## 16. Summary
 
 | Feature | Purpose | Syntax |
 |---------|---------|--------|
 | `stable` | Marks a callable as returning a referentially stable value | `stable (): T` |
 | `mutator` | Marks a callable as potentially changing stable state | `mutator set(v: T): void` |
 | `invalidates` | Targets which stable methods a mutator affects | `mutator set(v: T): void invalidates get` |
+| `this.x() is T` | Allows a type predicate to narrow a different stable method | `hasValue(): this.value() is string` |
 
 These three modifiers fill a gap in TypeScript's type system that affects a large and growing number of developers working with signal-based frameworks and getter-function APIs. They follow TypeScript's design philosophy: fully erasable, declaration-site only, structurally typed, and zero breaking changes. The same soundness tradeoffs that TypeScript already accepts for property narrowing extend naturally to `stable` calls, with `mutator` and `invalidates` providing explicit control over invalidation that property narrowing lacks.
 
-We recognize that introducing three new contextual keywords is significant language surface area. We believe the unified design — addressing narrowing, invalidation, and targeted invalidation together — justifies this cost over a piecemeal approach. However, we are open to a phased introduction (e.g., `stable` alone first, with `mutator` and `invalidates` in a follow-up) or a simplified design if the team prefers.
+We recognize that introducing three new contextual keywords is significant language surface area. We recommend a **phased introduction** to manage complexity and allow each mechanism to prove its value independently:
+
+- **Phase 1: `stable` alone** with conservative reset — any method call on the same receiver resets narrowing. This delivers the core value (narrowing through function calls) with minimal surface area and a simple, safe invalidation model.
+- **Phase 2: `mutator` and `invalidates`** for precise invalidation control, introduced once `stable` has proven its value and the conservative reset model proves too restrictive in practice.
+- **Phase 3: Linked type predicates** (`this.x() is T`) as an independent proposal, building on the `stable` foundation but addressing a distinct use case (guard-based narrowing of companion methods).
+
+This phased approach lets each mechanism be reviewed, tested, and adopted independently, reducing the risk of shipping too much surface area at once.
 
 ---
 
-## 16. Open Questions
+## 17. Open Questions
 
 The following design questions remain open and would benefit from TypeScript team input:
 
@@ -544,6 +652,8 @@ The following design questions remain open and would benefit from TypeScript tea
 6. **Alternative approaches.** Are there simpler mechanisms — such as a single-modifier design, a type-level encoding, or integration with an existing feature like `readonly` — that the team would prefer to explore? We are open to fundamentally different approaches if they better fit TypeScript's design trajectory.
 
 7. **Modifier naming.** Existing TypeScript modifiers are adjectives (`readonly`, `abstract`, `static`), while `mutator` is a noun. `mutating` — which follows the adjective pattern and mirrors Swift's `mutating` keyword — may be a better fit. We welcome the team's preference on naming.
+
+8. **Strictness levels.** Should there be a `--strictStable` compiler flag that treats all unmarked method calls on receivers with `stable` methods as potentially invalidating? This would reverse the default from "transparent unless marked `mutator`" to "invalidating unless marked `stable`." It would be too conservative for most codebases, but could be valuable for teams prioritizing soundness over ergonomics.
 
 ---
 
