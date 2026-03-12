@@ -156,6 +156,148 @@ All four are fully erasable (zero runtime overhead), declaration-site only, and 
 
 ---
 
+## Complete Syntax Reference
+
+### `stable` Modifier — Supported Declarations
+
+```ts
+// Function type (in type annotations, tuples, parameters)
+type Getter<T> = stable () => T;
+type Signal<T> = [read: stable () => T, write: mutator (v: T) => void invalidates read];
+
+// Method declaration (class)
+class Store<T> {
+    stable get(): T { return this._value; }
+}
+
+// Method signature (interface / type literal)
+interface Readable<T> {
+    stable get(): T;
+}
+
+// Get accessor (class + interface)
+class Counter {
+    stable get count(): number | undefined { return this._count; }
+}
+interface ReadOnly {
+    stable get value(): string | undefined;
+}
+
+// Function declaration
+stable function readConfig(): Config | undefined { ... }
+
+// Function expression
+const getValue = stable function(): string | undefined { ... };
+
+// Arrow function
+const getY = stable (): string | undefined => { ... };
+
+// Combined with async
+const fetchData = stable async (): Promise<Data | null> => { ... };
+```
+
+**Restriction:** `stable` requires zero parameters. Rejected on setters, constructors, and any function with parameters.
+
+### `mutator` Modifier — Supported Declarations
+
+```ts
+// Function type
+type Setter<T> = mutator (v: T) => void;
+
+// Method declaration (class)
+class Store<T> {
+    mutator set(value: T): void { this._value = value; }
+    mutator reset(): void { this._value = undefined as any; }
+}
+
+// Method signature (interface)
+interface Writable<T> {
+    mutator set(value: T): void;
+}
+
+// Set accessor (class + interface)
+class Counter {
+    mutator set count(value: number | undefined) { this._count = value; }
+}
+interface WriteOnly {
+    mutator set value(v: string | undefined);
+}
+
+// Function declaration
+mutator function setState(val: string | undefined): void { ... }
+
+// Function expression / arrow function
+const setX = mutator function(val: number | null): void {};
+const setY = mutator (val: string | undefined): void => {};
+```
+
+**Restriction:** `mutator` is rejected on get accessors (getters should not mutate state).
+
+### `invalidates` Clause
+
+```ts
+// On function types — targets specific stable endpoints
+type Signal<T> = [
+    read: stable () => T,
+    write: mutator (v: T) => void invalidates read
+];
+
+// Multi-target invalidation
+type MultiSignal<T> = [
+    a: stable () => T,
+    b: stable () => T,
+    setAll: mutator (v: T) => void invalidates a, b
+];
+
+// Without invalidates — mutator resets ALL stable narrowing on same receiver
+interface Writable<T> {
+    stable get(): T;
+    mutator set(value: T): void;  // resets all stable on this receiver
+}
+```
+
+**Note:** `invalidates` clause is currently only supported on function type syntax, not on method declarations or method signatures. For methods, the mutator resets all stable endpoints on the same receiver.
+
+### Linked Type Predicates
+
+```ts
+// Phase 3 feature — guard methods that narrow stable endpoints
+interface Resource<T> {
+    stable value(): T | undefined;
+    hasValue(): this.value() is Exclude<T, undefined>;
+}
+```
+
+### Grammar Error Cases
+
+```ts
+// ❌ stable with parameters — rejected
+stable function bad(x: number): number { return x; }
+
+// ❌ stable on setter — rejected (setters have parameters)
+interface Bad { stable set value(v: string); }
+
+// ❌ mutator on getter — rejected
+interface Bad { mutator get value(): string; }
+
+// ❌ stable on constructor — rejected
+class Bad { stable constructor() {} }
+
+// ❌ stable + mutator combined — rejected
+interface Bad { stable mutator get(): string; }
+```
+
+### Get / Set Accessor Parity
+
+TypeScript property narrowing already preserves narrowing of `obj.value` across function calls within a basic block. The `stable`/`mutator` modifiers on get/set accessors serve as:
+
+1. **Documentation** — The modifier signals that the getter is a pure reader or the setter is a state mutator
+2. **Declaration emit** — The modifier appears in `.d.ts` files, informing downstream consumers
+3. **Consistency** — All function-like declarations accept the modifiers where semantically appropriate
+4. **Future potential** — Enables more aggressive narrowing optimizations in future phases
+
+---
+
 ## Recommended Phased Introduction
 
 ### Phase 1: `stable` alone (conservative reset)
@@ -319,6 +461,58 @@ The following are explicitly **not** part of this proposal but are documented as
 
 ---
 
+## Open Design Questions
+
+These questions remain unresolved and would benefit from TypeScript team input:
+
+### Syntax
+| ID | Question | Impact |
+|---|---|---|
+| **SYN-1** | Should `mutator` + `invalidates` be collapsed into a single `mutates` clause? (e.g., `set(v: T): void mutates value`) | Syntax simplification |
+| **SYN-3** | TS modifiers are adjectives (`readonly`, `abstract`, `static`). `mutator` is a noun. Should it be `mutating`? | Naming convention |
+
+### Semantics
+| ID | Question | Impact |
+|---|---|---|
+| **SEM-2** | When a stable method is destructured from its receiver, should narrowing still apply? Should it be an error? | Soundness |
+| **SEM-5** | Should there be a `--strictStable` compiler flag that treats ALL unmarked calls as potentially invalidating? (Reverses default-transparent) | Safety model |
+| **SEM-6** | Should heuristic tier-based inference be a user-facing feature, or should all invalidation be explicit `mutator` annotations? | DX vs. safety |
+| **SEM-7** | For `Map<K, V \| undefined>`, `has(key)` → `get(key)` narrowing would incorrectly narrow `V \| undefined` to `V` | Soundness edge case |
+
+### Cross-Binding
+| ID | Question | Impact |
+|---|---|---|
+| **CBI-4** | Should SolidJS ship an object-based API as a "narrowable" alternative? | Framework guidance |
+| **CBI-5** | Can a function mutate both a tuple sibling AND a receiver method? E.g., `mutates read, get` | Multi-scope invalidation |
+
+### Adoption
+| ID | Question | Impact |
+|---|---|---|
+| **ADO-1** | Should builtins (`Map.get`, `WeakRef.deref`, DOM accessors) be annotated `stable`? | Standard library |
+| **ADO-2** | How do frameworks ship `.d.ts` that work with both `stable`-aware and older TS versions? | Backwards compatibility |
+| **ADO-3** | Should `stable` be allowed on functions with explicit `this` parameter? Does `this` type serve as receiver for invalidation scoping? | Generic functions |
+| **ADO-4** | Are there simpler mechanisms — single modifier, type-level encoding, `readonly` integration — that the team would prefer? | Alternative designs |
+
+---
+
+## Deferred Decisions
+
+These are deferred to future phases with rationale:
+
+| ID | Question | Phase | Rationale |
+|---|---|---|---|
+| **SYN-2** | Is `stable` the right name? Alternatives: `getter`, `pure`, `cached`, `memo` | Post-review | Naming should be finalized after team feedback |
+| **SYN-4** | `invalidates` clause on method declarations (currently only on function types) | Future | AST struct changes needed; method-level selective invalidation can wait |
+| **SYN-5** | `stable` on interface call signatures (`interface { stable (): T; }`) | Future | Parser ambiguity — `stable` is treated as method name |
+| **SYN-6** | `invalidates` exclusive mode (`sort: mutator () => void preserves length`) | Future | Low priority — only useful for partial invalidation |
+| **SEM-1** | How does `stable` propagate through generics, conditional types, mapped types? | Phase 2+ | Complex type-level interactions |
+| **SEM-8** | Should `T extends stable () => any ? true : false` discriminate stable functions? | Future | Conditional type discrimination |
+| **LP-1** | Keyed linked predicates: `has(key: K): this.get(key) is V` — parameter correlation | Phase 9 | Requires parameter binding infrastructure |
+| **LP-2** | Multi-predicate intersection: `isOk(): this.value() is T & this.error() is undefined` | Future | Complex predicate composition |
+| **LP-3** | Getter mutation invalidation: should `invalidates` target getter properties? | Future | Cross-concern between accessor modifiers and invalidation |
+
+---
+
 ## Companion Documents
 
 All companion documents are located in the `docs/` directory of this repository.
@@ -391,6 +585,30 @@ Consolidated register of 30 open design decisions across 5 categories (Syntax, S
 - `stableModifierErrors.ts` / `stableModifierDiagnostics.ts` — error reporting
 - `stableModifierEmit.ts` — erasure correctness
 - `stableModifierDeclarationParity.ts` — 11 sections: all declaration kinds, grammar errors, namespace support
+
+**Heuristic tiers and boundaries:**
+- `stableModifierTier1Writes.ts` — tier 1 write invalidation
+- `stableModifierTier2.ts` — tier 2 heuristic inference
+- `stableModifierStandaloneCallBoundary.ts` — standalone call boundary behavior
+- `stableModifierMethodCallBoundary.ts` — method call boundary behavior
+- `stableModifierValueTypeBoundary.ts` — value type boundary behavior
+
+**Getter analysis:**
+- `stableModifierGetterCorpus.ts` — getter pattern corpus
+- `stableModifierGetterParitySweep.ts` — getter parity sweep tests
+- `stableModifierGetterMissingMatrix.ts` — getter missing matrix coverage
+
+**Advanced patterns:**
+- `stableModifierAdvancedCallbacks.ts` — advanced callback behavior
+- `stableModifierMultiArgCallback.ts` — multi-argument callback patterns
+- `stableModifierConstrainedOverload.ts` — constrained overload resolution
+- `stableModifierGenericDiscriminant.ts` — generic discriminant narrowing
+- `stableModifierInOperator.ts` — `in` operator narrowing with stable
+
+**Diagnostics and edge cases:**
+- `stableModifierBareParameter.ts` — bare parameter diagnostics
+- `stableModifierHeuristicDiagnostics.ts` — heuristic diagnostic messages
+- `stableModifierP8Conservative.ts` — phase 8 conservative mode
 
 ---
 
