@@ -5882,6 +5882,7 @@ type MethodSignatureDeclaration struct {
 	FunctionLikeBase
 	TypeElementBase
 	typeSyntaxBase
+	LinksClause *NodeList // Optional: stable endpoint names for mutator invalidates clause
 }
 
 func (f *NodeFactory) NewMethodSignatureDeclaration(modifiers *ModifierList, name *PropertyName, postfixToken *TokenNode, typeParameters *NodeList, parameters *NodeList, returnType *TypeNode) *Node {
@@ -5904,7 +5905,7 @@ func (f *NodeFactory) UpdateMethodSignatureDeclaration(node *MethodSignatureDecl
 
 func (node *MethodSignatureDeclaration) ForEachChild(v Visitor) bool {
 	return visitModifiers(v, node.modifiers) || visit(v, node.name) || visit(v, node.PostfixToken) || visitNodeList(v, node.TypeParameters) ||
-		visitNodeList(v, node.Parameters) || visit(v, node.Type)
+		visitNodeList(v, node.Parameters) || visit(v, node.Type) || visitNodeList(v, node.LinksClause)
 }
 
 func (node *MethodSignatureDeclaration) VisitEachChild(v *NodeVisitor) *Node {
@@ -5912,7 +5913,11 @@ func (node *MethodSignatureDeclaration) VisitEachChild(v *NodeVisitor) *Node {
 }
 
 func (node *MethodSignatureDeclaration) Clone(f NodeFactoryCoercible) *Node {
-	return cloneNode(f.AsNodeFactory().NewMethodSignatureDeclaration(node.Modifiers(), node.Name(), node.PostfixToken, node.TypeParameters, node.Parameters, node.Type), node.AsNode(), f.AsNodeFactory().hooks)
+	result := f.AsNodeFactory().NewMethodSignatureDeclaration(node.Modifiers(), node.Name(), node.PostfixToken, node.TypeParameters, node.Parameters, node.Type)
+	if node.LinksClause != nil {
+		result.AsMethodSignatureDeclaration().LinksClause = node.LinksClause
+	}
+	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
 func IsMethodSignatureDeclaration(node *Node) bool {
@@ -5929,6 +5934,7 @@ type MethodDeclaration struct {
 	ClassElementBase
 	ObjectLiteralElementBase
 	compositeNodeBase
+	LinksClause *NodeList // Optional: stable endpoint names for mutator invalidates clause
 }
 
 func (f *NodeFactory) NewMethodDeclaration(modifiers *ModifierList, asteriskToken *TokenNode, name *PropertyName, postfixToken *TokenNode, typeParameters *NodeList, parameters *NodeList, returnType *TypeNode, fullSignature *TypeNode, body *BlockNode) *Node {
@@ -5954,7 +5960,7 @@ func (f *NodeFactory) UpdateMethodDeclaration(node *MethodDeclaration, modifiers
 
 func (node *MethodDeclaration) ForEachChild(v Visitor) bool {
 	return visitModifiers(v, node.modifiers) || visit(v, node.AsteriskToken) || visit(v, node.name) || visit(v, node.PostfixToken) ||
-		visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type) || visit(v, node.FullSignature) || visit(v, node.Body)
+		visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type) || visitNodeList(v, node.LinksClause) || visit(v, node.FullSignature) || visit(v, node.Body)
 }
 
 func (node *MethodDeclaration) VisitEachChild(v *NodeVisitor) *Node {
@@ -5962,7 +5968,11 @@ func (node *MethodDeclaration) VisitEachChild(v *NodeVisitor) *Node {
 }
 
 func (node *MethodDeclaration) Clone(f NodeFactoryCoercible) *Node {
-	return cloneNode(f.AsNodeFactory().NewMethodDeclaration(node.Modifiers(), node.AsteriskToken, node.Name(), node.PostfixToken, node.TypeParameters, node.Parameters, node.Type, node.FullSignature, node.Body), node.AsNode(), f.AsNodeFactory().hooks)
+	result := f.AsNodeFactory().NewMethodDeclaration(node.Modifiers(), node.AsteriskToken, node.Name(), node.PostfixToken, node.TypeParameters, node.Parameters, node.Type, node.FullSignature, node.Body)
+	if node.LinksClause != nil {
+		result.AsMethodDeclaration().LinksClause = node.LinksClause
+	}
+	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
 func (node *MethodDeclaration) computeSubtreeFacts() SubtreeFacts {

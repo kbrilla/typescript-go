@@ -1,0 +1,358 @@
+//// [tests/cases/compiler/stableModifierMethodInvalidates.ts] ////
+
+=== stableModifierMethodInvalidates.ts ===
+// Phase 6: invalidates clause on method declarations and method signatures
+
+// === 1. Selective invalidation via method-level invalidates clause ===
+interface Store<T> {
+>Store : Symbol(Store, Decl(stableModifierMethodInvalidates.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 3, 16))
+
+    stable getValue(): T;
+>getValue : Symbol(Store.getValue, Decl(stableModifierMethodInvalidates.ts, 3, 20))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 3, 16))
+
+    stable getLabel(): string;
+>getLabel : Symbol(Store.getLabel, Decl(stableModifierMethodInvalidates.ts, 4, 25))
+
+    mutator setValue(v: T): void invalidates getValue;
+>setValue : Symbol(Store.setValue, Decl(stableModifierMethodInvalidates.ts, 5, 30))
+>v : Symbol(v, Decl(stableModifierMethodInvalidates.ts, 6, 21))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 3, 16))
+
+    mutator setLabel(l: string): void invalidates getLabel;
+>setLabel : Symbol(Store.setLabel, Decl(stableModifierMethodInvalidates.ts, 6, 54))
+>l : Symbol(l, Decl(stableModifierMethodInvalidates.ts, 7, 21))
+
+    mutator reset(): void invalidates getValue, getLabel;
+>reset : Symbol(Store.reset, Decl(stableModifierMethodInvalidates.ts, 7, 59))
+}
+
+declare const store: Store<string | undefined>;
+>store : Symbol(store, Decl(stableModifierMethodInvalidates.ts, 11, 13))
+>Store : Symbol(Store, Decl(stableModifierMethodInvalidates.ts, 0, 0))
+
+if (store.getValue() !== undefined) {
+>store.getValue : Symbol(Store.getValue, Decl(stableModifierMethodInvalidates.ts, 3, 20))
+>store : Symbol(store, Decl(stableModifierMethodInvalidates.ts, 11, 13))
+>getValue : Symbol(Store.getValue, Decl(stableModifierMethodInvalidates.ts, 3, 20))
+>undefined : Symbol(undefined)
+
+    store.setLabel("test");     // does NOT invalidate getValue (different target)
+>store.setLabel : Symbol(Store.setLabel, Decl(stableModifierMethodInvalidates.ts, 6, 54))
+>store : Symbol(store, Decl(stableModifierMethodInvalidates.ts, 11, 13))
+>setLabel : Symbol(Store.setLabel, Decl(stableModifierMethodInvalidates.ts, 6, 54))
+
+    store.getValue().toUpperCase();  // ✅ still narrowed to string
+>store.getValue().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>store.getValue : Symbol(Store.getValue, Decl(stableModifierMethodInvalidates.ts, 3, 20))
+>store : Symbol(store, Decl(stableModifierMethodInvalidates.ts, 11, 13))
+>getValue : Symbol(Store.getValue, Decl(stableModifierMethodInvalidates.ts, 3, 20))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    store.setValue("hello");     // invalidates getValue → post-call narrows to string
+>store.setValue : Symbol(Store.setValue, Decl(stableModifierMethodInvalidates.ts, 5, 30))
+>store : Symbol(store, Decl(stableModifierMethodInvalidates.ts, 11, 13))
+>setValue : Symbol(Store.setValue, Decl(stableModifierMethodInvalidates.ts, 5, 30))
+
+    store.getValue().toUpperCase();  // ✅ still narrowed (to string via argument)
+>store.getValue().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>store.getValue : Symbol(Store.getValue, Decl(stableModifierMethodInvalidates.ts, 3, 20))
+>store : Symbol(store, Decl(stableModifierMethodInvalidates.ts, 11, 13))
+>getValue : Symbol(Store.getValue, Decl(stableModifierMethodInvalidates.ts, 3, 20))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    store.reset();              // invalidates both getValue and getLabel
+>store.reset : Symbol(Store.reset, Decl(stableModifierMethodInvalidates.ts, 7, 59))
+>store : Symbol(store, Decl(stableModifierMethodInvalidates.ts, 11, 13))
+>reset : Symbol(Store.reset, Decl(stableModifierMethodInvalidates.ts, 7, 59))
+
+    store.getValue();           // back to string | undefined
+>store.getValue : Symbol(Store.getValue, Decl(stableModifierMethodInvalidates.ts, 3, 20))
+>store : Symbol(store, Decl(stableModifierMethodInvalidates.ts, 11, 13))
+>getValue : Symbol(Store.getValue, Decl(stableModifierMethodInvalidates.ts, 3, 20))
+}
+
+// === 2. Multi-target method invalidation ===
+interface MultiStore {
+>MultiStore : Symbol(MultiStore, Decl(stableModifierMethodInvalidates.ts, 21, 1))
+
+    stable getA(): string | undefined;
+>getA : Symbol(MultiStore.getA, Decl(stableModifierMethodInvalidates.ts, 24, 22))
+
+    stable getB(): number | undefined;
+>getB : Symbol(MultiStore.getB, Decl(stableModifierMethodInvalidates.ts, 25, 38))
+
+    stable getC(): boolean | undefined;
+>getC : Symbol(MultiStore.getC, Decl(stableModifierMethodInvalidates.ts, 26, 38))
+
+    mutator setA(v: string | undefined): void invalidates getA;
+>setA : Symbol(MultiStore.setA, Decl(stableModifierMethodInvalidates.ts, 27, 39))
+>v : Symbol(v, Decl(stableModifierMethodInvalidates.ts, 28, 17))
+
+    mutator setAll(): void invalidates getA, getB, getC;
+>setAll : Symbol(MultiStore.setAll, Decl(stableModifierMethodInvalidates.ts, 28, 63))
+}
+
+declare const ms: MultiStore;
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>MultiStore : Symbol(MultiStore, Decl(stableModifierMethodInvalidates.ts, 21, 1))
+
+if (ms.getA() !== undefined && ms.getB() !== undefined && ms.getC() !== undefined) {
+>ms.getA : Symbol(MultiStore.getA, Decl(stableModifierMethodInvalidates.ts, 24, 22))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>getA : Symbol(MultiStore.getA, Decl(stableModifierMethodInvalidates.ts, 24, 22))
+>undefined : Symbol(undefined)
+>ms.getB : Symbol(MultiStore.getB, Decl(stableModifierMethodInvalidates.ts, 25, 38))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>getB : Symbol(MultiStore.getB, Decl(stableModifierMethodInvalidates.ts, 25, 38))
+>undefined : Symbol(undefined)
+>ms.getC : Symbol(MultiStore.getC, Decl(stableModifierMethodInvalidates.ts, 26, 38))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>getC : Symbol(MultiStore.getC, Decl(stableModifierMethodInvalidates.ts, 26, 38))
+>undefined : Symbol(undefined)
+
+    ms.setA("hi");          // only invalidates getA
+>ms.setA : Symbol(MultiStore.setA, Decl(stableModifierMethodInvalidates.ts, 27, 39))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>setA : Symbol(MultiStore.setA, Decl(stableModifierMethodInvalidates.ts, 27, 39))
+
+    const b: number = ms.getB();    // ✅ still narrowed
+>b : Symbol(b, Decl(stableModifierMethodInvalidates.ts, 35, 9))
+>ms.getB : Symbol(MultiStore.getB, Decl(stableModifierMethodInvalidates.ts, 25, 38))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>getB : Symbol(MultiStore.getB, Decl(stableModifierMethodInvalidates.ts, 25, 38))
+
+    const c: boolean = ms.getC();   // ✅ still narrowed
+>c : Symbol(c, Decl(stableModifierMethodInvalidates.ts, 36, 9))
+>ms.getC : Symbol(MultiStore.getC, Decl(stableModifierMethodInvalidates.ts, 26, 38))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>getC : Symbol(MultiStore.getC, Decl(stableModifierMethodInvalidates.ts, 26, 38))
+
+    ms.getA().toUpperCase();        // ✅ narrowed to string via argument
+>ms.getA().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>ms.getA : Symbol(MultiStore.getA, Decl(stableModifierMethodInvalidates.ts, 24, 22))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>getA : Symbol(MultiStore.getA, Decl(stableModifierMethodInvalidates.ts, 24, 22))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    ms.setAll();            // invalidates all three
+>ms.setAll : Symbol(MultiStore.setAll, Decl(stableModifierMethodInvalidates.ts, 28, 63))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>setAll : Symbol(MultiStore.setAll, Decl(stableModifierMethodInvalidates.ts, 28, 63))
+
+    ms.getA();              // string | undefined
+>ms.getA : Symbol(MultiStore.getA, Decl(stableModifierMethodInvalidates.ts, 24, 22))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>getA : Symbol(MultiStore.getA, Decl(stableModifierMethodInvalidates.ts, 24, 22))
+
+    ms.getB();              // number | undefined
+>ms.getB : Symbol(MultiStore.getB, Decl(stableModifierMethodInvalidates.ts, 25, 38))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>getB : Symbol(MultiStore.getB, Decl(stableModifierMethodInvalidates.ts, 25, 38))
+
+    ms.getC();              // boolean | undefined
+>ms.getC : Symbol(MultiStore.getC, Decl(stableModifierMethodInvalidates.ts, 26, 38))
+>ms : Symbol(ms, Decl(stableModifierMethodInvalidates.ts, 32, 13))
+>getC : Symbol(MultiStore.getC, Decl(stableModifierMethodInvalidates.ts, 26, 38))
+}
+
+// === 3. Class method-level invalidates ===
+class Container<T> {
+>Container : Symbol(Container, Decl(stableModifierMethodInvalidates.ts, 43, 1))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 46, 16))
+
+    private _value: T;
+>_value : Symbol(Container._value, Decl(stableModifierMethodInvalidates.ts, 46, 20))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 46, 16))
+
+    constructor(v: T) { this._value = v; }
+>v : Symbol(v, Decl(stableModifierMethodInvalidates.ts, 48, 16))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 46, 16))
+>this._value : Symbol(Container._value, Decl(stableModifierMethodInvalidates.ts, 46, 20))
+>this : Symbol(Container, Decl(stableModifierMethodInvalidates.ts, 43, 1))
+>_value : Symbol(Container._value, Decl(stableModifierMethodInvalidates.ts, 46, 20))
+>v : Symbol(v, Decl(stableModifierMethodInvalidates.ts, 48, 16))
+
+    stable getValue(): T { return this._value; }
+>getValue : Symbol(Container.getValue, Decl(stableModifierMethodInvalidates.ts, 48, 42))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 46, 16))
+>this._value : Symbol(Container._value, Decl(stableModifierMethodInvalidates.ts, 46, 20))
+>this : Symbol(Container, Decl(stableModifierMethodInvalidates.ts, 43, 1))
+>_value : Symbol(Container._value, Decl(stableModifierMethodInvalidates.ts, 46, 20))
+
+    stable getLabel(): string { return "label"; }
+>getLabel : Symbol(Container.getLabel, Decl(stableModifierMethodInvalidates.ts, 49, 48))
+
+    mutator setValue(v: T): void invalidates getValue { this._value = v; }
+>setValue : Symbol(Container.setValue, Decl(stableModifierMethodInvalidates.ts, 50, 49))
+>v : Symbol(v, Decl(stableModifierMethodInvalidates.ts, 51, 21))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 46, 16))
+>this._value : Symbol(Container._value, Decl(stableModifierMethodInvalidates.ts, 46, 20))
+>this : Symbol(Container, Decl(stableModifierMethodInvalidates.ts, 43, 1))
+>_value : Symbol(Container._value, Decl(stableModifierMethodInvalidates.ts, 46, 20))
+>v : Symbol(v, Decl(stableModifierMethodInvalidates.ts, 51, 21))
+
+    mutator clear(): void invalidates getValue, getLabel { this._value = undefined as any; }
+>clear : Symbol(Container.clear, Decl(stableModifierMethodInvalidates.ts, 51, 74))
+>this._value : Symbol(Container._value, Decl(stableModifierMethodInvalidates.ts, 46, 20))
+>this : Symbol(Container, Decl(stableModifierMethodInvalidates.ts, 43, 1))
+>_value : Symbol(Container._value, Decl(stableModifierMethodInvalidates.ts, 46, 20))
+>undefined : Symbol(undefined)
+}
+
+declare const container: Container<number | undefined>;
+>container : Symbol(container, Decl(stableModifierMethodInvalidates.ts, 55, 13))
+>Container : Symbol(Container, Decl(stableModifierMethodInvalidates.ts, 43, 1))
+
+if (container.getValue() !== undefined) {
+>container.getValue : Symbol(Container.getValue, Decl(stableModifierMethodInvalidates.ts, 48, 42))
+>container : Symbol(container, Decl(stableModifierMethodInvalidates.ts, 55, 13))
+>getValue : Symbol(Container.getValue, Decl(stableModifierMethodInvalidates.ts, 48, 42))
+>undefined : Symbol(undefined)
+
+    container.setValue(42);     // invalidates getValue → narrows to number
+>container.setValue : Symbol(Container.setValue, Decl(stableModifierMethodInvalidates.ts, 50, 49))
+>container : Symbol(container, Decl(stableModifierMethodInvalidates.ts, 55, 13))
+>setValue : Symbol(Container.setValue, Decl(stableModifierMethodInvalidates.ts, 50, 49))
+
+    const v: number = container.getValue();  // ✅ narrowed to number
+>v : Symbol(v, Decl(stableModifierMethodInvalidates.ts, 58, 9))
+>container.getValue : Symbol(Container.getValue, Decl(stableModifierMethodInvalidates.ts, 48, 42))
+>container : Symbol(container, Decl(stableModifierMethodInvalidates.ts, 55, 13))
+>getValue : Symbol(Container.getValue, Decl(stableModifierMethodInvalidates.ts, 48, 42))
+
+    container.clear();          // invalidates both
+>container.clear : Symbol(Container.clear, Decl(stableModifierMethodInvalidates.ts, 51, 74))
+>container : Symbol(container, Decl(stableModifierMethodInvalidates.ts, 55, 13))
+>clear : Symbol(Container.clear, Decl(stableModifierMethodInvalidates.ts, 51, 74))
+
+    container.getValue();       // number | undefined
+>container.getValue : Symbol(Container.getValue, Decl(stableModifierMethodInvalidates.ts, 48, 42))
+>container : Symbol(container, Decl(stableModifierMethodInvalidates.ts, 55, 13))
+>getValue : Symbol(Container.getValue, Decl(stableModifierMethodInvalidates.ts, 48, 42))
+}
+
+// === 4. Interface method vs function type — both with invalidates ===
+interface DualSyntax<T> {
+>DualSyntax : Symbol(DualSyntax, Decl(stableModifierMethodInvalidates.ts, 62, 1))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 65, 21))
+
+    stable getValue(): T;
+>getValue : Symbol(DualSyntax.getValue, Decl(stableModifierMethodInvalidates.ts, 65, 25))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 65, 21))
+
+    // Method syntax with invalidates
+    mutator setMethod(v: T): void invalidates getValue;
+>setMethod : Symbol(DualSyntax.setMethod, Decl(stableModifierMethodInvalidates.ts, 66, 25))
+>v : Symbol(v, Decl(stableModifierMethodInvalidates.ts, 68, 22))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 65, 21))
+
+    // Function type syntax with invalidates (already works)
+    setFunc: mutator (v: T) => void invalidates getValue;
+>setFunc : Symbol(DualSyntax.setFunc, Decl(stableModifierMethodInvalidates.ts, 68, 55))
+>v : Symbol(v, Decl(stableModifierMethodInvalidates.ts, 70, 22))
+>T : Symbol(T, Decl(stableModifierMethodInvalidates.ts, 65, 21))
+}
+
+declare const dual: DualSyntax<string | undefined>;
+>dual : Symbol(dual, Decl(stableModifierMethodInvalidates.ts, 73, 13))
+>DualSyntax : Symbol(DualSyntax, Decl(stableModifierMethodInvalidates.ts, 62, 1))
+
+if (dual.getValue() !== undefined) {
+>dual.getValue : Symbol(DualSyntax.getValue, Decl(stableModifierMethodInvalidates.ts, 65, 25))
+>dual : Symbol(dual, Decl(stableModifierMethodInvalidates.ts, 73, 13))
+>getValue : Symbol(DualSyntax.getValue, Decl(stableModifierMethodInvalidates.ts, 65, 25))
+>undefined : Symbol(undefined)
+
+    dual.setMethod("method");
+>dual.setMethod : Symbol(DualSyntax.setMethod, Decl(stableModifierMethodInvalidates.ts, 66, 25))
+>dual : Symbol(dual, Decl(stableModifierMethodInvalidates.ts, 73, 13))
+>setMethod : Symbol(DualSyntax.setMethod, Decl(stableModifierMethodInvalidates.ts, 66, 25))
+
+    dual.getValue().toUpperCase();  // ✅ narrowed to string
+>dual.getValue().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>dual.getValue : Symbol(DualSyntax.getValue, Decl(stableModifierMethodInvalidates.ts, 65, 25))
+>dual : Symbol(dual, Decl(stableModifierMethodInvalidates.ts, 73, 13))
+>getValue : Symbol(DualSyntax.getValue, Decl(stableModifierMethodInvalidates.ts, 65, 25))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    dual.setFunc("func");
+>dual.setFunc : Symbol(DualSyntax.setFunc, Decl(stableModifierMethodInvalidates.ts, 68, 55))
+>dual : Symbol(dual, Decl(stableModifierMethodInvalidates.ts, 73, 13))
+>setFunc : Symbol(DualSyntax.setFunc, Decl(stableModifierMethodInvalidates.ts, 68, 55))
+
+    dual.getValue().toUpperCase();  // ✅ narrowed to string
+>dual.getValue().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>dual.getValue : Symbol(DualSyntax.getValue, Decl(stableModifierMethodInvalidates.ts, 65, 25))
+>dual : Symbol(dual, Decl(stableModifierMethodInvalidates.ts, 73, 13))
+>getValue : Symbol(DualSyntax.getValue, Decl(stableModifierMethodInvalidates.ts, 65, 25))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+
+// === 5. Mutator method WITHOUT invalidates — invalidates ALL stable ===
+interface MixedAnnotation {
+>MixedAnnotation : Symbol(MixedAnnotation, Decl(stableModifierMethodInvalidates.ts, 80, 1))
+
+    stable getA(): string | undefined;
+>getA : Symbol(MixedAnnotation.getA, Decl(stableModifierMethodInvalidates.ts, 83, 27))
+
+    stable getB(): number | undefined;
+>getB : Symbol(MixedAnnotation.getB, Decl(stableModifierMethodInvalidates.ts, 84, 38))
+
+    mutator targeted(v: string): void invalidates getA;  // selective
+>targeted : Symbol(MixedAnnotation.targeted, Decl(stableModifierMethodInvalidates.ts, 85, 38))
+>v : Symbol(v, Decl(stableModifierMethodInvalidates.ts, 86, 21))
+
+    mutator untargeted(): void;  // no invalidates clause → invalidates ALL
+>untargeted : Symbol(MixedAnnotation.untargeted, Decl(stableModifierMethodInvalidates.ts, 86, 55))
+}
+
+declare const mixed: MixedAnnotation;
+>mixed : Symbol(mixed, Decl(stableModifierMethodInvalidates.ts, 90, 13))
+>MixedAnnotation : Symbol(MixedAnnotation, Decl(stableModifierMethodInvalidates.ts, 80, 1))
+
+if (mixed.getA() !== undefined && mixed.getB() !== undefined) {
+>mixed.getA : Symbol(MixedAnnotation.getA, Decl(stableModifierMethodInvalidates.ts, 83, 27))
+>mixed : Symbol(mixed, Decl(stableModifierMethodInvalidates.ts, 90, 13))
+>getA : Symbol(MixedAnnotation.getA, Decl(stableModifierMethodInvalidates.ts, 83, 27))
+>undefined : Symbol(undefined)
+>mixed.getB : Symbol(MixedAnnotation.getB, Decl(stableModifierMethodInvalidates.ts, 84, 38))
+>mixed : Symbol(mixed, Decl(stableModifierMethodInvalidates.ts, 90, 13))
+>getB : Symbol(MixedAnnotation.getB, Decl(stableModifierMethodInvalidates.ts, 84, 38))
+>undefined : Symbol(undefined)
+
+    mixed.targeted("hi");
+>mixed.targeted : Symbol(MixedAnnotation.targeted, Decl(stableModifierMethodInvalidates.ts, 85, 38))
+>mixed : Symbol(mixed, Decl(stableModifierMethodInvalidates.ts, 90, 13))
+>targeted : Symbol(MixedAnnotation.targeted, Decl(stableModifierMethodInvalidates.ts, 85, 38))
+
+    const b1: number = mixed.getB();     // ✅ still narrowed (not targeted)
+>b1 : Symbol(b1, Decl(stableModifierMethodInvalidates.ts, 93, 9))
+>mixed.getB : Symbol(MixedAnnotation.getB, Decl(stableModifierMethodInvalidates.ts, 84, 38))
+>mixed : Symbol(mixed, Decl(stableModifierMethodInvalidates.ts, 90, 13))
+>getB : Symbol(MixedAnnotation.getB, Decl(stableModifierMethodInvalidates.ts, 84, 38))
+
+    mixed.getA().toUpperCase();          // ✅ narrowed via argument
+>mixed.getA().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>mixed.getA : Symbol(MixedAnnotation.getA, Decl(stableModifierMethodInvalidates.ts, 83, 27))
+>mixed : Symbol(mixed, Decl(stableModifierMethodInvalidates.ts, 90, 13))
+>getA : Symbol(MixedAnnotation.getA, Decl(stableModifierMethodInvalidates.ts, 83, 27))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    mixed.untargeted();         // no invalidates clause → resets ALL
+>mixed.untargeted : Symbol(MixedAnnotation.untargeted, Decl(stableModifierMethodInvalidates.ts, 86, 55))
+>mixed : Symbol(mixed, Decl(stableModifierMethodInvalidates.ts, 90, 13))
+>untargeted : Symbol(MixedAnnotation.untargeted, Decl(stableModifierMethodInvalidates.ts, 86, 55))
+
+    mixed.getA();               // string | undefined
+>mixed.getA : Symbol(MixedAnnotation.getA, Decl(stableModifierMethodInvalidates.ts, 83, 27))
+>mixed : Symbol(mixed, Decl(stableModifierMethodInvalidates.ts, 90, 13))
+>getA : Symbol(MixedAnnotation.getA, Decl(stableModifierMethodInvalidates.ts, 83, 27))
+
+    mixed.getB();               // number | undefined
+>mixed.getB : Symbol(MixedAnnotation.getB, Decl(stableModifierMethodInvalidates.ts, 84, 38))
+>mixed : Symbol(mixed, Decl(stableModifierMethodInvalidates.ts, 90, 13))
+>getB : Symbol(MixedAnnotation.getB, Decl(stableModifierMethodInvalidates.ts, 84, 38))
+}
+

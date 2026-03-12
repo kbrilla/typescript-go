@@ -1884,8 +1884,16 @@ func (p *Parser) parseMethodDeclaration(pos int, jsdoc jsdocScannerInfo, modifie
 	typeParameters := p.parseTypeParameters()
 	parameters := p.parseParameters(signatureFlags)
 	typeNode := p.parseReturnType(ast.KindColonToken, false /*isType*/)
+	var linksClause *ast.NodeList
+	if p.hasMutatorModifier(modifiers) && p.token == ast.KindInvalidatesKeyword {
+		linksClause = p.parseInvalidatesClause()
+	}
 	body := p.parseFunctionBlockOrSemicolon(signatureFlags, diagnosticMessage)
-	result := p.finishNode(p.factory.NewMethodDeclaration(modifiers, asteriskToken, name, questionToken, typeParameters, parameters, typeNode, nil /*fullSignature*/, body), pos)
+	node := p.factory.NewMethodDeclaration(modifiers, asteriskToken, name, questionToken, typeParameters, parameters, typeNode, nil /*fullSignature*/, body)
+	if linksClause != nil {
+		node.AsMethodDeclaration().LinksClause = linksClause
+	}
+	result := p.finishNode(node, pos)
 	p.withJSDoc(result, jsdoc)
 	p.checkJSSyntax(result)
 	return result
@@ -3547,7 +3555,14 @@ func (p *Parser) parsePropertyOrMethodSignature(pos int, jsdoc jsdocScannerInfo,
 		typeParameters := p.parseTypeParameters()
 		parameters := p.parseParameters(ParseFlagsType)
 		returnType := p.parseReturnType(ast.KindColonToken /*isType*/, true)
+		var linksClause *ast.NodeList
+		if p.hasMutatorModifier(modifiers) && p.token == ast.KindInvalidatesKeyword {
+			linksClause = p.parseInvalidatesClause()
+		}
 		result = p.factory.NewMethodSignatureDeclaration(modifiers, name, questionToken, typeParameters, parameters, returnType)
+		if linksClause != nil {
+			result.AsMethodSignatureDeclaration().LinksClause = linksClause
+		}
 	} else {
 		typeNode := p.parseTypeAnnotation()
 		// Although type literal properties cannot not have initializers, we attempt

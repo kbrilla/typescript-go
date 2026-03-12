@@ -1,0 +1,411 @@
+//// [tests/cases/compiler/stableModifierMethodInvalidates.ts] ////
+
+=== stableModifierMethodInvalidates.ts ===
+// Phase 6: invalidates clause on method declarations and method signatures
+
+// === 1. Selective invalidation via method-level invalidates clause ===
+interface Store<T> {
+    stable getValue(): T;
+>getValue : () => T
+
+    stable getLabel(): string;
+>getLabel : () => string
+
+    mutator setValue(v: T): void invalidates getValue;
+>setValue : (v: T) => void
+>v : T
+>getValue : any
+
+    mutator setLabel(l: string): void invalidates getLabel;
+>setLabel : (l: string) => void
+>l : string
+>getLabel : any
+
+    mutator reset(): void invalidates getValue, getLabel;
+>reset : () => void
+>getValue : any
+>getLabel : any
+}
+
+declare const store: Store<string | undefined>;
+>store : Store<string | undefined>
+
+if (store.getValue() !== undefined) {
+>store.getValue() !== undefined : boolean
+>store.getValue() : string | undefined
+>store.getValue : () => string | undefined
+>store : Store<string | undefined>
+>getValue : () => string | undefined
+>undefined : undefined
+
+    store.setLabel("test");     // does NOT invalidate getValue (different target)
+>store.setLabel("test") : void
+>store.setLabel : (l: string) => void
+>store : Store<string | undefined>
+>setLabel : (l: string) => void
+>"test" : "test"
+
+    store.getValue().toUpperCase();  // ✅ still narrowed to string
+>store.getValue().toUpperCase() : string
+>store.getValue().toUpperCase : () => string
+>store.getValue() : string | undefined
+>store.getValue : () => string | undefined
+>store : Store<string | undefined>
+>getValue : () => string | undefined
+>toUpperCase : () => string
+
+    store.setValue("hello");     // invalidates getValue → post-call narrows to string
+>store.setValue("hello") : void
+>store.setValue : (v: string | undefined) => void
+>store : Store<string | undefined>
+>setValue : (v: string | undefined) => void
+>"hello" : "hello"
+
+    store.getValue().toUpperCase();  // ✅ still narrowed (to string via argument)
+>store.getValue().toUpperCase() : string
+>store.getValue().toUpperCase : () => string
+>store.getValue() : string | undefined
+>store.getValue : () => string | undefined
+>store : Store<string | undefined>
+>getValue : () => string | undefined
+>toUpperCase : () => string
+
+    store.reset();              // invalidates both getValue and getLabel
+>store.reset() : void
+>store.reset : () => void
+>store : Store<string | undefined>
+>reset : () => void
+
+    store.getValue();           // back to string | undefined
+>store.getValue() : string | undefined
+>store.getValue : () => string | undefined
+>store : Store<string | undefined>
+>getValue : () => string | undefined
+}
+
+// === 2. Multi-target method invalidation ===
+interface MultiStore {
+    stable getA(): string | undefined;
+>getA : () => string | undefined
+
+    stable getB(): number | undefined;
+>getB : () => number | undefined
+
+    stable getC(): boolean | undefined;
+>getC : () => boolean | undefined
+
+    mutator setA(v: string | undefined): void invalidates getA;
+>setA : (v: string | undefined) => void
+>v : string | undefined
+>getA : any
+
+    mutator setAll(): void invalidates getA, getB, getC;
+>setAll : () => void
+>getA : any
+>getB : any
+>getC : any
+}
+
+declare const ms: MultiStore;
+>ms : MultiStore
+
+if (ms.getA() !== undefined && ms.getB() !== undefined && ms.getC() !== undefined) {
+>ms.getA() !== undefined && ms.getB() !== undefined && ms.getC() !== undefined : boolean
+>ms.getA() !== undefined && ms.getB() !== undefined : boolean
+>ms.getA() !== undefined : boolean
+>ms.getA() : string | undefined
+>ms.getA : () => string | undefined
+>ms : MultiStore
+>getA : () => string | undefined
+>undefined : undefined
+>ms.getB() !== undefined : boolean
+>ms.getB() : number | undefined
+>ms.getB : () => number | undefined
+>ms : MultiStore
+>getB : () => number | undefined
+>undefined : undefined
+>ms.getC() !== undefined : boolean
+>ms.getC() : boolean | undefined
+>ms.getC : () => boolean | undefined
+>ms : MultiStore
+>getC : () => boolean | undefined
+>undefined : undefined
+
+    ms.setA("hi");          // only invalidates getA
+>ms.setA("hi") : void
+>ms.setA : (v: string | undefined) => void
+>ms : MultiStore
+>setA : (v: string | undefined) => void
+>"hi" : "hi"
+
+    const b: number = ms.getB();    // ✅ still narrowed
+>b : number
+>ms.getB() : number | undefined
+>ms.getB : () => number | undefined
+>ms : MultiStore
+>getB : () => number | undefined
+
+    const c: boolean = ms.getC();   // ✅ still narrowed
+>c : boolean
+>ms.getC() : boolean | undefined
+>ms.getC : () => boolean | undefined
+>ms : MultiStore
+>getC : () => boolean | undefined
+
+    ms.getA().toUpperCase();        // ✅ narrowed to string via argument
+>ms.getA().toUpperCase() : string
+>ms.getA().toUpperCase : () => string
+>ms.getA() : string | undefined
+>ms.getA : () => string | undefined
+>ms : MultiStore
+>getA : () => string | undefined
+>toUpperCase : () => string
+
+    ms.setAll();            // invalidates all three
+>ms.setAll() : void
+>ms.setAll : () => void
+>ms : MultiStore
+>setAll : () => void
+
+    ms.getA();              // string | undefined
+>ms.getA() : string | undefined
+>ms.getA : () => string | undefined
+>ms : MultiStore
+>getA : () => string | undefined
+
+    ms.getB();              // number | undefined
+>ms.getB() : number | undefined
+>ms.getB : () => number | undefined
+>ms : MultiStore
+>getB : () => number | undefined
+
+    ms.getC();              // boolean | undefined
+>ms.getC() : boolean | undefined
+>ms.getC : () => boolean | undefined
+>ms : MultiStore
+>getC : () => boolean | undefined
+}
+
+// === 3. Class method-level invalidates ===
+class Container<T> {
+>Container : Container<T>
+
+    private _value: T;
+>_value : T
+
+    constructor(v: T) { this._value = v; }
+>v : T
+>this._value = v : T
+>this._value : T
+>this : this
+>_value : T
+>v : T
+
+    stable getValue(): T { return this._value; }
+>getValue : () => T
+>this._value : T
+>this : this
+>_value : T
+
+    stable getLabel(): string { return "label"; }
+>getLabel : () => string
+>"label" : "label"
+
+    mutator setValue(v: T): void invalidates getValue { this._value = v; }
+>setValue : (v: T) => void
+>v : T
+>getValue : any
+>this._value = v : T
+>this._value : T
+>this : this
+>_value : T
+>v : T
+
+    mutator clear(): void invalidates getValue, getLabel { this._value = undefined as any; }
+>clear : () => void
+>getValue : any
+>getLabel : any
+>this._value = undefined as any : any
+>this._value : T
+>this : this
+>_value : T
+>undefined as any : any
+>undefined : undefined
+}
+
+declare const container: Container<number | undefined>;
+>container : Container<number | undefined>
+
+if (container.getValue() !== undefined) {
+>container.getValue() !== undefined : boolean
+>container.getValue() : number | undefined
+>container.getValue : () => number | undefined
+>container : Container<number | undefined>
+>getValue : () => number | undefined
+>undefined : undefined
+
+    container.setValue(42);     // invalidates getValue → narrows to number
+>container.setValue(42) : void
+>container.setValue : (v: number | undefined) => void
+>container : Container<number | undefined>
+>setValue : (v: number | undefined) => void
+>42 : 42
+
+    const v: number = container.getValue();  // ✅ narrowed to number
+>v : number
+>container.getValue() : number | undefined
+>container.getValue : () => number | undefined
+>container : Container<number | undefined>
+>getValue : () => number | undefined
+
+    container.clear();          // invalidates both
+>container.clear() : void
+>container.clear : () => void
+>container : Container<number | undefined>
+>clear : () => void
+
+    container.getValue();       // number | undefined
+>container.getValue() : number | undefined
+>container.getValue : () => number | undefined
+>container : Container<number | undefined>
+>getValue : () => number | undefined
+}
+
+// === 4. Interface method vs function type — both with invalidates ===
+interface DualSyntax<T> {
+    stable getValue(): T;
+>getValue : () => T
+
+    // Method syntax with invalidates
+    mutator setMethod(v: T): void invalidates getValue;
+>setMethod : (v: T) => void
+>v : T
+>getValue : any
+
+    // Function type syntax with invalidates (already works)
+    setFunc: mutator (v: T) => void invalidates getValue;
+>setFunc : (v: T) => void
+>v : T
+}
+
+declare const dual: DualSyntax<string | undefined>;
+>dual : DualSyntax<string | undefined>
+
+if (dual.getValue() !== undefined) {
+>dual.getValue() !== undefined : boolean
+>dual.getValue() : string | undefined
+>dual.getValue : () => string | undefined
+>dual : DualSyntax<string | undefined>
+>getValue : () => string | undefined
+>undefined : undefined
+
+    dual.setMethod("method");
+>dual.setMethod("method") : void
+>dual.setMethod : (v: string | undefined) => void
+>dual : DualSyntax<string | undefined>
+>setMethod : (v: string | undefined) => void
+>"method" : "method"
+
+    dual.getValue().toUpperCase();  // ✅ narrowed to string
+>dual.getValue().toUpperCase() : string
+>dual.getValue().toUpperCase : () => string
+>dual.getValue() : string | undefined
+>dual.getValue : () => string | undefined
+>dual : DualSyntax<string | undefined>
+>getValue : () => string | undefined
+>toUpperCase : () => string
+
+    dual.setFunc("func");
+>dual.setFunc("func") : void
+>dual.setFunc : (v: string | undefined) => void
+>dual : DualSyntax<string | undefined>
+>setFunc : (v: string | undefined) => void
+>"func" : "func"
+
+    dual.getValue().toUpperCase();  // ✅ narrowed to string
+>dual.getValue().toUpperCase() : string
+>dual.getValue().toUpperCase : () => string
+>dual.getValue() : string | undefined
+>dual.getValue : () => string | undefined
+>dual : DualSyntax<string | undefined>
+>getValue : () => string | undefined
+>toUpperCase : () => string
+}
+
+// === 5. Mutator method WITHOUT invalidates — invalidates ALL stable ===
+interface MixedAnnotation {
+    stable getA(): string | undefined;
+>getA : () => string | undefined
+
+    stable getB(): number | undefined;
+>getB : () => number | undefined
+
+    mutator targeted(v: string): void invalidates getA;  // selective
+>targeted : (v: string) => void
+>v : string
+>getA : any
+
+    mutator untargeted(): void;  // no invalidates clause → invalidates ALL
+>untargeted : () => void
+}
+
+declare const mixed: MixedAnnotation;
+>mixed : MixedAnnotation
+
+if (mixed.getA() !== undefined && mixed.getB() !== undefined) {
+>mixed.getA() !== undefined && mixed.getB() !== undefined : boolean
+>mixed.getA() !== undefined : boolean
+>mixed.getA() : string | undefined
+>mixed.getA : () => string | undefined
+>mixed : MixedAnnotation
+>getA : () => string | undefined
+>undefined : undefined
+>mixed.getB() !== undefined : boolean
+>mixed.getB() : number | undefined
+>mixed.getB : () => number | undefined
+>mixed : MixedAnnotation
+>getB : () => number | undefined
+>undefined : undefined
+
+    mixed.targeted("hi");
+>mixed.targeted("hi") : void
+>mixed.targeted : (v: string) => void
+>mixed : MixedAnnotation
+>targeted : (v: string) => void
+>"hi" : "hi"
+
+    const b1: number = mixed.getB();     // ✅ still narrowed (not targeted)
+>b1 : number
+>mixed.getB() : number | undefined
+>mixed.getB : () => number | undefined
+>mixed : MixedAnnotation
+>getB : () => number | undefined
+
+    mixed.getA().toUpperCase();          // ✅ narrowed via argument
+>mixed.getA().toUpperCase() : string
+>mixed.getA().toUpperCase : () => string
+>mixed.getA() : string | undefined
+>mixed.getA : () => string | undefined
+>mixed : MixedAnnotation
+>getA : () => string | undefined
+>toUpperCase : () => string
+
+    mixed.untargeted();         // no invalidates clause → resets ALL
+>mixed.untargeted() : void
+>mixed.untargeted : () => void
+>mixed : MixedAnnotation
+>untargeted : () => void
+
+    mixed.getA();               // string | undefined
+>mixed.getA() : string | undefined
+>mixed.getA : () => string | undefined
+>mixed : MixedAnnotation
+>getA : () => string | undefined
+
+    mixed.getB();               // number | undefined
+>mixed.getB() : number | undefined
+>mixed.getB : () => number | undefined
+>mixed : MixedAnnotation
+>getB : () => number | undefined
+}
+

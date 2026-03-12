@@ -901,11 +901,18 @@ func (c *Checker) isMutatorCallBoundary(reference *ast.Node, boundary *ast.Node)
 	}
 
 	// Same receiver, it's a mutator call. Check invalidates clause for selective invalidation.
-	if declaration := signature.declaration; declaration != nil && ast.IsFunctionTypeNode(declaration) {
-		fnType := declaration.AsFunctionTypeNode()
-		if fnType.LinksClause != nil && len(fnType.LinksClause.Nodes) > 0 {
+	if declaration := signature.declaration; declaration != nil {
+		var linksClause *ast.NodeList
+		if ast.IsFunctionTypeNode(declaration) {
+			linksClause = declaration.AsFunctionTypeNode().LinksClause
+		} else if ast.IsMethodDeclaration(declaration) {
+			linksClause = declaration.AsMethodDeclaration().LinksClause
+		} else if ast.IsMethodSignatureDeclaration(declaration) {
+			linksClause = declaration.AsMethodSignatureDeclaration().LinksClause
+		}
+		if linksClause != nil && len(linksClause.Nodes) > 0 {
 			// Invalidates clause exists — only invalidate if reference endpoint is linked
-			for _, link := range fnType.LinksClause.Nodes {
+			for _, link := range linksClause.Nodes {
 				if ast.IsIdentifier(link) && link.Text() == refName {
 					return true // Linked endpoint — invalidate
 				}
