@@ -107,7 +107,7 @@ SolidJS separates accessor and setter into different bindings:
 const [count, setCount] = createSignal<number | undefined>(0);
 ```
 
-The stable system tracks narrowing per-receiver. `count` and `setCount` are independent function bindings — `setCount()` cannot be recognized as a mutator of `count()`. The `invalidates` clause has no way to reference a separate binding. **SolidJS should NOT ship `stable` until cross-binding invalidation is designed.** This is a fundamental limitation of the receiver-scoped approach.
+The stable system tracks narrowing per-receiver. `count` and `setCount` are independent function bindings — `setCount()` cannot be recognized as a mutator of `count()`. The `invalidates` clause has no way to reference a separate binding. **SolidJS should NOT ship `stable` until cross-binding invalidation is designed.** This is a fundamental limitation of the receiver-scoped approach. A recommended solution using named tuple label references (`mutates read`) is analyzed in [research-solidjs-cross-binding.md](research-solidjs-cross-binding.md), estimated at ~300-500 LOC additional (Phase 2.5).
 
 ### 4. Structural Assignability Gap
 
@@ -176,6 +176,7 @@ The following are explicitly **not** part of this proposal but are documented as
 - [docs/stable-internal-design-document.md](stable-internal-design-document.md) — Internal technical SDD
 - [docs/stable-modifier-spec.md](stable-modifier-spec.md) — Formal SDD specification
 - [docs/ts-rejection-risk-assessment.md](ts-rejection-risk-assessment.md) — Rejection risk assessment
+- [docs/research-solidjs-cross-binding.md](research-solidjs-cross-binding.md) — SolidJS cross-binding invalidation research (6 approaches analyzed)
 
 ---
 
