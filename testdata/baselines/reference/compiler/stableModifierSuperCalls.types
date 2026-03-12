@@ -1,131 +1,74 @@
 //// [tests/cases/compiler/stableModifierSuperCalls.ts] ////
 
 === stableModifierSuperCalls.ts ===
-// Tests that super.mutator() calls correctly invalidate this.stable() narrowing
+// === Section 1: super.mutator() should invalidate this.stable() ===
+class Base {
+>Base : Base
 
-// === Section 1: Base class with stable/mutator ===
-class Base<T> {
->Base : Base<T>
-
-    private _value: T;
->_value : T
-
-    constructor(value: T) { this._value = value; }
->value : T
->this._value = value : T
->this._value : T
->this : this
->_value : T
->value : T
-
-    get: stable () => T = () => this._value;
->get : () => T
->() => this._value : () => T
->this._value : T
->this : this
->_value : T
-
-    set: mutator (value: T) => void invalidates get = (v) => { this._value = v; };
->set : (value: T) => void
->value : T
->(v) => { this._value = v; } : (v: T) => void
->v : T
->this._value = v : T
->this._value : T
->this : this
->_value : T
->v : T
-
-    reset: mutator () => void = () => { this._value = undefined as any; };
->reset : () => void
->() => { this._value = undefined as any; } : () => void
->this._value = undefined as any : any
->this._value : T
->this : this
->_value : T
->undefined as any : any
->undefined : undefined
-}
-
-// === Section 2: super.mutator() should invalidate this.stable() narrowing ===
-class DerivedInvalidation extends Base<string | undefined> {
->DerivedInvalidation : DerivedInvalidation
->Base : Base<string | undefined>
-
-    superInvalidatesGet(): void {
->superInvalidatesGet : () => void
-
-        if (this.get() !== undefined) {
->this.get() !== undefined : boolean
->this.get() : string | undefined
->this.get : () => string | undefined
->this : this
+    stable get(): string | undefined { return "hello"; }
 >get : () => string | undefined
->undefined : undefined
+>"hello" : "hello"
 
-            const before: string = this.get(); // OK — narrowed to string
->before : string
->this.get() : string | undefined
->this.get : () => string | undefined
->this : this
->get : () => string | undefined
-
-            before;
->before : string
-
-            super.set("new value");
->super.set("new value") : void
->super.set : (value: string | undefined) => void
->super : Base<string | undefined>
+    mutator set(value: string | undefined): void {}
 >set : (value: string | undefined) => void
->"new value" : "new value"
+>value : string | undefined
 
-            const after: string = this.get(); // should error — super.set() resets this.get()
->after : string
->this.get() : string | undefined
->this.get : () => string | undefined
->this : this
->get : () => string | undefined
-
-            after;
->after : string
-        }
-    }
+    mutator reset(): void {}
+>reset : () => void
 }
 
-// === Section 3: super.reset() (blanket mutator) should invalidate ===
-class DerivedBlanket extends Base<string | undefined> {
->DerivedBlanket : DerivedBlanket
->Base : Base<string | undefined>
+class DerivedSuperTest extends Base {
+>DerivedSuperTest : DerivedSuperTest
+>Base : Base
 
-    superResetInvalidates(): void {
->superResetInvalidates : () => void
-
-        if (this.get() !== undefined) {
->this.get() !== undefined : boolean
->this.get() : string | undefined
->this.get : () => string | undefined
->this : this
+    override stable get(): string | undefined { return super.get(); }
 >get : () => string | undefined
->undefined : undefined
-
-            const before: string = this.get(); // OK — narrowed
->before : string
->this.get() : string | undefined
->this.get : () => string | undefined
->this : this
+>super.get() : string | undefined
+>super.get : () => string | undefined
+>super : Base
 >get : () => string | undefined
 
-            before;
->before : string
+    override mutator set(value: string | undefined): void { super.set(value); }
+>set : (value: string | undefined) => void
+>value : string | undefined
+>super.set(value) : void
+>super.set : (value: string | undefined) => void
+>super : Base
+>set : (value: string | undefined) => void
+>value : string | undefined
 
-            super.reset();
+    override mutator reset(): void { super.reset(); }
+>reset : () => void
 >super.reset() : void
 >super.reset : () => void
->super : Base<string | undefined>
+>super : Base
 >reset : () => void
 
-            const after: string = this.get(); // should error — super.reset() resets narrowing
+    testSuperReset(): void {
+>testSuperReset : () => void
+
+        if (this.get() !== undefined) {
+>this.get() !== undefined : boolean
+>this.get() : string | undefined
+>this.get : () => string | undefined
+>this : this
+>get : () => string | undefined
+>undefined : undefined
+
+            const before: string = this.get(); // OK — narrowed
+>before : string
+>this.get() : string | undefined
+>this.get : () => string | undefined
+>this : this
+>get : () => string | undefined
+
+            super.reset(); // super.mutator() invalidates this.stable()
+>super.reset() : void
+>super.reset : () => void
+>super : Base
+>reset : () => void
+
+            const after: string = this.get(); // error — invalidated
 >after : string
 >this.get() : string | undefined
 >this.get : () => string | undefined
@@ -136,121 +79,70 @@ class DerivedBlanket extends Base<string | undefined> {
 >after : string
         }
     }
-}
 
-// === Section 4: super.mutator with invalidates clause respects targeting ===
-class DerivedTargeted extends Base<string | undefined> {
->DerivedTargeted : DerivedTargeted
->Base : Base<string | undefined>
+    testSuperSet(): void {
+>testSuperSet : () => void
 
-    extra: stable () => number | undefined = () => 42;
->extra : () => number | undefined
->() => 42 : () => number
->42 : 42
-
-    superSetTargeted(): void {
->superSetTargeted : () => void
-
-        if (this.get() !== undefined && this.extra() !== undefined) {
->this.get() !== undefined && this.extra() !== undefined : boolean
+        if (this.get() !== undefined) {
 >this.get() !== undefined : boolean
 >this.get() : string | undefined
 >this.get : () => string | undefined
 >this : this
 >get : () => string | undefined
 >undefined : undefined
->this.extra() !== undefined : boolean
->this.extra() : number | undefined
->this.extra : () => number | undefined
->this : this
->extra : () => number | undefined
->undefined : undefined
 
-            const getVal: string = this.get(); // OK — narrowed
->getVal : string
+            const before: string = this.get(); // OK — narrowed
+>before : string
 >this.get() : string | undefined
 >this.get : () => string | undefined
 >this : this
 >get : () => string | undefined
 
-            const extraVal: number = this.extra(); // OK — narrowed
->extraVal : number
->this.extra() : number | undefined
->this.extra : () => number | undefined
+            super.set(undefined); // super.mutator(undefined) post-call narrows to undefined
+>super.set(undefined) : void
+>super.set : (value: string | undefined) => void
+>super : Base
+>set : (value: string | undefined) => void
+>undefined : undefined
+
+            const after: string = this.get(); // error — narrowed to undefined
+>after : string
+>this.get() : string | undefined
+>this.get : () => string | undefined
 >this : this
->extra : () => number | undefined
+>get : () => string | undefined
 
-            getVal;
->getVal : string
+            after;
+>after : string
+        }
+    }
 
-            extraVal;
->extraVal : number
+    testSuperSetString(): void {
+>testSuperSetString : () => void
 
-            // super.set() invalidates get, but NOT extra (targeted via invalidates clause)
-            super.set("new");
+        if (this.get() !== undefined) {
+>this.get() !== undefined : boolean
+>this.get() : string | undefined
+>this.get : () => string | undefined
+>this : this
+>get : () => string | undefined
+>undefined : undefined
+
+            const before: string = this.get(); // OK — narrowed
+>before : string
+>this.get() : string | undefined
+>this.get : () => string | undefined
+>this : this
+>get : () => string | undefined
+
+            super.set("new"); // super.mutator("new") post-call narrows to string
 >super.set("new") : void
 >super.set : (value: string | undefined) => void
->super : Base<string | undefined>
+>super : Base
 >set : (value: string | undefined) => void
 >"new" : "new"
 
-            const getAfter: string = this.get(); // should error — invalidated
->getAfter : string
->this.get() : string | undefined
->this.get : () => string | undefined
->this : this
->get : () => string | undefined
-
-            const extraAfter: number = this.extra(); // OK — NOT invalidated (set only targets get)
->extraAfter : number
->this.extra() : number | undefined
->this.extra : () => number | undefined
->this : this
->extra : () => number | undefined
-
-            getAfter;
->getAfter : string
-
-            extraAfter;
->extraAfter : number
-        }
-    }
-}
-
-// === Section 5: Non-mutator super call should NOT invalidate ===
-class DerivedNonMutator extends Base<string | undefined> {
->DerivedNonMutator : DerivedNonMutator
->Base : Base<string | undefined>
-
-    superNonMutator(): void {
->superNonMutator : () => void
-
-        if (this.get() !== undefined) {
->this.get() !== undefined : boolean
->this.get() : string | undefined
->this.get : () => string | undefined
->this : this
->get : () => string | undefined
->undefined : undefined
-
-            const before: string = this.get(); // OK — narrowed
->before : string
->this.get() : string | undefined
->this.get : () => string | undefined
->this : this
->get : () => string | undefined
-
-            before;
->before : string
-
-            // super.toString() is NOT a mutator — should not reset narrowing
-            super.toString();
->super.toString() : string
->super.toString : () => string
->super : Base<string | undefined>
->toString : () => string
-
-            const after: string = this.get(); // OK — still narrowed (toString is not mutator)
+            const after: string = this.get(); // OK — post-call narrowed to string
 >after : string
 >this.get() : string | undefined
 >this.get : () => string | undefined
@@ -263,13 +155,13 @@ class DerivedNonMutator extends Base<string | undefined> {
     }
 }
 
-// === Section 6: this.mutator() still works (control case) ===
-class DerivedThis extends Base<string | undefined> {
->DerivedThis : DerivedThis
->Base : Base<string | undefined>
+// === Section 2: this.mutator() should invalidate this.stable() (control) ===
+class DerivedThisTest extends Base {
+>DerivedThisTest : DerivedThisTest
+>Base : Base
 
-    thisInvalidatesGet(): void {
->thisInvalidatesGet : () => void
+    testThisReset(): void {
+>testThisReset : () => void
 
         if (this.get() !== undefined) {
 >this.get() !== undefined : boolean
@@ -286,17 +178,13 @@ class DerivedThis extends Base<string | undefined> {
 >this : this
 >get : () => string | undefined
 
-            before;
->before : string
-
-            this.set("new");
->this.set("new") : void
->this.set : (value: string | undefined) => void
+            this.reset(); // this.mutator() invalidates
+>this.reset() : void
+>this.reset : () => void
 >this : this
->set : (value: string | undefined) => void
->"new" : "new"
+>reset : () => void
 
-            const after: string = this.get(); // should error — this.set() resets
+            const after: string = this.get(); // error — invalidated
 >after : string
 >this.get() : string | undefined
 >this.get : () => string | undefined

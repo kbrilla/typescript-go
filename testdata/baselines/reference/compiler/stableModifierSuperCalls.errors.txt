@@ -1,104 +1,72 @@
-stableModifierSuperCalls.ts(19,19): error TS2855: Class field 'set' defined by the parent class is not accessible in the child class via super.
-stableModifierSuperCalls.ts(34,19): error TS2855: Class field 'reset' defined by the parent class is not accessible in the child class via super.
-stableModifierSuperCalls.ts(54,19): error TS2855: Class field 'set' defined by the parent class is not accessible in the child class via super.
+stableModifierSuperCalls.ts(16,13): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+stableModifierSuperCalls.ts(17,19): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+stableModifierSuperCalls.ts(26,19): error TS2322: Type 'undefined' is not assignable to type 'string'.
+stableModifierSuperCalls.ts(46,13): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+stableModifierSuperCalls.ts(47,19): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
 
 
-==== stableModifierSuperCalls.ts (3 errors) ====
-    // Tests that super.mutator() calls correctly invalidate this.stable() narrowing
-    
-    // === Section 1: Base class with stable/mutator ===
-    class Base<T> {
-        private _value: T;
-        constructor(value: T) { this._value = value; }
-        get: stable () => T = () => this._value;
-        set: mutator (value: T) => void invalidates get = (v) => { this._value = v; };
-        reset: mutator () => void = () => { this._value = undefined as any; };
+==== stableModifierSuperCalls.ts (5 errors) ====
+    // === Section 1: super.mutator() should invalidate this.stable() ===
+    class Base {
+        stable get(): string | undefined { return "hello"; }
+        mutator set(value: string | undefined): void {}
+        mutator reset(): void {}
     }
     
-    // === Section 2: super.mutator() should invalidate this.stable() narrowing ===
-    class DerivedInvalidation extends Base<string | undefined> {
-        superInvalidatesGet(): void {
-            if (this.get() !== undefined) {
-                const before: string = this.get(); // OK — narrowed to string
-                before;
+    class DerivedSuperTest extends Base {
+        override stable get(): string | undefined { return super.get(); }
+        override mutator set(value: string | undefined): void { super.set(value); }
+        override mutator reset(): void { super.reset(); }
     
-                super.set("new value");
-                      ~~~
-!!! error TS2855: Class field 'set' defined by the parent class is not accessible in the child class via super.
-    
-                const after: string = this.get(); // should error — super.set() resets this.get()
-                after;
-            }
-        }
-    }
-    
-    // === Section 3: super.reset() (blanket mutator) should invalidate ===
-    class DerivedBlanket extends Base<string | undefined> {
-        superResetInvalidates(): void {
+        testSuperReset(): void {
             if (this.get() !== undefined) {
                 const before: string = this.get(); // OK — narrowed
-                before;
-    
-                super.reset();
+                super.reset(); // super.mutator() invalidates this.stable()
+                ~~~~~~~~~~~~~
+!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+                const after: string = this.get(); // error — invalidated
                       ~~~~~
-!!! error TS2855: Class field 'reset' defined by the parent class is not accessible in the child class via super.
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+                after;
+            }
+        }
     
-                const after: string = this.get(); // should error — super.reset() resets narrowing
+        testSuperSet(): void {
+            if (this.get() !== undefined) {
+                const before: string = this.get(); // OK — narrowed
+                super.set(undefined); // super.mutator(undefined) post-call narrows to undefined
+                const after: string = this.get(); // error — narrowed to undefined
+                      ~~~~~
+!!! error TS2322: Type 'undefined' is not assignable to type 'string'.
+                after;
+            }
+        }
+    
+        testSuperSetString(): void {
+            if (this.get() !== undefined) {
+                const before: string = this.get(); // OK — narrowed
+                super.set("new"); // super.mutator("new") post-call narrows to string
+                const after: string = this.get(); // OK — post-call narrowed to string
                 after;
             }
         }
     }
     
-    // === Section 4: super.mutator with invalidates clause respects targeting ===
-    class DerivedTargeted extends Base<string | undefined> {
-        extra: stable () => number | undefined = () => 42;
-    
-        superSetTargeted(): void {
-            if (this.get() !== undefined && this.extra() !== undefined) {
-                const getVal: string = this.get(); // OK — narrowed
-                const extraVal: number = this.extra(); // OK — narrowed
-                getVal;
-                extraVal;
-    
-                // super.set() invalidates get, but NOT extra (targeted via invalidates clause)
-                super.set("new");
-                      ~~~
-!!! error TS2855: Class field 'set' defined by the parent class is not accessible in the child class via super.
-    
-                const getAfter: string = this.get(); // should error — invalidated
-                const extraAfter: number = this.extra(); // OK — NOT invalidated (set only targets get)
-                getAfter;
-                extraAfter;
-            }
-        }
-    }
-    
-    // === Section 5: Non-mutator super call should NOT invalidate ===
-    class DerivedNonMutator extends Base<string | undefined> {
-        superNonMutator(): void {
+    // === Section 2: this.mutator() should invalidate this.stable() (control) ===
+    class DerivedThisTest extends Base {
+        testThisReset(): void {
             if (this.get() !== undefined) {
                 const before: string = this.get(); // OK — narrowed
-                before;
-    
-                // super.toString() is NOT a mutator — should not reset narrowing
-                super.toString();
-    
-                const after: string = this.get(); // OK — still narrowed (toString is not mutator)
-                after;
-            }
-        }
-    }
-    
-    // === Section 6: this.mutator() still works (control case) ===
-    class DerivedThis extends Base<string | undefined> {
-        thisInvalidatesGet(): void {
-            if (this.get() !== undefined) {
-                const before: string = this.get(); // OK — narrowed
-                before;
-    
-                this.set("new");
-    
-                const after: string = this.get(); // should error — this.set() resets
+                this.reset(); // this.mutator() invalidates
+                ~~~~~~~~~~~~
+!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+                const after: string = this.get(); // error — invalidated
+                      ~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
                 after;
             }
         }

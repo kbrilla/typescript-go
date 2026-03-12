@@ -883,7 +883,15 @@ func (c *Checker) isMutatorCallBoundary(reference *ast.Node, boundary *ast.Node)
 		return false
 	}
 
-	if !c.isMatchingReference(c.getNormalizedReferenceCandidate(refReceiver), c.getNormalizedReferenceCandidate(boundReceiver)) {
+	normalizedRef := c.getNormalizedReferenceCandidate(refReceiver)
+	normalizedBound := c.getNormalizedReferenceCandidate(boundReceiver)
+
+	// In class hierarchies, super.mutator() should invalidate this.stable() narrowing
+	// because both super and this refer to the same object instance.
+	superThisMatch := (normalizedRef.Kind == ast.KindThisKeyword && normalizedBound.Kind == ast.KindSuperKeyword) ||
+		(normalizedRef.Kind == ast.KindSuperKeyword && normalizedBound.Kind == ast.KindThisKeyword)
+
+	if !superThisMatch && !c.isMatchingReference(normalizedRef, normalizedBound) {
 		return false
 	}
 
