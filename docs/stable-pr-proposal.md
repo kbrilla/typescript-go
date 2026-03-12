@@ -628,8 +628,29 @@ These three modifiers fill a gap in TypeScript's type system that affects a larg
 We recognize that introducing three new contextual keywords is significant language surface area. We recommend a **phased introduction** to manage complexity and allow each mechanism to prove its value independently:
 
 - **Phase 1: `stable` alone** with conservative reset — any method call on the same receiver resets narrowing. This delivers the core value (narrowing through function calls) with minimal surface area and a simple, safe invalidation model.
+  ```ts
+  interface Signal<T> {
+      stable (): T;
+  }
+  // Narrowing preserved through stable calls; any method call on same receiver resets
+  ```
 - **Phase 2: `mutator` and `invalidates`** for precise invalidation control, introduced once `stable` has proven its value and the conservative reset model proves too restrictive in practice.
+  ```ts
+  interface WritableSignal<T> {
+      stable (): T;
+      mutator set(value: T): void;
+      mutator update(fn: (current: T) => T): void invalidates set;
+  }
+  // Only mutator calls reset narrowing; non-mutator methods are transparent
+  ```
 - **Phase 3: Linked type predicates** (`this.x() is T`) as an independent proposal, building on the `stable` foundation but addressing a distinct use case (guard-based narrowing of companion methods).
+  ```ts
+  interface Resource<T> {
+      stable value(): T;
+      hasValue(): this.value() is Exclude<T, undefined>;
+  }
+  // Guard methods narrow companion stable methods
+  ```
 
 This phased approach lets each mechanism be reviewed, tested, and adopted independently, reducing the risk of shipping too much surface area at once.
 
