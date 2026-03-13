@@ -17,13 +17,13 @@ class Store<T> {
 >value : T
 
     stable get(): T { return this._value; }
->get : () => T
+>get : stable () => T
 >this._value : T
 >this : this
 >_value : T
 
     mutator set(value: T): void { this._value = value; }
->set : (value: T) => void
+>set : mutator (value: T) => void
 >value : T
 >this._value = value : T
 >this._value : T
@@ -32,7 +32,7 @@ class Store<T> {
 >value : T
 
     mutator reset(): void { this._value = undefined as any; }
->reset : () => void
+>reset : mutator () => void
 >this._value = undefined as any : any
 >this._value : T
 >this : this
@@ -48,41 +48,41 @@ declare const store: Store<string | undefined>;
 if (store.get() !== undefined) {
 >store.get() !== undefined : boolean
 >store.get() : string | undefined
->store.get : () => string | undefined
+>store.get : stable () => string | undefined
 >store : Store<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 >undefined : undefined
 
     const s: string = store.get(); // OK — narrowed
 >s : string
 >store.get() : string | undefined
->store.get : () => string | undefined
+>store.get : stable () => string | undefined
 >store : Store<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 }
 
 // === Section 2: Post-call narrowing — mutator with string argument ===
 if (store.get() !== undefined) {
 >store.get() !== undefined : boolean
 >store.get() : string | undefined
->store.get : () => string | undefined
+>store.get : stable () => string | undefined
 >store : Store<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 >undefined : undefined
 
     store.set("new"); // mutator sets string → post-call narrowing gives string
 >store.set("new") : void
->store.set : (value: string | undefined) => void
+>store.set : mutator (value: string | undefined) => void
 >store : Store<string | undefined>
->set : (value: string | undefined) => void
+>set : mutator (value: string | undefined) => void
 >"new" : "new"
 
     const afterSet: string = store.get(); // OK — post-call narrowed to string
 >afterSet : string
 >store.get() : string | undefined
->store.get : () => string | undefined
+>store.get : stable () => string | undefined
 >store : Store<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 
     afterSet;
 >afterSet : string
@@ -92,23 +92,23 @@ if (store.get() !== undefined) {
 if (store.get() !== undefined) {
 >store.get() !== undefined : boolean
 >store.get() : string | undefined
->store.get : () => string | undefined
+>store.get : stable () => string | undefined
 >store : Store<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 >undefined : undefined
 
     store.reset(); // parameterless mutator — fully invalidates
 >store.reset() : void
->store.reset : () => void
+>store.reset : mutator () => void
 >store : Store<string | undefined>
->reset : () => void
+>reset : mutator () => void
 
     const afterReset: string = store.get(); // error — back to string | undefined
 >afterReset : string
 >store.get() : string | undefined
->store.get : () => string | undefined
+>store.get : stable () => string | undefined
 >store : Store<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 
     afterReset;
 >afterReset : string
@@ -118,24 +118,24 @@ if (store.get() !== undefined) {
 if (store.get() !== undefined) {
 >store.get() !== undefined : boolean
 >store.get() : string | undefined
->store.get : () => string | undefined
+>store.get : stable () => string | undefined
 >store : Store<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 >undefined : undefined
 
     store.set(undefined); // mutator sets undefined → post-call narrows to undefined
 >store.set(undefined) : void
->store.set : (value: string | undefined) => void
+>store.set : mutator (value: string | undefined) => void
 >store : Store<string | undefined>
->set : (value: string | undefined) => void
+>set : mutator (value: string | undefined) => void
 >undefined : undefined
 
     const afterSetUndefined: string = store.get(); // error — narrowed to undefined
 >afterSetUndefined : string
 >store.get() : string | undefined
->store.get : () => string | undefined
+>store.get : stable () => string | undefined
 >store : Store<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 
     afterSetUndefined;
 >afterSetUndefined : string
@@ -144,16 +144,16 @@ if (store.get() !== undefined) {
 // === Section 5: Stable modifier on interface method signatures ===
 interface ReadableStore<T> {
     stable get(): T;
->get : () => T
+>get : stable () => T
 }
 
 interface WritableStore<T> extends ReadableStore<T> {
     mutator set(value: T): void;
->set : (value: T) => void
+>set : mutator (value: T) => void
 >value : T
 
     mutator reset(): void;
->reset : () => void
+>reset : mutator () => void
 }
 
 declare const ws: WritableStore<string | undefined>;
@@ -162,30 +162,30 @@ declare const ws: WritableStore<string | undefined>;
 if (ws.get() !== undefined) {
 >ws.get() !== undefined : boolean
 >ws.get() : string | undefined
->ws.get : () => string | undefined
+>ws.get : stable () => string | undefined
 >ws : WritableStore<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 >undefined : undefined
 
     const s: string = ws.get(); // OK — narrowed
 >s : string
 >ws.get() : string | undefined
->ws.get : () => string | undefined
+>ws.get : stable () => string | undefined
 >ws : WritableStore<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 
     ws.reset();
 >ws.reset() : void
->ws.reset : () => void
+>ws.reset : mutator () => void
 >ws : WritableStore<string | undefined>
->reset : () => void
+>reset : mutator () => void
 
     const afterReset: string = ws.get(); // error — invalidated
 >afterReset : string
 >ws.get() : string | undefined
->ws.get : () => string | undefined
+>ws.get : stable () => string | undefined
 >ws : WritableStore<string | undefined>
->get : () => string | undefined
+>get : stable () => string | undefined
 
     afterReset;
 >afterReset : string
@@ -193,47 +193,47 @@ if (ws.get() !== undefined) {
 
 // === Section 6: Stable modifier on type literal method signatures ===
 declare const obj: {
->obj : { get(): string | undefined; set(value: string): void; reset(): void; }
+>obj : { stable get(): string | undefined; mutator set(value: string): void; mutator reset(): void; }
 
     stable get(): string | undefined;
->get : () => string | undefined
+>get : stable () => string | undefined
 
     mutator set(value: string): void;
->set : (value: string) => void
+>set : mutator (value: string) => void
 >value : string
 
     mutator reset(): void;
->reset : () => void
+>reset : mutator () => void
 
 };
 
 if (obj.get() !== undefined) {
 >obj.get() !== undefined : boolean
 >obj.get() : string | undefined
->obj.get : () => string | undefined
->obj : { get(): string | undefined; set(value: string): void; reset(): void; }
->get : () => string | undefined
+>obj.get : stable () => string | undefined
+>obj : { stable get(): string | undefined; mutator set(value: string): void; mutator reset(): void; }
+>get : stable () => string | undefined
 >undefined : undefined
 
     const s: string = obj.get(); // OK — narrowed
 >s : string
 >obj.get() : string | undefined
->obj.get : () => string | undefined
->obj : { get(): string | undefined; set(value: string): void; reset(): void; }
->get : () => string | undefined
+>obj.get : stable () => string | undefined
+>obj : { stable get(): string | undefined; mutator set(value: string): void; mutator reset(): void; }
+>get : stable () => string | undefined
 
     obj.reset();
 >obj.reset() : void
->obj.reset : () => void
->obj : { get(): string | undefined; set(value: string): void; reset(): void; }
->reset : () => void
+>obj.reset : mutator () => void
+>obj : { stable get(): string | undefined; mutator set(value: string): void; mutator reset(): void; }
+>reset : mutator () => void
 
     const afterReset: string = obj.get(); // error — invalidated
 >afterReset : string
 >obj.get() : string | undefined
->obj.get : () => string | undefined
->obj : { get(): string | undefined; set(value: string): void; reset(): void; }
->get : () => string | undefined
+>obj.get : stable () => string | undefined
+>obj : { stable get(): string | undefined; mutator set(value: string): void; mutator reset(): void; }
+>get : stable () => string | undefined
 
     afterReset;
 >afterReset : string
@@ -261,13 +261,13 @@ foo.mutator(); // OK — just calling a method named "mutator"
 // === Section 8: stable + mutator cannot combine on methods ===
 interface BadStore {
     stable mutator bad(): string; // error — can't combine
->bad : () => string
+>bad : stable mutator () => string
 }
 
 // === Section 9: stable method must have no parameters ===
 interface BadGetter {
     stable get(key: string): string; // error — stable methods must have no parameters
->get : (key: string) => string
+>get : stable (key: string) => string
 >key : string
 }
 
@@ -276,15 +276,15 @@ class Base {
 >Base : Base
 
     stable get(): string | undefined { return "hello"; }
->get : () => string | undefined
+>get : stable () => string | undefined
 >"hello" : "hello"
 
     mutator set(value: string | undefined): void {}
->set : (value: string | undefined) => void
+>set : mutator (value: string | undefined) => void
 >value : string | undefined
 
     mutator reset(): void {}
->reset : () => void
+>reset : mutator () => void
 }
 
 class Derived extends Base {
@@ -292,27 +292,27 @@ class Derived extends Base {
 >Base : Base
 
     override stable get(): string | undefined { return super.get(); }
->get : () => string | undefined
+>get : stable () => string | undefined
 >super.get() : string | undefined
->super.get : () => string | undefined
+>super.get : stable () => string | undefined
 >super : Base
->get : () => string | undefined
+>get : stable () => string | undefined
 
     override mutator set(value: string | undefined): void { super.set(value); }
->set : (value: string | undefined) => void
+>set : mutator (value: string | undefined) => void
 >value : string | undefined
 >super.set(value) : void
->super.set : (value: string | undefined) => void
+>super.set : mutator (value: string | undefined) => void
 >super : Base
->set : (value: string | undefined) => void
+>set : mutator (value: string | undefined) => void
 >value : string | undefined
 
     override mutator reset(): void { super.reset(); }
->reset : () => void
+>reset : mutator () => void
 >super.reset() : void
->super.reset : () => void
+>super.reset : mutator () => void
 >super : Base
->reset : () => void
+>reset : mutator () => void
 
     test(): void {
 >test : () => void
@@ -320,30 +320,30 @@ class Derived extends Base {
         if (this.get() !== undefined) {
 >this.get() !== undefined : boolean
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 >undefined : undefined
 
             const before: string = this.get(); // OK — narrowed
 >before : string
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 
             this.reset(); // parameterless mutator invalidates
 >this.reset() : void
->this.reset : () => void
+>this.reset : mutator () => void
 >this : this
->reset : () => void
+>reset : mutator () => void
 
             const afterReset: string = this.get(); // error — invalidated
 >afterReset : string
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 
             afterReset;
 >afterReset : string

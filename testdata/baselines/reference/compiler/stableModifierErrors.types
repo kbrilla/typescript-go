@@ -3,12 +3,12 @@
 === stableModifierErrors.ts ===
 // Error: stable modifier on function with parameters
 declare const fn1: stable (x: string) => number; // should error
->fn1 : (x: string) => number
+>fn1 : stable (x: string) => number
 >x : string
 
 // Valid: stable modifier on parameterless function type
 declare const fn3: stable () => string | undefined; // OK
->fn3 : () => string | undefined
+>fn3 : stable () => string | undefined
 
 // Identity modifier in a type alias
 type Getter<T> = stable () => T; // OK

@@ -46,17 +46,17 @@ function getterGeneric<PetType extends Pet>(pet: { get value(): PetType }) {
 }
 
 function identityGeneric<PetType extends Pet>(pet: { value: stable () => PetType }) {
->identityGeneric : <PetType extends Pet>(pet: { value: () => PetType; }) => void
->pet : { value: () => PetType; }
->value : () => PetType
+>identityGeneric : <PetType extends Pet>(pet: { value: stable () => PetType; }) => void
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
 
     if (pet.value().type === "dog") {
 >pet.value().type === "dog" : boolean
 >pet.value().type : "dog" | "fish"
 >pet.value() : PetType
->pet.value : () => PetType
->pet : { value: () => PetType; }
->value : () => PetType
+>pet.value : stable () => PetType
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
 >type : "dog" | "fish"
 >"dog" : "dog"
 
@@ -65,9 +65,9 @@ function identityGeneric<PetType extends Pet>(pet: { value: stable () => PetType
 >true : true
 >pet.value().saysWoof : true
 >pet.value() : PetType
->pet.value : () => PetType
->pet : { value: () => PetType; }
->value : () => PetType
+>pet.value : stable () => PetType
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
 >saysWoof : true
 
         identityDog;

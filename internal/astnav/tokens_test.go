@@ -96,6 +96,32 @@ func TestGetTokenAtPosition(t *testing.T) {
 		assert.Assert(t, token != nil, "Expected to get a token")
 	})
 
+	t.Run("stable mutator function type", func(t *testing.T) {
+		t.Parallel()
+		fileText := `type Setter<T> = (value: T) => void;
+type Accessor<T> = stable () => T;
+type Signal<T> = [get: Accessor<T>, set: mutator Setter<T> invalidates get];`
+		file := parser.ParseSourceFile(ast.SourceFileParseOptions{
+			FileName: "/test.ts",
+			Path:     "/test.ts",
+		}, fileText, core.ScriptKindTS)
+
+		// This should not panic for any position.
+		// Previously panicked with "did not expect KindFunctionType to have KindIdentifier in its trivia"
+		// when position fell on WrappedType, KeyParameter, or LinksClause children
+		// that VisitEachChild didn't visit.
+		for pos := 0; pos <= len(fileText); pos++ {
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						t.Errorf("GetTouchingPropertyName panicked at position %d: %v", pos, r)
+					}
+				}()
+				astnav.GetTouchingPropertyName(file, pos)
+			}()
+		}
+	})
+
 	t.Run("pointer equality", func(t *testing.T) {
 		t.Parallel()
 		fileText := `

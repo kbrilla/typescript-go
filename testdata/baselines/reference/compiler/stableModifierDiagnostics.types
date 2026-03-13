@@ -3,12 +3,12 @@
 === stableModifierDiagnostics.ts ===
 // Error: stable modifier on function type with parameters
 declare const badWithParams: stable (x: string) => string;
->badWithParams : (x: string) => string
+>badWithParams : stable (x: string) => string
 >x : string
 
 // Error: duplicate stable modifier
 declare const badDuplicate: stable stable () => string;
->badDuplicate : () => string
+>badDuplicate : stable () => string
 
 // Error: stable modifier cannot appear on constructor type
 declare const badConstructor: stable new () => object;
@@ -16,5 +16,5 @@ declare const badConstructor: stable new () => object;
 
 // Valid: stable on parameterless function type
 declare const good: stable () => string | undefined;
->good : () => string | undefined
+>good : stable () => string | undefined
 

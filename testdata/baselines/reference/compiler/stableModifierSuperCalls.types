@@ -6,15 +6,15 @@ class Base {
 >Base : Base
 
     stable get(): string | undefined { return "hello"; }
->get : () => string | undefined
+>get : stable () => string | undefined
 >"hello" : "hello"
 
     mutator set(value: string | undefined): void {}
->set : (value: string | undefined) => void
+>set : mutator (value: string | undefined) => void
 >value : string | undefined
 
     mutator reset(): void {}
->reset : () => void
+>reset : mutator () => void
 }
 
 class DerivedSuperTest extends Base {
@@ -22,27 +22,27 @@ class DerivedSuperTest extends Base {
 >Base : Base
 
     override stable get(): string | undefined { return super.get(); }
->get : () => string | undefined
+>get : stable () => string | undefined
 >super.get() : string | undefined
->super.get : () => string | undefined
+>super.get : stable () => string | undefined
 >super : Base
->get : () => string | undefined
+>get : stable () => string | undefined
 
     override mutator set(value: string | undefined): void { super.set(value); }
->set : (value: string | undefined) => void
+>set : mutator (value: string | undefined) => void
 >value : string | undefined
 >super.set(value) : void
->super.set : (value: string | undefined) => void
+>super.set : mutator (value: string | undefined) => void
 >super : Base
->set : (value: string | undefined) => void
+>set : mutator (value: string | undefined) => void
 >value : string | undefined
 
     override mutator reset(): void { super.reset(); }
->reset : () => void
+>reset : mutator () => void
 >super.reset() : void
->super.reset : () => void
+>super.reset : mutator () => void
 >super : Base
->reset : () => void
+>reset : mutator () => void
 
     testSuperReset(): void {
 >testSuperReset : () => void
@@ -50,30 +50,30 @@ class DerivedSuperTest extends Base {
         if (this.get() !== undefined) {
 >this.get() !== undefined : boolean
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 >undefined : undefined
 
             const before: string = this.get(); // OK — narrowed
 >before : string
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 
             super.reset(); // super.mutator() invalidates this.stable()
 >super.reset() : void
->super.reset : () => void
+>super.reset : mutator () => void
 >super : Base
->reset : () => void
+>reset : mutator () => void
 
             const after: string = this.get(); // error — invalidated
 >after : string
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 
             after;
 >after : string
@@ -86,31 +86,31 @@ class DerivedSuperTest extends Base {
         if (this.get() !== undefined) {
 >this.get() !== undefined : boolean
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 >undefined : undefined
 
             const before: string = this.get(); // OK — narrowed
 >before : string
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 
             super.set(undefined); // super.mutator(undefined) post-call narrows to undefined
 >super.set(undefined) : void
->super.set : (value: string | undefined) => void
+>super.set : mutator (value: string | undefined) => void
 >super : Base
->set : (value: string | undefined) => void
+>set : mutator (value: string | undefined) => void
 >undefined : undefined
 
             const after: string = this.get(); // error — narrowed to undefined
 >after : string
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 
             after;
 >after : string
@@ -123,31 +123,31 @@ class DerivedSuperTest extends Base {
         if (this.get() !== undefined) {
 >this.get() !== undefined : boolean
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 >undefined : undefined
 
             const before: string = this.get(); // OK — narrowed
 >before : string
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 
             super.set("new"); // super.mutator("new") post-call narrows to string
 >super.set("new") : void
->super.set : (value: string | undefined) => void
+>super.set : mutator (value: string | undefined) => void
 >super : Base
->set : (value: string | undefined) => void
+>set : mutator (value: string | undefined) => void
 >"new" : "new"
 
             const after: string = this.get(); // OK — post-call narrowed to string
 >after : string
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 
             after;
 >after : string
@@ -166,30 +166,30 @@ class DerivedThisTest extends Base {
         if (this.get() !== undefined) {
 >this.get() !== undefined : boolean
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 >undefined : undefined
 
             const before: string = this.get(); // OK — narrowed
 >before : string
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 
             this.reset(); // this.mutator() invalidates
 >this.reset() : void
->this.reset : () => void
+>this.reset : mutator () => void
 >this : this
->reset : () => void
+>reset : mutator () => void
 
             const after: string = this.get(); // error — invalidated
 >after : string
 >this.get() : string | undefined
->this.get : () => string | undefined
+>this.get : stable () => string | undefined
 >this : this
->get : () => string | undefined
+>get : stable () => string | undefined
 
             after;
 >after : string

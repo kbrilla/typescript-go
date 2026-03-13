@@ -34,10 +34,10 @@ declare const getterQN1: {
 };
 
 declare const identityQN1: {
->identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
+>identityQN1 : { foo: stable () => { aaa: string; bbb: string; } | undefined; }
 
     foo: stable () => { aaa: string; bbb: string } | undefined;
->foo : () => { aaa: string; bbb: string; } | undefined
+>foo : stable () => { aaa: string; bbb: string; } | undefined
 >aaa : string
 >bbb : string
 
@@ -73,26 +73,26 @@ if (getterQN1.foo) {
 
 if (identityQN1.foo()) {
 >identityQN1.foo() : { aaa: string; bbb: string; } | undefined
->identityQN1.foo : () => { aaa: string; bbb: string; } | undefined
->identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
->foo : () => { aaa: string; bbb: string; } | undefined
+>identityQN1.foo : stable () => { aaa: string; bbb: string; } | undefined
+>identityQN1 : { foo: stable () => { aaa: string; bbb: string; } | undefined; }
+>foo : stable () => { aaa: string; bbb: string; } | undefined
 
     const qn1IdentityA: string = identityQN1.foo().aaa; // stable parity target: OK
 >qn1IdentityA : string
 >identityQN1.foo().aaa : string
 >identityQN1.foo() : { aaa: string; bbb: string; } | undefined
->identityQN1.foo : () => { aaa: string; bbb: string; } | undefined
->identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
->foo : () => { aaa: string; bbb: string; } | undefined
+>identityQN1.foo : stable () => { aaa: string; bbb: string; } | undefined
+>identityQN1 : { foo: stable () => { aaa: string; bbb: string; } | undefined; }
+>foo : stable () => { aaa: string; bbb: string; } | undefined
 >aaa : string
 
     const qn1IdentityB: string = identityQN1.foo().bbb; // stable parity target: OK
 >qn1IdentityB : string
 >identityQN1.foo().bbb : string
 >identityQN1.foo() : { aaa: string; bbb: string; } | undefined
->identityQN1.foo : () => { aaa: string; bbb: string; } | undefined
->identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
->foo : () => { aaa: string; bbb: string; } | undefined
+>identityQN1.foo : stable () => { aaa: string; bbb: string; } | undefined
+>identityQN1 : { foo: stable () => { aaa: string; bbb: string; } | undefined; }
+>foo : stable () => { aaa: string; bbb: string; } | undefined
 >bbb : string
 
     qn1IdentityA;
@@ -130,9 +130,9 @@ if (getterQN1.foo) {
 
 if (identityQN1.foo()) {
 >identityQN1.foo() : { aaa: string; bbb: string; } | undefined
->identityQN1.foo : () => { aaa: string; bbb: string; } | undefined
->identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
->foo : () => { aaa: string; bbb: string; } | undefined
+>identityQN1.foo : stable () => { aaa: string; bbb: string; } | undefined
+>identityQN1 : { foo: stable () => { aaa: string; bbb: string; } | undefined; }
+>foo : stable () => { aaa: string; bbb: string; } | undefined
 
     for (const _ of [1, 2, 3]) {
 >_ : number
@@ -145,9 +145,9 @@ if (identityQN1.foo()) {
 >qn2Identity : string
 >identityQN1.foo().aaa : string
 >identityQN1.foo() : { aaa: string; bbb: string; } | undefined
->identityQN1.foo : () => { aaa: string; bbb: string; } | undefined
->identityQN1 : { foo: () => { aaa: string; bbb: string; } | undefined; }
->foo : () => { aaa: string; bbb: string; } | undefined
+>identityQN1.foo : stable () => { aaa: string; bbb: string; } | undefined
+>identityQN1 : { foo: stable () => { aaa: string; bbb: string; } | undefined; }
+>foo : stable () => { aaa: string; bbb: string; } | undefined
 >aaa : string
 
         qn2Identity;
@@ -178,10 +178,10 @@ declare const getterQN2: {
 };
 
 declare const identityQN2: {
->identityQN2 : { value: () => DeepOptionalGetter; }
+>identityQN2 : { value: stable () => DeepOptionalGetter; }
 
     value: stable () => DeepOptionalGetter;
->value : () => DeepOptionalGetter
+>value : stable () => DeepOptionalGetter
 
 };
 
@@ -234,18 +234,18 @@ if (getterQN2.value.a) {
 if (identityQN2.value().a) {
 >identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; } | undefined
 >identityQN2.value() : DeepOptionalGetter
->identityQN2.value : () => DeepOptionalGetter
->identityQN2 : { value: () => DeepOptionalGetter; }
->value : () => DeepOptionalGetter
+>identityQN2.value : stable () => DeepOptionalGetter
+>identityQN2 : { value: stable () => DeepOptionalGetter; }
+>value : stable () => DeepOptionalGetter
 >a : { b?: { c?: string | undefined; } | undefined; } | undefined
 
     if (identityQN2.value().a.b) {
 >identityQN2.value().a.b : { c?: string | undefined; } | undefined
 >identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
 >identityQN2.value() : DeepOptionalGetter
->identityQN2.value : () => DeepOptionalGetter
->identityQN2 : { value: () => DeepOptionalGetter; }
->value : () => DeepOptionalGetter
+>identityQN2.value : stable () => DeepOptionalGetter
+>identityQN2 : { value: stable () => DeepOptionalGetter; }
+>value : stable () => DeepOptionalGetter
 >a : { b?: { c?: string | undefined; } | undefined; }
 >b : { c?: string | undefined; } | undefined
 
@@ -254,9 +254,9 @@ if (identityQN2.value().a) {
 >identityQN2.value().a.b : { c?: string | undefined; }
 >identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
 >identityQN2.value() : DeepOptionalGetter
->identityQN2.value : () => DeepOptionalGetter
->identityQN2 : { value: () => DeepOptionalGetter; }
->value : () => DeepOptionalGetter
+>identityQN2.value : stable () => DeepOptionalGetter
+>identityQN2 : { value: stable () => DeepOptionalGetter; }
+>value : stable () => DeepOptionalGetter
 >a : { b?: { c?: string | undefined; } | undefined; }
 >b : { c?: string | undefined; }
 >c : string | undefined
@@ -267,9 +267,9 @@ if (identityQN2.value().a) {
 >identityQN2.value().a.b : { c?: string | undefined; }
 >identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
 >identityQN2.value() : DeepOptionalGetter
->identityQN2.value : () => DeepOptionalGetter
->identityQN2 : { value: () => DeepOptionalGetter; }
->value : () => DeepOptionalGetter
+>identityQN2.value : stable () => DeepOptionalGetter
+>identityQN2 : { value: stable () => DeepOptionalGetter; }
+>value : stable () => DeepOptionalGetter
 >a : { b?: { c?: string | undefined; } | undefined; }
 >b : { c?: string | undefined; }
 >c : string
@@ -327,17 +327,17 @@ function qn4Getter<PetType extends Pet>(pet: { get value(): PetType }) {
 
 // Case QN5: discriminant narrowing over generic parameter via stable endpoint.
 function qn5Identity<PetType extends Pet>(pet: { value: stable () => PetType }) {
->qn5Identity : <PetType extends Pet>(pet: { value: () => PetType; }) => void
->pet : { value: () => PetType; }
->value : () => PetType
+>qn5Identity : <PetType extends Pet>(pet: { value: stable () => PetType; }) => void
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
 
     if (pet.value().type === "dog") {
 >pet.value().type === "dog" : boolean
 >pet.value().type : "dog" | "fish"
 >pet.value() : PetType
->pet.value : () => PetType
->pet : { value: () => PetType; }
->value : () => PetType
+>pet.value : stable () => PetType
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
 >type : "dog" | "fish"
 >"dog" : "dog"
 
@@ -346,9 +346,9 @@ function qn5Identity<PetType extends Pet>(pet: { value: stable () => PetType }) 
 >true : true
 >pet.value().saysWoof : true
 >pet.value() : PetType
->pet.value : () => PetType
->pet : { value: () => PetType; }
->value : () => PetType
+>pet.value : stable () => PetType
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
 >saysWoof : true
 
         qn5a;
@@ -407,25 +407,25 @@ if (identityQN2.value().a && identityQN2.value().a.b && identityQN2.value().a.b.
 >identityQN2.value().a && identityQN2.value().a.b : { c?: string | undefined; } | undefined
 >identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; } | undefined
 >identityQN2.value() : DeepOptionalGetter
->identityQN2.value : () => DeepOptionalGetter
->identityQN2 : { value: () => DeepOptionalGetter; }
->value : () => DeepOptionalGetter
+>identityQN2.value : stable () => DeepOptionalGetter
+>identityQN2 : { value: stable () => DeepOptionalGetter; }
+>value : stable () => DeepOptionalGetter
 >a : { b?: { c?: string | undefined; } | undefined; } | undefined
 >identityQN2.value().a.b : { c?: string | undefined; } | undefined
 >identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
 >identityQN2.value() : DeepOptionalGetter
->identityQN2.value : () => DeepOptionalGetter
->identityQN2 : { value: () => DeepOptionalGetter; }
->value : () => DeepOptionalGetter
+>identityQN2.value : stable () => DeepOptionalGetter
+>identityQN2 : { value: stable () => DeepOptionalGetter; }
+>value : stable () => DeepOptionalGetter
 >a : { b?: { c?: string | undefined; } | undefined; }
 >b : { c?: string | undefined; } | undefined
 >identityQN2.value().a.b.c : string | undefined
 >identityQN2.value().a.b : { c?: string | undefined; }
 >identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
 >identityQN2.value() : DeepOptionalGetter
->identityQN2.value : () => DeepOptionalGetter
->identityQN2 : { value: () => DeepOptionalGetter; }
->value : () => DeepOptionalGetter
+>identityQN2.value : stable () => DeepOptionalGetter
+>identityQN2 : { value: stable () => DeepOptionalGetter; }
+>value : stable () => DeepOptionalGetter
 >a : { b?: { c?: string | undefined; } | undefined; }
 >b : { c?: string | undefined; }
 >c : string | undefined
@@ -440,9 +440,9 @@ if (identityQN2.value().a && identityQN2.value().a.b && identityQN2.value().a.b.
 >identityQN2.value().a.b : { c?: string | undefined; }
 >identityQN2.value().a : { b?: { c?: string | undefined; } | undefined; }
 >identityQN2.value() : DeepOptionalGetter
->identityQN2.value : () => DeepOptionalGetter
->identityQN2 : { value: () => DeepOptionalGetter; }
->value : () => DeepOptionalGetter
+>identityQN2.value : stable () => DeepOptionalGetter
+>identityQN2 : { value: stable () => DeepOptionalGetter; }
+>value : stable () => DeepOptionalGetter
 >a : { b?: { c?: string | undefined; } | undefined; }
 >b : { c?: string | undefined; }
 >c : string
@@ -495,7 +495,7 @@ class DotAIdentity {
 >DotAIdentity : DotAIdentity
 
     prop!: stable () => { a: string };
->prop : () => { a: string; }
+>prop : stable () => { a: string; }
 >a : string
 }
 
@@ -503,7 +503,7 @@ class DotBIdentity {
 >DotBIdentity : DotBIdentity
 
     prop!: stable () => { b: string };
->prop : () => { b: string; }
+>prop : stable () => { b: string; }
 >b : string
 }
 
@@ -588,9 +588,9 @@ function dn2Identity(x: DotAIdentity | DotBIdentity) {
 >dn2a : string
 >x.prop().a : string
 >x.prop() : { a: string; }
->x.prop : () => { a: string; }
+>x.prop : stable () => { a: string; }
 >x : DotAIdentity
->prop : () => { a: string; }
+>prop : stable () => { a: string; }
 >a : string
 
             dn2a;
@@ -605,9 +605,9 @@ function dn2Identity(x: DotAIdentity | DotBIdentity) {
 >dn2b : string
 >x.prop().b : string
 >x.prop() : { b: string; }
->x.prop : () => { b: string; }
+>x.prop : stable () => { b: string; }
 >x : DotBIdentity
->prop : () => { b: string; }
+>prop : stable () => { b: string; }
 >b : string
 
             dn2b;
@@ -662,7 +662,7 @@ class DotA2Identity extends DotBase {
 >DotBase : DotBase
 
     info!: stable () => AInfo;
->info : () => AInfo
+>info : stable () => AInfo
 }
 
 class DotB2Identity extends DotBase {
@@ -670,7 +670,7 @@ class DotB2Identity extends DotBase {
 >DotBase : DotBase
 
     info!: stable () => BInfo;
->info : () => BInfo
+>info : stable () => BInfo
 }
 
 // Case DN3: dotted-name access after class narrowing in loop.
@@ -729,9 +729,9 @@ while (dn4Target) {
 >dn4Target.info().a_count = 3 : 3
 >dn4Target.info().a_count : number
 >dn4Target.info() : AInfo
->dn4Target.info : () => AInfo
+>dn4Target.info : stable () => AInfo
 >dn4Target : DotA2Identity
->info : () => AInfo
+>info : stable () => AInfo
 >a_count : number
 >3 : 3
 
@@ -743,9 +743,9 @@ while (dn4Target) {
         const dn4b: BInfo = dn4Target.info(); // stable parity target: OK
 >dn4b : BInfo
 >dn4Target.info() : BInfo
->dn4Target.info : () => BInfo
+>dn4Target.info : stable () => BInfo
 >dn4Target : DotB2Identity
->info : () => BInfo
+>info : stable () => BInfo
 
         dn4b;
 >dn4b : BInfo
@@ -766,7 +766,7 @@ declare const getterNullish: {
 };
 
 declare const identityNullish: stable () => string | null;
->identityNullish : () => string | null
+>identityNullish : stable () => string | null
 
 // Case GC1: truthiness guard repeated reads.
 if (getterNullish.value) {
@@ -788,13 +788,13 @@ if (getterNullish.value) {
 
 if (identityNullish()) {
 >identityNullish() : string | null
->identityNullish : () => string | null
+>identityNullish : stable () => string | null
 
     const gc1Identity: number = identityNullish().length; // stable parity target: OK
 >gc1Identity : number
 >identityNullish().length : number
 >identityNullish() : string | null
->identityNullish : () => string | null
+>identityNullish : stable () => string | null
 >length : number
 
     gc1Identity;
@@ -826,7 +826,7 @@ if (getterNullish.value) {
 
 if (identityNullish()) {
 >identityNullish() : string | null
->identityNullish : () => string | null
+>identityNullish : stable () => string | null
 
     invoke(() => {});
 >invoke(() => {}) : void
@@ -837,7 +837,7 @@ if (identityNullish()) {
 >gc2Identity : number
 >identityNullish().length : number
 >identityNullish() : string | null
->identityNullish : () => string | null
+>identityNullish : stable () => string | null
 >length : number
 
     gc2Identity;
@@ -876,7 +876,7 @@ async function gc3Identity() {
 
     if (identityNullish()) {
 >identityNullish() : string | null
->identityNullish : () => string | null
+>identityNullish : stable () => string | null
 
         await delay();
 >await delay() : void
@@ -887,7 +887,7 @@ async function gc3Identity() {
 >gc3b : number
 >identityNullish().length : number
 >identityNullish() : string | null
->identityNullish : () => string | null
+>identityNullish : stable () => string | null
 >length : number
 
         gc3b;
@@ -911,10 +911,10 @@ declare const getterTG1: {
 };
 
 declare const identityTG1: {
->identityTG1 : { value: () => string | number; }
+>identityTG1 : { value: stable () => string | number; }
 
     value: stable () => string | number;
->value : () => string | number
+>value : stable () => string | number
 
 };
 
@@ -940,14 +940,14 @@ const tg1Identity: string | number = typeof identityTG1.value() === "string" && 
 >typeof identityTG1.value() === "string" : boolean
 >typeof identityTG1.value() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >identityTG1.value() : string | number
->identityTG1.value : () => string | number
->identityTG1 : { value: () => string | number; }
->value : () => string | number
+>identityTG1.value : stable () => string | number
+>identityTG1 : { value: stable () => string | number; }
+>value : stable () => string | number
 >"string" : "string"
 >identityTG1.value() : string | number
->identityTG1.value : () => string | number
->identityTG1 : { value: () => string | number; }
->value : () => string | number
+>identityTG1.value : stable () => string | number
+>identityTG1 : { value: stable () => string | number; }
+>value : stable () => string | number
 
 tg1Identity;
 >tg1Identity : string | number
@@ -976,9 +976,9 @@ if (typeof tg2GetterValue === "string") {
 const tg2IdentityValue = identityTG1.value();
 >tg2IdentityValue : string | number
 >identityTG1.value() : string | number
->identityTG1.value : () => string | number
->identityTG1 : { value: () => string | number; }
->value : () => string | number
+>identityTG1.value : stable () => string | number
+>identityTG1 : { value: stable () => string | number; }
+>value : stable () => string | number
 
 if (typeof tg2IdentityValue === "string") {
 >typeof tg2IdentityValue === "string" : boolean
@@ -1000,34 +1000,34 @@ if (typeof tg2IdentityValue === "string") {
 
 // Case X1: alias escape via passthrough helper.
 declare const identityX1: stable () => string | undefined;
->identityX1 : () => string | undefined
+>identityX1 : stable () => string | undefined
 
 if (identityX1() !== undefined) {
 >identityX1() !== undefined : boolean
 >identityX1() : string | undefined
->identityX1 : () => string | undefined
+>identityX1 : stable () => string | undefined
 >undefined : undefined
 
     const escaped = pass(identityX1);
->escaped : () => string | undefined
->pass(identityX1) : () => string | undefined
+>escaped : stable () => string | undefined
+>pass(identityX1) : stable () => string | undefined
 >pass : <T>(x: T) => T
->identityX1 : () => string | undefined
+>identityX1 : stable () => string | undefined
 
     escaped;
->escaped : () => string | undefined
+>escaped : stable () => string | undefined
 
     const x1: string = identityX1(); // parity target: OK
 >x1 : string
 >identityX1() : string | undefined
->identityX1 : () => string | undefined
+>identityX1 : stable () => string | undefined
 
     const x1Upper: string = identityX1().toUpperCase(); // parity target: OK
 >x1Upper : string
 >identityX1().toUpperCase() : string
 >identityX1().toUpperCase : () => string
 >identityX1() : string | undefined
->identityX1 : () => string | undefined
+>identityX1 : stable () => string | undefined
 >toUpperCase : () => string
 
     x1;
@@ -1047,7 +1047,7 @@ declare const getterX2: {
 };
 
 declare const identityX2: stable () => string | undefined;
->identityX2 : () => string | undefined
+>identityX2 : stable () => string | undefined
 
 const x2Getter: string = getterX2.value !== undefined ? getterX2.value : "fallback"; // getter baseline: OK
 >x2Getter : string
@@ -1070,10 +1070,10 @@ const x2Identity: string = identityX2() !== undefined ? identityX2() : "fallback
 >identityX2() !== undefined ? identityX2() : "fallback" : string
 >identityX2() !== undefined : boolean
 >identityX2() : string | undefined
->identityX2 : () => string | undefined
+>identityX2 : stable () => string | undefined
 >undefined : undefined
 >identityX2() : string | undefined
->identityX2 : () => string | undefined
+>identityX2 : stable () => string | undefined
 >"fallback" : "fallback"
 
 x2Identity;
@@ -1096,7 +1096,7 @@ declare const getterX3: {
 };
 
 declare const identityX3: stable () => Shape;
->identityX3 : () => Shape
+>identityX3 : stable () => Shape
 
 if (getterX3.value.kind === "circle") {
 >getterX3.value.kind === "circle" : boolean
@@ -1123,7 +1123,7 @@ if (identityX3().kind === "circle") {
 >identityX3().kind === "circle" : boolean
 >identityX3().kind : "circle" | "square"
 >identityX3() : Shape
->identityX3 : () => Shape
+>identityX3 : stable () => Shape
 >kind : "circle" | "square"
 >"circle" : "circle"
 
@@ -1131,7 +1131,7 @@ if (identityX3().kind === "circle") {
 >x3IdentityA : number
 >identityX3().radius : number
 >identityX3() : Shape
->identityX3 : () => Shape
+>identityX3 : stable () => Shape
 >radius : number
 
     x3IdentityA;
@@ -1167,7 +1167,7 @@ if (identityX3().kind === "circle") {
 >identityX3().kind === "circle" : boolean
 >identityX3().kind : "circle" | "square"
 >identityX3() : Shape
->identityX3 : () => Shape
+>identityX3 : stable () => Shape
 >kind : "circle" | "square"
 >"circle" : "circle"
 
@@ -1179,7 +1179,7 @@ if (identityX3().kind === "circle") {
 >x3IdentityB : number
 >identityX3().radius : number
 >identityX3() : Shape
->identityX3 : () => Shape
+>identityX3 : stable () => Shape
 >radius : number
 
     x3IdentityB;

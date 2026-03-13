@@ -25,16 +25,16 @@ type Shape =
 >height : number
 
 declare const readShape: stable () => Shape;
->readShape : () => Shape
+>readShape : stable () => Shape
 
 declare const readMaybe: stable () => string | undefined;
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 
 declare const readNullable: stable () => number | null;
->readNullable : () => number | null
+>readNullable : stable () => number | null
 
 declare const readUnion: stable () => string | number | boolean;
->readUnion : () => string | number | boolean
+>readUnion : stable () => string | number | boolean
 
 // --- 1. Switch/case discriminant narrowing ---
 // Source: narrowByDiscriminantInLoop, controlFlowAliasedDiscriminants
@@ -42,7 +42,7 @@ declare const readUnion: stable () => string | number | boolean;
 switch (readShape().kind) {
 >readShape().kind : "circle" | "square" | "triangle"
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >kind : "circle" | "square" | "triangle"
 
     case "circle":
@@ -52,7 +52,7 @@ switch (readShape().kind) {
 >r : number
 >readShape().radius : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >radius : number
 
         r;
@@ -66,7 +66,7 @@ switch (readShape().kind) {
 >s : number
 >readShape().size : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >size : number
 
         s;
@@ -80,7 +80,7 @@ switch (readShape().kind) {
 >b : number
 >readShape().base : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >base : number
 
         b;
@@ -94,12 +94,12 @@ switch (readShape().kind) {
 
 if (readMaybe()) {
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 
     const truthyVal: string = readMaybe(); // should narrow to string (truthy excludes undefined)
 >truthyVal : string
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 
     truthyVal;
 >truthyVal : string
@@ -108,12 +108,12 @@ if (readMaybe()) {
 if (!readMaybe()) {
 >!readMaybe() : boolean
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 
     // After falsy check, type should still be string | undefined (empty string is falsy)
     readMaybe();
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 }
 
 // --- 3. Type predicate narrowing ---
@@ -131,12 +131,12 @@ if (isString(readUnion())) {
 >isString(readUnion()) : boolean
 >isString : (x: unknown) => x is string
 >readUnion() : string | number | boolean
->readUnion : () => string | number | boolean
+>readUnion : stable () => string | number | boolean
 
     const str: string = readUnion(); // should narrow to string
 >str : string
 >readUnion() : string | number | boolean
->readUnion : () => string | number | boolean
+>readUnion : stable () => string | number | boolean
 
     str;
 >str : string
@@ -146,12 +146,12 @@ if (isNumber(readUnion())) {
 >isNumber(readUnion()) : boolean
 >isNumber : (x: unknown) => x is number
 >readUnion() : string | number | boolean
->readUnion : () => string | number | boolean
+>readUnion : stable () => string | number | boolean
 
     const num: number = readUnion(); // should narrow to number
 >num : number
 >readUnion() : string | number | boolean
->readUnion : () => string | number | boolean
+>readUnion : stable () => string | number | boolean
 
     num;
 >num : number
@@ -163,13 +163,13 @@ if (isNumber(readUnion())) {
 if (readMaybe() === "hello") {
 >readMaybe() === "hello" : boolean
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 >"hello" : "hello"
 
     const hello: "hello" = readMaybe(); // should narrow to "hello"
 >hello : "hello"
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 
     hello;
 >hello : "hello"
@@ -178,13 +178,13 @@ if (readMaybe() === "hello") {
 if (readMaybe() !== undefined) {
 >readMaybe() !== undefined : boolean
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 >undefined : undefined
 
     const definite: string = readMaybe(); // should narrow to string
 >definite : string
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 
     definite;
 >definite : string
@@ -193,12 +193,12 @@ if (readMaybe() !== undefined) {
 if (readNullable() !== null) {
 >readNullable() !== null : boolean
 >readNullable() : number | null
->readNullable : () => number | null
+>readNullable : stable () => number | null
 
     const nonNull: number = readNullable(); // should narrow to number
 >nonNull : number
 >readNullable() : number | null
->readNullable : () => number | null
+>readNullable : stable () => number | null
 
     nonNull;
 >nonNull : number
@@ -210,13 +210,13 @@ if (readNullable() !== null) {
 while (readMaybe() !== undefined) {
 >readMaybe() !== undefined : boolean
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 >undefined : undefined
 
     const loopVal: string = readMaybe(); // should narrow to string inside loop
 >loopVal : string
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 
     loopVal;
 >loopVal : string
@@ -232,10 +232,10 @@ const ternaryResult: string = readMaybe() !== undefined ? readMaybe() : "default
 >readMaybe() !== undefined ? readMaybe() : "default" : string
 >readMaybe() !== undefined : boolean
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 >undefined : undefined
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 >"default" : "default"
 
 ternaryResult;
@@ -248,10 +248,10 @@ const andResult = readMaybe() && readMaybe().length; // should narrow: if truthy
 >andResult : number | "" | undefined
 >readMaybe() && readMaybe().length : number | "" | undefined
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 >readMaybe().length : number
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 >length : number
 
 andResult;
@@ -261,7 +261,7 @@ const orResult: string = readMaybe() || "fallback"; // should narrow: if falsy, 
 >orResult : string
 >readMaybe() || "fallback" : string
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 >"fallback" : "fallback"
 
 orResult;
@@ -274,7 +274,7 @@ const coalesceResult: string = readMaybe() ?? "fallback"; // should narrow to st
 >coalesceResult : string
 >readMaybe() ?? "fallback" : string
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 >"fallback" : "fallback"
 
 coalesceResult;
@@ -284,7 +284,7 @@ const coalesceNullResult: number = readNullable() ?? 0; // should narrow to numb
 >coalesceNullResult : number
 >readNullable() ?? 0 : number
 >readNullable() : number | null
->readNullable : () => number | null
+>readNullable : stable () => number | null
 >0 : 0
 
 coalesceNullResult;
@@ -297,7 +297,7 @@ if (readShape().kind === "circle") {
 >readShape().kind === "circle" : boolean
 >readShape().kind : "circle" | "square" | "triangle"
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >kind : "circle" | "square" | "triangle"
 >"circle" : "circle"
 
@@ -305,7 +305,7 @@ if (readShape().kind === "circle") {
 >circleRadius : number
 >readShape().radius : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >radius : number
 
     circleRadius;
@@ -316,7 +316,7 @@ if (readShape().kind === "square") {
 >readShape().kind === "square" : boolean
 >readShape().kind : "circle" | "square" | "triangle"
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >kind : "circle" | "square" | "triangle"
 >"square" : "square"
 
@@ -324,7 +324,7 @@ if (readShape().kind === "square") {
 >squareSize : number
 >readShape().size : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >size : number
 
     squareSize;
@@ -336,13 +336,13 @@ if (readShape().kind === "square") {
 if (readMaybe() === undefined) {
 >readMaybe() === undefined : boolean
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 >undefined : undefined
 
     const undef: undefined = readMaybe(); // should narrow to undefined
 >undef : undefined
 >readMaybe() : string | undefined
->readMaybe : () => string | undefined
+>readMaybe : stable () => string | undefined
 
     undef;
 >undef : undefined
@@ -351,12 +351,12 @@ if (readMaybe() === undefined) {
 if (readNullable() === null) {
 >readNullable() === null : boolean
 >readNullable() : number | null
->readNullable : () => number | null
+>readNullable : stable () => number | null
 
     const nullVal: null = readNullable(); // should narrow to null
 >nullVal : null
 >readNullable() : number | null
->readNullable : () => number | null
+>readNullable : stable () => number | null
 
     nullVal;
 >nullVal : null

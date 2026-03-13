@@ -5,18 +5,18 @@
 
 // === Section 1: Single-endpoint invalidates ===
 declare const userStore: {
->userStore : { user: () => { name: string; } | undefined; settings: () => { theme: string; } | undefined; setUser: (v: { name: string; } | undefined) => void; }
+>userStore : { user: stable () => { name: string; } | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (v: { name: string; } | undefined) => void; }
 
     user: stable () => { name: string } | undefined;
->user : () => { name: string; } | undefined
+>user : stable () => { name: string; } | undefined
 >name : string
 
     settings: stable () => { theme: string } | undefined;
->settings : () => { theme: string; } | undefined
+>settings : stable () => { theme: string; } | undefined
 >theme : string
 
     setUser: mutator (v: { name: string } | undefined) => void invalidates user;
->setUser : (v: { name: string; } | undefined) => void
+>setUser : mutator (v: { name: string; } | undefined) => void
 >v : { name: string; } | undefined
 >name : string
 
@@ -27,22 +27,22 @@ if (userStore.user() !== undefined && userStore.settings() !== undefined) {
 >userStore.user() !== undefined && userStore.settings() !== undefined : boolean
 >userStore.user() !== undefined : boolean
 >userStore.user() : { name: string; } | undefined
->userStore.user : () => { name: string; } | undefined
->userStore : { user: () => { name: string; } | undefined; settings: () => { theme: string; } | undefined; setUser: (v: { name: string; } | undefined) => void; }
->user : () => { name: string; } | undefined
+>userStore.user : stable () => { name: string; } | undefined
+>userStore : { user: stable () => { name: string; } | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (v: { name: string; } | undefined) => void; }
+>user : stable () => { name: string; } | undefined
 >undefined : undefined
 >userStore.settings() !== undefined : boolean
 >userStore.settings() : { theme: string; } | undefined
->userStore.settings : () => { theme: string; } | undefined
->userStore : { user: () => { name: string; } | undefined; settings: () => { theme: string; } | undefined; setUser: (v: { name: string; } | undefined) => void; }
->settings : () => { theme: string; } | undefined
+>userStore.settings : stable () => { theme: string; } | undefined
+>userStore : { user: stable () => { name: string; } | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (v: { name: string; } | undefined) => void; }
+>settings : stable () => { theme: string; } | undefined
 >undefined : undefined
 
     userStore.setUser({ name: "new" });
 >userStore.setUser({ name: "new" }) : void
->userStore.setUser : (v: { name: string; } | undefined) => void
->userStore : { user: () => { name: string; } | undefined; settings: () => { theme: string; } | undefined; setUser: (v: { name: string; } | undefined) => void; }
->setUser : (v: { name: string; } | undefined) => void
+>userStore.setUser : mutator (v: { name: string; } | undefined) => void
+>userStore : { user: stable () => { name: string; } | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (v: { name: string; } | undefined) => void; }
+>setUser : mutator (v: { name: string; } | undefined) => void
 >{ name: "new" } : { name: string; }
 >name : string
 >"new" : "new"
@@ -51,31 +51,31 @@ if (userStore.user() !== undefined && userStore.settings() !== undefined) {
 >u : { name: string; }
 >name : string
 >userStore.user() : { name: string; } | undefined
->userStore.user : () => { name: string; } | undefined
->userStore : { user: () => { name: string; } | undefined; settings: () => { theme: string; } | undefined; setUser: (v: { name: string; } | undefined) => void; }
->user : () => { name: string; } | undefined
+>userStore.user : stable () => { name: string; } | undefined
+>userStore : { user: stable () => { name: string; } | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (v: { name: string; } | undefined) => void; }
+>user : stable () => { name: string; } | undefined
 
     const s: { theme: string } = userStore.settings(); // OK — settings() NOT linked, still narrowed
 >s : { theme: string; }
 >theme : string
 >userStore.settings() : { theme: string; } | undefined
->userStore.settings : () => { theme: string; } | undefined
->userStore : { user: () => { name: string; } | undefined; settings: () => { theme: string; } | undefined; setUser: (v: { name: string; } | undefined) => void; }
->settings : () => { theme: string; } | undefined
+>userStore.settings : stable () => { theme: string; } | undefined
+>userStore : { user: stable () => { name: string; } | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (v: { name: string; } | undefined) => void; }
+>settings : stable () => { theme: string; } | undefined
 }
 
 // === Section 2: Multi-endpoint invalidates ===
 declare const multiStore: {
->multiStore : { a: () => string | undefined; b: () => number | undefined; resetAll: () => void; }
+>multiStore : { a: stable () => string | undefined; b: stable () => number | undefined; resetAll: mutator () => void; }
 
     a: stable () => string | undefined;
->a : () => string | undefined
+>a : stable () => string | undefined
 
     b: stable () => number | undefined;
->b : () => number | undefined
+>b : stable () => number | undefined
 
     resetAll: mutator () => void invalidates a, b;
->resetAll : () => void
+>resetAll : mutator () => void
 
 };
 
@@ -83,50 +83,50 @@ if (multiStore.a() !== undefined && multiStore.b() !== undefined) {
 >multiStore.a() !== undefined && multiStore.b() !== undefined : boolean
 >multiStore.a() !== undefined : boolean
 >multiStore.a() : string | undefined
->multiStore.a : () => string | undefined
->multiStore : { a: () => string | undefined; b: () => number | undefined; resetAll: () => void; }
->a : () => string | undefined
+>multiStore.a : stable () => string | undefined
+>multiStore : { a: stable () => string | undefined; b: stable () => number | undefined; resetAll: mutator () => void; }
+>a : stable () => string | undefined
 >undefined : undefined
 >multiStore.b() !== undefined : boolean
 >multiStore.b() : number | undefined
->multiStore.b : () => number | undefined
->multiStore : { a: () => string | undefined; b: () => number | undefined; resetAll: () => void; }
->b : () => number | undefined
+>multiStore.b : stable () => number | undefined
+>multiStore : { a: stable () => string | undefined; b: stable () => number | undefined; resetAll: mutator () => void; }
+>b : stable () => number | undefined
 >undefined : undefined
 
     multiStore.resetAll();
 >multiStore.resetAll() : void
->multiStore.resetAll : () => void
->multiStore : { a: () => string | undefined; b: () => number | undefined; resetAll: () => void; }
->resetAll : () => void
+>multiStore.resetAll : mutator () => void
+>multiStore : { a: stable () => string | undefined; b: stable () => number | undefined; resetAll: mutator () => void; }
+>resetAll : mutator () => void
 
     const afterA: string = multiStore.a();   // should error — a() invalidated
 >afterA : string
 >multiStore.a() : string | undefined
->multiStore.a : () => string | undefined
->multiStore : { a: () => string | undefined; b: () => number | undefined; resetAll: () => void; }
->a : () => string | undefined
+>multiStore.a : stable () => string | undefined
+>multiStore : { a: stable () => string | undefined; b: stable () => number | undefined; resetAll: mutator () => void; }
+>a : stable () => string | undefined
 
     const afterB: number = multiStore.b();   // should error — b() invalidated
 >afterB : number
 >multiStore.b() : number | undefined
->multiStore.b : () => number | undefined
->multiStore : { a: () => string | undefined; b: () => number | undefined; resetAll: () => void; }
->b : () => number | undefined
+>multiStore.b : stable () => number | undefined
+>multiStore : { a: stable () => string | undefined; b: stable () => number | undefined; resetAll: mutator () => void; }
+>b : stable () => number | undefined
 }
 
 // === Section 3: Mutator without invalidates on multi-endpoint = conservative ===
 declare const ambiguousStore: {
->ambiguousStore : { x: () => string | undefined; y: () => number | undefined; doSomething: (v: number) => void; }
+>ambiguousStore : { x: stable () => string | undefined; y: stable () => number | undefined; doSomething: mutator (v: number) => void; }
 
     x: stable () => string | undefined;
->x : () => string | undefined
+>x : stable () => string | undefined
 
     y: stable () => number | undefined;
->y : () => number | undefined
+>y : stable () => number | undefined
 
     doSomething: mutator (v: number) => void; // no invalidates clause
->doSomething : (v: number) => void
+>doSomething : mutator (v: number) => void
 >v : number
 
 };
@@ -135,48 +135,48 @@ if (ambiguousStore.x() !== undefined && ambiguousStore.y() !== undefined) {
 >ambiguousStore.x() !== undefined && ambiguousStore.y() !== undefined : boolean
 >ambiguousStore.x() !== undefined : boolean
 >ambiguousStore.x() : string | undefined
->ambiguousStore.x : () => string | undefined
->ambiguousStore : { x: () => string | undefined; y: () => number | undefined; doSomething: (v: number) => void; }
->x : () => string | undefined
+>ambiguousStore.x : stable () => string | undefined
+>ambiguousStore : { x: stable () => string | undefined; y: stable () => number | undefined; doSomething: mutator (v: number) => void; }
+>x : stable () => string | undefined
 >undefined : undefined
 >ambiguousStore.y() !== undefined : boolean
 >ambiguousStore.y() : number | undefined
->ambiguousStore.y : () => number | undefined
->ambiguousStore : { x: () => string | undefined; y: () => number | undefined; doSomething: (v: number) => void; }
->y : () => number | undefined
+>ambiguousStore.y : stable () => number | undefined
+>ambiguousStore : { x: stable () => string | undefined; y: stable () => number | undefined; doSomething: mutator (v: number) => void; }
+>y : stable () => number | undefined
 >undefined : undefined
 
     ambiguousStore.doSomething(42);
 >ambiguousStore.doSomething(42) : void
->ambiguousStore.doSomething : (v: number) => void
->ambiguousStore : { x: () => string | undefined; y: () => number | undefined; doSomething: (v: number) => void; }
->doSomething : (v: number) => void
+>ambiguousStore.doSomething : mutator (v: number) => void
+>ambiguousStore : { x: stable () => string | undefined; y: stable () => number | undefined; doSomething: mutator (v: number) => void; }
+>doSomething : mutator (v: number) => void
 >42 : 42
 
     const afterX: string = ambiguousStore.x(); // should error — conservatively dropped
 >afterX : string
 >ambiguousStore.x() : string | undefined
->ambiguousStore.x : () => string | undefined
->ambiguousStore : { x: () => string | undefined; y: () => number | undefined; doSomething: (v: number) => void; }
->x : () => string | undefined
+>ambiguousStore.x : stable () => string | undefined
+>ambiguousStore : { x: stable () => string | undefined; y: stable () => number | undefined; doSomething: mutator (v: number) => void; }
+>x : stable () => string | undefined
 
     const afterY: number = ambiguousStore.y(); // should error — conservatively dropped
 >afterY : number
 >ambiguousStore.y() : number | undefined
->ambiguousStore.y : () => number | undefined
->ambiguousStore : { x: () => string | undefined; y: () => number | undefined; doSomething: (v: number) => void; }
->y : () => number | undefined
+>ambiguousStore.y : stable () => number | undefined
+>ambiguousStore : { x: stable () => string | undefined; y: stable () => number | undefined; doSomething: mutator (v: number) => void; }
+>y : stable () => number | undefined
 }
 
 // === Section 4: Mutator on single-endpoint = no ambiguity ===
 declare const singleStore: {
->singleStore : { value: () => string | undefined; setValue: (v: string | undefined) => void; }
+>singleStore : { value: stable () => string | undefined; setValue: mutator (v: string | undefined) => void; }
 
     value: stable () => string | undefined;
->value : () => string | undefined
+>value : stable () => string | undefined
 
     setValue: mutator (v: string | undefined) => void; // no invalidates, but only one stable endpoint
->setValue : (v: string | undefined) => void
+>setValue : mutator (v: string | undefined) => void
 >v : string | undefined
 
 };
@@ -184,38 +184,38 @@ declare const singleStore: {
 if (singleStore.value() !== undefined) {
 >singleStore.value() !== undefined : boolean
 >singleStore.value() : string | undefined
->singleStore.value : () => string | undefined
->singleStore : { value: () => string | undefined; setValue: (v: string | undefined) => void; }
->value : () => string | undefined
+>singleStore.value : stable () => string | undefined
+>singleStore : { value: stable () => string | undefined; setValue: mutator (v: string | undefined) => void; }
+>value : stable () => string | undefined
 >undefined : undefined
 
     singleStore.setValue("new");
 >singleStore.setValue("new") : void
->singleStore.setValue : (v: string | undefined) => void
->singleStore : { value: () => string | undefined; setValue: (v: string | undefined) => void; }
->setValue : (v: string | undefined) => void
+>singleStore.setValue : mutator (v: string | undefined) => void
+>singleStore : { value: stable () => string | undefined; setValue: mutator (v: string | undefined) => void; }
+>setValue : mutator (v: string | undefined) => void
 >"new" : "new"
 
     const after: string = singleStore.value(); // should error — mutator invalidated
 >after : string
 >singleStore.value() : string | undefined
->singleStore.value : () => string | undefined
->singleStore : { value: () => string | undefined; setValue: (v: string | undefined) => void; }
->value : () => string | undefined
+>singleStore.value : stable () => string | undefined
+>singleStore : { value: stable () => string | undefined; setValue: mutator (v: string | undefined) => void; }
+>value : stable () => string | undefined
 }
 
 // === Section 5: Selective invalidation — unlinked endpoint preserved ===
 declare const selectiveStore: {
->selectiveStore : { x: () => string | undefined; y: () => number | undefined; setX: (v: string | undefined) => void; }
+>selectiveStore : { x: stable () => string | undefined; y: stable () => number | undefined; setX: mutator (v: string | undefined) => void; }
 
     x: stable () => string | undefined;
->x : () => string | undefined
+>x : stable () => string | undefined
 
     y: stable () => number | undefined;
->y : () => number | undefined
+>y : stable () => number | undefined
 
     setX: mutator (v: string | undefined) => void invalidates x;
->setX : (v: string | undefined) => void
+>setX : mutator (v: string | undefined) => void
 >v : string | undefined
 
 };
@@ -224,36 +224,36 @@ if (selectiveStore.x() !== undefined && selectiveStore.y() !== undefined) {
 >selectiveStore.x() !== undefined && selectiveStore.y() !== undefined : boolean
 >selectiveStore.x() !== undefined : boolean
 >selectiveStore.x() : string | undefined
->selectiveStore.x : () => string | undefined
->selectiveStore : { x: () => string | undefined; y: () => number | undefined; setX: (v: string | undefined) => void; }
->x : () => string | undefined
+>selectiveStore.x : stable () => string | undefined
+>selectiveStore : { x: stable () => string | undefined; y: stable () => number | undefined; setX: mutator (v: string | undefined) => void; }
+>x : stable () => string | undefined
 >undefined : undefined
 >selectiveStore.y() !== undefined : boolean
 >selectiveStore.y() : number | undefined
->selectiveStore.y : () => number | undefined
->selectiveStore : { x: () => string | undefined; y: () => number | undefined; setX: (v: string | undefined) => void; }
->y : () => number | undefined
+>selectiveStore.y : stable () => number | undefined
+>selectiveStore : { x: stable () => string | undefined; y: stable () => number | undefined; setX: mutator (v: string | undefined) => void; }
+>y : stable () => number | undefined
 >undefined : undefined
 
     selectiveStore.setX(undefined);
 >selectiveStore.setX(undefined) : void
->selectiveStore.setX : (v: string | undefined) => void
->selectiveStore : { x: () => string | undefined; y: () => number | undefined; setX: (v: string | undefined) => void; }
->setX : (v: string | undefined) => void
+>selectiveStore.setX : mutator (v: string | undefined) => void
+>selectiveStore : { x: stable () => string | undefined; y: stable () => number | undefined; setX: mutator (v: string | undefined) => void; }
+>setX : mutator (v: string | undefined) => void
 >undefined : undefined
 
     const afterX: string = selectiveStore.x(); // should error — x() is linked
 >afterX : string
 >selectiveStore.x() : string | undefined
->selectiveStore.x : () => string | undefined
->selectiveStore : { x: () => string | undefined; y: () => number | undefined; setX: (v: string | undefined) => void; }
->x : () => string | undefined
+>selectiveStore.x : stable () => string | undefined
+>selectiveStore : { x: stable () => string | undefined; y: stable () => number | undefined; setX: mutator (v: string | undefined) => void; }
+>x : stable () => string | undefined
 
     const afterY: number = selectiveStore.y(); // OK — y() is NOT linked, preserved
 >afterY : number
 >selectiveStore.y() : number | undefined
->selectiveStore.y : () => number | undefined
->selectiveStore : { x: () => string | undefined; y: () => number | undefined; setX: (v: string | undefined) => void; }
->y : () => number | undefined
+>selectiveStore.y : stable () => number | undefined
+>selectiveStore : { x: stable () => string | undefined; y: stable () => number | undefined; setX: mutator (v: string | undefined) => void; }
+>y : stable () => number | undefined
 }
 

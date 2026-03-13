@@ -27,23 +27,23 @@ export declare function createSignal<T>(value: T): Signal<T>;
 // === 4. Method signatures with invalidates ===
 export interface Store<T> {
     stable getValue(): T;
->getValue : () => T
+>getValue : stable () => T
 
     stable getLabel(): string;
->getLabel : () => string
+>getLabel : stable () => string
 
     mutator setValue(v: T): void invalidates getValue;
->setValue : (v: T) => void
+>setValue : mutator (v: T) => void
 >v : T
 >getValue : any
 
     mutator setLabel(l: string): void invalidates getLabel;
->setLabel : (l: string) => void
+>setLabel : mutator (l: string) => void
 >l : string
 >getLabel : any
 
     mutator reset(): void invalidates getValue, getLabel;
->reset : () => void
+>reset : mutator () => void
 >getValue : any
 >getLabel : any
 }
@@ -61,25 +61,25 @@ export type KeyedSetter<K, V> = mutator[key] (key: K, value: V) => void invalida
 // === 6. Keyed stable/mutator on methods ===
 export interface TypedMap<K, V> {
     stable[key] get(key: K): V | undefined;
->get : (key: K) => V | undefined
+>get : stable (key: K) => V | undefined
 >key : K
 >key : any
 
     mutator[key] set(key: K, value: V): void invalidates get[key];
->set : (key: K, value: V) => void
+>set : mutator (key: K, value: V) => void
 >key : K
 >value : V
 >key : any
 >get : any
 
     mutator[key] delete(key: K): boolean invalidates get[key];
->delete : (key: K) => boolean
+>delete : mutator (key: K) => boolean
 >key : K
 >key : any
 >get : any
 
     mutator clear(): void;
->clear : () => void
+>clear : mutator () => void
 }
 
 // === 7. Mutator type reference wrapper ===
@@ -111,13 +111,13 @@ export class Container<T> {
 >v : T
 
     stable getValue(): T { return this._value; }
->getValue : () => T
+>getValue : stable () => T
 >this._value : T
 >this : this
 >_value : T
 
     mutator setValue(v: T): void invalidates getValue { this._value = v; }
->setValue : (v: T) => void
+>setValue : mutator (v: T) => void
 >v : T
 >getValue : any
 >this._value = v : T

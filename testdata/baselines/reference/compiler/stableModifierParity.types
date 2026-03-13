@@ -57,18 +57,18 @@ if (propertyModel.value !== undefined) {
 
 // Identity parity: repeated-read stable narrowing success.
 declare const identityRead: stable () => string | undefined;
->identityRead : () => string | undefined
+>identityRead : stable () => string | undefined
 
 if (identityRead() !== undefined) {
 >identityRead() !== undefined : boolean
 >identityRead() : string | undefined
->identityRead : () => string | undefined
+>identityRead : stable () => string | undefined
 >undefined : undefined
 
     const identityStable: string = identityRead(); // OK
 >identityStable : string
 >identityRead() : string | undefined
->identityRead : () => string | undefined
+>identityRead : stable () => string | undefined
 
     identityStable;
 >identityStable : string
@@ -80,10 +80,10 @@ const ternaryStable: string = identityRead() !== undefined ? identityRead() : "f
 >identityRead() !== undefined ? identityRead() : "fallback" : string
 >identityRead() !== undefined : boolean
 >identityRead() : string | undefined
->identityRead : () => string | undefined
+>identityRead : stable () => string | undefined
 >undefined : undefined
 >identityRead() : string | undefined
->identityRead : () => string | undefined
+>identityRead : stable () => string | undefined
 >"fallback" : "fallback"
 
 ternaryStable;
@@ -97,7 +97,7 @@ declare function invoke(cb: () => void): void;
 if (identityRead() !== undefined) {
 >identityRead() !== undefined : boolean
 >identityRead() : string | undefined
->identityRead : () => string | undefined
+>identityRead : stable () => string | undefined
 >undefined : undefined
 
     invoke(() => {
@@ -116,7 +116,7 @@ if (identityRead() !== undefined) {
     const afterCallback: string = identityRead(); // should error
 >afterCallback : string
 >identityRead() : string | undefined
->identityRead : () => string | undefined
+>identityRead : stable () => string | undefined
 
     afterCallback;
 >afterCallback : string
@@ -132,7 +132,7 @@ async function testAwaitParity() {
     if (identityRead() !== undefined) {
 >identityRead() !== undefined : boolean
 >identityRead() : string | undefined
->identityRead : () => string | undefined
+>identityRead : stable () => string | undefined
 >undefined : undefined
 
         await delay();
@@ -143,7 +143,7 @@ async function testAwaitParity() {
         const afterAwait: string = identityRead(); // OK (ambient no-arg await preserves narrowing)
 >afterAwait : string
 >identityRead() : string | undefined
->identityRead : () => string | undefined
+>identityRead : stable () => string | undefined
 
         afterAwait;
 >afterAwait : string
@@ -152,10 +152,10 @@ async function testAwaitParity() {
 
 // Setter/write-call analog shape: object stable getter + mutating method call.
 declare const store: {
->store : { read: () => string | undefined; set(v: string | undefined): void; }
+>store : { read: stable () => string | undefined; set(v: string | undefined): void; }
 
     read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
     set(v: string | undefined): void;
 >set : (v: string | undefined) => void
@@ -166,24 +166,24 @@ declare const store: {
 if (store.read() !== undefined) {
 >store.read() !== undefined : boolean
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; set(v: string | undefined): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; set(v: string | undefined): void; }
+>read : stable () => string | undefined
 >undefined : undefined
 
     store.set("next");
 >store.set("next") : void
 >store.set : (v: string | undefined) => void
->store : { read: () => string | undefined; set(v: string | undefined): void; }
+>store : { read: stable () => string | undefined; set(v: string | undefined): void; }
 >set : (v: string | undefined) => void
 >"next" : "next"
 
     const afterSetCall: string = store.read(); // should be OK
 >afterSetCall : string
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; set(v: string | undefined): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; set(v: string | undefined): void; }
+>read : stable () => string | undefined
 
     afterSetCall;
 >afterSetCall : string
@@ -263,13 +263,13 @@ type Shape =
 >size : number
 
 declare const shape: stable () => Shape;
->shape : () => Shape
+>shape : stable () => Shape
 
 if (shape().kind === "circle") {
 >shape().kind === "circle" : boolean
 >shape().kind : "circle" | "square"
 >shape() : Shape
->shape : () => Shape
+>shape : stable () => Shape
 >kind : "circle" | "square"
 >"circle" : "circle"
 
@@ -277,7 +277,7 @@ if (shape().kind === "circle") {
 >circleRadius : number
 >shape().radius : number
 >shape() : Shape
->shape : () => Shape
+>shape : stable () => Shape
 >radius : number
 
     circleRadius;
@@ -292,7 +292,7 @@ if (shape().kind === "circle") {
 >shape().kind === "circle" : boolean
 >shape().kind : "circle" | "square"
 >shape() : Shape
->shape : () => Shape
+>shape : stable () => Shape
 >kind : "circle" | "square"
 >"circle" : "circle"
 
@@ -304,7 +304,7 @@ if (shape().kind === "circle") {
 >afterUnknownShapeCall : number
 >shape().radius : number
 >shape() : Shape
->shape : () => Shape
+>shape : stable () => Shape
 >radius : number
 
     afterUnknownShapeCall;

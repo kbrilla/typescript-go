@@ -3,17 +3,17 @@
 === stableModifierNarrowing.ts ===
 // Basic stable function type narrowing
 declare const value: stable () => string | undefined;
->value : () => string | undefined
+>value : stable () => string | undefined
 
 if (value() !== undefined) {
 >value() !== undefined : boolean
 >value() : string | undefined
->value : () => string | undefined
+>value : stable () => string | undefined
 >undefined : undefined
 
     value(); // should be narrowed to string
 >value() : string | undefined
->value : () => string | undefined
+>value : stable () => string | undefined
 
     console.log(value().toUpperCase()); // should work, no error
 >console.log(value().toUpperCase()) : void
@@ -23,21 +23,21 @@ if (value() !== undefined) {
 >value().toUpperCase() : string
 >value().toUpperCase : () => string
 >value() : string | undefined
->value : () => string | undefined
+>value : stable () => string | undefined
 >toUpperCase : () => string
 }
 
 // Identity function with truthiness check
 declare const flag: stable () => string | null;
->flag : () => string | null
+>flag : stable () => string | null
 
 if (flag()) {
 >flag() : string | null
->flag : () => string | null
+>flag : stable () => string | null
 
     flag(); // should be narrowed to string (truthy)
 >flag() : string | null
->flag : () => string | null
+>flag : stable () => string | null
 
     console.log(flag().length); // should work
 >console.log(flag().length) : void
@@ -46,18 +46,18 @@ if (flag()) {
 >log : (...data: any[]) => void
 >flag().length : number
 >flag() : string | null
->flag : () => string | null
+>flag : stable () => string | null
 >length : number
 }
 
 // Identity function narrowing cleared in closures
 declare const closureVal: stable () => string | undefined;
->closureVal : () => string | undefined
+>closureVal : stable () => string | undefined
 
 if (closureVal() !== undefined) {
 >closureVal() !== undefined : boolean
 >closureVal() : string | undefined
->closureVal : () => string | undefined
+>closureVal : stable () => string | undefined
 >undefined : undefined
 
     setTimeout(() => {
@@ -67,7 +67,7 @@ if (closureVal() !== undefined) {
 
         closureVal(); // should be string | undefined (narrowing lost in closure)
 >closureVal() : string | undefined
->closureVal : () => string | undefined
+>closureVal : stable () => string | undefined
 
     });
 }
@@ -92,28 +92,28 @@ if (sig() !== undefined) {
 
 // Multiple stable functions - independent narrowing
 declare const a: stable () => string | undefined;
->a : () => string | undefined
+>a : stable () => string | undefined
 
 declare const b: stable () => number | undefined;
->b : () => number | undefined
+>b : stable () => number | undefined
 
 if (a() !== undefined && b() !== undefined) {
 >a() !== undefined && b() !== undefined : boolean
 >a() !== undefined : boolean
 >a() : string | undefined
->a : () => string | undefined
+>a : stable () => string | undefined
 >undefined : undefined
 >b() !== undefined : boolean
 >b() : number | undefined
->b : () => number | undefined
+>b : stable () => number | undefined
 >undefined : undefined
 
     a(); // should be string
 >a() : string | undefined
->a : () => string | undefined
+>a : stable () => string | undefined
 
     b(); // should be number
 >b() : number | undefined
->b : () => number | undefined
+>b : stable () => number | undefined
 }
 

@@ -4,7 +4,7 @@
 // --- Section 1: Basic linked predicate ---
 interface Resource<T> {
     value: stable () => T;
->value : () => T
+>value : stable () => T
 
     hasValue(): this.value() is Exclude<T, undefined>;
 >hasValue : () => this.value() is Exclude<T, undefined>
@@ -22,21 +22,21 @@ if (r.hasValue()) {
     const s: string = r.value();  // narrowed to string
 >s : string
 >r.value() : string | undefined
->r.value : () => string | undefined
+>r.value : stable () => string | undefined
 >r : Resource<string | undefined>
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 const v: string | undefined = r.value();  // outside guard, full type
 >v : string | undefined
 >r.value() : string | undefined
->r.value : () => string | undefined
+>r.value : stable () => string | undefined
 >r : Resource<string | undefined>
->value : () => string | undefined
+>value : stable () => string | undefined
 
 // --- Section 2: Multiple guards on same target ---
 interface TypedReader {
     read: stable () => number | string | boolean;
->read : () => string | number | boolean
+>read : stable () => string | number | boolean
 
     isNumber(): this.read() is number;
 >isNumber : () => this.read() is number
@@ -57,9 +57,9 @@ if (reader.isNumber()) {
     const n: number = reader.read();  // narrowed to number
 >n : number
 >reader.read() : string | number | boolean
->reader.read : () => string | number | boolean
+>reader.read : stable () => string | number | boolean
 >reader : TypedReader
->read : () => string | number | boolean
+>read : stable () => string | number | boolean
 }
 if (reader.isString()) {
 >reader.isString() : boolean
@@ -70,21 +70,21 @@ if (reader.isString()) {
     const s: string = reader.read();  // narrowed to string
 >s : string
 >reader.read() : string | number | boolean
->reader.read : () => string | number | boolean
+>reader.read : stable () => string | number | boolean
 >reader : TypedReader
->read : () => string | number | boolean
+>read : stable () => string | number | boolean
 }
 
 // --- Section 3: Guard + mutator invalidation ---
 interface WritableOption<T> {
     get: stable () => T | undefined;
->get : () => T | undefined
+>get : stable () => T | undefined
 
     isDefined(): this.get() is T;
 >isDefined : () => this.get() is T
 
     set: mutator (v: T | undefined) => void invalidates get;
->set : (v: T | undefined) => void
+>set : mutator (v: T | undefined) => void
 >v : T | undefined
 }
 
@@ -100,23 +100,23 @@ if (opt.isDefined()) {
     const n1: number = opt.get();  // narrowed by linked predicate
 >n1 : number
 >opt.get() : number | undefined
->opt.get : () => number | undefined
+>opt.get : stable () => number | undefined
 >opt : WritableOption<number>
->get : () => number | undefined
+>get : stable () => number | undefined
 
     opt.set(undefined);
 >opt.set(undefined) : void
->opt.set : (v: number | undefined) => void
+>opt.set : mutator (v: number | undefined) => void
 >opt : WritableOption<number>
->set : (v: number | undefined) => void
+>set : mutator (v: number | undefined) => void
 >undefined : undefined
 
     const n2: number | undefined = opt.get();  // back to full type after mutator
 >n2 : number | undefined
 >opt.get() : number | undefined
->opt.get : () => number | undefined
+>opt.get : stable () => number | undefined
 >opt : WritableOption<number>
->get : () => number | undefined
+>get : stable () => number | undefined
 }
 
 // --- Section 4: Different receivers (no cross-narrowing) ---
@@ -135,16 +135,16 @@ if (r1.hasValue()) {
     const s1: string = r1.value();  // narrowed
 >s1 : string
 >r1.value() : string | undefined
->r1.value : () => string | undefined
+>r1.value : stable () => string | undefined
 >r1 : Resource<string | undefined>
->value : () => string | undefined
+>value : stable () => string | undefined
 
     const s2: string | undefined = r2.value();  // NOT narrowed - different receiver
 >s2 : string | undefined
 >r2.value() : string | undefined
->r2.value : () => string | undefined
+>r2.value : stable () => string | undefined
 >r2 : Resource<string | undefined>
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 
 // --- Section 5: Guard + uncertainty boundary ---
@@ -163,9 +163,9 @@ if (r3.hasValue()) {
     const before: string = r3.value();  // narrowed
 >before : string
 >r3.value() : string | undefined
->r3.value : () => string | undefined
+>r3.value : stable () => string | undefined
 >r3 : Resource<string | undefined>
->value : () => string | undefined
+>value : stable () => string | undefined
 
     unknownCall();
 >unknownCall() : void
@@ -174,15 +174,15 @@ if (r3.hasValue()) {
     const after: string | undefined = r3.value();  // narrowing lost
 >after : string | undefined
 >r3.value() : string | undefined
->r3.value : () => string | undefined
+>r3.value : stable () => string | undefined
 >r3 : Resource<string | undefined>
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 
 // --- Section 6: Optional container pattern ---
 interface Maybe<T> {
     get: stable () => T | undefined;
->get : () => T | undefined
+>get : stable () => T | undefined
 
     isDefined(): this.get() is T;
 >isDefined : () => this.get() is T
@@ -203,9 +203,9 @@ if (maybe.isDefined()) {
     const n: number = maybe.get();  // narrowed to number
 >n : number
 >maybe.get() : number | undefined
->maybe.get : () => number | undefined
+>maybe.get : stable () => number | undefined
 >maybe : Maybe<number>
->get : () => number | undefined
+>get : stable () => number | undefined
 }
 if (maybe.isEmpty()) {
 >maybe.isEmpty() : boolean
@@ -216,15 +216,15 @@ if (maybe.isEmpty()) {
     const u: undefined = maybe.get();  // narrowed to undefined
 >u : undefined
 >maybe.get() : number | undefined
->maybe.get : () => number | undefined
+>maybe.get : stable () => number | undefined
 >maybe : Maybe<number>
->get : () => number | undefined
+>get : stable () => number | undefined
 }
 
 // --- Section 7: Guard is not stable itself (rule 2) ---
 interface Container<T> {
     value: stable () => T | null;
->value : () => T | null
+>value : stable () => T | null
 
     hasValue(): this.value() is T;
 >hasValue : () => this.value() is T
@@ -242,9 +242,9 @@ if (c.hasValue()) {
     const s: string = c.value();  // narrowed
 >s : string
 >c.value() : string | null
->c.value : () => string | null
+>c.value : stable () => string | null
 >c : Container<string>
->value : () => string | null
+>value : stable () => string | null
 }
 
 // --- Section 8: Negative - target not stable ---
@@ -259,7 +259,7 @@ interface BadTarget {
 // --- Section 9: Negative - narrowed type not assignable ---
 interface BadNarrowing {
     get: stable () => number | string;
->get : () => string | number
+>get : stable () => string | number
 
     check(): this.get() is boolean;  // should error: boolean not assignable to number | string
 >check : () => this.get() is boolean
@@ -278,7 +278,7 @@ r4.hasValue();  // called but not in a condition - no narrowing effect
 const v4: string | undefined = r4.value();  // full type, no narrowing
 >v4 : string | undefined
 >r4.value() : string | undefined
->r4.value : () => string | undefined
+>r4.value : stable () => string | undefined
 >r4 : Resource<string | undefined>
->value : () => string | undefined
+>value : stable () => string | undefined
 

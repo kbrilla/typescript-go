@@ -2,18 +2,18 @@
 
 === stableModifierBoundaries.ts ===
 declare const read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const stable: string = read(); // OK
 >stable : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 declare function unknownMutate(): void;
@@ -37,7 +37,7 @@ declare function delay(): Promise<void>;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     unknownMutate();
@@ -47,13 +47,13 @@ if (read() !== undefined) {
     const afterUnknownCall: string = read(); // preserved by ambient no-arg unknown-call rule
 >afterUnknownCall : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     unknownMutateWithArg(1);
@@ -64,13 +64,13 @@ if (read() !== undefined) {
     const afterUnknownCallWithArg: string = read(); // should error
 >afterUnknownCallWithArg : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invoke(() => {
@@ -89,13 +89,13 @@ if (read() !== undefined) {
     const afterCallbackCall: string = read(); // should error
 >afterCallbackCall : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const result = invoke(() => {
@@ -118,7 +118,7 @@ if (read() !== undefined) {
     const afterAssignedCallbackCall: string = read(); // should error
 >afterAssignedCallbackCall : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 let assignedCallbackResult: void;
@@ -127,7 +127,7 @@ let assignedCallbackResult: void;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     assignedCallbackResult = invoke(() => {
@@ -151,13 +151,13 @@ if (read() !== undefined) {
     const afterAssignmentExpressionCallbackCall: string = read(); // should error
 >afterAssignmentExpressionCallbackCall : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const indirectCallbackResult = invoke(pass(() => {
@@ -182,13 +182,13 @@ if (read() !== undefined) {
     const afterIndirectCallbackCall: string = read(); // should error
 >afterIndirectCallbackCall : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const conditionalCallbackResult = true
@@ -228,13 +228,13 @@ if (read() !== undefined) {
     const afterConditionalCallbackCall: string = read(); // should error
 >afterConditionalCallbackCall : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const noopCallback = () => {};
@@ -249,13 +249,13 @@ if (read() !== undefined) {
     const afterConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
 >afterConstNoopCallbackAlias : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const noopCallback = () => {};
@@ -274,7 +274,7 @@ if (read() !== undefined) {
     const afterAssignedConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
 >afterAssignedConstNoopCallbackAlias : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 let assignedNoopCallbackResult: void;
@@ -283,7 +283,7 @@ let assignedNoopCallbackResult: void;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const noopCallback = () => {};
@@ -303,13 +303,13 @@ if (read() !== undefined) {
     const afterAssignmentExprConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
 >afterAssignmentExprConstNoopCallbackAlias : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     let mutableNoopCallback = () => {};
@@ -337,13 +337,13 @@ if (read() !== undefined) {
     const afterMutableNoopCallbackAlias: string = read(); // should error
 >afterMutableNoopCallbackAlias : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const nonEmptyCallback = () => {
@@ -366,13 +366,13 @@ if (read() !== undefined) {
     const afterNonEmptyCallbackAlias: string = read(); // should error
 >afterNonEmptyCallbackAlias : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const callbacks = {
@@ -394,13 +394,13 @@ if (read() !== undefined) {
     const afterPropertyNoopCallbackAlias: string = read(); // should preserve
 >afterPropertyNoopCallbackAlias : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const callbacks = {
@@ -422,13 +422,13 @@ if (read() !== undefined) {
     const afterElementPropertyNoopCallbackAlias: string = read(); // should preserve
 >afterElementPropertyNoopCallbackAlias : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const callbacks = {
@@ -458,13 +458,13 @@ if (read() !== undefined) {
     const afterPropertyNonEmptyCallbackAlias: string = read(); // should error
 >afterPropertyNonEmptyCallbackAlias : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     let mutableCallbacks = {
@@ -504,13 +504,13 @@ if (read() !== undefined) {
     const afterMutablePropertyNoopCallbackAlias: string = read(); // should error
 >afterMutablePropertyNoopCallbackAlias : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invoke(pass(pass(() => {})));
@@ -525,13 +525,13 @@ if (read() !== undefined) {
     const afterNestedForwardedNoopCallback: string = read(); // should preserve
 >afterNestedForwardedNoopCallback : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invoke(pass(pass(() => {
@@ -554,47 +554,47 @@ if (read() !== undefined) {
     const afterNestedForwardedNonEmptyCallback: string = read(); // should error
 >afterNestedForwardedNonEmptyCallback : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const escapedRead = read;
->escapedRead : () => string | undefined
->read : () => string | undefined
+>escapedRead : stable () => string | undefined
+>read : stable () => string | undefined
 
     const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
 >afterAliasEscape : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     escapedRead;
->escapedRead : () => string | undefined
+>escapedRead : stable () => string | undefined
 }
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const indirect = pass(read);
->indirect : () => string | undefined
->pass(read) : () => string | undefined
+>indirect : stable () => string | undefined
+>pass(read) : stable () => string | undefined
 >pass : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     indirect;
->indirect : () => string | undefined
+>indirect : stable () => string | undefined
 
     const afterIndirectAliasEscape: string = read(); // should error
 >afterIndirectAliasEscape : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 
@@ -604,18 +604,18 @@ let reassignedRead: () => string | undefined;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     reassignedRead = read;
->reassignedRead = read : () => string | undefined
+>reassignedRead = read : stable () => string | undefined
 >reassignedRead : () => string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const afterReassignmentEscape: string = read(); // should error
 >afterReassignmentEscape : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     reassignedRead;
 >reassignedRead : () => string | undefined
@@ -627,7 +627,7 @@ async function testAwaitBoundary() {
     if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
         await delay();
@@ -638,7 +638,7 @@ async function testAwaitBoundary() {
         const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
 >afterAwait : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
     }
 }
 
@@ -648,7 +648,7 @@ async function testAwaitAssignmentBoundary() {
     if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
         const x = await delay();
@@ -663,7 +663,7 @@ async function testAwaitAssignmentBoundary() {
         const afterAwaitAssignment: string = read(); // should error
 >afterAwaitAssignment : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
     }
 }
 

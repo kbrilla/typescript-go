@@ -6,7 +6,7 @@
 // targets the tuple label "read", connecting it to the getter binding.
 
 declare function createSignal<T>(value: T): [
->createSignal : <T>(value: T) => [read: () => T, write: (value: T) => void]
+>createSignal : <T>(value: T) => [read: stable () => T, write: mutator (value: T) => void]
 >value : T
 
     read: stable () => T,
@@ -16,85 +16,85 @@ declare function createSignal<T>(value: T): [
 ];
 
 const [count, setCount] = createSignal<number | undefined>(0);
->count : () => number | undefined
->setCount : (value: number | undefined) => void
->createSignal<number | undefined>(0) : [read: () => number | undefined, write: (value: number | undefined) => void]
->createSignal : <T>(value: T) => [read: () => T, write: (value: T) => void]
+>count : stable () => number | undefined
+>setCount : mutator (value: number | undefined) => void
+>createSignal<number | undefined>(0) : [read: stable () => number | undefined, write: mutator (value: number | undefined) => void]
+>createSignal : <T>(value: T) => [read: stable () => T, write: mutator (value: T) => void]
 >0 : 0
 
 if (count() !== undefined) {
 >count() !== undefined : boolean
 >count() : number | undefined
->count : () => number | undefined
+>count : stable () => number | undefined
 >undefined : undefined
 
     count().toFixed(2); // OK — narrowed to number
 >count().toFixed(2) : string
 >count().toFixed : (fractionDigits?: number | undefined) => string
 >count() : number | undefined
->count : () => number | undefined
+>count : stable () => number | undefined
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
 
     setCount(undefined); // mutator: invalidates read → resets count() narrowing
 >setCount(undefined) : void
->setCount : (value: number | undefined) => void
+>setCount : mutator (value: number | undefined) => void
 >undefined : undefined
 
     // Post-call narrowing: argument is undefined → count() narrows to undefined
     const x: undefined = count();
 >x : undefined
 >count() : number | undefined
->count : () => number | undefined
+>count : stable () => number | undefined
 }
 
 // Section 2: Post-call narrowing preserves type through cross-binding
 const [value, setValue] = createSignal<string | undefined>("hello");
->value : () => string | undefined
->setValue : (value: string | undefined) => void
->createSignal<string | undefined>("hello") : [read: () => string | undefined, write: (value: string | undefined) => void]
->createSignal : <T>(value: T) => [read: () => T, write: (value: T) => void]
+>value : stable () => string | undefined
+>setValue : mutator (value: string | undefined) => void
+>createSignal<string | undefined>("hello") : [read: stable () => string | undefined, write: mutator (value: string | undefined) => void]
+>createSignal : <T>(value: T) => [read: stable () => T, write: mutator (value: T) => void]
 >"hello" : "hello"
 
 if (value() !== undefined) {
 >value() !== undefined : boolean
 >value() : string | undefined
->value : () => string | undefined
+>value : stable () => string | undefined
 >undefined : undefined
 
     value().toUpperCase(); // OK — narrowed to string
 >value().toUpperCase() : string
 >value().toUpperCase : () => string
 >value() : string | undefined
->value : () => string | undefined
+>value : stable () => string | undefined
 >toUpperCase : () => string
 
     setValue("world"); // arg is string → post-call narrows value() to string
 >setValue("world") : void
->setValue : (value: string | undefined) => void
+>setValue : mutator (value: string | undefined) => void
 >"world" : "world"
 
     value().toUpperCase(); // Should still work — narrowed to string
 >value().toUpperCase() : string
 >value().toUpperCase : () => string
 >value() : string | undefined
->value : () => string | undefined
+>value : stable () => string | undefined
 >toUpperCase : () => string
 
     setValue(undefined); // arg is undefined → post-call narrows to undefined
 >setValue(undefined) : void
->setValue : (value: string | undefined) => void
+>setValue : mutator (value: string | undefined) => void
 >undefined : undefined
 
     const y: undefined = value();
 >y : undefined
 >value() : string | undefined
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 
 // Section 3: Selective cross-binding — only invalidates targeted sibling
 declare function createDualSignal<A, B>(a: A, b: B): [
->createDualSignal : <A, B>(a: A, b: B) => [readA: () => A, readB: () => B, writeA: (value: A) => void, writeB: (value: B) => void]
+>createDualSignal : <A, B>(a: A, b: B) => [readA: stable () => A, readB: stable () => B, writeA: mutator (value: A) => void, writeB: mutator (value: B) => void]
 >a : A
 >b : B
 
@@ -109,12 +109,12 @@ declare function createDualSignal<A, B>(a: A, b: B): [
 ];
 
 const [getA, getB, setA, setB] = createDualSignal<string | undefined, number | undefined>("hello", 42);
->getA : () => string | undefined
->getB : () => number | undefined
->setA : (value: string | undefined) => void
->setB : (value: number | undefined) => void
->createDualSignal<string | undefined, number | undefined>("hello", 42) : [readA: () => string | undefined, readB: () => number | undefined, writeA: (value: string | undefined) => void, writeB: (value: number | undefined) => void]
->createDualSignal : <A, B>(a: A, b: B) => [readA: () => A, readB: () => B, writeA: (value: A) => void, writeB: (value: B) => void]
+>getA : stable () => string | undefined
+>getB : stable () => number | undefined
+>setA : mutator (value: string | undefined) => void
+>setB : mutator (value: number | undefined) => void
+>createDualSignal<string | undefined, number | undefined>("hello", 42) : [readA: stable () => string | undefined, readB: stable () => number | undefined, writeA: mutator (value: string | undefined) => void, writeB: mutator (value: number | undefined) => void]
+>createDualSignal : <A, B>(a: A, b: B) => [readA: stable () => A, readB: stable () => B, writeA: mutator (value: A) => void, writeB: mutator (value: B) => void]
 >"hello" : "hello"
 >42 : 42
 
@@ -122,78 +122,78 @@ if (getA() !== undefined && getB() !== undefined) {
 >getA() !== undefined && getB() !== undefined : boolean
 >getA() !== undefined : boolean
 >getA() : string | undefined
->getA : () => string | undefined
+>getA : stable () => string | undefined
 >undefined : undefined
 >getB() !== undefined : boolean
 >getB() : number | undefined
->getB : () => number | undefined
+>getB : stable () => number | undefined
 >undefined : undefined
 
     getA().toUpperCase(); // OK
 >getA().toUpperCase() : string
 >getA().toUpperCase : () => string
 >getA() : string | undefined
->getA : () => string | undefined
+>getA : stable () => string | undefined
 >toUpperCase : () => string
 
     getB().toFixed(2); // OK
 >getB().toFixed(2) : string
 >getB().toFixed : (fractionDigits?: number | undefined) => string
 >getB() : number | undefined
->getB : () => number | undefined
+>getB : stable () => number | undefined
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
 
     setB(undefined); // invalidates readB ONLY — NOT readA
 >setB(undefined) : void
->setB : (value: number | undefined) => void
+>setB : mutator (value: number | undefined) => void
 >undefined : undefined
 
     getA().toUpperCase(); // Should still work — setB doesn't target readA
 >getA().toUpperCase() : string
 >getA().toUpperCase : () => string
 >getA() : string | undefined
->getA : () => string | undefined
+>getA : stable () => string | undefined
 >toUpperCase : () => string
 
     // getB() is now invalidated
     const z: undefined = getB(); // post-call narrowing from setB(undefined)
 >z : undefined
 >getB() : number | undefined
->getB : () => number | undefined
+>getB : stable () => number | undefined
 }
 
 // Section 4: Cross-binding without narrowing (non-union type)
 declare function createCounter(): [
->createCounter : () => [read: () => number, increment: () => void]
+>createCounter : () => [read: stable () => number, increment: mutator () => void]
 
     read: stable () => number,
     increment: mutator () => void invalidates read
 ];
 
 const [getCount, increment] = createCounter();
->getCount : () => number
->increment : () => void
->createCounter() : [read: () => number, increment: () => void]
->createCounter : () => [read: () => number, increment: () => void]
+>getCount : stable () => number
+>increment : mutator () => void
+>createCounter() : [read: stable () => number, increment: mutator () => void]
+>createCounter : () => [read: stable () => number, increment: mutator () => void]
 
 const n1: number = getCount(); // number — no union, no narrowing benefit
 >n1 : number
 >getCount() : number
->getCount : () => number
+>getCount : stable () => number
 
 increment(); // invalidates read
 >increment() : void
->increment : () => void
+>increment : mutator () => void
 
 const n2: number = getCount(); // still number
 >n2 : number
 >getCount() : number
->getCount : () => number
+>getCount : stable () => number
 
 // Section 5: Grammar — invalidates clause on non-mutator should error
 declare function createBadSignal<T>(value: T): [
->createBadSignal : <T>(value: T) => [read: () => T, write: (value: T) => void, invalidates, read]
+>createBadSignal : <T>(value: T) => [read: stable () => T, write: (value: T) => void, invalidates, read]
 >value : T
 
     read: stable () => T,
@@ -204,7 +204,7 @@ declare function createBadSignal<T>(value: T): [
 
 // Section 6: Cross-binding with null narrowing and sequential mutations
 declare function createNullable(): [
->createNullable : () => [read: () => string | null, write: (value: string | null) => void]
+>createNullable : () => [read: stable () => string | null, write: mutator (value: string | null) => void]
 
     read: stable () => string | null,
     write: mutator (value: string | null) => void invalidates read,
@@ -213,46 +213,46 @@ declare function createNullable(): [
 ];
 
 const [getText, setText] = createNullable();
->getText : () => string | null
->setText : (value: string | null) => void
->createNullable() : [read: () => string | null, write: (value: string | null) => void]
->createNullable : () => [read: () => string | null, write: (value: string | null) => void]
+>getText : stable () => string | null
+>setText : mutator (value: string | null) => void
+>createNullable() : [read: stable () => string | null, write: mutator (value: string | null) => void]
+>createNullable : () => [read: stable () => string | null, write: mutator (value: string | null) => void]
 
 if (getText() !== null) {
 >getText() !== null : boolean
 >getText() : string | null
->getText : () => string | null
+>getText : stable () => string | null
 
     getText().length; // OK — narrowed to string
 >getText().length : number
 >getText() : string | null
->getText : () => string | null
+>getText : stable () => string | null
 >length : number
 
     setText(null); // post-call narrows getText() to null
 >setText(null) : void
->setText : (value: string | null) => void
+>setText : mutator (value: string | null) => void
 
     const nullVal: null = getText(); // correctly null
 >nullVal : null
 >getText() : string | null
->getText : () => string | null
+>getText : stable () => string | null
 
     setText("hello"); // post-call narrows getText() back to string
 >setText("hello") : void
->setText : (value: string | null) => void
+>setText : mutator (value: string | null) => void
 >"hello" : "hello"
 
     getText().length; // OK — narrowed back to string
 >getText().length : number
 >getText() : string | null
->getText : () => string | null
+>getText : stable () => string | null
 >length : number
 }
 
 // Section 7: Multiple mutators targeting same stable endpoint
 declare function createMultiMutator<T>(): [
->createMultiMutator : <T>() => [read: () => T | undefined, set: (value: T) => void, clear: () => void]
+>createMultiMutator : <T>() => [read: stable () => T | undefined, set: mutator (value: T) => void, clear: mutator () => void]
 
     read: stable () => T | undefined,
     set: mutator (value: T) => void invalidates read,
@@ -262,50 +262,50 @@ declare function createMultiMutator<T>(): [
 ];
 
 const [getVal, setVal, clearVal] = createMultiMutator<string>();
->getVal : () => string | undefined
->setVal : (value: string) => void
->clearVal : () => void
->createMultiMutator<string>() : [read: () => string | undefined, set: (value: string) => void, clear: () => void]
->createMultiMutator : <T>() => [read: () => T | undefined, set: (value: T) => void, clear: () => void]
+>getVal : stable () => string | undefined
+>setVal : mutator (value: string) => void
+>clearVal : mutator () => void
+>createMultiMutator<string>() : [read: stable () => string | undefined, set: mutator (value: string) => void, clear: mutator () => void]
+>createMultiMutator : <T>() => [read: stable () => T | undefined, set: mutator (value: T) => void, clear: mutator () => void]
 
 if (getVal() !== undefined) {
 >getVal() !== undefined : boolean
 >getVal() : string | undefined
->getVal : () => string | undefined
+>getVal : stable () => string | undefined
 >undefined : undefined
 
     getVal().toUpperCase(); // OK — narrowed to string
 >getVal().toUpperCase() : string
 >getVal().toUpperCase : () => string
 >getVal() : string | undefined
->getVal : () => string | undefined
+>getVal : stable () => string | undefined
 >toUpperCase : () => string
 
     clearVal(); // invalidates read — no args, full reset
 >clearVal() : void
->clearVal : () => void
+>clearVal : mutator () => void
 
     getVal(); // back to string | undefined (no post-call narrowing without args)
 >getVal() : string | undefined
->getVal : () => string | undefined
+>getVal : stable () => string | undefined
 }
 
 if (getVal() !== undefined) {
 >getVal() !== undefined : boolean
 >getVal() : string | undefined
->getVal : () => string | undefined
+>getVal : stable () => string | undefined
 >undefined : undefined
 
     setVal("new"); // invalidates read, post-call narrows to string
 >setVal("new") : void
->setVal : (value: string) => void
+>setVal : mutator (value: string) => void
 >"new" : "new"
 
     getVal().toUpperCase(); // OK — post-call narrowed to string
 >getVal().toUpperCase() : string
 >getVal().toUpperCase : () => string
 >getVal() : string | undefined
->getVal : () => string | undefined
+>getVal : stable () => string | undefined
 >toUpperCase : () => string
 }
 

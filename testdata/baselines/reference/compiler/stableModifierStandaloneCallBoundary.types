@@ -75,10 +75,10 @@ if (value() !== undefined) {
 
 // === Section 2: Same-receiver method calls are transparent (getter parity) ===
 declare const store: {
->store : { read: () => string | undefined; clear(): void; }
+>store : { read: stable () => string | undefined; clear(): void; }
 
     read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
     clear(): void;
 >clear : () => void
@@ -88,32 +88,32 @@ declare const store: {
 if (store.read() !== undefined) {
 >store.read() !== undefined : boolean
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
 >undefined : undefined
 
     store.clear();
 >store.clear() : void
 >store.clear : () => void
->store : { read: () => string | undefined; clear(): void; }
+>store : { read: stable () => string | undefined; clear(): void; }
 >clear : () => void
 
     const s: string = store.read(); // Transparent - getter parity: method calls don't invalidate narrowing
 >s : string
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
 }
 
 // === Section 3: Member stable with standalone call ===
 if (store.read() !== undefined) {
 >store.read() !== undefined : boolean
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
 >undefined : undefined
 
     unknownFunc();
@@ -123,9 +123,9 @@ if (store.read() !== undefined) {
     const s: string = store.read(); // Should preserve - standalone call is unrelated to store
 >s : string
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
 }
 
 // === Section 4: Mixed patterns ===
@@ -136,9 +136,9 @@ declare const otherStore: { doSomething(): void };
 if (store.read() !== undefined) {
 >store.read() !== undefined : boolean
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
 >undefined : undefined
 
     otherStore.doSomething();
@@ -159,8 +159,8 @@ if (store.read() !== undefined) {
     const s: string = store.read(); // Should preserve through all unrelated calls
 >s : string
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
 }
 

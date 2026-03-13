@@ -3,7 +3,7 @@
 === stableModifierTier2.ts ===
 // Candidate Tier 2 patterns: local alias-preserving forwarding and helper passthrough.
 declare const read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
 declare function pass<T>(x: T): T;
 >pass : <T>(x: T) => T
@@ -16,13 +16,13 @@ declare function useReader(fn: () => string | undefined): void;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const stable: string = read(); // baseline sanity check: still narrowed before boundaries
 >stable : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     stable;
 >stable : string
@@ -31,26 +31,26 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Tier 2 precision target: inline trivial passthrough lambda should preserve narrowing.
     const fwd = ((x) => x)(read);
->fwd : () => string | undefined
->((x) => x)(read) : () => string | undefined
->((x) => x) : (x: () => string | undefined) => () => string | undefined
->(x) => x : (x: () => string | undefined) => () => string | undefined
->x : () => string | undefined
->x : () => string | undefined
->read : () => string | undefined
+>fwd : stable () => string | undefined
+>((x) => x)(read) : stable () => string | undefined
+>((x) => x) : (x: stable () => string | undefined) => stable () => string | undefined
+>(x) => x : (x: stable () => string | undefined) => stable () => string | undefined
+>x : stable () => string | undefined
+>x : stable () => string | undefined
+>read : stable () => string | undefined
 
     fwd;
->fwd : () => string | undefined
+>fwd : stable () => string | undefined
 
     const afterInlinePassthrough: string = read(); // should stay narrowed
 >afterInlinePassthrough : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterInlinePassthrough;
 >afterInlinePassthrough : string
@@ -59,7 +59,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Tier 2 precision target: local const helper identifier with trivial passthrough body.
@@ -70,18 +70,18 @@ if (read() !== undefined) {
 >x : T
 
     const forwarded = localId(read);
->forwarded : () => string | undefined
->localId(read) : () => string | undefined
+>forwarded : stable () => string | undefined
+>localId(read) : stable () => string | undefined
 >localId : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     forwarded;
->forwarded : () => string | undefined
+>forwarded : stable () => string | undefined
 
     const afterConstHelperPassthrough: string = read(); // should stay narrowed
 >afterConstHelperPassthrough : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterConstHelperPassthrough;
 >afterConstHelperPassthrough : string
@@ -90,7 +90,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Tier 2 precision target: const alias-chain to trivial passthrough helper should preserve narrowing.
@@ -105,18 +105,18 @@ if (read() !== undefined) {
 >localId : <T>(x: T) => T
 
     const forwarded = localId2(read);
->forwarded : () => string | undefined
->localId2(read) : () => string | undefined
+>forwarded : stable () => string | undefined
+>localId2(read) : stable () => string | undefined
 >localId2 : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     forwarded;
->forwarded : () => string | undefined
+>forwarded : stable () => string | undefined
 
     const afterConstHelperAliasChain: string = read(); // should stay narrowed
 >afterConstHelperAliasChain : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterConstHelperAliasChain;
 >afterConstHelperAliasChain : string
@@ -125,7 +125,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Tier 2 precision target: 2-hop const alias-chain to trivial passthrough helper should preserve narrowing.
@@ -144,18 +144,18 @@ if (read() !== undefined) {
 >localId2 : <T>(x: T) => T
 
     const forwarded = localId3(read);
->forwarded : () => string | undefined
->localId3(read) : () => string | undefined
+>forwarded : stable () => string | undefined
+>localId3(read) : stable () => string | undefined
 >localId3 : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     forwarded;
->forwarded : () => string | undefined
+>forwarded : stable () => string | undefined
 
     const afterConstHelperTwoHopAliasChain: string = read(); // should stay narrowed
 >afterConstHelperTwoHopAliasChain : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterConstHelperTwoHopAliasChain;
 >afterConstHelperTwoHopAliasChain : string
@@ -164,7 +164,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Tier 2 precision target: local function declaration helper with trivial passthrough body.
@@ -176,18 +176,18 @@ if (read() !== undefined) {
 >x : T
     }
     const forwarded = localFnId(read);
->forwarded : () => string | undefined
->localFnId(read) : () => string | undefined
+>forwarded : stable () => string | undefined
+>localFnId(read) : stable () => string | undefined
 >localFnId : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     forwarded;
->forwarded : () => string | undefined
+>forwarded : stable () => string | undefined
 
     const stillString: string = read(); // should stay narrowed
 >stillString : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     stillString;
 >stillString : string
@@ -196,7 +196,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Tier 2 precision target: expression-statement passthrough via local const helper should preserve narrowing.
@@ -207,14 +207,14 @@ if (read() !== undefined) {
 >x : T
 
     localId(read);
->localId(read) : () => string | undefined
+>localId(read) : stable () => string | undefined
 >localId : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const afterExprStmtConstHelper: string = read(); // should stay narrowed
 >afterExprStmtConstHelper : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterExprStmtConstHelper;
 >afterExprStmtConstHelper : string
@@ -223,7 +223,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Tier 2 precision target: expression-statement passthrough via local function declaration should preserve narrowing.
@@ -235,14 +235,14 @@ if (read() !== undefined) {
 >x : T
     }
     localFnId(read);
->localFnId(read) : () => string | undefined
+>localFnId(read) : stable () => string | undefined
 >localFnId : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const afterExprStmtFunctionDecl: string = read(); // should stay narrowed
 >afterExprStmtFunctionDecl : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterExprStmtFunctionDecl;
 >afterExprStmtFunctionDecl : string
@@ -251,7 +251,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Conservative boundary: non-trivial helper body should still invalidate prior narrowing.
@@ -264,18 +264,18 @@ if (read() !== undefined) {
 >x : T
     }
     const forwarded = localFnWrap(read);
->forwarded : () => () => string | undefined
->localFnWrap(read) : () => () => string | undefined
+>forwarded : () => stable () => string | undefined
+>localFnWrap(read) : () => stable () => string | undefined
 >localFnWrap : <T>(x: T) => () => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     forwarded;
->forwarded : () => () => string | undefined
+>forwarded : () => stable () => string | undefined
 
     const afterNonTrivialFnHelper: string = read(); // current conservative: error
 >afterNonTrivialFnHelper : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterNonTrivialFnHelper;
 >afterNonTrivialFnHelper : string
@@ -284,7 +284,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Conservative boundary: mutable helper can be reassigned and must invalidate prior narrowing.
@@ -300,18 +300,18 @@ if (read() !== undefined) {
 >pass : <T>(x: T) => T
 
     const forwarded = localMaybeId(read);
->forwarded : () => string | undefined
->localMaybeId(read) : () => string | undefined
+>forwarded : stable () => string | undefined
+>localMaybeId(read) : stable () => string | undefined
 >localMaybeId : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     forwarded;
->forwarded : () => string | undefined
+>forwarded : stable () => string | undefined
 
     const afterMutableHelperPassthrough: string = read(); // current conservative: error
 >afterMutableHelperPassthrough : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterMutableHelperPassthrough;
 >afterMutableHelperPassthrough : string
@@ -320,7 +320,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Conservative boundary: mutable alias chain remains invalidating after reassignment.
@@ -340,18 +340,18 @@ if (read() !== undefined) {
 >pass : <T>(x: T) => T
 
     const forwarded = maybeAlias(read);
->forwarded : () => string | undefined
->maybeAlias(read) : () => string | undefined
+>forwarded : stable () => string | undefined
+>maybeAlias(read) : stable () => string | undefined
 >maybeAlias : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     forwarded;
->forwarded : () => string | undefined
+>forwarded : stable () => string | undefined
 
     const afterMutableAliasChain: string = read(); // current conservative: error
 >afterMutableAliasChain : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterMutableAliasChain;
 >afterMutableAliasChain : string
@@ -360,7 +360,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Current guardrail: bare standalone helper expression-statement call is treated as unrelated and preserves narrowing.
@@ -376,14 +376,14 @@ if (read() !== undefined) {
 >pass : <T>(x: T) => T
 
     localMaybeId(read);
->localMaybeId(read) : () => string | undefined
+>localMaybeId(read) : stable () => string | undefined
 >localMaybeId : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const afterExprStmtMutableHelper: string = read(); // currently preserved under standalone-call unrelated heuristic
 >afterExprStmtMutableHelper : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterExprStmtMutableHelper;
 >afterExprStmtMutableHelper : string
@@ -392,7 +392,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Current guardrail: bare standalone helper expression-statement call is treated as unrelated and preserves narrowing.
@@ -405,14 +405,14 @@ if (read() !== undefined) {
 >x : T
     }
     localFnWrap(read);
->localFnWrap(read) : () => () => string | undefined
+>localFnWrap(read) : () => stable () => string | undefined
 >localFnWrap : <T>(x: T) => () => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const afterExprStmtNonTrivialHelper: string = read(); // currently preserved under standalone-call unrelated heuristic
 >afterExprStmtNonTrivialHelper : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterExprStmtNonTrivialHelper;
 >afterExprStmtNonTrivialHelper : string
@@ -421,7 +421,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Conservative boundary: mutable helper wrapped in a further helper call should invalidate prior narrowing.
@@ -439,14 +439,14 @@ if (read() !== undefined) {
     useReader(localMaybeId(read));
 >useReader(localMaybeId(read)) : void
 >useReader : (fn: () => string | undefined) => void
->localMaybeId(read) : () => string | undefined
+>localMaybeId(read) : stable () => string | undefined
 >localMaybeId : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const afterWrappedMutableHelperPassthrough: string = read(); // current conservative: error
 >afterWrappedMutableHelperPassthrough : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterWrappedMutableHelperPassthrough;
 >afterWrappedMutableHelperPassthrough : string
@@ -455,7 +455,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Conservative boundary: non-trivial helper wrapped in a further helper call should invalidate prior narrowing.
@@ -473,14 +473,14 @@ if (read() !== undefined) {
     useReader(localFnWrap(read));
 >useReader(localFnWrap(read)) : void
 >useReader : (fn: () => string | undefined) => void
->localFnWrap(read) : () => string | undefined
+>localFnWrap(read) : stable () => string | undefined
 >localFnWrap : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const afterWrappedNonTrivialFnHelper: string = read(); // current conservative: error
 >afterWrappedNonTrivialFnHelper : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterWrappedNonTrivialFnHelper;
 >afterWrappedNonTrivialFnHelper : string
@@ -489,23 +489,23 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // Tier 2 precision target: ambient stable helper passthrough preserves narrowing.
     const forwarded = pass(read);
->forwarded : () => string | undefined
->pass(read) : () => string | undefined
+>forwarded : stable () => string | undefined
+>pass(read) : stable () => string | undefined
 >pass : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     forwarded;
->forwarded : () => string | undefined
+>forwarded : stable () => string | undefined
 
     const afterAliasPreservingPass: string = read(); // should stay narrowed
 >afterAliasPreservingPass : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterAliasPreservingPass;
 >afterAliasPreservingPass : string
@@ -514,21 +514,21 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     // current conservative: passing read endpoint through a helper call invalidates prior narrowing
     useReader(pass(read));
 >useReader(pass(read)) : void
 >useReader : (fn: () => string | undefined) => void
->pass(read) : () => string | undefined
+>pass(read) : stable () => string | undefined
 >pass : <T>(x: T) => T
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const afterHelperPassthrough: string = read(); // current conservative: error
 >afterHelperPassthrough : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterHelperPassthrough;
 >afterHelperPassthrough : string

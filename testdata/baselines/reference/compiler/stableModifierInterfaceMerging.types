@@ -5,7 +5,7 @@
 // When both declarations have stable, the modifier survives.
 interface StableAgreed {
     value: stable () => string | undefined;
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 interface StableAgreed {
     other(): void;
@@ -18,18 +18,18 @@ declare const agreed: StableAgreed;
 if (agreed.value() !== undefined) {
 >agreed.value() !== undefined : boolean
 >agreed.value() : string | undefined
->agreed.value : () => string | undefined
+>agreed.value : stable () => string | undefined
 >agreed : StableAgreed
->value : () => string | undefined
+>value : stable () => string | undefined
 >undefined : undefined
 
     agreed.value().toUpperCase(); // OK — stable survives merging when both agree
 >agreed.value().toUpperCase() : string
 >agreed.value().toUpperCase : () => string
 >agreed.value() : string | undefined
->agreed.value : () => string | undefined
+>agreed.value : stable () => string | undefined
 >agreed : StableAgreed
->value : () => string | undefined
+>value : stable () => string | undefined
 >toUpperCase : () => string
 }
 
@@ -38,11 +38,11 @@ if (agreed.value() !== undefined) {
 // type (not the symbol), the first declaration's type is used → stable survives.
 interface StableFirstWins {
     value: stable () => string | undefined;
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 interface StableFirstWins {
     value: () => string | undefined; // different type annotation — no stable
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 
 declare const firstWins: StableFirstWins;
@@ -51,18 +51,18 @@ declare const firstWins: StableFirstWins;
 if (firstWins.value() !== undefined) {
 >firstWins.value() !== undefined : boolean
 >firstWins.value() : string | undefined
->firstWins.value : () => string | undefined
+>firstWins.value : stable () => string | undefined
 >firstWins : StableFirstWins
->value : () => string | undefined
+>value : stable () => string | undefined
 >undefined : undefined
 
     firstWins.value().toUpperCase(); // stable from first declaration
 >firstWins.value().toUpperCase() : string
 >firstWins.value().toUpperCase : () => string
 >firstWins.value() : string | undefined
->firstWins.value : () => string | undefined
+>firstWins.value : stable () => string | undefined
 >firstWins : StableFirstWins
->value : () => string | undefined
+>value : stable () => string | undefined
 >toUpperCase : () => string
 }
 
@@ -103,11 +103,11 @@ if (lost.value() !== undefined) {
 // If the resolved signature has stable, narrowing applies.
 interface StableA {
     value: stable () => string | undefined;
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 interface StableB {
     value: stable () => string | undefined;
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 
 declare const both: StableA & StableB;
@@ -116,18 +116,18 @@ declare const both: StableA & StableB;
 if (both.value() !== undefined) {
 >both.value() !== undefined : boolean
 >both.value() : string | undefined
->both.value : (() => string | undefined) & (() => string | undefined)
+>both.value : (stable () => string | undefined) & (stable () => string | undefined)
 >both : StableA & StableB
->value : (() => string | undefined) & (() => string | undefined)
+>value : (stable () => string | undefined) & (stable () => string | undefined)
 >undefined : undefined
 
     both.value().toUpperCase(); // OK — stable present in both constituents
 >both.value().toUpperCase() : string
 >both.value().toUpperCase : () => string
 >both.value() : string
->both.value : (() => string | undefined) & (() => string | undefined)
+>both.value : (stable () => string | undefined) & (stable () => string | undefined)
 >both : StableA & StableB
->value : (() => string | undefined) & (() => string | undefined)
+>value : (stable () => string | undefined) & (stable () => string | undefined)
 >toUpperCase : () => string
 }
 
@@ -136,7 +136,7 @@ if (both.value() !== undefined) {
 // Since WithStable has the stable modifier, narrowing survives.
 interface WithStable {
     getValue: stable () => number | undefined;
->getValue : () => number | undefined
+>getValue : stable () => number | undefined
 }
 interface WithoutStable {
     getValue: () => number | undefined;
@@ -149,18 +149,18 @@ declare const mixed: WithStable & WithoutStable;
 if (mixed.getValue() !== undefined) {
 >mixed.getValue() !== undefined : boolean
 >mixed.getValue() : number | undefined
->mixed.getValue : (() => number | undefined) & (() => number | undefined)
+>mixed.getValue : (stable () => number | undefined) & (() => number | undefined)
 >mixed : WithStable & WithoutStable
->getValue : (() => number | undefined) & (() => number | undefined)
+>getValue : (stable () => number | undefined) & (() => number | undefined)
 >undefined : undefined
 
     mixed.getValue().toFixed(2); // OK — stable from first constituent survives intersection
 >mixed.getValue().toFixed(2) : string
 >mixed.getValue().toFixed : (fractionDigits?: number | undefined) => string
 >mixed.getValue() : number
->mixed.getValue : (() => number | undefined) & (() => number | undefined)
+>mixed.getValue : (stable () => number | undefined) & (() => number | undefined)
 >mixed : WithStable & WithoutStable
->getValue : (() => number | undefined) & (() => number | undefined)
+>getValue : (stable () => number | undefined) & (() => number | undefined)
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
 }
@@ -169,15 +169,15 @@ if (mixed.getValue() !== undefined) {
 // Same first-declaration-wins behavior applies to mutator.
 interface MutatorAgreed {
     value: stable () => string | undefined;
->value : () => string | undefined
+>value : stable () => string | undefined
 
     set: mutator (v: string | undefined) => void;
->set : (v: string | undefined) => void
+>set : mutator (v: string | undefined) => void
 >v : string | undefined
 }
 interface MutatorAgreed {
     set: (v: string | undefined) => void; // no mutator modifier
->set : (v: string | undefined) => void
+>set : mutator (v: string | undefined) => void
 >v : string | undefined
 }
 
@@ -187,30 +187,30 @@ declare const mutAgreed: MutatorAgreed;
 if (mutAgreed.value() !== undefined) {
 >mutAgreed.value() !== undefined : boolean
 >mutAgreed.value() : string | undefined
->mutAgreed.value : () => string | undefined
+>mutAgreed.value : stable () => string | undefined
 >mutAgreed : MutatorAgreed
->value : () => string | undefined
+>value : stable () => string | undefined
 >undefined : undefined
 
     mutAgreed.set(undefined); // mutator from first declaration applies
 >mutAgreed.set(undefined) : void
->mutAgreed.set : (v: string | undefined) => void
+>mutAgreed.set : mutator (v: string | undefined) => void
 >mutAgreed : MutatorAgreed
->set : (v: string | undefined) => void
+>set : mutator (v: string | undefined) => void
 >undefined : undefined
 
     mutAgreed.value(); // should be reset by mutator
 >mutAgreed.value() : string | undefined
->mutAgreed.value : () => string | undefined
+>mutAgreed.value : stable () => string | undefined
 >mutAgreed : MutatorAgreed
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 
 // Section 7: Interface extends — stable preserved in extension
 // Extension (not merging) preserves stable through inheritance.
 interface Base {
     value: stable () => string | undefined;
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 interface Derived extends Base {
     other(): void;
@@ -223,18 +223,18 @@ declare const derived: Derived;
 if (derived.value() !== undefined) {
 >derived.value() !== undefined : boolean
 >derived.value() : string | undefined
->derived.value : () => string | undefined
+>derived.value : stable () => string | undefined
 >derived : Derived
->value : () => string | undefined
+>value : stable () => string | undefined
 >undefined : undefined
 
     derived.value().toUpperCase(); // OK — stable inherited from Base
 >derived.value().toUpperCase() : string
 >derived.value().toUpperCase : () => string
 >derived.value() : string | undefined
->derived.value : () => string | undefined
+>derived.value : stable () => string | undefined
 >derived : Derived
->value : () => string | undefined
+>value : stable () => string | undefined
 >toUpperCase : () => string
 }
 
@@ -243,7 +243,7 @@ if (derived.value() !== undefined) {
 // the derived declaration takes priority over the base.
 interface BaseStable {
     value: stable () => string | undefined;
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 interface DerivedNoStable extends BaseStable {
     value: () => string | undefined; // overrides base without stable
@@ -279,7 +279,7 @@ interface BaseNoStable {
 }
 interface DerivedStable extends BaseNoStable {
     value: stable () => string | undefined; // adds stable
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 
 declare const addedStable: DerivedStable;
@@ -288,18 +288,18 @@ declare const addedStable: DerivedStable;
 if (addedStable.value() !== undefined) {
 >addedStable.value() !== undefined : boolean
 >addedStable.value() : string | undefined
->addedStable.value : () => string | undefined
+>addedStable.value : stable () => string | undefined
 >addedStable : DerivedStable
->value : () => string | undefined
+>value : stable () => string | undefined
 >undefined : undefined
 
     addedStable.value().toUpperCase(); // stable added by derived
 >addedStable.value().toUpperCase() : string
 >addedStable.value().toUpperCase : () => string
 >addedStable.value() : string | undefined
->addedStable.value : () => string | undefined
+>addedStable.value : stable () => string | undefined
 >addedStable : DerivedStable
->value : () => string | undefined
+>value : stable () => string | undefined
 >toUpperCase : () => string
 }
 
@@ -307,10 +307,10 @@ if (addedStable.value() !== undefined) {
 // Same behavior for stable/mutator as method modifiers.
 interface MethodMerge {
     stable getValue(): string | undefined;
->getValue : () => string | undefined
+>getValue : stable () => string | undefined
 
     mutator setValue(v: string | undefined): void;
->setValue : (v: string | undefined) => void
+>setValue : mutator (v: string | undefined) => void
 >v : string | undefined
 }
 interface MethodMerge {
@@ -324,31 +324,31 @@ declare const methodMerge: MethodMerge;
 if (methodMerge.getValue() !== undefined) {
 >methodMerge.getValue() !== undefined : boolean
 >methodMerge.getValue() : string | undefined
->methodMerge.getValue : () => string | undefined
+>methodMerge.getValue : stable () => string | undefined
 >methodMerge : MethodMerge
->getValue : () => string | undefined
+>getValue : stable () => string | undefined
 >undefined : undefined
 
     methodMerge.getValue().toUpperCase(); // OK — stable method survives merge
 >methodMerge.getValue().toUpperCase() : string
 >methodMerge.getValue().toUpperCase : () => string
 >methodMerge.getValue() : string | undefined
->methodMerge.getValue : () => string | undefined
+>methodMerge.getValue : stable () => string | undefined
 >methodMerge : MethodMerge
->getValue : () => string | undefined
+>getValue : stable () => string | undefined
 >toUpperCase : () => string
 
     methodMerge.setValue(undefined); // mutator resets
 >methodMerge.setValue(undefined) : void
->methodMerge.setValue : (v: string | undefined) => void
+>methodMerge.setValue : mutator (v: string | undefined) => void
 >methodMerge : MethodMerge
->setValue : (v: string | undefined) => void
+>setValue : mutator (v: string | undefined) => void
 >undefined : undefined
 
     methodMerge.getValue(); // back to string | undefined
 >methodMerge.getValue() : string | undefined
->methodMerge.getValue : () => string | undefined
+>methodMerge.getValue : stable () => string | undefined
 >methodMerge : MethodMerge
->getValue : () => string | undefined
+>getValue : stable () => string | undefined
 }
 

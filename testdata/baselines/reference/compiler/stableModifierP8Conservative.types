@@ -32,7 +32,7 @@ declare const getterModel: {
 };
 
 declare const identityModel: stable () => Shape;
->identityModel : () => Shape
+>identityModel : stable () => Shape
 
 if (getterModel.value.kind === "circle") {
 >getterModel.value.kind === "circle" : boolean
@@ -63,7 +63,7 @@ if (identityModel().kind === "circle") {
 >identityModel().kind === "circle" : boolean
 >identityModel().kind : "circle" | "square"
 >identityModel() : Shape
->identityModel : () => Shape
+>identityModel : stable () => Shape
 >kind : "circle" | "square"
 >"circle" : "circle"
 
@@ -75,7 +75,7 @@ if (identityModel().kind === "circle") {
 >identityAfterUnknown : number
 >identityModel().radius : number
 >identityModel() : Shape
->identityModel : () => Shape
+>identityModel : stable () => Shape
 >radius : number
 
     identityAfterUnknown;
@@ -86,7 +86,7 @@ if (identityModel().kind === "circle") {
 >identityModel().kind === "circle" : boolean
 >identityModel().kind : "circle" | "square"
 >identityModel() : Shape
->identityModel : () => Shape
+>identityModel : stable () => Shape
 >kind : "circle" | "square"
 >"circle" : "circle"
 
@@ -99,7 +99,7 @@ if (identityModel().kind === "circle") {
 >identityAfterUnknownWithArg : number
 >identityModel().radius : number
 >identityModel() : Shape
->identityModel : () => Shape
+>identityModel : stable () => Shape
 >radius : number
 
     identityAfterUnknownWithArg;

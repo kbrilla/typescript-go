@@ -8839,11 +8839,14 @@ func (node *FunctionTypeNode) ForEachChild(v Visitor) bool {
 
 func (node *FunctionTypeNode) VisitEachChild(v *NodeVisitor) *Node {
 	result := v.Factory.UpdateFunctionTypeNode(node, v.visitModifiers(node.Modifiers()), v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
+	keyParameter := v.visitNode(node.KeyParameter)
+	wrappedType := v.visitNode(node.WrappedType)
+	linksClause := v.visitNodes(node.LinksClause)
 	if result != node.AsNode() {
 		resultFn := result.AsFunctionTypeNode()
-		resultFn.KeyParameter = node.KeyParameter
-		resultFn.WrappedType = node.WrappedType
-		resultFn.LinksClause = node.LinksClause
+		resultFn.KeyParameter = keyParameter
+		resultFn.WrappedType = wrappedType
+		resultFn.LinksClause = linksClause
 		resultFn.LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
 	}
 	return result

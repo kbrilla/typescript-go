@@ -13,24 +13,24 @@ type Animal = { kind: "cat"; meow: boolean } | { kind: "dog"; bark: boolean };
 >bark : boolean
 
 declare const readAnimal: stable () => Animal | undefined;
->readAnimal : () => Animal | undefined
+>readAnimal : stable () => Animal | undefined
 
 declare const read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
 // Optional chain as discriminant — should narrow.
 if (readAnimal()?.kind === "cat") {
 >readAnimal()?.kind === "cat" : boolean
 >readAnimal()?.kind : "cat" | "dog" | undefined
 >readAnimal() : Animal | undefined
->readAnimal : () => Animal | undefined
+>readAnimal : stable () => Animal | undefined
 >kind : "cat" | "dog" | undefined
 >"cat" : "cat"
 
     const cat = readAnimal();
 >cat : Animal | undefined
 >readAnimal() : Animal | undefined
->readAnimal : () => Animal | undefined
+>readAnimal : stable () => Animal | undefined
 
     cat;
 >cat : { kind: "cat"; meow: boolean; }
@@ -41,13 +41,13 @@ if (typeof read() === "string") {
 >typeof read() === "string" : boolean
 >typeof read() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >"string" : "string"
 
     const str: string = read();
 >str : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     str;
 >str : string
@@ -57,7 +57,7 @@ if (typeof read() === "string") {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const upper = read()!.toUpperCase();
@@ -66,7 +66,7 @@ if (read() !== undefined) {
 >read()!.toUpperCase : () => string
 >read()! : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >toUpperCase : () => string
 
     const result: string = upper;
@@ -79,7 +79,7 @@ if (read() !== undefined) {
 
 // Nested optional chain on stable discriminant.
 declare const readNested: stable () => { inner?: Animal } | undefined;
->readNested : () => { inner?: Animal | undefined; } | undefined
+>readNested : stable () => { inner?: Animal | undefined; } | undefined
 >inner : Animal | undefined
 
 if (readNested()?.inner?.kind === "cat") {
@@ -87,7 +87,7 @@ if (readNested()?.inner?.kind === "cat") {
 >readNested()?.inner?.kind : "cat" | "dog" | undefined
 >readNested()?.inner : Animal | undefined
 >readNested() : { inner?: Animal | undefined; } | undefined
->readNested : () => { inner?: Animal | undefined; } | undefined
+>readNested : stable () => { inner?: Animal | undefined; } | undefined
 >inner : Animal | undefined
 >kind : "cat" | "dog" | undefined
 >"cat" : "cat"
@@ -95,7 +95,7 @@ if (readNested()?.inner?.kind === "cat") {
     const nested = readNested();
 >nested : { inner?: Animal | undefined; } | undefined
 >readNested() : { inner?: Animal | undefined; } | undefined
->readNested : () => { inner?: Animal | undefined; } | undefined
+>readNested : stable () => { inner?: Animal | undefined; } | undefined
 
     nested;
 >nested : { inner?: Animal | undefined; }
@@ -105,7 +105,7 @@ if (readNested()?.inner?.kind === "cat") {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const len = read()!.length;
@@ -113,7 +113,7 @@ if (read() !== undefined) {
 >read()!.length : number
 >read()! : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >length : number
 
     const n: number = len;
@@ -126,7 +126,7 @@ if (read() !== undefined) {
     const stillNarrowed: string = read();
 >stillNarrowed : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     stillNarrowed;
 >stillNarrowed : string
@@ -136,14 +136,14 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const template = `value: ${read()}`;
 >template : string
 >`value: ${read()}` : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const s: string = template;
 >s : string
@@ -156,12 +156,12 @@ if (read() !== undefined) {
 // Truthiness narrowing + stable.
 if (read()) {
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const truthy: string = read();
 >truthy : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     truthy;
 >truthy : string
@@ -172,12 +172,12 @@ if (!!read()) {
 >!!read() : boolean
 >!read() : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const doubleNeg: string = read();
 >doubleNeg : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     doubleNeg;
 >doubleNeg : string
@@ -187,12 +187,12 @@ if (!!read()) {
 if (read() != null) {
 >read() != null : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const notNull: string = read();
 >notNull : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     notNull;
 >notNull : string
@@ -202,13 +202,13 @@ if (read() != null) {
 if (read() === "hello") {
 >read() === "hello" : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >"hello" : "hello"
 
     const hello: "hello" = read();
 >hello : "hello"
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     hello;
 >hello : "hello"

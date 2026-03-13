@@ -6,20 +6,20 @@
 // after last assignment, and across callback boundaries.
 
 declare const read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
 // --- 1. Basic closure captures narrowed stable type ---
 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const captured = read();
 >captured : string | undefined
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const fn = () => {
 >fn : () => void
@@ -43,7 +43,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const fn = () => {
@@ -55,7 +55,7 @@ if (read() !== undefined) {
         const v: string = read(); // OK — stable narrowing propagates into closure (getter parity)
 >v : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
         v;
 >v : string
@@ -75,14 +75,14 @@ declare function passthrough<T>(x: T): T;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     passthrough(read());
 >passthrough(read()) : string
 >passthrough : <T>(x: T) => T
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const fn = () => {
 >fn : () => void
@@ -91,7 +91,7 @@ if (read() !== undefined) {
         const v: string = read(); // should error — closure re-evaluates stable call
 >v : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
         v;
 >v : string
@@ -107,7 +107,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const result = (() => {
@@ -118,7 +118,7 @@ if (read() !== undefined) {
 
         return read(); // string — IIFE preserves stable narrowing (getter parity)
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     })();
     result;
@@ -128,30 +128,30 @@ if (read() !== undefined) {
 // --- 5. Multiple stable endpoints in closures ---
 
 declare const readA: stable () => number | null;
->readA : () => number | null
+>readA : stable () => number | null
 
 declare const readB: stable () => boolean | undefined;
->readB : () => boolean | undefined
+>readB : stable () => boolean | undefined
 
 if (readA() !== null && readB() !== undefined) {
 >readA() !== null && readB() !== undefined : boolean
 >readA() !== null : boolean
 >readA() : number | null
->readA : () => number | null
+>readA : stable () => number | null
 >readB() !== undefined : boolean
 >readB() : boolean | undefined
->readB : () => boolean | undefined
+>readB : stable () => boolean | undefined
 >undefined : undefined
 
     const a = readA(); // narrowed to number
 >a : number | null
 >readA() : number | null
->readA : () => number | null
+>readA : stable () => number | null
 
     const b = readB(); // narrowed to boolean
 >b : boolean | undefined
 >readB() : boolean | undefined
->readB : () => boolean | undefined
+>readB : stable () => boolean | undefined
 
     const fn = () => {
 >fn : () => void

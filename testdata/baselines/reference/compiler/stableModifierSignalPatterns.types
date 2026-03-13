@@ -102,11 +102,11 @@ declare class ReactiveStore {
 >ReactiveStore : ReactiveStore
 
     user: stable () => { name: string } | undefined;
->user : () => { name: string; } | undefined
+>user : stable () => { name: string; } | undefined
 >name : string
 
     count: stable () => number | null;
->count : () => number | null
+>count : stable () => number | null
 
     setUser(v: { name: string } | undefined): void;
 >setUser : (v: { name: string; } | undefined) => void
@@ -121,18 +121,18 @@ declare const store: ReactiveStore;
 if (store.user() !== undefined) {
 >store.user() !== undefined : boolean
 >store.user() : { name: string; } | undefined
->store.user : () => { name: string; } | undefined
+>store.user : stable () => { name: string; } | undefined
 >store : ReactiveStore
->user : () => { name: string; } | undefined
+>user : stable () => { name: string; } | undefined
 >undefined : undefined
 
     const name: string = store.user().name; // should narrow
 >name : string
 >store.user().name : string
 >store.user() : { name: string; } | undefined
->store.user : () => { name: string; } | undefined
+>store.user : stable () => { name: string; } | undefined
 >store : ReactiveStore
->user : () => { name: string; } | undefined
+>user : stable () => { name: string; } | undefined
 >name : string
 
     name;
@@ -142,16 +142,16 @@ if (store.user() !== undefined) {
 if (store.count() !== null) {
 >store.count() !== null : boolean
 >store.count() : number | null
->store.count : () => number | null
+>store.count : stable () => number | null
 >store : ReactiveStore
->count : () => number | null
+>count : stable () => number | null
 
     const n: number = store.count(); // should narrow
 >n : number
 >store.count() : number | null
->store.count : () => number | null
+>store.count : stable () => number | null
 >store : ReactiveStore
->count : () => number | null
+>count : stable () => number | null
 
     n;
 >n : number
@@ -162,31 +162,31 @@ if (store.user() !== undefined && store.count() !== null) {
 >store.user() !== undefined && store.count() !== null : boolean
 >store.user() !== undefined : boolean
 >store.user() : { name: string; } | undefined
->store.user : () => { name: string; } | undefined
+>store.user : stable () => { name: string; } | undefined
 >store : ReactiveStore
->user : () => { name: string; } | undefined
+>user : stable () => { name: string; } | undefined
 >undefined : undefined
 >store.count() !== null : boolean
 >store.count() : number | null
->store.count : () => number | null
+>store.count : stable () => number | null
 >store : ReactiveStore
->count : () => number | null
+>count : stable () => number | null
 
     const name: string = store.user().name; // should still be narrowed
 >name : string
 >store.user().name : string
 >store.user() : { name: string; } | undefined
->store.user : () => { name: string; } | undefined
+>store.user : stable () => { name: string; } | undefined
 >store : ReactiveStore
->user : () => { name: string; } | undefined
+>user : stable () => { name: string; } | undefined
 >name : string
 
     const n: number = store.count(); // should still be narrowed
 >n : number
 >store.count() : number | null
->store.count : () => number | null
+>store.count : stable () => number | null
 >store : ReactiveStore
->count : () => number | null
+>count : stable () => number | null
 
     name;
 >name : string
@@ -199,9 +199,9 @@ if (store.user() !== undefined && store.count() !== null) {
 if (store.user() !== undefined) {
 >store.user() !== undefined : boolean
 >store.user() : { name: string; } | undefined
->store.user : () => { name: string; } | undefined
+>store.user : stable () => { name: string; } | undefined
 >store : ReactiveStore
->user : () => { name: string; } | undefined
+>user : stable () => { name: string; } | undefined
 >undefined : undefined
 
     store.setUser({ name: "new" }); // method call — transparent for getter parity
@@ -217,9 +217,9 @@ if (store.user() !== undefined) {
 >afterSet : { name: string; } | undefined
 >name : string
 >store.user() : { name: string; } | undefined
->store.user : () => { name: string; } | undefined
+>store.user : stable () => { name: string; } | undefined
 >store : ReactiveStore
->user : () => { name: string; } | undefined
+>user : stable () => { name: string; } | undefined
 
     afterSet;
 >afterSet : { name: string; }
@@ -230,19 +230,19 @@ if (store.user() !== undefined) {
 // -----------------------------------------------------------------------------
 
 declare const mixed: stable () => string | number;
->mixed : () => string | number
+>mixed : stable () => string | number
 
 if (typeof mixed() === "string") {
 >typeof mixed() === "string" : boolean
 >typeof mixed() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >mixed() : string | number
->mixed : () => string | number
+>mixed : stable () => string | number
 >"string" : "string"
 
     const s: string = mixed(); // should narrow to string
 >s : string
 >mixed() : string | number
->mixed : () => string | number
+>mixed : stable () => string | number
 
     s;
 >s : string
@@ -252,13 +252,13 @@ if (typeof mixed() === "number") {
 >typeof mixed() === "number" : boolean
 >typeof mixed() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >mixed() : string | number
->mixed : () => string | number
+>mixed : stable () => string | number
 >"number" : "number"
 
     const n: number = mixed(); // should narrow to number
 >n : number
 >mixed() : string | number
->mixed : () => string | number
+>mixed : stable () => string | number
 
     n;
 >n : number
@@ -266,19 +266,19 @@ if (typeof mixed() === "number") {
 
 // typeof with union including undefined
 declare const mixedUndef: stable () => string | number | undefined;
->mixedUndef : () => string | number | undefined
+>mixedUndef : stable () => string | number | undefined
 
 if (typeof mixedUndef() === "string") {
 >typeof mixedUndef() === "string" : boolean
 >typeof mixedUndef() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >mixedUndef() : string | number | undefined
->mixedUndef : () => string | number | undefined
+>mixedUndef : stable () => string | number | undefined
 >"string" : "string"
 
     const s: string = mixedUndef(); // should narrow to string
 >s : string
 >mixedUndef() : string | number | undefined
->mixedUndef : () => string | number | undefined
+>mixedUndef : stable () => string | number | undefined
 
     s;
 >s : string
@@ -288,13 +288,13 @@ if (typeof mixedUndef() === "undefined") {
 >typeof mixedUndef() === "undefined" : boolean
 >typeof mixedUndef() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >mixedUndef() : string | number | undefined
->mixedUndef : () => string | number | undefined
+>mixedUndef : stable () => string | number | undefined
 >"undefined" : "undefined"
 
     const u: undefined = mixedUndef(); // should narrow to undefined
 >u : undefined
 >mixedUndef() : string | number | undefined
->mixedUndef : () => string | number | undefined
+>mixedUndef : stable () => string | number | undefined
 
     u;
 >u : undefined
@@ -306,19 +306,19 @@ if (typeof mixed() === "string" && mixed().length > 0) {
 >typeof mixed() === "string" : boolean
 >typeof mixed() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >mixed() : string | number
->mixed : () => string | number
+>mixed : stable () => string | number
 >"string" : "string"
 >mixed().length > 0 : boolean
 >mixed().length : number
 >mixed() : string | number
->mixed : () => string | number
+>mixed : stable () => string | number
 >length : number
 >0 : 0
 
     const s: string = mixed(); // should narrow to string
 >s : string
 >mixed() : string | number
->mixed : () => string | number
+>mixed : stable () => string | number
 
     s;
 >s : string
@@ -329,51 +329,51 @@ if (typeof mixed() === "string" && mixed().length > 0) {
 // -----------------------------------------------------------------------------
 
 declare const maybe: stable () => string | undefined;
->maybe : () => string | undefined
+>maybe : stable () => string | undefined
 
 const definite = maybe()!; // should be string
 >definite : string
 >maybe()! : string
 >maybe() : string | undefined
->maybe : () => string | undefined
+>maybe : stable () => string | undefined
 
 const definiteLen = maybe()!.length; // should work
 >definiteLen : number
 >maybe()!.length : number
 >maybe()! : string
 >maybe() : string | undefined
->maybe : () => string | undefined
+>maybe : stable () => string | undefined
 >length : number
 
 declare const maybeNum: stable () => number | null;
->maybeNum : () => number | null
+>maybeNum : stable () => number | null
 
 const definiteNum = maybeNum()!; // should be number
 >definiteNum : number
 >maybeNum()! : number
 >maybeNum() : number | null
->maybeNum : () => number | null
+>maybeNum : stable () => number | null
 
 const definiteNumPlus = maybeNum()! + 1; // should work
 >definiteNumPlus : number
 >maybeNum()! + 1 : number
 >maybeNum()! : number
 >maybeNum() : number | null
->maybeNum : () => number | null
+>maybeNum : stable () => number | null
 >1 : 1
 
 // Non-null assertion after guard (redundant but should still work)
 if (maybe() !== undefined) {
 >maybe() !== undefined : boolean
 >maybe() : string | undefined
->maybe : () => string | undefined
+>maybe : stable () => string | undefined
 >undefined : undefined
 
     const alsoDefinite = maybe()!; // should be string (already narrowed)
 >alsoDefinite : string
 >maybe()! : string
 >maybe() : string | undefined
->maybe : () => string | undefined
+>maybe : stable () => string | undefined
 
     alsoDefinite;
 >alsoDefinite : string

@@ -2,7 +2,7 @@
 
 === stableModifierHeuristicDiagnostics.ts ===
 declare const read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
 declare function unknownMutate(): void;
 >unknownMutate : () => void
@@ -21,7 +21,7 @@ declare function delay(): Promise<void>;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     unknownMutateWithArg(1);
@@ -32,7 +32,7 @@ if (read() !== undefined) {
     const afterUnknown: string = read(); // should error + unknown-call-specific diagnostic
 >afterUnknown : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterUnknown;
 >afterUnknown : string
@@ -41,7 +41,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     unknownMutateWithArg(1);
@@ -52,12 +52,12 @@ if (read() !== undefined) {
     const afterUnknownFirst: string = read(); // should error + one boundary diagnostic on unknown call
 >afterUnknownFirst : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     const afterUnknownSecond: string = read(); // should error, no duplicate boundary diagnostic spam
 >afterUnknownSecond : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterUnknownFirst;
 >afterUnknownFirst : string
@@ -69,7 +69,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invoke(() => {
@@ -88,7 +88,7 @@ if (read() !== undefined) {
     const afterCallback: string = read(); // should error + generic uncertainty-boundary diagnostic
 >afterCallback : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterCallback;
 >afterCallback : string
@@ -97,20 +97,20 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const escaped = read;
->escaped : () => string | undefined
->read : () => string | undefined
+>escaped : stable () => string | undefined
+>read : stable () => string | undefined
 
     escaped;
->escaped : () => string | undefined
+>escaped : stable () => string | undefined
 
     const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
 >afterAliasEscape : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterAliasEscape;
 >afterAliasEscape : string
@@ -122,7 +122,7 @@ async function testAwaitBoundary() {
     if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
         await delay();
@@ -133,7 +133,7 @@ async function testAwaitBoundary() {
         const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
 >afterAwait : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
         afterAwait;
 >afterAwait : string

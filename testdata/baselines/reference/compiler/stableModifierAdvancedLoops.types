@@ -6,25 +6,25 @@
 // boundaries interact correctly with stable CFA.
 
 declare const readObj: stable () => Record<string, number> | undefined;
->readObj : () => Record<string, number> | undefined
+>readObj : stable () => Record<string, number> | undefined
 
 declare const readArr: stable () => number[] | undefined;
->readArr : () => number[] | undefined
+>readArr : stable () => number[] | undefined
 
 declare const read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
 // For-in over stable read — should narrow to non-nullish.
 if (readObj() !== undefined) {
 >readObj() !== undefined : boolean
 >readObj() : Record<string, number> | undefined
->readObj : () => Record<string, number> | undefined
+>readObj : stable () => Record<string, number> | undefined
 >undefined : undefined
 
     for (const key in readObj()) {
 >key : string
 >readObj() : Record<string, number> | undefined
->readObj : () => Record<string, number> | undefined
+>readObj : stable () => Record<string, number> | undefined
 
         const k: string = key;
 >k : string
@@ -39,13 +39,13 @@ if (readObj() !== undefined) {
 if (readArr() !== undefined) {
 >readArr() !== undefined : boolean
 >readArr() : number[] | undefined
->readArr : () => number[] | undefined
+>readArr : stable () => number[] | undefined
 >undefined : undefined
 
     for (const item of readArr()) {
 >item : number
 >readArr() : number[] | undefined
->readArr : () => number[] | undefined
+>readArr : stable () => number[] | undefined
 
         const n: number = item;
 >n : number
@@ -58,7 +58,7 @@ if (readArr() !== undefined) {
 
 // For-of with destructuring from stable read.
 declare const readPairs: stable () => Array<{ a: string; b: number }>;
->readPairs : () => { a: string; b: number; }[]
+>readPairs : stable () => { a: string; b: number; }[]
 >a : string
 >b : number
 
@@ -66,7 +66,7 @@ for (const { a, b } of readPairs()) {
 >a : string
 >b : number
 >readPairs() : { a: string; b: number; }[]
->readPairs : () => { a: string; b: number; }[]
+>readPairs : stable () => { a: string; b: number; }[]
 
     const str: string = a;
 >str : string
@@ -85,16 +85,16 @@ for (const { a, b } of readPairs()) {
 
 // While loop with stable read condition.
 declare const readFlag: stable () => boolean;
->readFlag : () => boolean
+>readFlag : stable () => boolean
 
 while (readFlag()) {
 >readFlag() : boolean
->readFlag : () => boolean
+>readFlag : stable () => boolean
 
     const flag: boolean = readFlag();
 >flag : boolean
 >readFlag() : boolean
->readFlag : () => boolean
+>readFlag : stable () => boolean
 
     flag;
 >flag : true
@@ -105,7 +105,7 @@ do {
     const val = read();
 >val : string | undefined
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     val;
 >val : string | undefined
@@ -113,17 +113,17 @@ do {
 } while (read() !== undefined);
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
 // Nested for-of with stable.
 declare const readMatrix: stable () => number[][];
->readMatrix : () => number[][]
+>readMatrix : stable () => number[][]
 
 for (const row of readMatrix()) {
 >row : number[]
 >readMatrix() : number[][]
->readMatrix : () => number[][]
+>readMatrix : stable () => number[][]
 
     for (const cell of row) {
 >cell : number
@@ -142,7 +142,7 @@ for (const row of readMatrix()) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     for (const _ of [1, 2, 3]) {
@@ -155,13 +155,13 @@ if (read() !== undefined) {
         if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
             const val: string = read();
 >val : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
             val;
 >val : string

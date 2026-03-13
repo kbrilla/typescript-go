@@ -6,7 +6,7 @@
 // and advanced callback patterns at stable boundaries.
 
 declare const read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
 declare function invoke(cb: () => void): void;
 >invoke : (cb: () => void) => void
@@ -22,7 +22,7 @@ declare function invokeWithArg(cb: (x: number) => void): void;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invokeWithArg((x: number) => {});
@@ -34,7 +34,7 @@ if (read() !== undefined) {
     const afterParamEmptyCallback: string = read(); // should stay narrowed
 >afterParamEmptyCallback : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterParamEmptyCallback;
 >afterParamEmptyCallback : string
@@ -44,7 +44,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invokeWithArg((x: number) => { console.log(x); });
@@ -61,7 +61,7 @@ if (read() !== undefined) {
     const afterParamNonEmptyCallback: string = read(); // should stay narrowed (unrelated standalone call)
 >afterParamNonEmptyCallback : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterParamNonEmptyCallback;
 >afterParamNonEmptyCallback : string
@@ -71,7 +71,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invoke(function myCallback() {});
@@ -83,7 +83,7 @@ if (read() !== undefined) {
     const afterFunctionKeywordEmpty: string = read(); // should stay narrowed
 >afterFunctionKeywordEmpty : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterFunctionKeywordEmpty;
 >afterFunctionKeywordEmpty : string
@@ -93,7 +93,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invoke(function myCallback() { console.log("side effect"); });
@@ -110,7 +110,7 @@ if (read() !== undefined) {
     const afterFunctionKeywordNonEmpty: string = read(); // should stay narrowed (unrelated standalone call)
 >afterFunctionKeywordNonEmpty : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterFunctionKeywordNonEmpty;
 >afterFunctionKeywordNonEmpty : string
@@ -120,7 +120,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invoke(async () => {});
@@ -131,7 +131,7 @@ if (read() !== undefined) {
     const afterAsyncEmptyCallback: string = read(); // should stay narrowed
 >afterAsyncEmptyCallback : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterAsyncEmptyCallback;
 >afterAsyncEmptyCallback : string
@@ -141,7 +141,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invoke(async () => { await Promise.resolve(); });
@@ -157,7 +157,7 @@ if (read() !== undefined) {
     const afterAsyncNonEmptyCallback: string = read(); // should stay narrowed (unrelated standalone call)
 >afterAsyncNonEmptyCallback : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterAsyncNonEmptyCallback;
 >afterAsyncNonEmptyCallback : string
@@ -171,7 +171,7 @@ declare function invokeGen(cb: () => Generator): void;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invokeGen(function*() { yield 1; });
@@ -184,7 +184,7 @@ if (read() !== undefined) {
     const afterGeneratorCallback: string = read(); // should stay narrowed (unrelated standalone call)
 >afterGeneratorCallback : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterGeneratorCallback;
 >afterGeneratorCallback : string
@@ -201,7 +201,7 @@ declare function invokeTwo(cb1: (a: string) => void, cb2: (b: number) => void): 
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invokeTwo((a: string) => {}, (b: number) => {});
@@ -215,7 +215,7 @@ if (read() !== undefined) {
     const afterMultiParamEmpty: string = read(); // should stay narrowed
 >afterMultiParamEmpty : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterMultiParamEmpty;
 >afterMultiParamEmpty : string
@@ -225,7 +225,7 @@ if (read() !== undefined) {
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invokeTwo((a: string) => {}, (b: number) => { console.log(b); });
@@ -244,7 +244,7 @@ if (read() !== undefined) {
     const afterMultiParamOneNonEmpty: string = read(); // should stay narrowed (unrelated standalone call)
 >afterMultiParamOneNonEmpty : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterMultiParamOneNonEmpty;
 >afterMultiParamOneNonEmpty : string
@@ -259,7 +259,7 @@ declare function invokeRest(cb: (...args: any[]) => void): void;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invokeRest((...args: any[]) => {});
@@ -271,7 +271,7 @@ if (read() !== undefined) {
     const afterRestParamEmpty: string = read(); // should stay narrowed
 >afterRestParamEmpty : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterRestParamEmpty;
 >afterRestParamEmpty : string
@@ -286,7 +286,7 @@ declare function invokeOpt(cb: (x?: number) => void): void;
 if (read() !== undefined) {
 >read() !== undefined : boolean
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     invokeOpt((x?: number) => {});
@@ -298,7 +298,7 @@ if (read() !== undefined) {
     const afterOptParamEmpty: string = read(); // should stay narrowed
 >afterOptParamEmpty : string
 >read() : string | undefined
->read : () => string | undefined
+>read : stable () => string | undefined
 
     afterOptParamEmpty;
 >afterOptParamEmpty : string

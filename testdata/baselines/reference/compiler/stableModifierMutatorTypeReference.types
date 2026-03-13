@@ -97,7 +97,7 @@ declare function createSolidSignal<T>(value: T): SolidSignal<T>;
 >value : T
 
 const [value, setValue] = createSolidSignal<string | null>("hello");
->value : () => string | null
+>value : stable () => string | null
 >setValue : SolidSetter<string | null>
 >createSolidSignal<string | null>("hello") : SolidSignal<string | null>
 >createSolidSignal : <T>(value: T) => SolidSignal<T>
@@ -106,13 +106,13 @@ const [value, setValue] = createSolidSignal<string | null>("hello");
 if (value() !== null) {
 >value() !== null : boolean
 >value() : string | null
->value : () => string | null
+>value : stable () => string | null
 
     value().toUpperCase();  // narrowed to string
 >value().toUpperCase() : string
 >value().toUpperCase : () => string
 >value() : string | null
->value : () => string | null
+>value : stable () => string | null
 >toUpperCase : () => string
 
     setValue(null);          // invalidates
@@ -128,7 +128,7 @@ type UpdateFn<T> = (value: T) => void;
 
 // mutator on a type alias reference (not a callable interface)
 declare function createCell<T>(init: T): [
->createCell : <T>(init: T) => [read: () => T, write: UpdateFn<T>]
+>createCell : <T>(init: T) => [read: stable () => T, write: UpdateFn<T>]
 >init : T
 
     read: stable () => T,
@@ -136,22 +136,22 @@ declare function createCell<T>(init: T): [
 ];
 
 const [getCell, setCell] = createCell<boolean | undefined>(true);
->getCell : () => boolean | undefined
+>getCell : stable () => boolean | undefined
 >setCell : UpdateFn<boolean | undefined>
->createCell<boolean | undefined>(true) : [read: () => boolean | undefined, write: UpdateFn<boolean | undefined>]
->createCell : <T>(init: T) => [read: () => T, write: UpdateFn<T>]
+>createCell<boolean | undefined>(true) : [read: stable () => boolean | undefined, write: UpdateFn<boolean | undefined>]
+>createCell : <T>(init: T) => [read: stable () => T, write: UpdateFn<T>]
 >true : true
 
 if (getCell() !== undefined) {
 >getCell() !== undefined : boolean
 >getCell() : boolean | undefined
->getCell : () => boolean | undefined
+>getCell : stable () => boolean | undefined
 >undefined : undefined
 
     getCell() === true;    // narrowed to boolean
 >getCell() === true : boolean
 >getCell() : boolean | undefined
->getCell : () => boolean | undefined
+>getCell : stable () => boolean | undefined
 >true : true
 
     setCell(undefined);     // invalidates
@@ -169,7 +169,7 @@ interface Writer<T> {
 
 // mutator applied to a generic type parameter with a callable constraint
 declare function createPair<T, W extends Writer<T>>(init: T): [
->createPair : <T, W extends Writer<T>>(init: T) => [read: () => T, write: W]
+>createPair : <T, W extends Writer<T>>(init: T) => [read: stable () => T, write: W]
 >init : T
 
     read: stable () => T,
@@ -177,23 +177,23 @@ declare function createPair<T, W extends Writer<T>>(init: T): [
 ];
 
 const [getPair, setPair] = createPair<number | undefined, Writer<number | undefined>>(10);
->getPair : () => number | undefined
+>getPair : stable () => number | undefined
 >setPair : Writer<number | undefined>
->createPair<number | undefined, Writer<number | undefined>>(10) : [read: () => number | undefined, write: Writer<number | undefined>]
->createPair : <T, W extends Writer<T>>(init: T) => [read: () => T, write: W]
+>createPair<number | undefined, Writer<number | undefined>>(10) : [read: stable () => number | undefined, write: Writer<number | undefined>]
+>createPair : <T, W extends Writer<T>>(init: T) => [read: stable () => T, write: W]
 >10 : 10
 
 if (getPair() !== undefined) {
 >getPair() !== undefined : boolean
 >getPair() : number | undefined
->getPair : () => number | undefined
+>getPair : stable () => number | undefined
 >undefined : undefined
 
     getPair().toFixed(2);  // narrowed to number
 >getPair().toFixed(2) : string
 >getPair().toFixed : (fractionDigits?: number | undefined) => string
 >getPair() : number | undefined
->getPair : () => number | undefined
+>getPair : stable () => number | undefined
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
 
@@ -220,7 +220,7 @@ declare function createSignal2<T>(value: T): Signal2<T>;
 >value : T
 
 const [count2, setCount2] = createSignal2<number | undefined>(0);
->count2 : () => number | undefined
+>count2 : stable () => number | undefined
 >setCount2 : SimpleSetter<number | undefined>
 >createSignal2<number | undefined>(0) : Signal2<number | undefined>
 >createSignal2 : <T>(value: T) => Signal2<T>
@@ -229,14 +229,14 @@ const [count2, setCount2] = createSignal2<number | undefined>(0);
 if (count2() !== undefined) {
 >count2() !== undefined : boolean
 >count2() : number | undefined
->count2 : () => number | undefined
+>count2 : stable () => number | undefined
 >undefined : undefined
 
     count2().toFixed(2);   // OK: narrowed to number
 >count2().toFixed(2) : string
 >count2().toFixed : (fractionDigits?: number | undefined) => string
 >count2() : number | undefined
->count2 : () => number | undefined
+>count2 : stable () => number | undefined
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
 
@@ -251,7 +251,7 @@ if (count2() !== undefined) {
 >count2().toFixed(2) : any
 >count2().toFixed : any
 >count2() : number | undefined
->count2 : () => number | undefined
+>count2 : stable () => number | undefined
 >toFixed : any
 >2 : 2
 }

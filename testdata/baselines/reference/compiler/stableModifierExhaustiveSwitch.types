@@ -22,7 +22,7 @@ type Shape =
 >height : number
 
 declare const readShape: stable () => Shape;
->readShape : () => Shape
+>readShape : stable () => Shape
 
 // Exhaustive switch — each case should narrow the discriminant.
 function exhaustiveSwitch() {
@@ -31,7 +31,7 @@ function exhaustiveSwitch() {
     switch (readShape().kind) {
 >readShape().kind : "circle" | "square" | "triangle"
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >kind : "circle" | "square" | "triangle"
 
         case "circle":
@@ -41,7 +41,7 @@ function exhaustiveSwitch() {
 >circleRadius : number
 >readShape().radius : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >radius : number
 
             circleRadius;
@@ -55,7 +55,7 @@ function exhaustiveSwitch() {
 >squareSide : number
 >readShape().side : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >side : number
 
             squareSide;
@@ -69,7 +69,7 @@ function exhaustiveSwitch() {
 >triBase : number
 >readShape().base : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >base : number
 
             triBase;
@@ -86,7 +86,7 @@ function exhaustiveWithDefaultNever() {
     switch (readShape().kind) {
 >readShape().kind : "circle" | "square" | "triangle"
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >kind : "circle" | "square" | "triangle"
 
         case "circle":
@@ -96,7 +96,7 @@ function exhaustiveWithDefaultNever() {
 >circleRadius : number
 >readShape().radius : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >radius : number
 
             circleRadius;
@@ -110,7 +110,7 @@ function exhaustiveWithDefaultNever() {
 >squareSide : number
 >readShape().side : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >side : number
 
             squareSide;
@@ -124,7 +124,7 @@ function exhaustiveWithDefaultNever() {
 >triBase : number
 >readShape().base : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >base : number
 
             triBase;
@@ -135,7 +135,7 @@ function exhaustiveWithDefaultNever() {
             const _exhaustive: never = readShape();
 >_exhaustive : never
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 
             _exhaustive;
 >_exhaustive : never
@@ -144,7 +144,7 @@ function exhaustiveWithDefaultNever() {
 
 // typeof switch narrowing on stable calls.
 declare const readValue: stable () => string | number | boolean;
->readValue : () => string | number | boolean
+>readValue : stable () => string | number | boolean
 
 function typeofSwitch() {
 >typeofSwitch : () => void
@@ -152,7 +152,7 @@ function typeofSwitch() {
     switch (typeof readValue()) {
 >typeof readValue() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >readValue() : string | number | boolean
->readValue : () => string | number | boolean
+>readValue : stable () => string | number | boolean
 
         case "string":
 >"string" : "string"
@@ -160,7 +160,7 @@ function typeofSwitch() {
             const str: string = readValue();
 >str : string
 >readValue() : string | number | boolean
->readValue : () => string | number | boolean
+>readValue : stable () => string | number | boolean
 
             str;
 >str : string
@@ -172,7 +172,7 @@ function typeofSwitch() {
             const num: number = readValue();
 >num : number
 >readValue() : string | number | boolean
->readValue : () => string | number | boolean
+>readValue : stable () => string | number | boolean
 
             num;
 >num : number
@@ -184,7 +184,7 @@ function typeofSwitch() {
             const bool: boolean = readValue();
 >bool : boolean
 >readValue() : string | number | boolean
->readValue : () => string | number | boolean
+>readValue : stable () => string | number | boolean
 
             bool;
 >bool : boolean
@@ -200,7 +200,7 @@ function switchFallthrough() {
     switch (readShape().kind) {
 >readShape().kind : "circle" | "square" | "triangle"
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >kind : "circle" | "square" | "triangle"
 
         case "circle":
@@ -217,7 +217,7 @@ function switchFallthrough() {
 >kind : "square"
 >side : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 
             circleOrSquare;
 >circleOrSquare : { kind: "circle"; radius: number; } | { kind: "square"; side: number; }
@@ -232,7 +232,7 @@ function switchFallthrough() {
 >base : number
 >height : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 
             tri;
 >tri : { kind: "triangle"; base: number; height: number; }
@@ -248,7 +248,7 @@ function nonExhaustiveSwitch() {
     switch (readShape().kind) {
 >readShape().kind : "circle" | "square" | "triangle"
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >kind : "circle" | "square" | "triangle"
 
         case "circle":
@@ -258,7 +258,7 @@ function nonExhaustiveSwitch() {
 >circleRadius : number
 >readShape().radius : number
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 >radius : number
 
             circleRadius;
@@ -271,7 +271,7 @@ function nonExhaustiveSwitch() {
     const afterNonExhaustive: Shape = readShape();
 >afterNonExhaustive : Shape
 >readShape() : Shape
->readShape : () => Shape
+>readShape : stable () => Shape
 
     afterNonExhaustive;
 >afterNonExhaustive : Shape

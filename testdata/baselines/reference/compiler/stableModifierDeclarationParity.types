@@ -3,7 +3,7 @@
 === stableModifierDeclarationParity.ts ===
 // === Section 1: stable function declaration ===
 stable function getValue(): string | undefined {
->getValue : () => string | undefined
+>getValue : stable () => string | undefined
 
     return Math.random() > 0.5 ? "hello" : undefined;
 >Math.random() > 0.5 ? "hello" : undefined : "hello" | undefined
@@ -20,13 +20,13 @@ stable function getValue(): string | undefined {
 if (getValue() !== undefined) {
 >getValue() !== undefined : boolean
 >getValue() : string | undefined
->getValue : () => string | undefined
+>getValue : stable () => string | undefined
 >undefined : undefined
 
     const v: string = getValue(); // should be narrowed to string
 >v : string
 >getValue() : string | undefined
->getValue : () => string | undefined
+>getValue : stable () => string | undefined
 }
 
 // === Section 2: mutator function declaration ===
@@ -35,7 +35,7 @@ let state: string | undefined = "initial";
 >"initial" : "initial"
 
 mutator function setState(val: string | undefined): void {
->setState : (val: string | undefined) => void
+>setState : mutator (val: string | undefined) => void
 >val : string | undefined
 
     state = val;
@@ -45,7 +45,7 @@ mutator function setState(val: string | undefined): void {
 }
 
 stable function getState(): string | undefined {
->getState : () => string | undefined
+>getState : stable () => string | undefined
 
     return state;
 >state : string | undefined
@@ -54,29 +54,29 @@ stable function getState(): string | undefined {
 if (getState() !== undefined) {
 >getState() !== undefined : boolean
 >getState() : string | undefined
->getState : () => string | undefined
+>getState : stable () => string | undefined
 >undefined : undefined
 
     const s: string = getState(); // narrowed
 >s : string
 >getState() : string | undefined
->getState : () => string | undefined
+>getState : stable () => string | undefined
 
     setState(undefined); // mutator — should invalidate getState() narrowing
 >setState(undefined) : void
->setState : (val: string | undefined) => void
+>setState : mutator (val: string | undefined) => void
 >undefined : undefined
 
     const s2: string | undefined = getState(); // back to string | undefined
 >s2 : string | undefined
 >getState() : string | undefined
->getState : () => string | undefined
+>getState : stable () => string | undefined
 }
 
 // === Section 3: stable function expression ===
 const getX = stable function(): number | null {
->getX : () => number | null
->stable function(): number | null {    return Math.random() > 0.5 ? 42 : null;} : () => number | null
+>getX : stable () => number | null
+>stable function(): number | null {    return Math.random() > 0.5 ? 42 : null;} : stable () => number | null
 
     return Math.random() > 0.5 ? 42 : null;
 >Math.random() > 0.5 ? 42 : null : 42 | null
@@ -93,38 +93,38 @@ const getX = stable function(): number | null {
 if (getX() !== null) {
 >getX() !== null : boolean
 >getX() : number | null
->getX : () => number | null
+>getX : stable () => number | null
 
     const x: number = getX(); // narrowed
 >x : number
 >getX() : number | null
->getX : () => number | null
+>getX : stable () => number | null
 }
 
 // === Section 4: mutator function expression ===
 const setX = mutator function(val: number | null): void {};
->setX : (val: number | null) => void
->mutator function(val: number | null): void {} : (val: number | null) => void
+>setX : mutator (val: number | null) => void
+>mutator function(val: number | null): void {} : mutator (val: number | null) => void
 >val : number | null
 
 stable function readX(): number | null { return null; }
->readX : () => number | null
+>readX : stable () => number | null
 
 if (readX() !== null) {
 >readX() !== null : boolean
 >readX() : number | null
->readX : () => number | null
+>readX : stable () => number | null
 
     const r: number = readX(); // narrowed
 >r : number
 >readX() : number | null
->readX : () => number | null
+>readX : stable () => number | null
 }
 
 // === Section 5: stable arrow function ===
 const getY = stable (): string | undefined => {
->getY : () => string | undefined
->stable (): string | undefined => {    return Math.random() > 0.5 ? "world" : undefined;} : () => string | undefined
+>getY : stable () => string | undefined
+>stable (): string | undefined => {    return Math.random() > 0.5 ? "world" : undefined;} : stable () => string | undefined
 
     return Math.random() > 0.5 ? "world" : undefined;
 >Math.random() > 0.5 ? "world" : undefined : "world" | undefined
@@ -142,51 +142,51 @@ const getY = stable (): string | undefined => {
 if (getY() !== undefined) {
 >getY() !== undefined : boolean
 >getY() : string | undefined
->getY : () => string | undefined
+>getY : stable () => string | undefined
 >undefined : undefined
 
     const y: string = getY(); // narrowed
 >y : string
 >getY() : string | undefined
->getY : () => string | undefined
+>getY : stable () => string | undefined
 }
 
 // === Section 6: mutator arrow function ===
 const setY = mutator (val: string | undefined): void => {};
->setY : (val: string | undefined) => void
->mutator (val: string | undefined): void => {} : (val: string | undefined) => void
+>setY : mutator (val: string | undefined) => void
+>mutator (val: string | undefined): void => {} : mutator (val: string | undefined) => void
 >val : string | undefined
 
 stable function readY(): string | undefined { return undefined; }
->readY : () => string | undefined
+>readY : stable () => string | undefined
 >undefined : undefined
 
 if (readY() !== undefined) {
 >readY() !== undefined : boolean
 >readY() : string | undefined
->readY : () => string | undefined
+>readY : stable () => string | undefined
 >undefined : undefined
 
     const r: string = readY(); // narrowed
 >r : string
 >readY() : string | undefined
->readY : () => string | undefined
+>readY : stable () => string | undefined
 
     setY(undefined); // mutator call
 >setY(undefined) : void
->setY : (val: string | undefined) => void
+>setY : mutator (val: string | undefined) => void
 >undefined : undefined
 
     const r2: string | undefined = readY(); // back to union
 >r2 : string | undefined
 >readY() : string | undefined
->readY : () => string | undefined
+>readY : stable () => string | undefined
 }
 
 // === Section 7: stable async arrow function (combined modifiers) ===
 const getAsync = stable async (): Promise<string | undefined> => {
->getAsync : () => Promise<string | undefined>
->stable async (): Promise<string | undefined> => {    return undefined;} : () => Promise<string | undefined>
+>getAsync : stable () => Promise<string | undefined>
+>stable async (): Promise<string | undefined> => {    return undefined;} : stable () => Promise<string | undefined>
 
     return undefined;
 >undefined : undefined
@@ -250,7 +250,7 @@ interface BadMutatorGetter {
 
 // Error: stable with parameters (function declaration)
 stable function badStableWithParams(x: number): number { return x; } // Error
->badStableWithParams : (x: number) => number
+>badStableWithParams : stable (x: number) => number
 >x : number
 >x : number
 
@@ -266,29 +266,29 @@ namespace NS {
 >NS : typeof NS
 
     export stable function getVal(): string | undefined {
->getVal : () => string | undefined
+>getVal : stable () => string | undefined
 
         return "ns";
 >"ns" : "ns"
     }
     export mutator function setVal(v: string | undefined): void {}
->setVal : (v: string | undefined) => void
+>setVal : mutator (v: string | undefined) => void
 >v : string | undefined
 }
 
 if (NS.getVal() !== undefined) {
 >NS.getVal() !== undefined : boolean
 >NS.getVal() : string | undefined
->NS.getVal : () => string | undefined
+>NS.getVal : stable () => string | undefined
 >NS : typeof NS
->getVal : () => string | undefined
+>getVal : stable () => string | undefined
 >undefined : undefined
 
     const v: string = NS.getVal(); // narrowed
 >v : string
 >NS.getVal() : string | undefined
->NS.getVal : () => string | undefined
+>NS.getVal : stable () => string | undefined
 >NS : typeof NS
->getVal : () => string | undefined
+>getVal : stable () => string | undefined
 }
 

@@ -31,10 +31,10 @@ type GoodMutator4 = mutator () => void; // valid — parameterless mutator like 
 // === Section 3: mutator in generic position ===
 interface Container<T> {
     read: stable () => T;
->read : () => T
+>read : stable () => T
 
     write: mutator (v: T) => void invalidates read;
->write : (v: T) => void
+>write : mutator (v: T) => void
 >v : T
 }
 
@@ -51,30 +51,30 @@ const c = createContainer<string | undefined>("hello");
 if (c.read() !== undefined) {
 >c.read() !== undefined : boolean
 >c.read() : string | undefined
->c.read : () => string | undefined
+>c.read : stable () => string | undefined
 >c : Container<string | undefined>
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const val: string = c.read(); // OK — narrowed
 >val : string
 >c.read() : string | undefined
->c.read : () => string | undefined
+>c.read : stable () => string | undefined
 >c : Container<string | undefined>
->read : () => string | undefined
+>read : stable () => string | undefined
 
     c.write(undefined);
 >c.write(undefined) : void
->c.write : (v: string | undefined) => void
+>c.write : mutator (v: string | undefined) => void
 >c : Container<string | undefined>
->write : (v: string | undefined) => void
+>write : mutator (v: string | undefined) => void
 >undefined : undefined
 
     const afterWrite: string = c.read(); // should error — mutator invalidated
 >afterWrite : string
 >c.read() : string | undefined
->c.read : () => string | undefined
+>c.read : stable () => string | undefined
 >c : Container<string | undefined>
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 

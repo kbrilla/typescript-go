@@ -36,7 +36,7 @@ declare const getterBasic: {
 };
 
 declare const identityBasic: stable () => string | undefined;
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
 if (getterBasic.value !== undefined) {
 >getterBasic.value !== undefined : boolean
@@ -58,13 +58,13 @@ if (getterBasic.value !== undefined) {
 if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
     const identityStable: string = identityBasic(); // stable parity target: OK
 >identityStable : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityStable;
 >identityStable : string
@@ -104,22 +104,22 @@ getterMerged;
 if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
     identityBasic();
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
 } else {
     identityBasic();
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 }
 const identityMerged: string = identityBasic(); // stable parity target: error
 >identityMerged : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
 identityMerged;
 >identityMerged : string
@@ -153,7 +153,7 @@ if (getterBasic.value !== undefined) {
 if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
     invoke(() => {});
@@ -164,7 +164,7 @@ if (identityBasic() !== undefined) {
     const identityAfterCallback: string = identityBasic(); // OK (empty callback preserves narrowing)
 >identityAfterCallback : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityAfterCallback;
 >identityAfterCallback : string
@@ -173,7 +173,7 @@ if (identityBasic() !== undefined) {
 if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
     invoke(() => {});
@@ -184,7 +184,7 @@ if (identityBasic() !== undefined) {
     const identityAfterNoopCallback: string = identityBasic(); // parity target: OK for narrow no-op callback shape
 >identityAfterNoopCallback : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityAfterNoopCallback;
 >identityAfterNoopCallback : string
@@ -196,7 +196,7 @@ let assignedInvokeResult: void;
 if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
     assignedInvokeResult = invoke(() => {
@@ -220,7 +220,7 @@ if (identityBasic() !== undefined) {
     const identityAfterAssignmentCallback: string = identityBasic(); // stable boundary target: error for assignment-expression callback form
 >identityAfterAssignmentCallback : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityAfterAssignmentCallback;
 >identityAfterAssignmentCallback : string
@@ -229,7 +229,7 @@ if (identityBasic() !== undefined) {
 if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
     const cb = () => {};
@@ -244,7 +244,7 @@ if (identityBasic() !== undefined) {
     const identityAfterConstNoopCallbackAlias: string = identityBasic(); // stable precision target: OK under strict const no-op alias guard
 >identityAfterConstNoopCallbackAlias : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityAfterConstNoopCallbackAlias;
 >identityAfterConstNoopCallbackAlias : string
@@ -253,7 +253,7 @@ if (identityBasic() !== undefined) {
 if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
     let cb = () => {};
@@ -281,7 +281,7 @@ if (identityBasic() !== undefined) {
     const identityAfterMutableCallbackAlias: string = identityBasic(); // stable boundary target: error (mutable alias remains conservative)
 >identityAfterMutableCallbackAlias : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityAfterMutableCallbackAlias;
 >identityAfterMutableCallbackAlias : string
@@ -290,7 +290,7 @@ if (identityBasic() !== undefined) {
 if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
     const cb = () => {
@@ -313,7 +313,7 @@ if (identityBasic() !== undefined) {
     const identityAfterNonEmptyCallbackAlias: string = identityBasic(); // stable boundary target: error (non-empty alias remains conservative)
 >identityAfterNonEmptyCallbackAlias : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityAfterNonEmptyCallbackAlias;
 >identityAfterNonEmptyCallbackAlias : string
@@ -351,7 +351,7 @@ async function parityAwaitBoundaries() {
     if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
         await delay();
@@ -362,7 +362,7 @@ async function parityAwaitBoundaries() {
         const identityAfterAwait: string = identityBasic(); // OK (ambient no-arg await preserves narrowing)
 >identityAfterAwait : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
         identityAfterAwait;
 >identityAfterAwait : string
@@ -371,7 +371,7 @@ async function parityAwaitBoundaries() {
     if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
         await Promise.resolve();
@@ -384,7 +384,7 @@ async function parityAwaitBoundaries() {
         const identityAfterSafeAwait: string = identityBasic(); // parity target: OK for narrow safe await shape
 >identityAfterSafeAwait : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
         identityAfterSafeAwait;
 >identityAfterSafeAwait : string
@@ -420,10 +420,10 @@ if (getterBasic.value !== undefined) {
 }
 
 declare const identityStore: {
->identityStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>identityStore : { read: stable () => string | undefined; set(v: string | undefined): void; }
 
     read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
     set(v: string | undefined): void;
 >set : (v: string | undefined) => void
@@ -434,24 +434,24 @@ declare const identityStore: {
 if (identityStore.read() !== undefined) {
 >identityStore.read() !== undefined : boolean
 >identityStore.read() : string | undefined
->identityStore.read : () => string | undefined
->identityStore : { read: () => string | undefined; set(v: string | undefined): void; }
->read : () => string | undefined
+>identityStore.read : stable () => string | undefined
+>identityStore : { read: stable () => string | undefined; set(v: string | undefined): void; }
+>read : stable () => string | undefined
 >undefined : undefined
 
     identityStore.set("next");
 >identityStore.set("next") : void
 >identityStore.set : (v: string | undefined) => void
->identityStore : { read: () => string | undefined; set(v: string | undefined): void; }
+>identityStore : { read: stable () => string | undefined; set(v: string | undefined): void; }
 >set : (v: string | undefined) => void
 >"next" : "next"
 
     const identityAfterWrite: string = identityStore.read(); // stable parity target: OK
 >identityAfterWrite : string
 >identityStore.read() : string | undefined
->identityStore.read : () => string | undefined
->identityStore : { read: () => string | undefined; set(v: string | undefined): void; }
->read : () => string | undefined
+>identityStore.read : stable () => string | undefined
+>identityStore : { read: stable () => string | undefined; set(v: string | undefined): void; }
+>read : stable () => string | undefined
 
     identityAfterWrite;
 >identityAfterWrite : string
@@ -488,20 +488,20 @@ if (getterBasic.value !== undefined) {
 if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
     const identityAlias = identityBasic;
->identityAlias : () => string | undefined
->identityBasic : () => string | undefined
+>identityAlias : stable () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityAlias;
->identityAlias : () => string | undefined
+>identityAlias : stable () => string | undefined
 
     const identityAfterAlias: string = identityBasic(); // stable parity target: OK for direct const alias
 >identityAfterAlias : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityAfterAlias;
 >identityAfterAlias : string
@@ -510,22 +510,22 @@ if (identityBasic() !== undefined) {
 if (identityBasic() !== undefined) {
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 
     const identityIndirectAlias = pass(identityBasic);
->identityIndirectAlias : () => string | undefined
->pass(identityBasic) : () => string | undefined
+>identityIndirectAlias : stable () => string | undefined
+>pass(identityBasic) : stable () => string | undefined
 >pass : <T>(x: T) => T
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityIndirectAlias;
->identityIndirectAlias : () => string | undefined
+>identityIndirectAlias : stable () => string | undefined
 
     const identityAfterIndirectAlias: string = identityBasic(); // stable observed: error (indirect alias escape)
 >identityAfterIndirectAlias : string
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 
     identityAfterIndirectAlias;
 >identityAfterIndirectAlias : string
@@ -556,10 +556,10 @@ const identityTernary: string = identityBasic() !== undefined ? identityBasic() 
 >identityBasic() !== undefined ? identityBasic() : "fallback" : string
 >identityBasic() !== undefined : boolean
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >undefined : undefined
 >identityBasic() : string | undefined
->identityBasic : () => string | undefined
+>identityBasic : stable () => string | undefined
 >"fallback" : "fallback"
 
 identityTernary;
@@ -593,7 +593,7 @@ declare const getterNested: {
 };
 
 declare const identityNested: stable () => Shape;
->identityNested : () => Shape
+>identityNested : stable () => Shape
 
 if (getterNested.value.kind === "circle") {
 >getterNested.value.kind === "circle" : boolean
@@ -620,7 +620,7 @@ if (identityNested().kind === "circle") {
 >identityNested().kind === "circle" : boolean
 >identityNested().kind : "circle" | "square"
 >identityNested() : Shape
->identityNested : () => Shape
+>identityNested : stable () => Shape
 >kind : "circle" | "square"
 >"circle" : "circle"
 
@@ -628,7 +628,7 @@ if (identityNested().kind === "circle") {
 >identityRadius : number
 >identityNested().radius : number
 >identityNested() : Shape
->identityNested : () => Shape
+>identityNested : stable () => Shape
 >radius : number
 
     identityRadius;
@@ -664,7 +664,7 @@ if (identityNested().kind === "circle") {
 >identityNested().kind === "circle" : boolean
 >identityNested().kind : "circle" | "square"
 >identityNested() : Shape
->identityNested : () => Shape
+>identityNested : stable () => Shape
 >kind : "circle" | "square"
 >"circle" : "circle"
 
@@ -676,7 +676,7 @@ if (identityNested().kind === "circle") {
 >identityAfterUnknown : number
 >identityNested().radius : number
 >identityNested() : Shape
->identityNested : () => Shape
+>identityNested : stable () => Shape
 >radius : number
 
     identityAfterUnknown;

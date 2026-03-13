@@ -6,7 +6,7 @@ export type Signal<T> = stable () => T;
 
 export interface Store {
     read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
     set: (value: string) => void;
 >set : (value: string) => void
@@ -14,7 +14,7 @@ export interface Store {
 }
 
 export declare function createSignal<T>(initial: T): [stable () => T, (v: T) => void];
->createSignal : <T>(initial: T) => [() => T, (v: T) => void]
+>createSignal : <T>(initial: T) => [stable () => T, (v: T) => void]
 >initial : T
 >v : T
 
@@ -22,7 +22,7 @@ export declare function createSignal<T>(initial: T): [stable () => T, (v: T) => 
 import { Signal, Store, createSignal } from "./signals";
 >Signal : any
 >Store : any
->createSignal : <T>(initial: T) => [() => T, (v: T) => void]
+>createSignal : <T>(initial: T) => [stable () => T, (v: T) => void]
 
 declare const read: Signal<string | undefined>;
 >read : Signal<string | undefined>
@@ -47,36 +47,36 @@ if (read() !== undefined) {
 if (store.read() !== undefined) {
 >store.read() !== undefined : boolean
 >store.read() : string | undefined
->store.read : () => string | undefined
+>store.read : stable () => string | undefined
 >store : Store
->read : () => string | undefined
+>read : stable () => string | undefined
 >undefined : undefined
 
     const narrowed: string = store.read();
 >narrowed : string
 >store.read() : string | undefined
->store.read : () => string | undefined
+>store.read : stable () => string | undefined
 >store : Store
->read : () => string | undefined
+>read : stable () => string | undefined
 }
 
 // Imported factory function returning stable tuple
 const [value, setValue] = createSignal<string | undefined>("hello");
->value : () => string | undefined
+>value : stable () => string | undefined
 >setValue : (v: string | undefined) => void
->createSignal<string | undefined>("hello") : [() => string | undefined, (v: string | undefined) => void]
->createSignal : <T>(initial: T) => [() => T, (v: T) => void]
+>createSignal<string | undefined>("hello") : [stable () => string | undefined, (v: string | undefined) => void]
+>createSignal : <T>(initial: T) => [stable () => T, (v: T) => void]
 >"hello" : "hello"
 
 if (value() !== undefined) {
 >value() !== undefined : boolean
 >value() : string | undefined
->value : () => string | undefined
+>value : stable () => string | undefined
 >undefined : undefined
 
     const narrowed: string = value();
 >narrowed : string
 >value() : string | undefined
->value : () => string | undefined
+>value : stable () => string | undefined
 }
 

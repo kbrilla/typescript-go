@@ -34,10 +34,10 @@ declare const getterM1: {
 };
 
 declare const identityM1: {
->identityM1 : { value: () => M1Props; }
+>identityM1 : { value: stable () => M1Props; }
 
     value: stable () => M1Props;
->value : () => M1Props
+>value : stable () => M1Props
 
 };
 
@@ -105,9 +105,9 @@ if (getterM1.value.foo) {
 if (identityM1.value().foo) {
 >identityM1.value().foo : { aaa: string; bbb: string; } | undefined
 >identityM1.value() : M1Props
->identityM1.value : () => M1Props
->identityM1 : { value: () => M1Props; }
->value : () => M1Props
+>identityM1.value : stable () => M1Props
+>identityM1 : { value: stable () => M1Props; }
+>value : stable () => M1Props
 >foo : { aaa: string; bbb: string; } | undefined
 
     for (const _ of [1, 2, 3]) {
@@ -122,9 +122,9 @@ if (identityM1.value().foo) {
 >identityM1.value().foo.aaa : string
 >identityM1.value().foo : { aaa: string; bbb: string; }
 >identityM1.value() : M1Props
->identityM1.value : () => M1Props
->identityM1 : { value: () => M1Props; }
->value : () => M1Props
+>identityM1.value : stable () => M1Props
+>identityM1 : { value: stable () => M1Props; }
+>value : stable () => M1Props
 >foo : { aaa: string; bbb: string; }
 >aaa : string
 
@@ -133,9 +133,9 @@ if (identityM1.value().foo) {
 >identityM1.value().foo.bbb : string
 >identityM1.value().foo : { aaa: string; bbb: string; }
 >identityM1.value() : M1Props
->identityM1.value : () => M1Props
->identityM1 : { value: () => M1Props; }
->value : () => M1Props
+>identityM1.value : stable () => M1Props
+>identityM1 : { value: stable () => M1Props; }
+>value : stable () => M1Props
 >foo : { aaa: string; bbb: string; }
 >bbb : string
 
@@ -175,10 +175,10 @@ declare const getterM2: {
 };
 
 declare const identityM2: {
->identityM2 : { value: () => M2DeepOptional; }
+>identityM2 : { value: stable () => M2DeepOptional; }
 
     value: stable () => M2DeepOptional;
->value : () => M2DeepOptional
+>value : stable () => M2DeepOptional
 
 };
 
@@ -264,9 +264,9 @@ if (getterM2.value.a) {
 if (identityM2.value().a) {
 >identityM2.value().a : { b?: { c?: string | undefined; } | undefined; } | undefined
 >identityM2.value() : M2DeepOptional
->identityM2.value : () => M2DeepOptional
->identityM2 : { value: () => M2DeepOptional; }
->value : () => M2DeepOptional
+>identityM2.value : stable () => M2DeepOptional
+>identityM2 : { value: stable () => M2DeepOptional; }
+>value : stable () => M2DeepOptional
 >a : { b?: { c?: string | undefined; } | undefined; } | undefined
 
     for (const _ of [1]) {
@@ -291,18 +291,18 @@ if (identityM2.value().a) {
 >identityM2.value().a.b : { c?: string | undefined; } | undefined
 >identityM2.value().a : { b?: { c?: string | undefined; } | undefined; }
 >identityM2.value() : M2DeepOptional
->identityM2.value : () => M2DeepOptional
->identityM2 : { value: () => M2DeepOptional; }
->value : () => M2DeepOptional
+>identityM2.value : stable () => M2DeepOptional
+>identityM2 : { value: stable () => M2DeepOptional; }
+>value : stable () => M2DeepOptional
 >a : { b?: { c?: string | undefined; } | undefined; }
 >b : { c?: string | undefined; } | undefined
 >identityM2.value().a.b.c : string | undefined
 >identityM2.value().a.b : { c?: string | undefined; }
 >identityM2.value().a : { b?: { c?: string | undefined; } | undefined; }
 >identityM2.value() : M2DeepOptional
->identityM2.value : () => M2DeepOptional
->identityM2 : { value: () => M2DeepOptional; }
->value : () => M2DeepOptional
+>identityM2.value : stable () => M2DeepOptional
+>identityM2 : { value: stable () => M2DeepOptional; }
+>value : stable () => M2DeepOptional
 >a : { b?: { c?: string | undefined; } | undefined; }
 >b : { c?: string | undefined; }
 >c : string | undefined
@@ -318,9 +318,9 @@ if (identityM2.value().a) {
 >identityM2.value().a.b : { c?: string | undefined; }
 >identityM2.value().a : { b?: { c?: string | undefined; } | undefined; }
 >identityM2.value() : M2DeepOptional
->identityM2.value : () => M2DeepOptional
->identityM2 : { value: () => M2DeepOptional; }
->value : () => M2DeepOptional
+>identityM2.value : stable () => M2DeepOptional
+>identityM2 : { value: stable () => M2DeepOptional; }
+>value : stable () => M2DeepOptional
 >a : { b?: { c?: string | undefined; } | undefined; }
 >b : { c?: string | undefined; }
 >c : string
@@ -356,7 +356,7 @@ class M3AIdentity {
 >M3AIdentity : M3AIdentity
 
     prop!: stable () => { a: string };
->prop : () => { a: string; }
+>prop : stable () => { a: string; }
 >a : string
 }
 
@@ -364,7 +364,7 @@ class M3BIdentity {
 >M3BIdentity : M3BIdentity
 
     prop!: stable () => { b: string };
->prop : () => { b: string; }
+>prop : stable () => { b: string; }
 >b : string
 }
 
@@ -426,9 +426,9 @@ function m3IdentityWhileTrue(x: M3AIdentity | M3BIdentity) {
 >m3a : string
 >x.prop().a : string
 >x.prop() : { a: string; }
->x.prop : () => { a: string; }
+>x.prop : stable () => { a: string; }
 >x : M3AIdentity
->prop : () => { a: string; }
+>prop : stable () => { a: string; }
 >a : string
 
             m3a;
@@ -443,9 +443,9 @@ function m3IdentityWhileTrue(x: M3AIdentity | M3BIdentity) {
 >m3b : string
 >x.prop().b : string
 >x.prop() : { b: string; }
->x.prop : () => { b: string; }
+>x.prop : stable () => { b: string; }
 >x : M3BIdentity
->prop : () => { b: string; }
+>prop : stable () => { b: string; }
 >b : string
 
             m3b;
@@ -515,9 +515,9 @@ function m4IdentityPredicateAny(x: M3AIdentity | M3BIdentity) {
 >m4a : string
 >x.prop().a : string
 >x.prop() : { a: string; }
->x.prop : () => { a: string; }
+>x.prop : stable () => { a: string; }
 >x : M3AIdentity
->prop : () => { a: string; }
+>prop : stable () => { a: string; }
 >a : string
 
             m4a;
@@ -532,9 +532,9 @@ function m4IdentityPredicateAny(x: M3AIdentity | M3BIdentity) {
 >m4b : string
 >x.prop().b : string
 >x.prop() : { b: string; }
->x.prop : () => { b: string; }
+>x.prop : stable () => { b: string; }
 >x : M3BIdentity
->prop : () => { b: string; }
+>prop : stable () => { b: string; }
 >b : string
 
             m4b;
@@ -559,9 +559,9 @@ function m4IdentityPredicateUnknown(x: M3AIdentity | M3BIdentity) {
 >m4a : string
 >x.prop().a : string
 >x.prop() : { a: string; }
->x.prop : () => { a: string; }
+>x.prop : stable () => { a: string; }
 >x : M3AIdentity
->prop : () => { a: string; }
+>prop : stable () => { a: string; }
 >a : string
 
             m4a;
@@ -576,9 +576,9 @@ function m4IdentityPredicateUnknown(x: M3AIdentity | M3BIdentity) {
 >m4b : string
 >x.prop().b : string
 >x.prop() : { b: string; }
->x.prop : () => { b: string; }
+>x.prop : stable () => { b: string; }
 >x : M3BIdentity
->prop : () => { b: string; }
+>prop : stable () => { b: string; }
 >b : string
 
             m4b;
@@ -636,17 +636,17 @@ function m5GetterDirect(pet: { get value(): M5Pet }) {
 }
 
 function m5IdentityDirect(pet: { value: stable () => M5Pet }) {
->m5IdentityDirect : (pet: { value: () => M5Pet; }) => void
->pet : { value: () => M5Pet; }
->value : () => M5Pet
+>m5IdentityDirect : (pet: { value: stable () => M5Pet; }) => void
+>pet : { value: stable () => M5Pet; }
+>value : stable () => M5Pet
 
     if (pet.value().type === "dog") {
 >pet.value().type === "dog" : boolean
 >pet.value().type : "dog" | "fish"
 >pet.value() : M5Pet
->pet.value : () => M5Pet
->pet : { value: () => M5Pet; }
->value : () => M5Pet
+>pet.value : stable () => M5Pet
+>pet : { value: stable () => M5Pet; }
+>value : stable () => M5Pet
 >type : "dog" | "fish"
 >"dog" : "dog"
 
@@ -655,9 +655,9 @@ function m5IdentityDirect(pet: { value: stable () => M5Pet }) {
 >true : true
 >pet.value().saysWoof : true
 >pet.value() : M5Pet
->pet.value : () => M5Pet
->pet : { value: () => M5Pet; }
->value : () => M5Pet
+>pet.value : stable () => M5Pet
+>pet : { value: stable () => M5Pet; }
+>value : stable () => M5Pet
 >saysWoof : true
 
         m5a;
@@ -694,17 +694,17 @@ function m5GetterGeneric<PetType extends M5Pet>(pet: { get value(): PetType }) {
 }
 
 function m5IdentityGeneric<PetType extends M5Pet>(pet: { value: stable () => PetType }) {
->m5IdentityGeneric : <PetType extends M5Pet>(pet: { value: () => PetType; }) => void
->pet : { value: () => PetType; }
->value : () => PetType
+>m5IdentityGeneric : <PetType extends M5Pet>(pet: { value: stable () => PetType; }) => void
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
 
     if (pet.value().type === "dog") {
 >pet.value().type === "dog" : boolean
 >pet.value().type : "dog" | "fish"
 >pet.value() : PetType
->pet.value : () => PetType
->pet : { value: () => PetType; }
->value : () => PetType
+>pet.value : stable () => PetType
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
 >type : "dog" | "fish"
 >"dog" : "dog"
 
@@ -713,9 +713,9 @@ function m5IdentityGeneric<PetType extends M5Pet>(pet: { value: stable () => Pet
 >true : true
 >pet.value().saysWoof : true
 >pet.value() : PetType
->pet.value : () => PetType
->pet : { value: () => PetType; }
->value : () => PetType
+>pet.value : stable () => PetType
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
 >saysWoof : true
 
         m5a;
@@ -755,8 +755,8 @@ class M6IdentityContainer {
 >M6IdentityContainer : M6IdentityContainer
 
     memberRead: stable () => string | number = (() => "x") as stable () => string | number;
->memberRead : () => string | number
->(() => "x") as stable () => string | number : () => string | number
+>memberRead : stable () => string | number
+>(() => "x") as stable () => string | number : stable () => string | number
 >(() => "x") : () => string
 >() => "x" : () => string
 >"x" : "x"
@@ -771,10 +771,10 @@ declare const m6GetterObj: {
 };
 
 declare const m6IdentityObj: {
->m6IdentityObj : { value: () => string | number; }
+>m6IdentityObj : { value: stable () => string | number; }
 
     value: stable () => string | number;
->value : () => string | number
+>value : stable () => string | number
 
 };
 
@@ -787,7 +787,7 @@ declare const m6BoundaryGetter: {
 };
 
 declare const m6BoundaryIdentity: stable () => string | undefined;
->m6BoundaryIdentity : () => string | undefined
+>m6BoundaryIdentity : stable () => string | undefined
 
 m6Sink = typeof m6GetterObj.value === "string" && m6GetterObj.value; // getter baseline: string | number
 >m6Sink = typeof m6GetterObj.value === "string" && m6GetterObj.value : string | false
@@ -810,14 +810,14 @@ m6Sink = typeof m6IdentityObj.value() === "string" && m6IdentityObj.value(); // 
 >typeof m6IdentityObj.value() === "string" : boolean
 >typeof m6IdentityObj.value() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >m6IdentityObj.value() : string | number
->m6IdentityObj.value : () => string | number
->m6IdentityObj : { value: () => string | number; }
->value : () => string | number
+>m6IdentityObj.value : stable () => string | number
+>m6IdentityObj : { value: stable () => string | number; }
+>value : stable () => string | number
 >"string" : "string"
 >m6IdentityObj.value() : string | number
->m6IdentityObj.value : () => string | number
->m6IdentityObj : { value: () => string | number; }
->value : () => string | number
+>m6IdentityObj.value : stable () => string | number
+>m6IdentityObj : { value: stable () => string | number; }
+>value : stable () => string | number
 
 const m6GetterInstance = new M6GetterContainer();
 >m6GetterInstance : M6GetterContainer
@@ -850,14 +850,14 @@ m6Sink = typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstan
 >typeof m6IdentityInstance.memberRead() === "string" : boolean
 >typeof m6IdentityInstance.memberRead() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >m6IdentityInstance.memberRead() : string | number
->m6IdentityInstance.memberRead : () => string | number
+>m6IdentityInstance.memberRead : stable () => string | number
 >m6IdentityInstance : M6IdentityContainer
->memberRead : () => string | number
+>memberRead : stable () => string | number
 >"string" : "string"
 >m6IdentityInstance.memberRead() : string | number
->m6IdentityInstance.memberRead : () => string | number
+>m6IdentityInstance.memberRead : stable () => string | number
 >m6IdentityInstance : M6IdentityContainer
->memberRead : () => string | number
+>memberRead : stable () => string | number
 
 m6Sink = typeof m6GetterInstance.accessor === "string" && m6GetterInstance.accessor; // getter baseline: string | number
 >m6Sink = typeof m6GetterInstance.accessor === "string" && m6GetterInstance.accessor : string | false
@@ -880,14 +880,14 @@ m6Sink = typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstan
 >typeof m6IdentityInstance.memberRead() === "string" : boolean
 >typeof m6IdentityInstance.memberRead() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
 >m6IdentityInstance.memberRead() : string | number
->m6IdentityInstance.memberRead : () => string | number
+>m6IdentityInstance.memberRead : stable () => string | number
 >m6IdentityInstance : M6IdentityContainer
->memberRead : () => string | number
+>memberRead : stable () => string | number
 >"string" : "string"
 >m6IdentityInstance.memberRead() : string | number
->m6IdentityInstance.memberRead : () => string | number
+>m6IdentityInstance.memberRead : stable () => string | number
 >m6IdentityInstance : M6IdentityContainer
->memberRead : () => string | number
+>memberRead : stable () => string | number
 
 // Boundary control in this matrix file: if getter path remains narrowed but stable drops,
 // keep the delta visible for parity tracking.
@@ -915,7 +915,7 @@ if (m6BoundaryGetter.value !== undefined) {
 if (m6BoundaryIdentity() !== undefined) {
 >m6BoundaryIdentity() !== undefined : boolean
 >m6BoundaryIdentity() : string | undefined
->m6BoundaryIdentity : () => string | undefined
+>m6BoundaryIdentity : stable () => string | undefined
 >undefined : undefined
 
     unknownMutate();
@@ -925,7 +925,7 @@ if (m6BoundaryIdentity() !== undefined) {
     const m6IdentityBoundaryControl: string = m6BoundaryIdentity(); // parity with getter baseline via ambient no-arg unknown-call preserve rule
 >m6IdentityBoundaryControl : string
 >m6BoundaryIdentity() : string | undefined
->m6BoundaryIdentity : () => string | undefined
+>m6BoundaryIdentity : stable () => string | undefined
 
     m6IdentityBoundaryControl;
 >m6IdentityBoundaryControl : string

@@ -131,10 +131,10 @@ if (value() !== undefined) {
 
 // === Section 4: Same-receiver method calls are transparent (getter parity) ===
 declare const store: {
->store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
 
     read: stable () => string | undefined;
->read : () => string | undefined
+>read : stable () => string | undefined
 
     clear(): void;
 >clear : () => void
@@ -148,46 +148,46 @@ declare const store: {
 if (store.read() !== undefined) {
 >store.read() !== undefined : boolean
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
+>read : stable () => string | undefined
 >undefined : undefined
 
     store.clear();
 >store.clear() : void
 >store.clear : () => void
->store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
 >clear : () => void
 
     const s: string = store.read(); // Transparent - getter parity: method calls don't invalidate narrowing
 >s : string
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
+>read : stable () => string | undefined
 }
 
 if (store.read() !== undefined) {
 >store.read() !== undefined : boolean
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
+>read : stable () => string | undefined
 >undefined : undefined
 
     store.reset("new");
 >store.reset("new") : void
 >store.reset : (v: string) => void
->store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
+>store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
 >reset : (v: string) => void
 >"new" : "new"
 
     const s: string = store.read(); // Transparent - getter parity: only property writes invalidate
 >s : string
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
+>read : stable () => string | undefined
 }
 
 // === Section 5: Method calls on different receiver ===
@@ -198,9 +198,9 @@ declare const otherStore: { doSomething(): void };
 if (store.read() !== undefined) {
 >store.read() !== undefined : boolean
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
+>read : stable () => string | undefined
 >undefined : undefined
 
     otherStore.doSomething();
@@ -212,8 +212,8 @@ if (store.read() !== undefined) {
     const s: string = store.read(); // Should preserve - different receiver
 >s : string
 >store.read() : string | undefined
->store.read : () => string | undefined
->store : { read: () => string | undefined; clear(): void; reset(v: string): void; }
->read : () => string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
+>read : stable () => string | undefined
 }
 
