@@ -654,7 +654,7 @@ function m5IdentityDirect(pet: { value: stable () => M5Pet }) {
 >m5a : true
 >true : true
 >pet.value().saysWoof : true
->pet.value() : M5Pet
+>pet.value() : M5Dog
 >pet.value : stable () => M5Pet
 >pet : { value: stable () => M5Pet; }
 >value : stable () => M5Pet
@@ -712,7 +712,7 @@ function m5IdentityGeneric<PetType extends M5Pet>(pet: { value: stable () => Pet
 >m5a : true
 >true : true
 >pet.value().saysWoof : true
->pet.value() : PetType
+>pet.value() : M5Dog
 >pet.value : stable () => PetType
 >pet : { value: stable () => PetType; }
 >value : stable () => PetType
@@ -814,7 +814,7 @@ m6Sink = typeof m6IdentityObj.value() === "string" && m6IdentityObj.value(); // 
 >m6IdentityObj : { value: stable () => string | number; }
 >value : stable () => string | number
 >"string" : "string"
->m6IdentityObj.value() : string | number
+>m6IdentityObj.value() : string
 >m6IdentityObj.value : stable () => string | number
 >m6IdentityObj : { value: stable () => string | number; }
 >value : stable () => string | number
@@ -854,7 +854,7 @@ m6Sink = typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstan
 >m6IdentityInstance : M6IdentityContainer
 >memberRead : stable () => string | number
 >"string" : "string"
->m6IdentityInstance.memberRead() : string | number
+>m6IdentityInstance.memberRead() : string
 >m6IdentityInstance.memberRead : stable () => string | number
 >m6IdentityInstance : M6IdentityContainer
 >memberRead : stable () => string | number
@@ -884,7 +884,7 @@ m6Sink = typeof m6IdentityInstance.memberRead() === "string" && m6IdentityInstan
 >m6IdentityInstance : M6IdentityContainer
 >memberRead : stable () => string | number
 >"string" : "string"
->m6IdentityInstance.memberRead() : string | number
+>m6IdentityInstance.memberRead() : string
 >m6IdentityInstance.memberRead : stable () => string | number
 >m6IdentityInstance : M6IdentityContainer
 >memberRead : stable () => string | number
@@ -924,7 +924,7 @@ if (m6BoundaryIdentity() !== undefined) {
 
     const m6IdentityBoundaryControl: string = m6BoundaryIdentity(); // parity with getter baseline via ambient no-arg unknown-call preserve rule
 >m6IdentityBoundaryControl : string
->m6BoundaryIdentity() : string | undefined
+>m6BoundaryIdentity() : string
 >m6BoundaryIdentity : stable () => string | undefined
 
     m6IdentityBoundaryControl;

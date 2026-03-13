@@ -12,7 +12,7 @@ if (read() !== undefined) {
 
     const stable: string = read(); // OK
 >stable : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -46,7 +46,7 @@ if (read() !== undefined) {
 
     const afterUnknownCall: string = read(); // preserved by ambient no-arg unknown-call rule
 >afterUnknownCall : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -63,7 +63,7 @@ if (read() !== undefined) {
 
     const afterUnknownCallWithArg: string = read(); // should error
 >afterUnknownCallWithArg : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -88,7 +88,7 @@ if (read() !== undefined) {
     });
     const afterCallbackCall: string = read(); // should error
 >afterCallbackCall : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -117,7 +117,7 @@ if (read() !== undefined) {
 
     const afterAssignedCallbackCall: string = read(); // should error
 >afterAssignedCallbackCall : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -150,7 +150,7 @@ if (read() !== undefined) {
 
     const afterAssignmentExpressionCallbackCall: string = read(); // should error
 >afterAssignmentExpressionCallbackCall : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -181,7 +181,7 @@ if (read() !== undefined) {
 
     const afterIndirectCallbackCall: string = read(); // should error
 >afterIndirectCallbackCall : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -248,7 +248,7 @@ if (read() !== undefined) {
 
     const afterConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
 >afterConstNoopCallbackAlias : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -273,7 +273,7 @@ if (read() !== undefined) {
 
     const afterAssignedConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
 >afterAssignedConstNoopCallbackAlias : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -302,7 +302,7 @@ if (read() !== undefined) {
 
     const afterAssignmentExprConstNoopCallbackAlias: string = read(); // should be preserved under strict alias guard
 >afterAssignmentExprConstNoopCallbackAlias : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -336,7 +336,7 @@ if (read() !== undefined) {
 
     const afterMutableNoopCallbackAlias: string = read(); // should error
 >afterMutableNoopCallbackAlias : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -365,7 +365,7 @@ if (read() !== undefined) {
 
     const afterNonEmptyCallbackAlias: string = read(); // should error
 >afterNonEmptyCallbackAlias : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -393,7 +393,7 @@ if (read() !== undefined) {
 
     const afterPropertyNoopCallbackAlias: string = read(); // should preserve
 >afterPropertyNoopCallbackAlias : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -421,7 +421,7 @@ if (read() !== undefined) {
 
     const afterElementPropertyNoopCallbackAlias: string = read(); // should preserve
 >afterElementPropertyNoopCallbackAlias : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -457,7 +457,7 @@ if (read() !== undefined) {
 
     const afterPropertyNonEmptyCallbackAlias: string = read(); // should error
 >afterPropertyNonEmptyCallbackAlias : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -503,7 +503,7 @@ if (read() !== undefined) {
 
     const afterMutablePropertyNoopCallbackAlias: string = read(); // should error
 >afterMutablePropertyNoopCallbackAlias : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -524,7 +524,7 @@ if (read() !== undefined) {
 
     const afterNestedForwardedNoopCallback: string = read(); // should preserve
 >afterNestedForwardedNoopCallback : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -553,7 +553,7 @@ if (read() !== undefined) {
     })));
     const afterNestedForwardedNonEmptyCallback: string = read(); // should error
 >afterNestedForwardedNonEmptyCallback : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -569,7 +569,7 @@ if (read() !== undefined) {
 
     const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
 >afterAliasEscape : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     escapedRead;
@@ -593,7 +593,7 @@ if (read() !== undefined) {
 
     const afterIndirectAliasEscape: string = read(); // should error
 >afterIndirectAliasEscape : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 }
 
@@ -614,7 +614,7 @@ if (read() !== undefined) {
 
     const afterReassignmentEscape: string = read(); // should error
 >afterReassignmentEscape : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     reassignedRead;
@@ -637,7 +637,7 @@ async function testAwaitBoundary() {
 
         const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
 >afterAwait : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
     }
 }

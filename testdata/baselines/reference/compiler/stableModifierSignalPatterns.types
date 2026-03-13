@@ -42,7 +42,7 @@ if (value() !== undefined) {
 
     const s: string = value(); // should narrow to string
 >s : string
->value() : string | undefined
+>value() : string
 >value : ReadonlySignal<string | undefined>
 
     s;
@@ -57,7 +57,7 @@ if (value() !== undefined) {
 
     const afterWrite: string | undefined = value(); // conservative: narrowing may persist since setValue is independent
 >afterWrite : string | undefined
->value() : string | undefined
+>value() : string
 >value : ReadonlySignal<string | undefined>
 
     afterWrite;
@@ -71,7 +71,7 @@ if (value()) {
 
     const truthy: string = value(); // should narrow to string (truthy)
 >truthy : string
->value() : string | undefined
+>value() : string
 >value : ReadonlySignal<string | undefined>
 
     truthy;
@@ -86,7 +86,7 @@ const ternary: string = value() !== undefined ? value() : "fallback";
 >value() : string | undefined
 >value : ReadonlySignal<string | undefined>
 >undefined : undefined
->value() : string | undefined
+>value() : string
 >value : ReadonlySignal<string | undefined>
 >"fallback" : "fallback"
 
@@ -129,7 +129,7 @@ if (store.user() !== undefined) {
     const name: string = store.user().name; // should narrow
 >name : string
 >store.user().name : string
->store.user() : { name: string; } | undefined
+>store.user() : { name: string; }
 >store.user : stable () => { name: string; } | undefined
 >store : ReactiveStore
 >user : stable () => { name: string; } | undefined
@@ -148,7 +148,7 @@ if (store.count() !== null) {
 
     const n: number = store.count(); // should narrow
 >n : number
->store.count() : number | null
+>store.count() : number
 >store.count : stable () => number | null
 >store : ReactiveStore
 >count : stable () => number | null
@@ -175,7 +175,7 @@ if (store.user() !== undefined && store.count() !== null) {
     const name: string = store.user().name; // should still be narrowed
 >name : string
 >store.user().name : string
->store.user() : { name: string; } | undefined
+>store.user() : { name: string; }
 >store.user : stable () => { name: string; } | undefined
 >store : ReactiveStore
 >user : stable () => { name: string; } | undefined
@@ -183,7 +183,7 @@ if (store.user() !== undefined && store.count() !== null) {
 
     const n: number = store.count(); // should still be narrowed
 >n : number
->store.count() : number | null
+>store.count() : number
 >store.count : stable () => number | null
 >store : ReactiveStore
 >count : stable () => number | null
@@ -216,7 +216,7 @@ if (store.user() !== undefined) {
     const afterSet: { name: string } | undefined = store.user(); // expected: narrowing dropped
 >afterSet : { name: string; } | undefined
 >name : string
->store.user() : { name: string; } | undefined
+>store.user() : { name: string; }
 >store.user : stable () => { name: string; } | undefined
 >store : ReactiveStore
 >user : stable () => { name: string; } | undefined
@@ -241,7 +241,7 @@ if (typeof mixed() === "string") {
 
     const s: string = mixed(); // should narrow to string
 >s : string
->mixed() : string | number
+>mixed() : string
 >mixed : stable () => string | number
 
     s;
@@ -257,7 +257,7 @@ if (typeof mixed() === "number") {
 
     const n: number = mixed(); // should narrow to number
 >n : number
->mixed() : string | number
+>mixed() : number
 >mixed : stable () => string | number
 
     n;
@@ -277,7 +277,7 @@ if (typeof mixedUndef() === "string") {
 
     const s: string = mixedUndef(); // should narrow to string
 >s : string
->mixedUndef() : string | number | undefined
+>mixedUndef() : string
 >mixedUndef : stable () => string | number | undefined
 
     s;
@@ -293,7 +293,7 @@ if (typeof mixedUndef() === "undefined") {
 
     const u: undefined = mixedUndef(); // should narrow to undefined
 >u : undefined
->mixedUndef() : string | number | undefined
+>mixedUndef() : undefined
 >mixedUndef : stable () => string | number | undefined
 
     u;
@@ -310,14 +310,14 @@ if (typeof mixed() === "string" && mixed().length > 0) {
 >"string" : "string"
 >mixed().length > 0 : boolean
 >mixed().length : number
->mixed() : string | number
+>mixed() : string
 >mixed : stable () => string | number
 >length : number
 >0 : 0
 
     const s: string = mixed(); // should narrow to string
 >s : string
->mixed() : string | number
+>mixed() : string
 >mixed : stable () => string | number
 
     s;
@@ -372,7 +372,7 @@ if (maybe() !== undefined) {
     const alsoDefinite = maybe()!; // should be string (already narrowed)
 >alsoDefinite : string
 >maybe()! : string
->maybe() : string | undefined
+>maybe() : string
 >maybe : stable () => string | undefined
 
     alsoDefinite;
@@ -412,7 +412,7 @@ if (comp.name() !== undefined) {
     const greeting = `Hello ${comp.name()}`; // should narrow
 >greeting : string
 >`Hello ${comp.name()}` : string
->comp.name() : string | undefined
+>comp.name() : string
 >comp.name : InputSignal<string | undefined>
 >comp : MyComponent
 >name : InputSignal<string | undefined>
@@ -421,7 +421,7 @@ if (comp.name() !== undefined) {
 >upper : string
 >comp.name().toUpperCase() : string
 >comp.name().toUpperCase : () => string
->comp.name() : string | undefined
+>comp.name() : string
 >comp.name : InputSignal<string | undefined>
 >comp : MyComponent
 >name : InputSignal<string | undefined>
@@ -513,11 +513,11 @@ if (form.firstName() !== undefined && form.lastName() !== undefined) {
     const full = `${form.firstName()} ${form.lastName()}`; // both should narrow
 >full : string
 >`${form.firstName()} ${form.lastName()}` : string
->form.firstName() : string | undefined
+>form.firstName() : string
 >form.firstName : InputSignal<string | undefined>
 >form : FormComponent
 >firstName : InputSignal<string | undefined>
->form.lastName() : string | undefined
+>form.lastName() : string
 >form.lastName : InputSignal<string | undefined>
 >form : FormComponent
 >lastName : InputSignal<string | undefined>
@@ -536,7 +536,7 @@ if (form.age() !== null) {
     const nextYear = form.age() + 1; // should narrow to number
 >nextYear : number
 >form.age() + 1 : number
->form.age() : number | null
+>form.age() : number
 >form.age : InputSignal<number | null>
 >form : FormComponent
 >age : InputSignal<number | null>

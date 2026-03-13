@@ -23,7 +23,7 @@ if (readObj() !== undefined) {
 
     for (const key in readObj()) {
 >key : string
->readObj() : Record<string, number> | undefined
+>readObj() : Record<string, number>
 >readObj : stable () => Record<string, number> | undefined
 
         const k: string = key;
@@ -44,7 +44,7 @@ if (readArr() !== undefined) {
 
     for (const item of readArr()) {
 >item : number
->readArr() : number[] | undefined
+>readArr() : number[]
 >readArr : stable () => number[] | undefined
 
         const n: number = item;
@@ -93,7 +93,7 @@ while (readFlag()) {
 
     const flag: boolean = readFlag();
 >flag : boolean
->readFlag() : boolean
+>readFlag() : true
 >readFlag : stable () => boolean
 
     flag;
@@ -141,7 +141,7 @@ for (const row of readMatrix()) {
 // For-of with narrowing check inside loop body.
 if (read() !== undefined) {
 >read() !== undefined : boolean
->read() : string | undefined
+>read() : undefined
 >read : stable () => string | undefined
 >undefined : undefined
 
@@ -154,13 +154,13 @@ if (read() !== undefined) {
 
         if (read() !== undefined) {
 >read() !== undefined : boolean
->read() : string | undefined
+>read() : never
 >read : stable () => string | undefined
 >undefined : undefined
 
             const val: string = read();
 >val : string
->read() : string | undefined
+>read() : never
 >read : stable () => string | undefined
 
             val;

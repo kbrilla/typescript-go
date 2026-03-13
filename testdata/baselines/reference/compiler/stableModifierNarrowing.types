@@ -12,7 +12,7 @@ if (value() !== undefined) {
 >undefined : undefined
 
     value(); // should be narrowed to string
->value() : string | undefined
+>value() : string
 >value : stable () => string | undefined
 
     console.log(value().toUpperCase()); // should work, no error
@@ -22,7 +22,7 @@ if (value() !== undefined) {
 >log : (...data: any[]) => void
 >value().toUpperCase() : string
 >value().toUpperCase : () => string
->value() : string | undefined
+>value() : string
 >value : stable () => string | undefined
 >toUpperCase : () => string
 }
@@ -36,7 +36,7 @@ if (flag()) {
 >flag : stable () => string | null
 
     flag(); // should be narrowed to string (truthy)
->flag() : string | null
+>flag() : string
 >flag : stable () => string | null
 
     console.log(flag().length); // should work
@@ -45,7 +45,7 @@ if (flag()) {
 >console : Console
 >log : (...data: any[]) => void
 >flag().length : number
->flag() : string | null
+>flag() : string
 >flag : stable () => string | null
 >length : number
 }
@@ -66,7 +66,7 @@ if (closureVal() !== undefined) {
 >() => {        closureVal(); // should be string | undefined (narrowing lost in closure)    } : () => void
 
         closureVal(); // should be string | undefined (narrowing lost in closure)
->closureVal() : string | undefined
+>closureVal() : string
 >closureVal : stable () => string | undefined
 
     });
@@ -86,7 +86,7 @@ if (sig() !== undefined) {
 >undefined : undefined
 
     sig(); // should be narrowed to string
->sig() : string | undefined
+>sig() : string
 >sig : Signal<string | undefined>
 }
 
@@ -109,11 +109,11 @@ if (a() !== undefined && b() !== undefined) {
 >undefined : undefined
 
     a(); // should be string
->a() : string | undefined
+>a() : string
 >a : stable () => string | undefined
 
     b(); // should be number
->b() : number | undefined
+>b() : number
 >b : stable () => number | undefined
 }
 

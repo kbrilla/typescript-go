@@ -7214,6 +7214,10 @@ func (c *Checker) getQuickTypeOfExpression(node *ast.Node) *Type {
 func (c *Checker) getReturnTypeOfSingleNonGenericSignature(funcType *Type, kind SignatureKind) *Type {
 	signature := c.getSingleSignature(funcType, kind, true /*allowMembers*/)
 	if signature != nil && len(signature.typeParameters) == 0 {
+		// Skip stable signatures — they need full CFA narrowing via checkCallExpression
+		if signature.flags&SignatureFlagsStable != 0 {
+			return nil
+		}
 		return c.getReturnTypeOfSignature(signature)
 	}
 	return nil

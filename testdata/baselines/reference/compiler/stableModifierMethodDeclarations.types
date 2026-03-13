@@ -55,7 +55,7 @@ if (store.get() !== undefined) {
 
     const s: string = store.get(); // OK — narrowed
 >s : string
->store.get() : string | undefined
+>store.get() : string
 >store.get : stable () => string | undefined
 >store : Store<string | undefined>
 >get : stable () => string | undefined
@@ -79,7 +79,7 @@ if (store.get() !== undefined) {
 
     const afterSet: string = store.get(); // OK — post-call narrowed to string
 >afterSet : string
->store.get() : string | undefined
+>store.get() : string
 >store.get : stable () => string | undefined
 >store : Store<string | undefined>
 >get : stable () => string | undefined
@@ -132,7 +132,7 @@ if (store.get() !== undefined) {
 
     const afterSetUndefined: string = store.get(); // error — narrowed to undefined
 >afterSetUndefined : string
->store.get() : string | undefined
+>store.get() : undefined
 >store.get : stable () => string | undefined
 >store : Store<string | undefined>
 >get : stable () => string | undefined
@@ -169,7 +169,7 @@ if (ws.get() !== undefined) {
 
     const s: string = ws.get(); // OK — narrowed
 >s : string
->ws.get() : string | undefined
+>ws.get() : string
 >ws.get : stable () => string | undefined
 >ws : WritableStore<string | undefined>
 >get : stable () => string | undefined
@@ -217,7 +217,7 @@ if (obj.get() !== undefined) {
 
     const s: string = obj.get(); // OK — narrowed
 >s : string
->obj.get() : string | undefined
+>obj.get() : string
 >obj.get : stable () => string | undefined
 >obj : { stable get(): string | undefined; mutator set(value: string): void; mutator reset(): void; }
 >get : stable () => string | undefined
@@ -327,7 +327,7 @@ class Derived extends Base {
 
             const before: string = this.get(); // OK — narrowed
 >before : string
->this.get() : string | undefined
+>this.get() : string
 >this.get : stable () => string | undefined
 >this : this
 >get : stable () => string | undefined

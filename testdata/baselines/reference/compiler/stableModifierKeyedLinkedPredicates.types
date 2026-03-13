@@ -40,7 +40,7 @@ if (map.get("x") !== undefined) {
 
     const a: number = map.get("x");       // narrowed (same key "x")
 >a : number
->map.get("x") : number | undefined
+>map.get("x") : number
 >map.get : stable (key: string) => number | undefined
 >map : TypedMap<string, number>
 >get : stable (key: string) => number | undefined
@@ -64,7 +64,7 @@ if (map.get("x") !== undefined) {
 
     const c: number = map.get("x");       // still narrowed
 >c : number
->map.get("x") : number | undefined
+>map.get("x") : number
 >map.get : stable (key: string) => number | undefined
 >map : TypedMap<string, number>
 >get : stable (key: string) => number | undefined
@@ -115,7 +115,7 @@ if (map.get(key) !== undefined) {
 
     const e: number = map.get(key);       // narrowed (same variable ref)
 >e : number
->map.get(key) : number | undefined
+>map.get(key) : number
 >map.get : stable (key: string) => number | undefined
 >map : TypedMap<string, number>
 >get : stable (key: string) => number | undefined
@@ -142,7 +142,7 @@ if (map.get("a") !== undefined && map.get("b") !== undefined) {
 
     const f: number = map.get("a");       // narrowed
 >f : number
->map.get("a") : number | undefined
+>map.get("a") : number
 >map.get : stable (key: string) => number | undefined
 >map : TypedMap<string, number>
 >get : stable (key: string) => number | undefined
@@ -150,7 +150,7 @@ if (map.get("a") !== undefined && map.get("b") !== undefined) {
 
     const g: number = map.get("b");       // narrowed
 >g : number
->map.get("b") : number | undefined
+>map.get("b") : number
 >map.get : stable (key: string) => number | undefined
 >map : TypedMap<string, number>
 >get : stable (key: string) => number | undefined
@@ -166,7 +166,7 @@ if (map.get("a") !== undefined && map.get("b") !== undefined) {
 
     const h: number = map.get("b");       // still narrowed
 >h : number
->map.get("b") : number | undefined
+>map.get("b") : number
 >map.get : stable (key: string) => number | undefined
 >map : TypedMap<string, number>
 >get : stable (key: string) => number | undefined
@@ -200,7 +200,7 @@ if (map.get("x") !== undefined && map.get("y") !== undefined) {
 
     const i: number = map.get("x");       // still narrowed
 >i : number
->map.get("x") : number | undefined
+>map.get("x") : number
 >map.get : stable (key: string) => number | undefined
 >map : TypedMap<string, number>
 >get : stable (key: string) => number | undefined
@@ -233,7 +233,7 @@ if (fmap.get("z") !== undefined) {
 
     const j: number = fmap.get("z");      // narrowed
 >j : number
->fmap.get("z") : number | undefined
+>fmap.get("z") : number
 >fmap.get : stable (key: string) => number | undefined
 >fmap : FuncMap<string, number>
 >get : stable (key: string) => number | undefined
@@ -249,7 +249,7 @@ if (fmap.get("z") !== undefined) {
 
     const k: number = fmap.get("z");      // still narrowed
 >k : number
->fmap.get("z") : number | undefined
+>fmap.get("z") : number
 >fmap.get : stable (key: string) => number | undefined
 >fmap : FuncMap<string, number>
 >get : stable (key: string) => number | undefined
@@ -324,7 +324,7 @@ if (ms.getA("x") !== undefined && ms.getB("x") !== undefined && ms.getA("y") !==
 
     const msb: number = ms.getB("x");    // still narrowed
 >msb : number
->ms.getB("x") : number | undefined
+>ms.getB("x") : number
 >ms.getB : stable (key: string) => number | undefined
 >ms : MultiStore
 >getB : stable (key: string) => number | undefined
@@ -332,7 +332,7 @@ if (ms.getA("x") !== undefined && ms.getB("x") !== undefined && ms.getA("y") !==
 
     const msa: number = ms.getA("y");    // still narrowed (different key)
 >msa : number
->ms.getA("y") : number | undefined
+>ms.getA("y") : number
 >ms.getA : stable (key: string) => number | undefined
 >ms : MultiStore
 >getA : stable (key: string) => number | undefined

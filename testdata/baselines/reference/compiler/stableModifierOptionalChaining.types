@@ -25,8 +25,8 @@ if (read() !== undefined) {
 >undefined : undefined
 
     const obj = read();
->obj : { name: string; age: number; } | undefined
->read() : { name: string; age: number; } | undefined
+>obj : { name: string; age: number; }
+>read() : { name: string; age: number; }
 >read : Signal<{ name: string; age: number; } | undefined>
 
     const n: string = obj.name;

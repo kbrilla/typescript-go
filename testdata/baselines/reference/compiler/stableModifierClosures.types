@@ -17,8 +17,8 @@ if (read() !== undefined) {
 >undefined : undefined
 
     const captured = read();
->captured : string | undefined
->read() : string | undefined
+>captured : string
+>read() : string
 >read : stable () => string | undefined
 
     const fn = () => {
@@ -54,7 +54,7 @@ if (read() !== undefined) {
         // matching getter behavior. The call is narrowed by the outer guard.
         const v: string = read(); // OK — stable narrowing propagates into closure (getter parity)
 >v : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
         v;
@@ -81,7 +81,7 @@ if (read() !== undefined) {
     passthrough(read());
 >passthrough(read()) : string
 >passthrough : <T>(x: T) => T
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     const fn = () => {
@@ -90,7 +90,7 @@ if (read() !== undefined) {
 
         const v: string = read(); // should error — closure re-evaluates stable call
 >v : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
         v;
@@ -117,7 +117,7 @@ if (read() !== undefined) {
 >() => {        return read(); // string — IIFE preserves stable narrowing (getter parity)    } : () => string
 
         return read(); // string — IIFE preserves stable narrowing (getter parity)
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     })();
@@ -144,13 +144,13 @@ if (readA() !== null && readB() !== undefined) {
 >undefined : undefined
 
     const a = readA(); // narrowed to number
->a : number | null
->readA() : number | null
+>a : number
+>readA() : number
 >readA : stable () => number | null
 
     const b = readB(); // narrowed to boolean
->b : boolean | undefined
->readB() : boolean | undefined
+>b : boolean
+>readB() : boolean
 >readB : stable () => boolean | undefined
 
     const fn = () => {

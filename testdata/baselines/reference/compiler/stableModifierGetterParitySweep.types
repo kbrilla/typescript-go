@@ -63,7 +63,7 @@ if (identityBasic() !== undefined) {
 
     const identityStable: string = identityBasic(); // stable parity target: OK
 >identityStable : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
     identityStable;
@@ -108,12 +108,12 @@ if (identityBasic() !== undefined) {
 >undefined : undefined
 
     identityBasic();
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
 } else {
     identityBasic();
->identityBasic() : string | undefined
+>identityBasic() : undefined
 >identityBasic : stable () => string | undefined
 }
 const identityMerged: string = identityBasic(); // stable parity target: error
@@ -163,7 +163,7 @@ if (identityBasic() !== undefined) {
 
     const identityAfterCallback: string = identityBasic(); // OK (empty callback preserves narrowing)
 >identityAfterCallback : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
     identityAfterCallback;
@@ -183,7 +183,7 @@ if (identityBasic() !== undefined) {
 
     const identityAfterNoopCallback: string = identityBasic(); // parity target: OK for narrow no-op callback shape
 >identityAfterNoopCallback : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
     identityAfterNoopCallback;
@@ -219,7 +219,7 @@ if (identityBasic() !== undefined) {
 
     const identityAfterAssignmentCallback: string = identityBasic(); // stable boundary target: error for assignment-expression callback form
 >identityAfterAssignmentCallback : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
     identityAfterAssignmentCallback;
@@ -243,7 +243,7 @@ if (identityBasic() !== undefined) {
 
     const identityAfterConstNoopCallbackAlias: string = identityBasic(); // stable precision target: OK under strict const no-op alias guard
 >identityAfterConstNoopCallbackAlias : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
     identityAfterConstNoopCallbackAlias;
@@ -280,7 +280,7 @@ if (identityBasic() !== undefined) {
 
     const identityAfterMutableCallbackAlias: string = identityBasic(); // stable boundary target: error (mutable alias remains conservative)
 >identityAfterMutableCallbackAlias : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
     identityAfterMutableCallbackAlias;
@@ -312,7 +312,7 @@ if (identityBasic() !== undefined) {
 
     const identityAfterNonEmptyCallbackAlias: string = identityBasic(); // stable boundary target: error (non-empty alias remains conservative)
 >identityAfterNonEmptyCallbackAlias : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
     identityAfterNonEmptyCallbackAlias;
@@ -361,7 +361,7 @@ async function parityAwaitBoundaries() {
 
         const identityAfterAwait: string = identityBasic(); // OK (ambient no-arg await preserves narrowing)
 >identityAfterAwait : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
         identityAfterAwait;
@@ -383,7 +383,7 @@ async function parityAwaitBoundaries() {
 
         const identityAfterSafeAwait: string = identityBasic(); // parity target: OK for narrow safe await shape
 >identityAfterSafeAwait : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
         identityAfterSafeAwait;
@@ -448,7 +448,7 @@ if (identityStore.read() !== undefined) {
 
     const identityAfterWrite: string = identityStore.read(); // stable parity target: OK
 >identityAfterWrite : string
->identityStore.read() : string | undefined
+>identityStore.read() : string
 >identityStore.read : stable () => string | undefined
 >identityStore : { read: stable () => string | undefined; set(v: string | undefined): void; }
 >read : stable () => string | undefined
@@ -500,7 +500,7 @@ if (identityBasic() !== undefined) {
 
     const identityAfterAlias: string = identityBasic(); // stable parity target: OK for direct const alias
 >identityAfterAlias : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
     identityAfterAlias;
@@ -524,7 +524,7 @@ if (identityBasic() !== undefined) {
 
     const identityAfterIndirectAlias: string = identityBasic(); // stable observed: error (indirect alias escape)
 >identityAfterIndirectAlias : string
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 
     identityAfterIndirectAlias;
@@ -558,7 +558,7 @@ const identityTernary: string = identityBasic() !== undefined ? identityBasic() 
 >identityBasic() : string | undefined
 >identityBasic : stable () => string | undefined
 >undefined : undefined
->identityBasic() : string | undefined
+>identityBasic() : string
 >identityBasic : stable () => string | undefined
 >"fallback" : "fallback"
 
@@ -627,7 +627,7 @@ if (identityNested().kind === "circle") {
     const identityRadius: number = identityNested().radius; // stable parity target: OK
 >identityRadius : number
 >identityNested().radius : number
->identityNested() : Shape
+>identityNested() : { kind: "circle"; radius: number; }
 >identityNested : stable () => Shape
 >radius : number
 
@@ -675,7 +675,7 @@ if (identityNested().kind === "circle") {
     const identityAfterUnknown: number = identityNested().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
 >identityAfterUnknown : number
 >identityNested().radius : number
->identityNested() : Shape
+>identityNested() : { kind: "circle"; radius: number; }
 >identityNested : stable () => Shape
 >radius : number
 

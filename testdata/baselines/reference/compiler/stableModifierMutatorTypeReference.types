@@ -43,7 +43,7 @@ if (count() !== undefined) {
     count().toFixed(2);   // narrowed to number
 >count().toFixed(2) : string
 >count().toFixed : (fractionDigits?: number | undefined) => string
->count() : number | undefined
+>count() : number
 >count : Accessor<number | undefined>
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
@@ -56,7 +56,7 @@ if (count() !== undefined) {
     count().toFixed(2);    // still narrowed (post-call: number)
 >count().toFixed(2) : string
 >count().toFixed : (fractionDigits?: number | undefined) => string
->count() : number | undefined
+>count() : number
 >count : Accessor<number | undefined>
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
@@ -111,7 +111,7 @@ if (value() !== null) {
     value().toUpperCase();  // narrowed to string
 >value().toUpperCase() : string
 >value().toUpperCase : () => string
->value() : string | null
+>value() : string
 >value : stable () => string | null
 >toUpperCase : () => string
 
@@ -150,7 +150,7 @@ if (getCell() !== undefined) {
 
     getCell() === true;    // narrowed to boolean
 >getCell() === true : boolean
->getCell() : boolean | undefined
+>getCell() : boolean
 >getCell : stable () => boolean | undefined
 >true : true
 
@@ -192,7 +192,7 @@ if (getPair() !== undefined) {
     getPair().toFixed(2);  // narrowed to number
 >getPair().toFixed(2) : string
 >getPair().toFixed : (fractionDigits?: number | undefined) => string
->getPair() : number | undefined
+>getPair() : number
 >getPair : stable () => number | undefined
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
@@ -235,7 +235,7 @@ if (count2() !== undefined) {
     count2().toFixed(2);   // OK: narrowed to number
 >count2().toFixed(2) : string
 >count2().toFixed : (fractionDigits?: number | undefined) => string
->count2() : number | undefined
+>count2() : number
 >count2 : stable () => number | undefined
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
@@ -250,7 +250,7 @@ if (count2() !== undefined) {
     count2().toFixed(2);   // Error expected: count2() is number | undefined again
 >count2().toFixed(2) : any
 >count2().toFixed : any
->count2() : number | undefined
+>count2() : undefined
 >count2 : stable () => number | undefined
 >toFixed : any
 >2 : 2

@@ -74,7 +74,7 @@ if (identityModel().kind === "circle") {
     const identityAfterUnknown: number = identityModel().radius; // guarded parity target: OK
 >identityAfterUnknown : number
 >identityModel().radius : number
->identityModel() : Shape
+>identityModel() : { kind: "circle"; radius: number; }
 >identityModel : stable () => Shape
 >radius : number
 
@@ -98,7 +98,7 @@ if (identityModel().kind === "circle") {
     const identityAfterUnknownWithArg: number = identityModel().radius; // expected conservative error (non-target shape)
 >identityAfterUnknownWithArg : number
 >identityModel().radius : number
->identityModel() : Shape
+>identityModel() : { kind: "circle"; radius: number; }
 >identityModel : stable () => Shape
 >radius : number
 

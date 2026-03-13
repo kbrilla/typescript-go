@@ -48,7 +48,7 @@ if (store.getValue() !== undefined) {
     store.getValue().toUpperCase();  // ✅ still narrowed to string
 >store.getValue().toUpperCase() : string
 >store.getValue().toUpperCase : () => string
->store.getValue() : string | undefined
+>store.getValue() : string
 >store.getValue : stable () => string | undefined
 >store : Store<string | undefined>
 >getValue : stable () => string | undefined
@@ -64,7 +64,7 @@ if (store.getValue() !== undefined) {
     store.getValue().toUpperCase();  // ✅ still narrowed (to string via argument)
 >store.getValue().toUpperCase() : string
 >store.getValue().toUpperCase : () => string
->store.getValue() : string | undefined
+>store.getValue() : string
 >store.getValue : stable () => string | undefined
 >store : Store<string | undefined>
 >getValue : stable () => string | undefined
@@ -140,14 +140,14 @@ if (ms.getA() !== undefined && ms.getB() !== undefined && ms.getC() !== undefine
 
     const b: number = ms.getB();    // ✅ still narrowed
 >b : number
->ms.getB() : number | undefined
+>ms.getB() : number
 >ms.getB : stable () => number | undefined
 >ms : MultiStore
 >getB : stable () => number | undefined
 
     const c: boolean = ms.getC();   // ✅ still narrowed
 >c : boolean
->ms.getC() : boolean | undefined
+>ms.getC() : boolean
 >ms.getC : stable () => boolean | undefined
 >ms : MultiStore
 >getC : stable () => boolean | undefined
@@ -155,7 +155,7 @@ if (ms.getA() !== undefined && ms.getB() !== undefined && ms.getC() !== undefine
     ms.getA().toUpperCase();        // ✅ narrowed to string via argument
 >ms.getA().toUpperCase() : string
 >ms.getA().toUpperCase : () => string
->ms.getA() : string | undefined
+>ms.getA() : string
 >ms.getA : stable () => string | undefined
 >ms : MultiStore
 >getA : stable () => string | undefined
@@ -253,7 +253,7 @@ if (container.getValue() !== undefined) {
 
     const v: number = container.getValue();  // ✅ narrowed to number
 >v : number
->container.getValue() : number | undefined
+>container.getValue() : number
 >container.getValue : stable () => number | undefined
 >container : Container<number | undefined>
 >getValue : stable () => number | undefined
@@ -309,7 +309,7 @@ if (dual.getValue() !== undefined) {
     dual.getValue().toUpperCase();  // ✅ narrowed to string
 >dual.getValue().toUpperCase() : string
 >dual.getValue().toUpperCase : () => string
->dual.getValue() : string | undefined
+>dual.getValue() : string
 >dual.getValue : stable () => string | undefined
 >dual : DualSyntax<string | undefined>
 >getValue : stable () => string | undefined
@@ -325,7 +325,7 @@ if (dual.getValue() !== undefined) {
     dual.getValue().toUpperCase();  // ✅ narrowed to string
 >dual.getValue().toUpperCase() : string
 >dual.getValue().toUpperCase : () => string
->dual.getValue() : string | undefined
+>dual.getValue() : string
 >dual.getValue : stable () => string | undefined
 >dual : DualSyntax<string | undefined>
 >getValue : stable () => string | undefined
@@ -376,7 +376,7 @@ if (mixed.getA() !== undefined && mixed.getB() !== undefined) {
 
     const b1: number = mixed.getB();     // ✅ still narrowed (not targeted)
 >b1 : number
->mixed.getB() : number | undefined
+>mixed.getB() : number
 >mixed.getB : stable () => number | undefined
 >mixed : MixedAnnotation
 >getB : stable () => number | undefined
@@ -384,7 +384,7 @@ if (mixed.getA() !== undefined && mixed.getB() !== undefined) {
     mixed.getA().toUpperCase();          // ✅ narrowed via argument
 >mixed.getA().toUpperCase() : string
 >mixed.getA().toUpperCase : () => string
->mixed.getA() : string | undefined
+>mixed.getA() : string
 >mixed.getA : stable () => string | undefined
 >mixed : MixedAnnotation
 >getA : stable () => string | undefined

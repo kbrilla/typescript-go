@@ -64,7 +64,7 @@ function identityGeneric<PetType extends Pet>(pet: { value: stable () => PetType
 >identityDog : true
 >true : true
 >pet.value().saysWoof : true
->pet.value() : PetType
+>pet.value() : Dog
 >pet.value : stable () => PetType
 >pet : { value: stable () => PetType; }
 >value : stable () => PetType

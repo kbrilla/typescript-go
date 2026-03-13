@@ -30,7 +30,7 @@ if (read() !== undefined) {
 
     const r1: string = read(); // Should preserve - ambient, void, no-args
 >r1 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -50,7 +50,7 @@ if (read() !== undefined) {
 
     const r2: string = read(); // Should preserve - multiple transparent calls
 >r2 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -70,7 +70,7 @@ if (read() !== undefined) {
 
     const r3: string = read(); // May not preserve (non-void return)
 >r3 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -92,7 +92,7 @@ if (read() !== undefined) {
 
     const r4: string = read(); // May not preserve (has args)
 >r4 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -114,7 +114,7 @@ if (read() !== undefined) {
 
     const r5: string = read(); // May not preserve (has body)
 >r5 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 

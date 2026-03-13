@@ -50,7 +50,7 @@ if (read() !== undefined) {
 
     const r1: string = read(); // OK - single no-op callback preserves
 >r1 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -69,7 +69,7 @@ if (read() !== undefined) {
 
     const r2: string = read(); // Phase 2: should preserve narrowing
 >r2 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -88,7 +88,7 @@ if (read() !== undefined) {
 
     const r3: string = read(); // Phase 2: should preserve narrowing
 >r3 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -107,7 +107,7 @@ if (read() !== undefined) {
 
     const r4: string = read(); // Phase 2: should preserve narrowing
 >r4 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -127,7 +127,7 @@ if (read() !== undefined) {
 
     const r5: string = read(); // Phase 2: should preserve narrowing
 >r5 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -151,7 +151,7 @@ if (read() !== undefined) {
 
     const r6: string = read(); // Should fail - callback has side effects
 >r6 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -177,7 +177,7 @@ if (read() !== undefined) {
 
     const r7: string = read(); // Should fail - callback has parameters
 >r7 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -207,7 +207,7 @@ if (read() !== undefined) {
 
     const r8: string = read(); // Phase 2: should preserve narrowing
 >r8 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -230,7 +230,7 @@ if (read() !== undefined) {
 
     const r9: string = read(); // Phase 2: should preserve narrowing
 >r9 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -268,7 +268,7 @@ if (read() !== undefined) {
 
     const r10: string = read(); // Should fail - callback is non-empty
 >r10 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -299,7 +299,7 @@ if (read() !== undefined) {
     })));
     const r11: string = read(); // Should fail - wrapped callback is non-empty
 >r11 : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 

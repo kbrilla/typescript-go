@@ -21,7 +21,7 @@ if (r.hasValue()) {
 
     const s: string = r.value();  // narrowed to string
 >s : string
->r.value() : string | undefined
+>r.value() : string
 >r.value : stable () => string | undefined
 >r : Resource<string | undefined>
 >value : stable () => string | undefined
@@ -56,7 +56,7 @@ if (reader.isNumber()) {
 
     const n: number = reader.read();  // narrowed to number
 >n : number
->reader.read() : string | number | boolean
+>reader.read() : number
 >reader.read : stable () => string | number | boolean
 >reader : TypedReader
 >read : stable () => string | number | boolean
@@ -69,7 +69,7 @@ if (reader.isString()) {
 
     const s: string = reader.read();  // narrowed to string
 >s : string
->reader.read() : string | number | boolean
+>reader.read() : string
 >reader.read : stable () => string | number | boolean
 >reader : TypedReader
 >read : stable () => string | number | boolean
@@ -99,7 +99,7 @@ if (opt.isDefined()) {
 
     const n1: number = opt.get();  // narrowed by linked predicate
 >n1 : number
->opt.get() : number | undefined
+>opt.get() : number
 >opt.get : stable () => number | undefined
 >opt : WritableOption<number>
 >get : stable () => number | undefined
@@ -113,7 +113,7 @@ if (opt.isDefined()) {
 
     const n2: number | undefined = opt.get();  // back to full type after mutator
 >n2 : number | undefined
->opt.get() : number | undefined
+>opt.get() : undefined
 >opt.get : stable () => number | undefined
 >opt : WritableOption<number>
 >get : stable () => number | undefined
@@ -134,7 +134,7 @@ if (r1.hasValue()) {
 
     const s1: string = r1.value();  // narrowed
 >s1 : string
->r1.value() : string | undefined
+>r1.value() : string
 >r1.value : stable () => string | undefined
 >r1 : Resource<string | undefined>
 >value : stable () => string | undefined
@@ -162,7 +162,7 @@ if (r3.hasValue()) {
 
     const before: string = r3.value();  // narrowed
 >before : string
->r3.value() : string | undefined
+>r3.value() : string
 >r3.value : stable () => string | undefined
 >r3 : Resource<string | undefined>
 >value : stable () => string | undefined
@@ -173,7 +173,7 @@ if (r3.hasValue()) {
 
     const after: string | undefined = r3.value();  // narrowing lost
 >after : string | undefined
->r3.value() : string | undefined
+>r3.value() : string
 >r3.value : stable () => string | undefined
 >r3 : Resource<string | undefined>
 >value : stable () => string | undefined
@@ -202,7 +202,7 @@ if (maybe.isDefined()) {
 
     const n: number = maybe.get();  // narrowed to number
 >n : number
->maybe.get() : number | undefined
+>maybe.get() : number
 >maybe.get : stable () => number | undefined
 >maybe : Maybe<number>
 >get : stable () => number | undefined
@@ -215,7 +215,7 @@ if (maybe.isEmpty()) {
 
     const u: undefined = maybe.get();  // narrowed to undefined
 >u : undefined
->maybe.get() : number | undefined
+>maybe.get() : undefined
 >maybe.get : stable () => number | undefined
 >maybe : Maybe<number>
 >get : stable () => number | undefined
@@ -241,7 +241,7 @@ if (c.hasValue()) {
 
     const s: string = c.value();  // narrowed
 >s : string
->c.value() : string | null
+>c.value() : string
 >c.value : stable () => string | null
 >c : Container<string>
 >value : stable () => string | null

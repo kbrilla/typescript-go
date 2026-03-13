@@ -80,7 +80,7 @@ if (identityQN1.foo()) {
     const qn1IdentityA: string = identityQN1.foo().aaa; // stable parity target: OK
 >qn1IdentityA : string
 >identityQN1.foo().aaa : string
->identityQN1.foo() : { aaa: string; bbb: string; } | undefined
+>identityQN1.foo() : { aaa: string; bbb: string; }
 >identityQN1.foo : stable () => { aaa: string; bbb: string; } | undefined
 >identityQN1 : { foo: stable () => { aaa: string; bbb: string; } | undefined; }
 >foo : stable () => { aaa: string; bbb: string; } | undefined
@@ -89,7 +89,7 @@ if (identityQN1.foo()) {
     const qn1IdentityB: string = identityQN1.foo().bbb; // stable parity target: OK
 >qn1IdentityB : string
 >identityQN1.foo().bbb : string
->identityQN1.foo() : { aaa: string; bbb: string; } | undefined
+>identityQN1.foo() : { aaa: string; bbb: string; }
 >identityQN1.foo : stable () => { aaa: string; bbb: string; } | undefined
 >identityQN1 : { foo: stable () => { aaa: string; bbb: string; } | undefined; }
 >foo : stable () => { aaa: string; bbb: string; } | undefined
@@ -144,7 +144,7 @@ if (identityQN1.foo()) {
         const qn2Identity: string = identityQN1.foo().aaa; // stable parity target: OK
 >qn2Identity : string
 >identityQN1.foo().aaa : string
->identityQN1.foo() : { aaa: string; bbb: string; } | undefined
+>identityQN1.foo() : { aaa: string; bbb: string; }
 >identityQN1.foo : stable () => { aaa: string; bbb: string; } | undefined
 >identityQN1 : { foo: stable () => { aaa: string; bbb: string; } | undefined; }
 >foo : stable () => { aaa: string; bbb: string; } | undefined
@@ -345,7 +345,7 @@ function qn5Identity<PetType extends Pet>(pet: { value: stable () => PetType }) 
 >qn5a : true
 >true : true
 >pet.value().saysWoof : true
->pet.value() : PetType
+>pet.value() : Dog
 >pet.value : stable () => PetType
 >pet : { value: stable () => PetType; }
 >value : stable () => PetType
@@ -793,7 +793,7 @@ if (identityNullish()) {
     const gc1Identity: number = identityNullish().length; // stable parity target: OK
 >gc1Identity : number
 >identityNullish().length : number
->identityNullish() : string | null
+>identityNullish() : string
 >identityNullish : stable () => string | null
 >length : number
 
@@ -836,7 +836,7 @@ if (identityNullish()) {
     const gc2Identity: number = identityNullish().length; // intentional gap visibility candidate
 >gc2Identity : number
 >identityNullish().length : number
->identityNullish() : string | null
+>identityNullish() : string
 >identityNullish : stable () => string | null
 >length : number
 
@@ -886,7 +886,7 @@ async function gc3Identity() {
         const gc3b: number = identityNullish().length; // stable parity target: OK
 >gc3b : number
 >identityNullish().length : number
->identityNullish() : string | null
+>identityNullish() : string
 >identityNullish : stable () => string | null
 >length : number
 
@@ -944,7 +944,7 @@ const tg1Identity: string | number = typeof identityTG1.value() === "string" && 
 >identityTG1 : { value: stable () => string | number; }
 >value : stable () => string | number
 >"string" : "string"
->identityTG1.value() : string | number
+>identityTG1.value() : string
 >identityTG1.value : stable () => string | number
 >identityTG1 : { value: stable () => string | number; }
 >value : stable () => string | number
@@ -1019,14 +1019,14 @@ if (identityX1() !== undefined) {
 
     const x1: string = identityX1(); // parity target: OK
 >x1 : string
->identityX1() : string | undefined
+>identityX1() : string
 >identityX1 : stable () => string | undefined
 
     const x1Upper: string = identityX1().toUpperCase(); // parity target: OK
 >x1Upper : string
 >identityX1().toUpperCase() : string
 >identityX1().toUpperCase : () => string
->identityX1() : string | undefined
+>identityX1() : string
 >identityX1 : stable () => string | undefined
 >toUpperCase : () => string
 
@@ -1072,7 +1072,7 @@ const x2Identity: string = identityX2() !== undefined ? identityX2() : "fallback
 >identityX2() : string | undefined
 >identityX2 : stable () => string | undefined
 >undefined : undefined
->identityX2() : string | undefined
+>identityX2() : string
 >identityX2 : stable () => string | undefined
 >"fallback" : "fallback"
 
@@ -1130,7 +1130,7 @@ if (identityX3().kind === "circle") {
     const x3IdentityA: number = identityX3().radius; // stable parity target: OK
 >x3IdentityA : number
 >identityX3().radius : number
->identityX3() : Shape
+>identityX3() : { kind: "circle"; radius: number; }
 >identityX3 : stable () => Shape
 >radius : number
 
@@ -1178,7 +1178,7 @@ if (identityX3().kind === "circle") {
     const x3IdentityB: number = identityX3().radius; // parity target: OK for guarded ambient no-arg unknown-call shape
 >x3IdentityB : number
 >identityX3().radius : number
->identityX3() : Shape
+>identityX3() : { kind: "circle"; radius: number; }
 >identityX3 : stable () => Shape
 >radius : number
 

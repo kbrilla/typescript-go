@@ -34,7 +34,7 @@ if (animal().kind === "cat") {
 
     const cat: Cat = animal();
 >cat : Cat
->animal() : Cat | Dog
+>animal() : Cat
 >animal : Signal<Cat | Dog>
 
     cat.meow();
@@ -53,7 +53,7 @@ if ("meow" in animal()) {
 
     const cat: Cat = animal();
 >cat : Cat
->animal() : Cat | Dog
+>animal() : Cat
 >animal : Signal<Cat | Dog>
 
     cat.meow();
@@ -71,7 +71,7 @@ if ("bark" in animal()) {
 
     const dog: Dog = animal();
 >dog : Dog
->animal() : Cat | Dog
+>animal() : Dog
 >animal : Signal<Cat | Dog>
 
     dog.bark();
@@ -94,7 +94,7 @@ if (typeof value() === "string") {
 
     const str: string = value();
 >str : string
->value() : string | number
+>value() : string
 >value : Signal<string | number>
 }
 
@@ -107,7 +107,7 @@ if (typeof value() === "number") {
 
     const num: number = value();
 >num : number
->value() : string | number
+>value() : number
 >value : Signal<string | number>
 }
 
@@ -123,7 +123,7 @@ if (instance() instanceof Date) {
 
     const d: Date = instance();
 >d : Date
->instance() : Date | RegExp
+>instance() : Date
 >instance : Signal<Date | RegExp>
 }
 

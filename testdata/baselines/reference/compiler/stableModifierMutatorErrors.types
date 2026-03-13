@@ -58,7 +58,7 @@ if (c.read() !== undefined) {
 
     const val: string = c.read(); // OK — narrowed
 >val : string
->c.read() : string | undefined
+>c.read() : string
 >c.read : stable () => string | undefined
 >c : Container<string | undefined>
 >read : stable () => string | undefined
@@ -72,7 +72,7 @@ if (c.read() !== undefined) {
 
     const afterWrite: string = c.read(); // should error — mutator invalidated
 >afterWrite : string
->c.read() : string | undefined
+>c.read() : undefined
 >c.read : stable () => string | undefined
 >c : Container<string | undefined>
 >read : stable () => string | undefined

@@ -21,7 +21,7 @@ if (read() !== undefined) {
 
     const stable: string = read(); // baseline sanity check: still narrowed before boundaries
 >stable : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     stable;
@@ -49,7 +49,7 @@ if (read() !== undefined) {
 
     const afterInlinePassthrough: string = read(); // should stay narrowed
 >afterInlinePassthrough : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterInlinePassthrough;
@@ -80,7 +80,7 @@ if (read() !== undefined) {
 
     const afterConstHelperPassthrough: string = read(); // should stay narrowed
 >afterConstHelperPassthrough : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterConstHelperPassthrough;
@@ -115,7 +115,7 @@ if (read() !== undefined) {
 
     const afterConstHelperAliasChain: string = read(); // should stay narrowed
 >afterConstHelperAliasChain : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterConstHelperAliasChain;
@@ -154,7 +154,7 @@ if (read() !== undefined) {
 
     const afterConstHelperTwoHopAliasChain: string = read(); // should stay narrowed
 >afterConstHelperTwoHopAliasChain : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterConstHelperTwoHopAliasChain;
@@ -186,7 +186,7 @@ if (read() !== undefined) {
 
     const stillString: string = read(); // should stay narrowed
 >stillString : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     stillString;
@@ -213,7 +213,7 @@ if (read() !== undefined) {
 
     const afterExprStmtConstHelper: string = read(); // should stay narrowed
 >afterExprStmtConstHelper : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterExprStmtConstHelper;
@@ -241,7 +241,7 @@ if (read() !== undefined) {
 
     const afterExprStmtFunctionDecl: string = read(); // should stay narrowed
 >afterExprStmtFunctionDecl : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterExprStmtFunctionDecl;
@@ -382,7 +382,7 @@ if (read() !== undefined) {
 
     const afterExprStmtMutableHelper: string = read(); // currently preserved under standalone-call unrelated heuristic
 >afterExprStmtMutableHelper : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterExprStmtMutableHelper;
@@ -411,7 +411,7 @@ if (read() !== undefined) {
 
     const afterExprStmtNonTrivialHelper: string = read(); // currently preserved under standalone-call unrelated heuristic
 >afterExprStmtNonTrivialHelper : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterExprStmtNonTrivialHelper;
@@ -445,7 +445,7 @@ if (read() !== undefined) {
 
     const afterWrappedMutableHelperPassthrough: string = read(); // current conservative: error
 >afterWrappedMutableHelperPassthrough : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterWrappedMutableHelperPassthrough;
@@ -479,7 +479,7 @@ if (read() !== undefined) {
 
     const afterWrappedNonTrivialFnHelper: string = read(); // current conservative: error
 >afterWrappedNonTrivialFnHelper : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterWrappedNonTrivialFnHelper;
@@ -504,7 +504,7 @@ if (read() !== undefined) {
 
     const afterAliasPreservingPass: string = read(); // should stay narrowed
 >afterAliasPreservingPass : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterAliasPreservingPass;
@@ -527,7 +527,7 @@ if (read() !== undefined) {
 
     const afterHelperPassthrough: string = read(); // current conservative: error
 >afterHelperPassthrough : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterHelperPassthrough;

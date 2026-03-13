@@ -31,7 +31,7 @@ if (count() !== undefined) {
     count().toFixed(2); // OK — narrowed to number
 >count().toFixed(2) : string
 >count().toFixed : (fractionDigits?: number | undefined) => string
->count() : number | undefined
+>count() : number
 >count : stable () => number | undefined
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
@@ -44,7 +44,7 @@ if (count() !== undefined) {
     // Post-call narrowing: argument is undefined → count() narrows to undefined
     const x: undefined = count();
 >x : undefined
->count() : number | undefined
+>count() : undefined
 >count : stable () => number | undefined
 }
 
@@ -65,7 +65,7 @@ if (value() !== undefined) {
     value().toUpperCase(); // OK — narrowed to string
 >value().toUpperCase() : string
 >value().toUpperCase : () => string
->value() : string | undefined
+>value() : string
 >value : stable () => string | undefined
 >toUpperCase : () => string
 
@@ -77,7 +77,7 @@ if (value() !== undefined) {
     value().toUpperCase(); // Should still work — narrowed to string
 >value().toUpperCase() : string
 >value().toUpperCase : () => string
->value() : string | undefined
+>value() : string
 >value : stable () => string | undefined
 >toUpperCase : () => string
 
@@ -88,7 +88,7 @@ if (value() !== undefined) {
 
     const y: undefined = value();
 >y : undefined
->value() : string | undefined
+>value() : undefined
 >value : stable () => string | undefined
 }
 
@@ -132,14 +132,14 @@ if (getA() !== undefined && getB() !== undefined) {
     getA().toUpperCase(); // OK
 >getA().toUpperCase() : string
 >getA().toUpperCase : () => string
->getA() : string | undefined
+>getA() : string
 >getA : stable () => string | undefined
 >toUpperCase : () => string
 
     getB().toFixed(2); // OK
 >getB().toFixed(2) : string
 >getB().toFixed : (fractionDigits?: number | undefined) => string
->getB() : number | undefined
+>getB() : number
 >getB : stable () => number | undefined
 >toFixed : (fractionDigits?: number | undefined) => string
 >2 : 2
@@ -152,14 +152,14 @@ if (getA() !== undefined && getB() !== undefined) {
     getA().toUpperCase(); // Should still work — setB doesn't target readA
 >getA().toUpperCase() : string
 >getA().toUpperCase : () => string
->getA() : string | undefined
+>getA() : string
 >getA : stable () => string | undefined
 >toUpperCase : () => string
 
     // getB() is now invalidated
     const z: undefined = getB(); // post-call narrowing from setB(undefined)
 >z : undefined
->getB() : number | undefined
+>getB() : undefined
 >getB : stable () => number | undefined
 }
 
@@ -225,7 +225,7 @@ if (getText() !== null) {
 
     getText().length; // OK — narrowed to string
 >getText().length : number
->getText() : string | null
+>getText() : string
 >getText : stable () => string | null
 >length : number
 
@@ -235,7 +235,7 @@ if (getText() !== null) {
 
     const nullVal: null = getText(); // correctly null
 >nullVal : null
->getText() : string | null
+>getText() : null
 >getText : stable () => string | null
 
     setText("hello"); // post-call narrows getText() back to string
@@ -245,7 +245,7 @@ if (getText() !== null) {
 
     getText().length; // OK — narrowed back to string
 >getText().length : number
->getText() : string | null
+>getText() : string
 >getText : stable () => string | null
 >length : number
 }
@@ -277,7 +277,7 @@ if (getVal() !== undefined) {
     getVal().toUpperCase(); // OK — narrowed to string
 >getVal().toUpperCase() : string
 >getVal().toUpperCase : () => string
->getVal() : string | undefined
+>getVal() : string
 >getVal : stable () => string | undefined
 >toUpperCase : () => string
 
@@ -304,7 +304,7 @@ if (getVal() !== undefined) {
     getVal().toUpperCase(); // OK — post-call narrowed to string
 >getVal().toUpperCase() : string
 >getVal().toUpperCase : () => string
->getVal() : string | undefined
+>getVal() : string
 >getVal : stable () => string | undefined
 >toUpperCase : () => string
 }

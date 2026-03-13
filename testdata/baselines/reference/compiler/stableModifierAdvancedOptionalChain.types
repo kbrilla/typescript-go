@@ -28,8 +28,8 @@ if (readAnimal()?.kind === "cat") {
 >"cat" : "cat"
 
     const cat = readAnimal();
->cat : Animal | undefined
->readAnimal() : Animal | undefined
+>cat : { kind: "cat"; meow: boolean; }
+>readAnimal() : { kind: "cat"; meow: boolean; }
 >readAnimal : stable () => Animal | undefined
 
     cat;
@@ -46,7 +46,7 @@ if (typeof read() === "string") {
 
     const str: string = read();
 >str : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     str;
@@ -65,7 +65,7 @@ if (read() !== undefined) {
 >read()!.toUpperCase() : string
 >read()!.toUpperCase : () => string
 >read()! : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 >toUpperCase : () => string
 
@@ -93,8 +93,8 @@ if (readNested()?.inner?.kind === "cat") {
 >"cat" : "cat"
 
     const nested = readNested();
->nested : { inner?: Animal | undefined; } | undefined
->readNested() : { inner?: Animal | undefined; } | undefined
+>nested : { inner?: Animal | undefined; }
+>readNested() : { inner?: Animal | undefined; }
 >readNested : stable () => { inner?: Animal | undefined; } | undefined
 
     nested;
@@ -112,7 +112,7 @@ if (read() !== undefined) {
 >len : number
 >read()!.length : number
 >read()! : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 >length : number
 
@@ -125,7 +125,7 @@ if (read() !== undefined) {
 
     const stillNarrowed: string = read();
 >stillNarrowed : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     stillNarrowed;
@@ -142,7 +142,7 @@ if (read() !== undefined) {
     const template = `value: ${read()}`;
 >template : string
 >`value: ${read()}` : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     const s: string = template;
@@ -160,7 +160,7 @@ if (read()) {
 
     const truthy: string = read();
 >truthy : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     truthy;
@@ -176,7 +176,7 @@ if (!!read()) {
 
     const doubleNeg: string = read();
 >doubleNeg : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     doubleNeg;
@@ -191,7 +191,7 @@ if (read() != null) {
 
     const notNull: string = read();
 >notNull : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     notNull;
@@ -207,7 +207,7 @@ if (read() === "hello") {
 
     const hello: "hello" = read();
 >hello : "hello"
->read() : string | undefined
+>read() : "hello"
 >read : stable () => string | undefined
 
     hello;

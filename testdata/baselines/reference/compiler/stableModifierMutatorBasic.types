@@ -27,7 +27,7 @@ if (store.read() !== undefined) {
 
     const s: string = store.read(); // OK — narrowed
 >s : string
->store.read() : string | undefined
+>store.read() : string
 >store.read : stable () => string | undefined
 >store : { read: stable () => string | undefined; write: mutator (v: string) => void; }
 >read : stable () => string | undefined
@@ -51,7 +51,7 @@ if (store.read() !== undefined) {
 
     const afterWrite: string = store.read(); // should error — mutator invalidated narrowing
 >afterWrite : string
->store.read() : string | undefined
+>store.read() : string
 >store.read : stable () => string | undefined
 >store : { read: stable () => string | undefined; write: mutator (v: string) => void; }
 >read : stable () => string | undefined
@@ -159,7 +159,7 @@ if (storeA.read() !== undefined && storeB.read() !== undefined) {
 
     const bAfterReset: string = storeB.read(); // OK — different receiver, unaffected
 >bAfterReset : string
->storeB.read() : string | undefined
+>storeB.read() : string
 >storeB.read : stable () => string | undefined
 >storeB : { read: stable () => string | undefined; reset: mutator () => void; }
 >read : stable () => string | undefined

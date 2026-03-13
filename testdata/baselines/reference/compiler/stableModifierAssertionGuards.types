@@ -23,7 +23,7 @@ if (true) {
 
     const s: string = maybeStr(); // Should be narrowed after assertion
 >s : string
->maybeStr() : string | undefined
+>maybeStr() : string
 >maybeStr : Signal<string | undefined>
 }
 
@@ -43,7 +43,7 @@ if (isString(unknown())) {
 
     const s: string = unknown(); // Should be narrowed by type predicate
 >s : string
->unknown() : string | number
+>unknown() : string
 >unknown : Signal<string | number>
 }
 
@@ -66,7 +66,7 @@ if (true) {
 
     const s: string = maybeNull(); // Should be narrowed after assertion
 >s : string
->maybeNull() : string | null
+>maybeNull() : string
 >maybeNull : Signal<string | null>
 }
 
@@ -82,7 +82,7 @@ if (items() !== undefined) {
 
     for (const item of items()) {
 >item : string
->items() : readonly string[] | undefined
+>items() : readonly string[]
 >items : Signal<readonly string[] | undefined>
 
         const s: string = item;
@@ -109,7 +109,7 @@ const result2: string | undefined = flag() && flag().toUpperCase(); // logical A
 >flag : Signal<string | undefined>
 >flag().toUpperCase() : string
 >flag().toUpperCase : () => string
->flag() : string | undefined
+>flag() : string
 >flag : Signal<string | undefined>
 >toUpperCase : () => string
 

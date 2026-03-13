@@ -39,7 +39,7 @@ if (read() !== undefined) {
 
     const narrowed: string = read();
 >narrowed : string
->read() : string | undefined
+>read() : string
 >read : Signal<string | undefined>
 }
 
@@ -54,7 +54,7 @@ if (store.read() !== undefined) {
 
     const narrowed: string = store.read();
 >narrowed : string
->store.read() : string | undefined
+>store.read() : string
 >store.read : stable () => string | undefined
 >store : Store
 >read : stable () => string | undefined
@@ -76,7 +76,7 @@ if (value() !== undefined) {
 
     const narrowed: string = value();
 >narrowed : string
->value() : string | undefined
+>value() : string
 >value : stable () => string | undefined
 }
 

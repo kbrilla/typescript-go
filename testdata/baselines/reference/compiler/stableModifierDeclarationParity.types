@@ -25,7 +25,7 @@ if (getValue() !== undefined) {
 
     const v: string = getValue(); // should be narrowed to string
 >v : string
->getValue() : string | undefined
+>getValue() : string
 >getValue : stable () => string | undefined
 }
 
@@ -59,7 +59,7 @@ if (getState() !== undefined) {
 
     const s: string = getState(); // narrowed
 >s : string
->getState() : string | undefined
+>getState() : string
 >getState : stable () => string | undefined
 
     setState(undefined); // mutator — should invalidate getState() narrowing
@@ -69,7 +69,7 @@ if (getState() !== undefined) {
 
     const s2: string | undefined = getState(); // back to string | undefined
 >s2 : string | undefined
->getState() : string | undefined
+>getState() : string
 >getState : stable () => string | undefined
 }
 
@@ -97,7 +97,7 @@ if (getX() !== null) {
 
     const x: number = getX(); // narrowed
 >x : number
->getX() : number | null
+>getX() : number
 >getX : stable () => number | null
 }
 
@@ -117,7 +117,7 @@ if (readX() !== null) {
 
     const r: number = readX(); // narrowed
 >r : number
->readX() : number | null
+>readX() : number
 >readX : stable () => number | null
 }
 
@@ -147,7 +147,7 @@ if (getY() !== undefined) {
 
     const y: string = getY(); // narrowed
 >y : string
->getY() : string | undefined
+>getY() : string
 >getY : stable () => string | undefined
 }
 
@@ -169,7 +169,7 @@ if (readY() !== undefined) {
 
     const r: string = readY(); // narrowed
 >r : string
->readY() : string | undefined
+>readY() : string
 >readY : stable () => string | undefined
 
     setY(undefined); // mutator call
@@ -179,7 +179,7 @@ if (readY() !== undefined) {
 
     const r2: string | undefined = readY(); // back to union
 >r2 : string | undefined
->readY() : string | undefined
+>readY() : string
 >readY : stable () => string | undefined
 }
 
@@ -286,7 +286,7 @@ if (NS.getVal() !== undefined) {
 
     const v: string = NS.getVal(); // narrowed
 >v : string
->NS.getVal() : string | undefined
+>NS.getVal() : string
 >NS.getVal : stable () => string | undefined
 >NS : typeof NS
 >getVal : stable () => string | undefined

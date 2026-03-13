@@ -57,7 +57,7 @@ class DerivedSuperTest extends Base {
 
             const before: string = this.get(); // OK — narrowed
 >before : string
->this.get() : string | undefined
+>this.get() : string
 >this.get : stable () => string | undefined
 >this : this
 >get : stable () => string | undefined
@@ -93,7 +93,7 @@ class DerivedSuperTest extends Base {
 
             const before: string = this.get(); // OK — narrowed
 >before : string
->this.get() : string | undefined
+>this.get() : string
 >this.get : stable () => string | undefined
 >this : this
 >get : stable () => string | undefined
@@ -107,7 +107,7 @@ class DerivedSuperTest extends Base {
 
             const after: string = this.get(); // error — narrowed to undefined
 >after : string
->this.get() : string | undefined
+>this.get() : undefined
 >this.get : stable () => string | undefined
 >this : this
 >get : stable () => string | undefined
@@ -130,7 +130,7 @@ class DerivedSuperTest extends Base {
 
             const before: string = this.get(); // OK — narrowed
 >before : string
->this.get() : string | undefined
+>this.get() : string
 >this.get : stable () => string | undefined
 >this : this
 >get : stable () => string | undefined
@@ -144,7 +144,7 @@ class DerivedSuperTest extends Base {
 
             const after: string = this.get(); // OK — post-call narrowed to string
 >after : string
->this.get() : string | undefined
+>this.get() : string
 >this.get : stable () => string | undefined
 >this : this
 >get : stable () => string | undefined
@@ -173,7 +173,7 @@ class DerivedThisTest extends Base {
 
             const before: string = this.get(); // OK — narrowed
 >before : string
->this.get() : string | undefined
+>this.get() : string
 >this.get : stable () => string | undefined
 >this : this
 >get : stable () => string | undefined

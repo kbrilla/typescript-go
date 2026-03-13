@@ -269,7 +269,7 @@ if (store.read() !== undefined) {
 
     const afterDotSetCall: string = store.read(); // should stay narrowed
 >afterDotSetCall : string
->store.read() : string | undefined
+>store.read() : string
 >store.read : stable () => string | undefined
 >store : { read: stable () => string | undefined; set(v: string | undefined): void; }
 >read : stable () => string | undefined
@@ -295,7 +295,7 @@ if (store.read() !== undefined) {
 
     const afterBracketSetCall: string = store.read(); // should stay narrowed
 >afterBracketSetCall : string
->store.read() : string | undefined
+>store.read() : string
 >store.read : stable () => string | undefined
 >store : { read: stable () => string | undefined; set(v: string | undefined): void; }
 >read : stable () => string | undefined
@@ -449,7 +449,7 @@ if (keyStore.read() !== undefined) {
 
     const afterNonProvenDynamicWrite: string = keyStore.read(); // should error
 >afterNonProvenDynamicWrite : string
->keyStore.read() : string | undefined
+>keyStore.read() : string
 >keyStore.read : stable () => string | undefined
 >keyStore : { read: stable () => string | undefined; set(v: string | undefined): void; }
 >read : stable () => string | undefined
@@ -486,7 +486,7 @@ if (keyStore.read() !== undefined) {
 
     const afterOtherReceiverWrite: string = keyStore.read(); // should stay narrowed
 >afterOtherReceiverWrite : string
->keyStore.read() : string | undefined
+>keyStore.read() : string
 >keyStore.read : stable () => string | undefined
 >keyStore : { read: stable () => string | undefined; set(v: string | undefined): void; }
 >read : stable () => string | undefined

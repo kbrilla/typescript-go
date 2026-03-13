@@ -31,7 +31,7 @@ if (read() !== undefined) {
 
     const afterUnknown: string = read(); // should error + unknown-call-specific diagnostic
 >afterUnknown : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterUnknown;
@@ -51,12 +51,12 @@ if (read() !== undefined) {
 
     const afterUnknownFirst: string = read(); // should error + one boundary diagnostic on unknown call
 >afterUnknownFirst : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     const afterUnknownSecond: string = read(); // should error, no duplicate boundary diagnostic spam
 >afterUnknownSecond : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterUnknownFirst;
@@ -87,7 +87,7 @@ if (read() !== undefined) {
     });
     const afterCallback: string = read(); // should error + generic uncertainty-boundary diagnostic
 >afterCallback : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterCallback;
@@ -109,7 +109,7 @@ if (read() !== undefined) {
 
     const afterAliasEscape: string = read(); // direct const alias should preserve narrowing
 >afterAliasEscape : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterAliasEscape;
@@ -132,7 +132,7 @@ async function testAwaitBoundary() {
 
         const afterAwait: string = read(); // OK (ambient no-arg await preserves narrowing)
 >afterAwait : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
         afterAwait;

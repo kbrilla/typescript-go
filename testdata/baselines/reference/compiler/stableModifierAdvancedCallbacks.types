@@ -33,7 +33,7 @@ if (read() !== undefined) {
 
     const afterParamEmptyCallback: string = read(); // should stay narrowed
 >afterParamEmptyCallback : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterParamEmptyCallback;
@@ -60,7 +60,7 @@ if (read() !== undefined) {
 
     const afterParamNonEmptyCallback: string = read(); // should stay narrowed (unrelated standalone call)
 >afterParamNonEmptyCallback : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterParamNonEmptyCallback;
@@ -82,7 +82,7 @@ if (read() !== undefined) {
 
     const afterFunctionKeywordEmpty: string = read(); // should stay narrowed
 >afterFunctionKeywordEmpty : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterFunctionKeywordEmpty;
@@ -109,7 +109,7 @@ if (read() !== undefined) {
 
     const afterFunctionKeywordNonEmpty: string = read(); // should stay narrowed (unrelated standalone call)
 >afterFunctionKeywordNonEmpty : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterFunctionKeywordNonEmpty;
@@ -130,7 +130,7 @@ if (read() !== undefined) {
 
     const afterAsyncEmptyCallback: string = read(); // should stay narrowed
 >afterAsyncEmptyCallback : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterAsyncEmptyCallback;
@@ -156,7 +156,7 @@ if (read() !== undefined) {
 
     const afterAsyncNonEmptyCallback: string = read(); // should stay narrowed (unrelated standalone call)
 >afterAsyncNonEmptyCallback : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterAsyncNonEmptyCallback;
@@ -183,7 +183,7 @@ if (read() !== undefined) {
 
     const afterGeneratorCallback: string = read(); // should stay narrowed (unrelated standalone call)
 >afterGeneratorCallback : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterGeneratorCallback;
@@ -214,7 +214,7 @@ if (read() !== undefined) {
 
     const afterMultiParamEmpty: string = read(); // should stay narrowed
 >afterMultiParamEmpty : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterMultiParamEmpty;
@@ -243,7 +243,7 @@ if (read() !== undefined) {
 
     const afterMultiParamOneNonEmpty: string = read(); // should stay narrowed (unrelated standalone call)
 >afterMultiParamOneNonEmpty : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterMultiParamOneNonEmpty;
@@ -270,7 +270,7 @@ if (read() !== undefined) {
 
     const afterRestParamEmpty: string = read(); // should stay narrowed
 >afterRestParamEmpty : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterRestParamEmpty;
@@ -297,7 +297,7 @@ if (read() !== undefined) {
 
     const afterOptParamEmpty: string = read(); // should stay narrowed
 >afterOptParamEmpty : string
->read() : string | undefined
+>read() : string
 >read : stable () => string | undefined
 
     afterOptParamEmpty;

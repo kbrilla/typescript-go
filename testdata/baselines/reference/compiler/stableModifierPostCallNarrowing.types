@@ -26,7 +26,7 @@ count.set(42);
 
 const n1: number = count.read();  // Should narrow to number after set(42)
 >n1 : number
->count.read() : number | undefined
+>count.read() : number
 >count.read : stable () => number | undefined
 >count : Signal<number | undefined>
 >read : stable () => number | undefined
@@ -44,7 +44,7 @@ mixed.set("hello");
 
 const s1: string = mixed.read();  // Should narrow to string
 >s1 : string
->mixed.read() : string | number | undefined
+>mixed.read() : string
 >mixed.read : stable () => string | number | undefined
 >mixed : Signal<string | number | undefined>
 >read : stable () => string | number | undefined
@@ -62,7 +62,7 @@ opt.set(undefined);
 
 const u1: string | undefined = opt.read();  // Remains string | undefined
 >u1 : string | undefined
->opt.read() : string | undefined
+>opt.read() : undefined
 >opt.read : stable () => string | undefined
 >opt : Signal<string | undefined>
 >read : stable () => string | undefined
@@ -80,7 +80,7 @@ seq.set(100);
 
 const v1: number = seq.read();  // Should narrow to number
 >v1 : number
->seq.read() : string | number | undefined
+>seq.read() : number
 >seq.read : stable () => string | number | undefined
 >seq : Signal<string | number | undefined>
 >read : stable () => string | number | undefined
@@ -94,7 +94,7 @@ seq.set("world");
 
 const v2: string = seq.read();  // Should narrow to string
 >v2 : string
->seq.read() : string | number | undefined
+>seq.read() : string
 >seq.read : stable () => string | number | undefined
 >seq : Signal<string | number | undefined>
 >read : stable () => string | number | undefined
@@ -123,7 +123,7 @@ if (b.read() !== undefined) {
 
     const bVal: string = b.read();  // Still narrowed — b not affected by a.set()
 >bVal : string
->b.read() : string | undefined
+>b.read() : string
 >b.read : stable () => string | undefined
 >b : Signal<string | undefined>
 >read : stable () => string | undefined
@@ -142,7 +142,7 @@ lit.set("a");
 
 const l1: "a" = lit.read();  // Should narrow to "a"
 >l1 : "a"
->lit.read() : "a" | "b" | "c"
+>lit.read() : "a"
 >lit.read : stable () => "a" | "b" | "c"
 >lit : Signal<"a" | "b" | "c">
 >read : stable () => "a" | "b" | "c"
@@ -166,7 +166,7 @@ if (guarded.read() !== null) {
 
     const g1: number | null = guarded.read();  // Set(null) narrows to null, but null is assignable to number|null
 >g1 : number | null
->guarded.read() : number | null
+>guarded.read() : null
 >guarded.read : stable () => number | null
 >guarded : Signal<number | null>
 >read : stable () => number | null
@@ -210,7 +210,7 @@ narrowedSig.set(val);
 
 const ns1: string = narrowedSig.read();  // val is string, narrows to string
 >ns1 : string
->narrowedSig.read() : string | number | undefined
+>narrowedSig.read() : string
 >narrowedSig.read : stable () => string | number | undefined
 >narrowedSig : Signal<string | number | undefined>
 >read : stable () => string | number | undefined
@@ -261,7 +261,7 @@ if (store.user() !== undefined && store.settings() !== undefined) {
 
     const u: string = store.user();  // Narrowed to string (typeof "Alice") — post-call narrowing
 >u : string
->store.user() : string | undefined
+>store.user() : string
 >store.user : stable () => string | undefined
 >store : { user: stable () => string | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (value: string | undefined) => void; setSettings: mutator (value: { theme: string; } | undefined) => void; }
 >user : stable () => string | undefined
@@ -269,7 +269,7 @@ if (store.user() !== undefined && store.settings() !== undefined) {
     const s: { theme: string } = store.settings();  // Still narrowed from guard (not invalidated by setUser)
 >s : { theme: string; }
 >theme : string
->store.settings() : { theme: string; } | undefined
+>store.settings() : { theme: string; }
 >store.settings : stable () => { theme: string; } | undefined
 >store : { user: stable () => string | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (value: string | undefined) => void; setSettings: mutator (value: { theme: string; } | undefined) => void; }
 >settings : stable () => { theme: string; } | undefined
@@ -288,7 +288,7 @@ resetSig.set(undefined);
 
 const rs1: string | number | undefined = resetSig.read();  // set(undefined) narrows to undefined, but undefined is in the union
 >rs1 : string | number | undefined
->resetSig.read() : string | number | undefined
+>resetSig.read() : undefined
 >resetSig.read : stable () => string | number | undefined
 >resetSig : Signal<string | number | undefined>
 >read : stable () => string | number | undefined
@@ -306,7 +306,7 @@ multi.set(42);
 
 const m1: number = multi.read();  // number
 >m1 : number
->multi.read() : string | number | undefined
+>multi.read() : number
 >multi.read : stable () => string | number | undefined
 >multi : Signal<string | number | undefined>
 >read : stable () => string | number | undefined
@@ -320,7 +320,7 @@ multi.set("hello");
 
 const m2: string = multi.read();  // string
 >m2 : string
->multi.read() : string | number | undefined
+>multi.read() : string
 >multi.read : stable () => string | number | undefined
 >multi : Signal<string | number | undefined>
 >read : stable () => string | number | undefined
@@ -334,7 +334,7 @@ multi.set(undefined);
 
 const m3: string | number | undefined = multi.read();  // reset to full type
 >m3 : string | number | undefined
->multi.read() : string | number | undefined
+>multi.read() : undefined
 >multi.read : stable () => string | number | undefined
 >multi : Signal<string | number | undefined>
 >read : stable () => string | number | undefined

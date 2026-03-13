@@ -50,7 +50,7 @@ if (userStore.user() !== undefined && userStore.settings() !== undefined) {
     const u: { name: string } = userStore.user(); // should error — user() invalidated by setUser
 >u : { name: string; }
 >name : string
->userStore.user() : { name: string; } | undefined
+>userStore.user() : { name: string; }
 >userStore.user : stable () => { name: string; } | undefined
 >userStore : { user: stable () => { name: string; } | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (v: { name: string; } | undefined) => void; }
 >user : stable () => { name: string; } | undefined
@@ -58,7 +58,7 @@ if (userStore.user() !== undefined && userStore.settings() !== undefined) {
     const s: { theme: string } = userStore.settings(); // OK — settings() NOT linked, still narrowed
 >s : { theme: string; }
 >theme : string
->userStore.settings() : { theme: string; } | undefined
+>userStore.settings() : { theme: string; }
 >userStore.settings : stable () => { theme: string; } | undefined
 >userStore : { user: stable () => { name: string; } | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (v: { name: string; } | undefined) => void; }
 >settings : stable () => { theme: string; } | undefined
@@ -162,7 +162,7 @@ if (ambiguousStore.x() !== undefined && ambiguousStore.y() !== undefined) {
 
     const afterY: number = ambiguousStore.y(); // should error — conservatively dropped
 >afterY : number
->ambiguousStore.y() : number | undefined
+>ambiguousStore.y() : number
 >ambiguousStore.y : stable () => number | undefined
 >ambiguousStore : { x: stable () => string | undefined; y: stable () => number | undefined; doSomething: mutator (v: number) => void; }
 >y : stable () => number | undefined
@@ -198,7 +198,7 @@ if (singleStore.value() !== undefined) {
 
     const after: string = singleStore.value(); // should error — mutator invalidated
 >after : string
->singleStore.value() : string | undefined
+>singleStore.value() : string
 >singleStore.value : stable () => string | undefined
 >singleStore : { value: stable () => string | undefined; setValue: mutator (v: string | undefined) => void; }
 >value : stable () => string | undefined
@@ -244,14 +244,14 @@ if (selectiveStore.x() !== undefined && selectiveStore.y() !== undefined) {
 
     const afterX: string = selectiveStore.x(); // should error — x() is linked
 >afterX : string
->selectiveStore.x() : string | undefined
+>selectiveStore.x() : undefined
 >selectiveStore.x : stable () => string | undefined
 >selectiveStore : { x: stable () => string | undefined; y: stable () => number | undefined; setX: mutator (v: string | undefined) => void; }
 >x : stable () => string | undefined
 
     const afterY: number = selectiveStore.y(); // OK — y() is NOT linked, preserved
 >afterY : number
->selectiveStore.y() : number | undefined
+>selectiveStore.y() : number
 >selectiveStore.y : stable () => number | undefined
 >selectiveStore : { x: stable () => string | undefined; y: stable () => number | undefined; setX: mutator (v: string | undefined) => void; }
 >y : stable () => number | undefined

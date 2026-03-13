@@ -26,7 +26,7 @@ if (agreed.value() !== undefined) {
     agreed.value().toUpperCase(); // OK — stable survives merging when both agree
 >agreed.value().toUpperCase() : string
 >agreed.value().toUpperCase : () => string
->agreed.value() : string | undefined
+>agreed.value() : string
 >agreed.value : stable () => string | undefined
 >agreed : StableAgreed
 >value : stable () => string | undefined
@@ -59,7 +59,7 @@ if (firstWins.value() !== undefined) {
     firstWins.value().toUpperCase(); // stable from first declaration
 >firstWins.value().toUpperCase() : string
 >firstWins.value().toUpperCase : () => string
->firstWins.value() : string | undefined
+>firstWins.value() : string
 >firstWins.value : stable () => string | undefined
 >firstWins : StableFirstWins
 >value : stable () => string | undefined
@@ -200,7 +200,7 @@ if (mutAgreed.value() !== undefined) {
 >undefined : undefined
 
     mutAgreed.value(); // should be reset by mutator
->mutAgreed.value() : string | undefined
+>mutAgreed.value() : undefined
 >mutAgreed.value : stable () => string | undefined
 >mutAgreed : MutatorAgreed
 >value : stable () => string | undefined
@@ -231,7 +231,7 @@ if (derived.value() !== undefined) {
     derived.value().toUpperCase(); // OK — stable inherited from Base
 >derived.value().toUpperCase() : string
 >derived.value().toUpperCase : () => string
->derived.value() : string | undefined
+>derived.value() : string
 >derived.value : stable () => string | undefined
 >derived : Derived
 >value : stable () => string | undefined
@@ -296,7 +296,7 @@ if (addedStable.value() !== undefined) {
     addedStable.value().toUpperCase(); // stable added by derived
 >addedStable.value().toUpperCase() : string
 >addedStable.value().toUpperCase : () => string
->addedStable.value() : string | undefined
+>addedStable.value() : string
 >addedStable.value : stable () => string | undefined
 >addedStable : DerivedStable
 >value : stable () => string | undefined
@@ -332,7 +332,7 @@ if (methodMerge.getValue() !== undefined) {
     methodMerge.getValue().toUpperCase(); // OK — stable method survives merge
 >methodMerge.getValue().toUpperCase() : string
 >methodMerge.getValue().toUpperCase : () => string
->methodMerge.getValue() : string | undefined
+>methodMerge.getValue() : string
 >methodMerge.getValue : stable () => string | undefined
 >methodMerge : MethodMerge
 >getValue : stable () => string | undefined
@@ -346,7 +346,7 @@ if (methodMerge.getValue() !== undefined) {
 >undefined : undefined
 
     methodMerge.getValue(); // back to string | undefined
->methodMerge.getValue() : string | undefined
+>methodMerge.getValue() : undefined
 >methodMerge.getValue : stable () => string | undefined
 >methodMerge : MethodMerge
 >getValue : stable () => string | undefined

@@ -38,7 +38,7 @@ if (animal().kind === "cat") {
 
     const cat: Cat = animal();
 >cat : Cat
->animal() : Animal
+>animal() : Cat
 >animal : Signal<Animal>
 
     cat.meow();
@@ -49,7 +49,7 @@ if (animal().kind === "cat") {
 
     const cat2: Cat = animal(); // Should still be narrowed to Cat
 >cat2 : Cat
->animal() : Animal
+>animal() : Cat
 >animal : Signal<Animal>
 }
 
@@ -63,7 +63,7 @@ if (animal().kind === "dog") {
 
     const dog: Dog = animal();
 >dog : Dog
->animal() : Animal
+>animal() : Dog
 >animal : Signal<Animal>
 
     dog.bark();
@@ -74,7 +74,7 @@ if (animal().kind === "dog") {
 
     const dog2: Dog = animal(); // Should still be narrowed to Dog
 >dog2 : Dog
->animal() : Animal
+>animal() : Dog
 >animal : Signal<Animal>
 }
 
@@ -97,7 +97,7 @@ if (value() !== undefined) {
 
     const s: string = value(); // console.log should not invalidate
 >s : string
->value() : string | undefined
+>value() : string
 >value : Signal<string | undefined>
 }
 
@@ -120,12 +120,12 @@ if (value() !== undefined) {
 >helper.log : (s: string) => void
 >helper : { log(s: string): void; format(s: string): string; }
 >log : (s: string) => void
->value() : string | undefined
+>value() : string
 >value : Signal<string | undefined>
 
     const s: string = value(); // Method call on unrelated object
 >s : string
->value() : string | undefined
+>value() : string
 >value : Signal<string | undefined>
 }
 
@@ -161,7 +161,7 @@ if (store.read() !== undefined) {
 
     const s: string = store.read(); // Transparent - getter parity: method calls don't invalidate narrowing
 >s : string
->store.read() : string | undefined
+>store.read() : string
 >store.read : stable () => string | undefined
 >store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
 >read : stable () => string | undefined
@@ -184,7 +184,7 @@ if (store.read() !== undefined) {
 
     const s: string = store.read(); // Transparent - getter parity: only property writes invalidate
 >s : string
->store.read() : string | undefined
+>store.read() : string
 >store.read : stable () => string | undefined
 >store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
 >read : stable () => string | undefined
@@ -211,7 +211,7 @@ if (store.read() !== undefined) {
 
     const s: string = store.read(); // Should preserve - different receiver
 >s : string
->store.read() : string | undefined
+>store.read() : string
 >store.read : stable () => string | undefined
 >store : { read: stable () => string | undefined; clear(): void; reset(v: string): void; }
 >read : stable () => string | undefined

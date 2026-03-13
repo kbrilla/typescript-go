@@ -67,7 +67,7 @@ if (identityRead() !== undefined) {
 
     const identityStable: string = identityRead(); // OK
 >identityStable : string
->identityRead() : string | undefined
+>identityRead() : string
 >identityRead : stable () => string | undefined
 
     identityStable;
@@ -82,7 +82,7 @@ const ternaryStable: string = identityRead() !== undefined ? identityRead() : "f
 >identityRead() : string | undefined
 >identityRead : stable () => string | undefined
 >undefined : undefined
->identityRead() : string | undefined
+>identityRead() : string
 >identityRead : stable () => string | undefined
 >"fallback" : "fallback"
 
@@ -115,7 +115,7 @@ if (identityRead() !== undefined) {
     });
     const afterCallback: string = identityRead(); // should error
 >afterCallback : string
->identityRead() : string | undefined
+>identityRead() : string
 >identityRead : stable () => string | undefined
 
     afterCallback;
@@ -142,7 +142,7 @@ async function testAwaitParity() {
 
         const afterAwait: string = identityRead(); // OK (ambient no-arg await preserves narrowing)
 >afterAwait : string
->identityRead() : string | undefined
+>identityRead() : string
 >identityRead : stable () => string | undefined
 
         afterAwait;
@@ -180,7 +180,7 @@ if (store.read() !== undefined) {
 
     const afterSetCall: string = store.read(); // should be OK
 >afterSetCall : string
->store.read() : string | undefined
+>store.read() : string
 >store.read : stable () => string | undefined
 >store : { read: stable () => string | undefined; set(v: string | undefined): void; }
 >read : stable () => string | undefined
@@ -276,7 +276,7 @@ if (shape().kind === "circle") {
     const circleRadius: number = shape().radius; // OK
 >circleRadius : number
 >shape().radius : number
->shape() : Shape
+>shape() : { kind: "circle"; radius: number; }
 >shape : stable () => Shape
 >radius : number
 
@@ -303,7 +303,7 @@ if (shape().kind === "circle") {
     const afterUnknownShapeCall: number = shape().radius; // OK (no-arg unknown call preserves narrowing)
 >afterUnknownShapeCall : number
 >shape().radius : number
->shape() : Shape
+>shape() : { kind: "circle"; radius: number; }
 >shape : stable () => Shape
 >radius : number
 
