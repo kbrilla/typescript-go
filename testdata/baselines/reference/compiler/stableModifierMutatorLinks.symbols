@@ -1,0 +1,219 @@
+//// [tests/cases/compiler/stableModifierMutatorLinks.ts] ////
+
+=== stableModifierMutatorLinks.ts ===
+// Phase 5: Mutator with invalidates clause — selective invalidation
+
+// === Section 1: Single-endpoint invalidates ===
+declare const userStore: {
+>userStore : Symbol(userStore, Decl(stableModifierMutatorLinks.ts, 3, 13))
+
+    user: stable () => { name: string } | undefined;
+>user : Symbol(user, Decl(stableModifierMutatorLinks.ts, 3, 26))
+>name : Symbol(name, Decl(stableModifierMutatorLinks.ts, 4, 24))
+
+    settings: stable () => { theme: string } | undefined;
+>settings : Symbol(settings, Decl(stableModifierMutatorLinks.ts, 4, 52))
+>theme : Symbol(theme, Decl(stableModifierMutatorLinks.ts, 5, 28))
+
+    setUser: mutator (v: { name: string } | undefined) => void invalidates user;
+>setUser : Symbol(setUser, Decl(stableModifierMutatorLinks.ts, 5, 57))
+>v : Symbol(v, Decl(stableModifierMutatorLinks.ts, 6, 22))
+>name : Symbol(name, Decl(stableModifierMutatorLinks.ts, 6, 26))
+
+};
+
+// setUser invalidates to user — should invalidate user() but NOT settings()
+if (userStore.user() !== undefined && userStore.settings() !== undefined) {
+>userStore.user : Symbol(user, Decl(stableModifierMutatorLinks.ts, 3, 26))
+>userStore : Symbol(userStore, Decl(stableModifierMutatorLinks.ts, 3, 13))
+>user : Symbol(user, Decl(stableModifierMutatorLinks.ts, 3, 26))
+>undefined : Symbol(undefined)
+>userStore.settings : Symbol(settings, Decl(stableModifierMutatorLinks.ts, 4, 52))
+>userStore : Symbol(userStore, Decl(stableModifierMutatorLinks.ts, 3, 13))
+>settings : Symbol(settings, Decl(stableModifierMutatorLinks.ts, 4, 52))
+>undefined : Symbol(undefined)
+
+    userStore.setUser({ name: "new" });
+>userStore.setUser : Symbol(setUser, Decl(stableModifierMutatorLinks.ts, 5, 57))
+>userStore : Symbol(userStore, Decl(stableModifierMutatorLinks.ts, 3, 13))
+>setUser : Symbol(setUser, Decl(stableModifierMutatorLinks.ts, 5, 57))
+>name : Symbol(name, Decl(stableModifierMutatorLinks.ts, 11, 23))
+
+    const u: { name: string } = userStore.user(); // should error — user() invalidated by setUser
+>u : Symbol(u, Decl(stableModifierMutatorLinks.ts, 12, 9))
+>name : Symbol(name, Decl(stableModifierMutatorLinks.ts, 12, 14))
+>userStore.user : Symbol(user, Decl(stableModifierMutatorLinks.ts, 3, 26))
+>userStore : Symbol(userStore, Decl(stableModifierMutatorLinks.ts, 3, 13))
+>user : Symbol(user, Decl(stableModifierMutatorLinks.ts, 3, 26))
+
+    const s: { theme: string } = userStore.settings(); // OK — settings() NOT linked, still narrowed
+>s : Symbol(s, Decl(stableModifierMutatorLinks.ts, 13, 9))
+>theme : Symbol(theme, Decl(stableModifierMutatorLinks.ts, 13, 14))
+>userStore.settings : Symbol(settings, Decl(stableModifierMutatorLinks.ts, 4, 52))
+>userStore : Symbol(userStore, Decl(stableModifierMutatorLinks.ts, 3, 13))
+>settings : Symbol(settings, Decl(stableModifierMutatorLinks.ts, 4, 52))
+}
+
+// === Section 2: Multi-endpoint invalidates ===
+declare const multiStore: {
+>multiStore : Symbol(multiStore, Decl(stableModifierMutatorLinks.ts, 17, 13))
+
+    a: stable () => string | undefined;
+>a : Symbol(a, Decl(stableModifierMutatorLinks.ts, 17, 27))
+
+    b: stable () => number | undefined;
+>b : Symbol(b, Decl(stableModifierMutatorLinks.ts, 18, 39))
+
+    resetAll: mutator () => void invalidates a, b;
+>resetAll : Symbol(resetAll, Decl(stableModifierMutatorLinks.ts, 19, 39))
+
+};
+
+if (multiStore.a() !== undefined && multiStore.b() !== undefined) {
+>multiStore.a : Symbol(a, Decl(stableModifierMutatorLinks.ts, 17, 27))
+>multiStore : Symbol(multiStore, Decl(stableModifierMutatorLinks.ts, 17, 13))
+>a : Symbol(a, Decl(stableModifierMutatorLinks.ts, 17, 27))
+>undefined : Symbol(undefined)
+>multiStore.b : Symbol(b, Decl(stableModifierMutatorLinks.ts, 18, 39))
+>multiStore : Symbol(multiStore, Decl(stableModifierMutatorLinks.ts, 17, 13))
+>b : Symbol(b, Decl(stableModifierMutatorLinks.ts, 18, 39))
+>undefined : Symbol(undefined)
+
+    multiStore.resetAll();
+>multiStore.resetAll : Symbol(resetAll, Decl(stableModifierMutatorLinks.ts, 19, 39))
+>multiStore : Symbol(multiStore, Decl(stableModifierMutatorLinks.ts, 17, 13))
+>resetAll : Symbol(resetAll, Decl(stableModifierMutatorLinks.ts, 19, 39))
+
+    const afterA: string = multiStore.a();   // should error — a() invalidated
+>afterA : Symbol(afterA, Decl(stableModifierMutatorLinks.ts, 25, 9))
+>multiStore.a : Symbol(a, Decl(stableModifierMutatorLinks.ts, 17, 27))
+>multiStore : Symbol(multiStore, Decl(stableModifierMutatorLinks.ts, 17, 13))
+>a : Symbol(a, Decl(stableModifierMutatorLinks.ts, 17, 27))
+
+    const afterB: number = multiStore.b();   // should error — b() invalidated
+>afterB : Symbol(afterB, Decl(stableModifierMutatorLinks.ts, 26, 9))
+>multiStore.b : Symbol(b, Decl(stableModifierMutatorLinks.ts, 18, 39))
+>multiStore : Symbol(multiStore, Decl(stableModifierMutatorLinks.ts, 17, 13))
+>b : Symbol(b, Decl(stableModifierMutatorLinks.ts, 18, 39))
+}
+
+// === Section 3: Mutator without invalidates on multi-endpoint = conservative ===
+declare const ambiguousStore: {
+>ambiguousStore : Symbol(ambiguousStore, Decl(stableModifierMutatorLinks.ts, 30, 13))
+
+    x: stable () => string | undefined;
+>x : Symbol(x, Decl(stableModifierMutatorLinks.ts, 30, 31))
+
+    y: stable () => number | undefined;
+>y : Symbol(y, Decl(stableModifierMutatorLinks.ts, 31, 39))
+
+    doSomething: mutator (v: number) => void; // no invalidates clause
+>doSomething : Symbol(doSomething, Decl(stableModifierMutatorLinks.ts, 32, 39))
+>v : Symbol(v, Decl(stableModifierMutatorLinks.ts, 33, 26))
+
+};
+
+if (ambiguousStore.x() !== undefined && ambiguousStore.y() !== undefined) {
+>ambiguousStore.x : Symbol(x, Decl(stableModifierMutatorLinks.ts, 30, 31))
+>ambiguousStore : Symbol(ambiguousStore, Decl(stableModifierMutatorLinks.ts, 30, 13))
+>x : Symbol(x, Decl(stableModifierMutatorLinks.ts, 30, 31))
+>undefined : Symbol(undefined)
+>ambiguousStore.y : Symbol(y, Decl(stableModifierMutatorLinks.ts, 31, 39))
+>ambiguousStore : Symbol(ambiguousStore, Decl(stableModifierMutatorLinks.ts, 30, 13))
+>y : Symbol(y, Decl(stableModifierMutatorLinks.ts, 31, 39))
+>undefined : Symbol(undefined)
+
+    ambiguousStore.doSomething(42);
+>ambiguousStore.doSomething : Symbol(doSomething, Decl(stableModifierMutatorLinks.ts, 32, 39))
+>ambiguousStore : Symbol(ambiguousStore, Decl(stableModifierMutatorLinks.ts, 30, 13))
+>doSomething : Symbol(doSomething, Decl(stableModifierMutatorLinks.ts, 32, 39))
+
+    const afterX: string = ambiguousStore.x(); // should error — conservatively dropped
+>afterX : Symbol(afterX, Decl(stableModifierMutatorLinks.ts, 38, 9))
+>ambiguousStore.x : Symbol(x, Decl(stableModifierMutatorLinks.ts, 30, 31))
+>ambiguousStore : Symbol(ambiguousStore, Decl(stableModifierMutatorLinks.ts, 30, 13))
+>x : Symbol(x, Decl(stableModifierMutatorLinks.ts, 30, 31))
+
+    const afterY: number = ambiguousStore.y(); // should error — conservatively dropped
+>afterY : Symbol(afterY, Decl(stableModifierMutatorLinks.ts, 39, 9))
+>ambiguousStore.y : Symbol(y, Decl(stableModifierMutatorLinks.ts, 31, 39))
+>ambiguousStore : Symbol(ambiguousStore, Decl(stableModifierMutatorLinks.ts, 30, 13))
+>y : Symbol(y, Decl(stableModifierMutatorLinks.ts, 31, 39))
+}
+
+// === Section 4: Mutator on single-endpoint = no ambiguity ===
+declare const singleStore: {
+>singleStore : Symbol(singleStore, Decl(stableModifierMutatorLinks.ts, 43, 13))
+
+    value: stable () => string | undefined;
+>value : Symbol(value, Decl(stableModifierMutatorLinks.ts, 43, 28))
+
+    setValue: mutator (v: string | undefined) => void; // no invalidates, but only one stable endpoint
+>setValue : Symbol(setValue, Decl(stableModifierMutatorLinks.ts, 44, 43))
+>v : Symbol(v, Decl(stableModifierMutatorLinks.ts, 45, 23))
+
+};
+
+if (singleStore.value() !== undefined) {
+>singleStore.value : Symbol(value, Decl(stableModifierMutatorLinks.ts, 43, 28))
+>singleStore : Symbol(singleStore, Decl(stableModifierMutatorLinks.ts, 43, 13))
+>value : Symbol(value, Decl(stableModifierMutatorLinks.ts, 43, 28))
+>undefined : Symbol(undefined)
+
+    singleStore.setValue("new");
+>singleStore.setValue : Symbol(setValue, Decl(stableModifierMutatorLinks.ts, 44, 43))
+>singleStore : Symbol(singleStore, Decl(stableModifierMutatorLinks.ts, 43, 13))
+>setValue : Symbol(setValue, Decl(stableModifierMutatorLinks.ts, 44, 43))
+
+    const after: string = singleStore.value(); // should error — mutator invalidated
+>after : Symbol(after, Decl(stableModifierMutatorLinks.ts, 50, 9))
+>singleStore.value : Symbol(value, Decl(stableModifierMutatorLinks.ts, 43, 28))
+>singleStore : Symbol(singleStore, Decl(stableModifierMutatorLinks.ts, 43, 13))
+>value : Symbol(value, Decl(stableModifierMutatorLinks.ts, 43, 28))
+}
+
+// === Section 5: Selective invalidation — unlinked endpoint preserved ===
+declare const selectiveStore: {
+>selectiveStore : Symbol(selectiveStore, Decl(stableModifierMutatorLinks.ts, 54, 13))
+
+    x: stable () => string | undefined;
+>x : Symbol(x, Decl(stableModifierMutatorLinks.ts, 54, 31))
+
+    y: stable () => number | undefined;
+>y : Symbol(y, Decl(stableModifierMutatorLinks.ts, 55, 39))
+
+    setX: mutator (v: string | undefined) => void invalidates x;
+>setX : Symbol(setX, Decl(stableModifierMutatorLinks.ts, 56, 39))
+>v : Symbol(v, Decl(stableModifierMutatorLinks.ts, 57, 19))
+
+};
+
+if (selectiveStore.x() !== undefined && selectiveStore.y() !== undefined) {
+>selectiveStore.x : Symbol(x, Decl(stableModifierMutatorLinks.ts, 54, 31))
+>selectiveStore : Symbol(selectiveStore, Decl(stableModifierMutatorLinks.ts, 54, 13))
+>x : Symbol(x, Decl(stableModifierMutatorLinks.ts, 54, 31))
+>undefined : Symbol(undefined)
+>selectiveStore.y : Symbol(y, Decl(stableModifierMutatorLinks.ts, 55, 39))
+>selectiveStore : Symbol(selectiveStore, Decl(stableModifierMutatorLinks.ts, 54, 13))
+>y : Symbol(y, Decl(stableModifierMutatorLinks.ts, 55, 39))
+>undefined : Symbol(undefined)
+
+    selectiveStore.setX(undefined);
+>selectiveStore.setX : Symbol(setX, Decl(stableModifierMutatorLinks.ts, 56, 39))
+>selectiveStore : Symbol(selectiveStore, Decl(stableModifierMutatorLinks.ts, 54, 13))
+>setX : Symbol(setX, Decl(stableModifierMutatorLinks.ts, 56, 39))
+>undefined : Symbol(undefined)
+
+    const afterX: string = selectiveStore.x(); // should error — x() is linked
+>afterX : Symbol(afterX, Decl(stableModifierMutatorLinks.ts, 62, 9))
+>selectiveStore.x : Symbol(x, Decl(stableModifierMutatorLinks.ts, 54, 31))
+>selectiveStore : Symbol(selectiveStore, Decl(stableModifierMutatorLinks.ts, 54, 13))
+>x : Symbol(x, Decl(stableModifierMutatorLinks.ts, 54, 31))
+
+    const afterY: number = selectiveStore.y(); // OK — y() is NOT linked, preserved
+>afterY : Symbol(afterY, Decl(stableModifierMutatorLinks.ts, 63, 9))
+>selectiveStore.y : Symbol(y, Decl(stableModifierMutatorLinks.ts, 55, 39))
+>selectiveStore : Symbol(selectiveStore, Decl(stableModifierMutatorLinks.ts, 54, 13))
+>y : Symbol(y, Decl(stableModifierMutatorLinks.ts, 55, 39))
+}
+

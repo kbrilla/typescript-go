@@ -2059,6 +2059,11 @@ func (c *Checker) createTypePredicateFromTypePredicateNode(node *ast.Node, signa
 	if predicateNode.Type != nil {
 		t = c.getTypeFromTypeNode(predicateNode.Type)
 	}
+	// Linked method predicate (this.method() is Type)
+	if ast.IsPropertyAccessExpression(predicateNode.ParameterName) {
+		methodName := predicateNode.ParameterName.Name().Text()
+		return c.newTypePredicate(TypePredicateKindLinkedMethod, methodName, -1, t)
+	}
 	if ast.IsThisTypeNode(predicateNode.ParameterName) {
 		kind := core.IfElse(predicateNode.AssertsModifier != nil, TypePredicateKindAssertsThis, TypePredicateKindThis)
 		return c.newTypePredicate(kind, "" /*parameterName*/, 0 /*parameterIndex*/, t)

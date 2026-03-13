@@ -1,0 +1,84 @@
+// @strict: true
+
+// Phase 9: Keyed Linked Predicates — per-key stable tracking
+
+// === 1. Basic per-key stable with literal keys ===
+interface TypedMap<K, V> {
+    stable[key] get(key: K): V | undefined;
+    mutator set(key: K, value: V): void invalidates get[key];
+    mutator delete(key: K): boolean invalidates get[key];
+    mutator clear(): void;  // unkeyed → invalidates ALL
+}
+
+declare const map: TypedMap<string, number>;
+
+// Per-key narrowing with string literals
+if (map.get("x") !== undefined) {
+    const a: number = map.get("x");       // narrowed (same key "x")
+    const b = map.get("y");               // number | undefined (different key)
+
+    map.set("y", 42);                     // invalidates only get("y")
+    const c: number = map.get("x");       // still narrowed
+
+    map.set("x", 99);                     // invalidates get("x")
+    const d = map.get("x");               // number | undefined (narrowing dropped)
+
+    map.clear();                          // invalidates ALL keys
+    map.get("x");                         // number | undefined
+}
+
+// === 2. Variable key reference ===
+declare const key: string;
+if (map.get(key) !== undefined) {
+    const e: number = map.get(key);       // narrowed (same variable ref)
+}
+
+// === 3. Independent keys narrowed simultaneously ===
+if (map.get("a") !== undefined && map.get("b") !== undefined) {
+    const f: number = map.get("a");       // narrowed
+    const g: number = map.get("b");       // narrowed
+
+    map.set("a", 10);                     // only invalidates get("a")
+    const h: number = map.get("b");       // still narrowed
+}
+
+// === 4. delete per-key invalidation ===
+if (map.get("x") !== undefined && map.get("y") !== undefined) {
+    map.delete("y");                      // invalidates get("y") only
+    const i: number = map.get("x");       // still narrowed
+}
+
+// === 5. Function type syntax with keyed stable ===
+interface FuncMap<K, V> {
+    get: stable[key] (key: K) => V | undefined;
+    set: mutator (key: K, value: V) => void invalidates get[key];
+}
+
+declare const fmap: FuncMap<string, number>;
+if (fmap.get("z") !== undefined) {
+    const j: number = fmap.get("z");      // narrowed
+    fmap.set("w", 5);                     // different key
+    const k: number = fmap.get("z");      // still narrowed
+}
+
+// === 6. Multi-stable per-key invalidation — explicit control ===
+interface MultiStore {
+    stable[key] getA(key: string): number | undefined;
+    stable[key] getB(key: string): number | undefined;
+    mutator setA(key: string, value: number): void invalidates getA[key];
+    mutator setAll(key: string): void invalidates getA[key], getB[key];
+    mutator reset(): void invalidates getA, getB;  // unkeyed → all keys
+}
+
+declare const ms: MultiStore;
+if (ms.getA("x") !== undefined && ms.getB("x") !== undefined && ms.getA("y") !== undefined) {
+    ms.setA("x", 42);          // only invalidates getA("x"), NOT getB("x") or getA("y")
+    const msb: number = ms.getB("x");    // still narrowed
+    const msa: number = ms.getA("y");    // still narrowed (different key)
+
+    ms.setAll("y");            // invalidates getA("y") AND getB("y")
+    const msa2 = ms.getA("x");           // number | undefined — already invalidated by setA("x") above
+
+    ms.reset();                // invalidates ALL keys of both getA and getB
+    const msa3 = ms.getA("x");           // number | undefined — should error if assigned to number
+}

@@ -1,0 +1,173 @@
+//// [tests/cases/compiler/stableModifierMutatorBasic.ts] ////
+
+=== stableModifierMutatorBasic.ts ===
+// Phase 5: Basic mutator keyword parsing and invalidation
+
+// === Section 1: Basic mutator parsing ===
+declare const store: {
+>store : { read: stable () => string | undefined; write: mutator (v: string) => void; }
+
+    read: stable () => string | undefined;
+>read : stable () => string | undefined
+
+    write: mutator (v: string) => void;
+>write : mutator (v: string) => void
+>v : string
+
+};
+
+// Basic stable narrowing should still work
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; write: mutator (v: string) => void; }
+>read : stable () => string | undefined
+>undefined : undefined
+
+    const s: string = store.read(); // OK — narrowed
+>s : string
+>store.read() : string
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; write: mutator (v: string) => void; }
+>read : stable () => string | undefined
+}
+
+// === Section 2: Mutator call invalidates stable narrowing ===
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; write: mutator (v: string) => void; }
+>read : stable () => string | undefined
+>undefined : undefined
+
+    store.write("new");
+>store.write("new") : void
+>store.write : mutator (v: string) => void
+>store : { read: stable () => string | undefined; write: mutator (v: string) => void; }
+>write : mutator (v: string) => void
+>"new" : "new"
+
+    const afterWrite: string = store.read(); // should error — mutator invalidated narrowing
+>afterWrite : string
+>store.read() : string
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; write: mutator (v: string) => void; }
+>read : stable () => string | undefined
+
+    afterWrite;
+>afterWrite : string
+}
+
+// === Section 3: Parameterless mutator works ===
+declare const resetable: {
+>resetable : { value: stable () => string | undefined; reset: mutator () => void; }
+
+    value: stable () => string | undefined;
+>value : stable () => string | undefined
+
+    reset: mutator () => void;
+>reset : mutator () => void
+
+};
+
+if (resetable.value() !== undefined) {
+>resetable.value() !== undefined : boolean
+>resetable.value() : string | undefined
+>resetable.value : stable () => string | undefined
+>resetable : { value: stable () => string | undefined; reset: mutator () => void; }
+>value : stable () => string | undefined
+>undefined : undefined
+
+    resetable.reset();
+>resetable.reset() : void
+>resetable.reset : mutator () => void
+>resetable : { value: stable () => string | undefined; reset: mutator () => void; }
+>reset : mutator () => void
+
+    const afterReset: string = resetable.value(); // should error — mutator invalidated
+>afterReset : string
+>resetable.value() : string | undefined
+>resetable.value : stable () => string | undefined
+>resetable : { value: stable () => string | undefined; reset: mutator () => void; }
+>value : stable () => string | undefined
+
+    afterReset;
+>afterReset : string
+}
+
+// === Section 4: Mutator validation — stable and mutator cannot combine ===
+declare const bad: {
+>bad : { conflict: stable mutator (v: string) => void; }
+
+    conflict: stable mutator (v: string) => void; // should error — can't combine
+>conflict : stable mutator (v: string) => void
+>v : string
+
+};
+
+// === Section 5: Cross-receiver mutator independence ===
+declare const storeA: {
+>storeA : { read: stable () => string | undefined; reset: mutator () => void; }
+
+    read: stable () => string | undefined;
+>read : stable () => string | undefined
+
+    reset: mutator () => void;
+>reset : mutator () => void
+
+};
+declare const storeB: {
+>storeB : { read: stable () => string | undefined; reset: mutator () => void; }
+
+    read: stable () => string | undefined;
+>read : stable () => string | undefined
+
+    reset: mutator () => void;
+>reset : mutator () => void
+
+};
+
+if (storeA.read() !== undefined && storeB.read() !== undefined) {
+>storeA.read() !== undefined && storeB.read() !== undefined : boolean
+>storeA.read() !== undefined : boolean
+>storeA.read() : string | undefined
+>storeA.read : stable () => string | undefined
+>storeA : { read: stable () => string | undefined; reset: mutator () => void; }
+>read : stable () => string | undefined
+>undefined : undefined
+>storeB.read() !== undefined : boolean
+>storeB.read() : string | undefined
+>storeB.read : stable () => string | undefined
+>storeB : { read: stable () => string | undefined; reset: mutator () => void; }
+>read : stable () => string | undefined
+>undefined : undefined
+
+    storeA.reset();
+>storeA.reset() : void
+>storeA.reset : mutator () => void
+>storeA : { read: stable () => string | undefined; reset: mutator () => void; }
+>reset : mutator () => void
+
+    const aAfterReset: string = storeA.read(); // should error — same receiver mutator
+>aAfterReset : string
+>storeA.read() : string | undefined
+>storeA.read : stable () => string | undefined
+>storeA : { read: stable () => string | undefined; reset: mutator () => void; }
+>read : stable () => string | undefined
+
+    const bAfterReset: string = storeB.read(); // OK — different receiver, unaffected
+>bAfterReset : string
+>storeB.read() : string
+>storeB.read : stable () => string | undefined
+>storeB : { read: stable () => string | undefined; reset: mutator () => void; }
+>read : stable () => string | undefined
+
+    aAfterReset;
+>aAfterReset : string
+
+    bAfterReset;
+>bAfterReset : string
+}
+

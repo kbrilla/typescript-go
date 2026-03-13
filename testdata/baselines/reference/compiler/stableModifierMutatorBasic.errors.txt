@@ -1,0 +1,77 @@
+stableModifierMutatorBasic.ts(28,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+stableModifierMutatorBasic.ts(29,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+stableModifierMutatorBasic.ts(35,15): error TS100012: 'stable' modifier can only appear on a function type with no parameters.
+stableModifierMutatorBasic.ts(49,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+stableModifierMutatorBasic.ts(50,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+
+==== stableModifierMutatorBasic.ts (5 errors) ====
+    // Phase 5: Basic mutator keyword parsing and invalidation
+    
+    // === Section 1: Basic mutator parsing ===
+    declare const store: {
+        read: stable () => string | undefined;
+        write: mutator (v: string) => void;
+    };
+    
+    // Basic stable narrowing should still work
+    if (store.read() !== undefined) {
+        const s: string = store.read(); // OK — narrowed
+    }
+    
+    // === Section 2: Mutator call invalidates stable narrowing ===
+    if (store.read() !== undefined) {
+        store.write("new");
+        const afterWrite: string = store.read(); // should error — mutator invalidated narrowing
+        afterWrite;
+    }
+    
+    // === Section 3: Parameterless mutator works ===
+    declare const resetable: {
+        value: stable () => string | undefined;
+        reset: mutator () => void;
+    };
+    
+    if (resetable.value() !== undefined) {
+        resetable.reset();
+        ~~~~~~~~~~~~~~~~~
+!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterReset: string = resetable.value(); // should error — mutator invalidated
+              ~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterReset;
+    }
+    
+    // === Section 4: Mutator validation — stable and mutator cannot combine ===
+    declare const bad: {
+        conflict: stable mutator (v: string) => void; // should error — can't combine
+                  ~~~~~~
+!!! error TS100012: 'stable' modifier can only appear on a function type with no parameters.
+    };
+    
+    // === Section 5: Cross-receiver mutator independence ===
+    declare const storeA: {
+        read: stable () => string | undefined;
+        reset: mutator () => void;
+    };
+    declare const storeB: {
+        read: stable () => string | undefined;
+        reset: mutator () => void;
+    };
+    
+    if (storeA.read() !== undefined && storeB.read() !== undefined) {
+        storeA.reset();
+        ~~~~~~~~~~~~~~
+!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const aAfterReset: string = storeA.read(); // should error — same receiver mutator
+              ~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        const bAfterReset: string = storeB.read(); // OK — different receiver, unaffected
+        aAfterReset;
+        bAfterReset;
+    }
+    

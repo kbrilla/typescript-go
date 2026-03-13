@@ -1,0 +1,178 @@
+//// [tests/cases/compiler/stableModifierAdvancedOptionalChain.ts] ////
+
+=== stableModifierAdvancedOptionalChain.ts ===
+// Phase 3: Guarded optional-chain carryover and discriminant patterns.
+// Tests optional chaining as discriminant, with method calls, and
+// boundary interaction patterns with stable reads.
+
+type Animal = { kind: "cat"; meow: boolean } | { kind: "dog"; bark: boolean };
+>Animal : Symbol(Animal, Decl(stableModifierAdvancedOptionalChain.ts, 0, 0))
+>kind : Symbol(kind, Decl(stableModifierAdvancedOptionalChain.ts, 4, 15))
+>meow : Symbol(meow, Decl(stableModifierAdvancedOptionalChain.ts, 4, 28))
+>kind : Symbol(kind, Decl(stableModifierAdvancedOptionalChain.ts, 4, 48))
+>bark : Symbol(bark, Decl(stableModifierAdvancedOptionalChain.ts, 4, 61))
+
+declare const readAnimal: stable () => Animal | undefined;
+>readAnimal : Symbol(readAnimal, Decl(stableModifierAdvancedOptionalChain.ts, 6, 13))
+>Animal : Symbol(Animal, Decl(stableModifierAdvancedOptionalChain.ts, 0, 0))
+
+declare const read: stable () => string | undefined;
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+// Optional chain as discriminant — should narrow.
+if (readAnimal()?.kind === "cat") {
+>readAnimal()?.kind : Symbol(kind, Decl(stableModifierAdvancedOptionalChain.ts, 4, 15), Decl(stableModifierAdvancedOptionalChain.ts, 4, 48))
+>readAnimal : Symbol(readAnimal, Decl(stableModifierAdvancedOptionalChain.ts, 6, 13))
+>kind : Symbol(kind, Decl(stableModifierAdvancedOptionalChain.ts, 4, 15), Decl(stableModifierAdvancedOptionalChain.ts, 4, 48))
+
+    const cat = readAnimal();
+>cat : Symbol(cat, Decl(stableModifierAdvancedOptionalChain.ts, 11, 9))
+>readAnimal : Symbol(readAnimal, Decl(stableModifierAdvancedOptionalChain.ts, 6, 13))
+
+    cat;
+>cat : Symbol(cat, Decl(stableModifierAdvancedOptionalChain.ts, 11, 9))
+}
+
+// Optional chain + typeof guard.
+if (typeof read() === "string") {
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    const str: string = read();
+>str : Symbol(str, Decl(stableModifierAdvancedOptionalChain.ts, 17, 9))
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    str;
+>str : Symbol(str, Decl(stableModifierAdvancedOptionalChain.ts, 17, 9))
+}
+
+// Optional chaining on stable result with method call.
+if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+>undefined : Symbol(undefined)
+
+    const upper = read()!.toUpperCase();
+>upper : Symbol(upper, Decl(stableModifierAdvancedOptionalChain.ts, 23, 9))
+>read()!.toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    const result: string = upper;
+>result : Symbol(result, Decl(stableModifierAdvancedOptionalChain.ts, 24, 9))
+>upper : Symbol(upper, Decl(stableModifierAdvancedOptionalChain.ts, 23, 9))
+
+    result;
+>result : Symbol(result, Decl(stableModifierAdvancedOptionalChain.ts, 24, 9))
+}
+
+// Nested optional chain on stable discriminant.
+declare const readNested: stable () => { inner?: Animal } | undefined;
+>readNested : Symbol(readNested, Decl(stableModifierAdvancedOptionalChain.ts, 29, 13))
+>inner : Symbol(inner, Decl(stableModifierAdvancedOptionalChain.ts, 29, 40))
+>Animal : Symbol(Animal, Decl(stableModifierAdvancedOptionalChain.ts, 0, 0))
+
+if (readNested()?.inner?.kind === "cat") {
+>readNested()?.inner?.kind : Symbol(kind, Decl(stableModifierAdvancedOptionalChain.ts, 4, 15), Decl(stableModifierAdvancedOptionalChain.ts, 4, 48))
+>readNested()?.inner : Symbol(inner, Decl(stableModifierAdvancedOptionalChain.ts, 29, 40))
+>readNested : Symbol(readNested, Decl(stableModifierAdvancedOptionalChain.ts, 29, 13))
+>inner : Symbol(inner, Decl(stableModifierAdvancedOptionalChain.ts, 29, 40))
+>kind : Symbol(kind, Decl(stableModifierAdvancedOptionalChain.ts, 4, 15), Decl(stableModifierAdvancedOptionalChain.ts, 4, 48))
+
+    const nested = readNested();
+>nested : Symbol(nested, Decl(stableModifierAdvancedOptionalChain.ts, 32, 9))
+>readNested : Symbol(readNested, Decl(stableModifierAdvancedOptionalChain.ts, 29, 13))
+
+    nested;
+>nested : Symbol(nested, Decl(stableModifierAdvancedOptionalChain.ts, 32, 9))
+}
+
+// Identity read after unrelated method call on result.
+if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+>undefined : Symbol(undefined)
+
+    const len = read()!.length;
+>len : Symbol(len, Decl(stableModifierAdvancedOptionalChain.ts, 38, 9))
+>read()!.length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+>length : Symbol(String.length, Decl(lib.es5.d.ts, --, --))
+
+    const n: number = len;
+>n : Symbol(n, Decl(stableModifierAdvancedOptionalChain.ts, 39, 9))
+>len : Symbol(len, Decl(stableModifierAdvancedOptionalChain.ts, 38, 9))
+
+    n;
+>n : Symbol(n, Decl(stableModifierAdvancedOptionalChain.ts, 39, 9))
+
+    const stillNarrowed: string = read();
+>stillNarrowed : Symbol(stillNarrowed, Decl(stableModifierAdvancedOptionalChain.ts, 41, 9))
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    stillNarrowed;
+>stillNarrowed : Symbol(stillNarrowed, Decl(stableModifierAdvancedOptionalChain.ts, 41, 9))
+}
+
+// Identity narrowing with template literal.
+if (read() !== undefined) {
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+>undefined : Symbol(undefined)
+
+    const template = `value: ${read()}`;
+>template : Symbol(template, Decl(stableModifierAdvancedOptionalChain.ts, 47, 9))
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    const s: string = template;
+>s : Symbol(s, Decl(stableModifierAdvancedOptionalChain.ts, 48, 9))
+>template : Symbol(template, Decl(stableModifierAdvancedOptionalChain.ts, 47, 9))
+
+    s;
+>s : Symbol(s, Decl(stableModifierAdvancedOptionalChain.ts, 48, 9))
+}
+
+// Truthiness narrowing + stable.
+if (read()) {
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    const truthy: string = read();
+>truthy : Symbol(truthy, Decl(stableModifierAdvancedOptionalChain.ts, 54, 9))
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    truthy;
+>truthy : Symbol(truthy, Decl(stableModifierAdvancedOptionalChain.ts, 54, 9))
+}
+
+// Double negation truthiness.
+if (!!read()) {
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    const doubleNeg: string = read();
+>doubleNeg : Symbol(doubleNeg, Decl(stableModifierAdvancedOptionalChain.ts, 60, 9))
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    doubleNeg;
+>doubleNeg : Symbol(doubleNeg, Decl(stableModifierAdvancedOptionalChain.ts, 60, 9))
+}
+
+// Inequality narrowing.
+if (read() != null) {
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    const notNull: string = read();
+>notNull : Symbol(notNull, Decl(stableModifierAdvancedOptionalChain.ts, 66, 9))
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    notNull;
+>notNull : Symbol(notNull, Decl(stableModifierAdvancedOptionalChain.ts, 66, 9))
+}
+
+// Strict equality to specific value.
+if (read() === "hello") {
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    const hello: "hello" = read();
+>hello : Symbol(hello, Decl(stableModifierAdvancedOptionalChain.ts, 72, 9))
+>read : Symbol(read, Decl(stableModifierAdvancedOptionalChain.ts, 7, 13))
+
+    hello;
+>hello : Symbol(hello, Decl(stableModifierAdvancedOptionalChain.ts, 72, 9))
+}
+

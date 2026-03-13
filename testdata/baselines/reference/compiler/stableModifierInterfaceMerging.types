@@ -1,0 +1,354 @@
+//// [tests/cases/compiler/stableModifierInterfaceMerging.ts] ////
+
+=== stableModifierInterfaceMerging.ts ===
+// Section 1: Merged interfaces — both declarations agree on stable
+// When both declarations have stable, the modifier survives.
+interface StableAgreed {
+    value: stable () => string | undefined;
+>value : stable () => string | undefined
+}
+interface StableAgreed {
+    other(): void;
+>other : () => void
+}
+
+declare const agreed: StableAgreed;
+>agreed : StableAgreed
+
+if (agreed.value() !== undefined) {
+>agreed.value() !== undefined : boolean
+>agreed.value() : string | undefined
+>agreed.value : stable () => string | undefined
+>agreed : StableAgreed
+>value : stable () => string | undefined
+>undefined : undefined
+
+    agreed.value().toUpperCase(); // OK — stable survives merging when both agree
+>agreed.value().toUpperCase() : string
+>agreed.value().toUpperCase : () => string
+>agreed.value() : string
+>agreed.value : stable () => string | undefined
+>agreed : StableAgreed
+>value : stable () => string | undefined
+>toUpperCase : () => string
+}
+
+// Section 2: Merged interfaces — first declaration has stable, second doesn't
+// The first declaration is the ValueDeclaration. Since stable is on the function
+// type (not the symbol), the first declaration's type is used → stable survives.
+interface StableFirstWins {
+    value: stable () => string | undefined;
+>value : stable () => string | undefined
+}
+interface StableFirstWins {
+    value: () => string | undefined; // different type annotation — no stable
+>value : stable () => string | undefined
+}
+
+declare const firstWins: StableFirstWins;
+>firstWins : StableFirstWins
+
+if (firstWins.value() !== undefined) {
+>firstWins.value() !== undefined : boolean
+>firstWins.value() : string | undefined
+>firstWins.value : stable () => string | undefined
+>firstWins : StableFirstWins
+>value : stable () => string | undefined
+>undefined : undefined
+
+    firstWins.value().toUpperCase(); // stable from first declaration
+>firstWins.value().toUpperCase() : string
+>firstWins.value().toUpperCase : () => string
+>firstWins.value() : string
+>firstWins.value : stable () => string | undefined
+>firstWins : StableFirstWins
+>value : stable () => string | undefined
+>toUpperCase : () => string
+}
+
+// Section 3: Merged interfaces — first declaration lacks stable, second has it
+// First declaration wins via ValueDeclaration. Since first lacks stable, it's lost.
+interface StableLost {
+    value: () => string | undefined;
+>value : () => string | undefined
+}
+interface StableLost {
+    value: stable () => string | undefined;
+>value : () => string | undefined
+}
+
+declare const lost: StableLost;
+>lost : StableLost
+
+if (lost.value() !== undefined) {
+>lost.value() !== undefined : boolean
+>lost.value() : string | undefined
+>lost.value : () => string | undefined
+>lost : StableLost
+>value : () => string | undefined
+>undefined : undefined
+
+    lost.value().toUpperCase(); // stable is lost — first declaration has no stable
+>lost.value().toUpperCase() : string
+>lost.value().toUpperCase : () => string
+>lost.value() : string | undefined
+>lost.value : () => string | undefined
+>lost : StableLost
+>value : () => string | undefined
+>toUpperCase : () => string
+}
+
+// Section 4: Intersection types — both have stable
+// In intersections, each constituent's signatures are independent.
+// If the resolved signature has stable, narrowing applies.
+interface StableA {
+    value: stable () => string | undefined;
+>value : stable () => string | undefined
+}
+interface StableB {
+    value: stable () => string | undefined;
+>value : stable () => string | undefined
+}
+
+declare const both: StableA & StableB;
+>both : StableA & StableB
+
+if (both.value() !== undefined) {
+>both.value() !== undefined : boolean
+>both.value() : string | undefined
+>both.value : (stable () => string | undefined) & (stable () => string | undefined)
+>both : StableA & StableB
+>value : (stable () => string | undefined) & (stable () => string | undefined)
+>undefined : undefined
+
+    both.value().toUpperCase(); // OK — stable present in both constituents
+>both.value().toUpperCase() : string
+>both.value().toUpperCase : () => string
+>both.value() : string
+>both.value : (stable () => string | undefined) & (stable () => string | undefined)
+>both : StableA & StableB
+>value : (stable () => string | undefined) & (stable () => string | undefined)
+>toUpperCase : () => string
+}
+
+// Section 5: Intersection types — one has stable, one doesn't
+// In intersections, the property type is resolved from the first constituent.
+// Since WithStable has the stable modifier, narrowing survives.
+interface WithStable {
+    getValue: stable () => number | undefined;
+>getValue : stable () => number | undefined
+}
+interface WithoutStable {
+    getValue: () => number | undefined;
+>getValue : () => number | undefined
+}
+
+declare const mixed: WithStable & WithoutStable;
+>mixed : WithStable & WithoutStable
+
+if (mixed.getValue() !== undefined) {
+>mixed.getValue() !== undefined : boolean
+>mixed.getValue() : number | undefined
+>mixed.getValue : (stable () => number | undefined) & (() => number | undefined)
+>mixed : WithStable & WithoutStable
+>getValue : (stable () => number | undefined) & (() => number | undefined)
+>undefined : undefined
+
+    mixed.getValue().toFixed(2); // OK — stable from first constituent survives intersection
+>mixed.getValue().toFixed(2) : string
+>mixed.getValue().toFixed : (fractionDigits?: number | undefined) => string
+>mixed.getValue() : number
+>mixed.getValue : (stable () => number | undefined) & (() => number | undefined)
+>mixed : WithStable & WithoutStable
+>getValue : (stable () => number | undefined) & (() => number | undefined)
+>toFixed : (fractionDigits?: number | undefined) => string
+>2 : 2
+}
+
+// Section 6: Merged interfaces with mutator disagreement
+// Same first-declaration-wins behavior applies to mutator.
+interface MutatorAgreed {
+    value: stable () => string | undefined;
+>value : stable () => string | undefined
+
+    set: mutator (v: string | undefined) => void;
+>set : mutator (v: string | undefined) => void
+>v : string | undefined
+}
+interface MutatorAgreed {
+    set: (v: string | undefined) => void; // no mutator modifier
+>set : mutator (v: string | undefined) => void
+>v : string | undefined
+}
+
+declare const mutAgreed: MutatorAgreed;
+>mutAgreed : MutatorAgreed
+
+if (mutAgreed.value() !== undefined) {
+>mutAgreed.value() !== undefined : boolean
+>mutAgreed.value() : string | undefined
+>mutAgreed.value : stable () => string | undefined
+>mutAgreed : MutatorAgreed
+>value : stable () => string | undefined
+>undefined : undefined
+
+    mutAgreed.set(undefined); // mutator from first declaration applies
+>mutAgreed.set(undefined) : void
+>mutAgreed.set : mutator (v: string | undefined) => void
+>mutAgreed : MutatorAgreed
+>set : mutator (v: string | undefined) => void
+>undefined : undefined
+
+    mutAgreed.value(); // should be reset by mutator
+>mutAgreed.value() : undefined
+>mutAgreed.value : stable () => string | undefined
+>mutAgreed : MutatorAgreed
+>value : stable () => string | undefined
+}
+
+// Section 7: Interface extends — stable preserved in extension
+// Extension (not merging) preserves stable through inheritance.
+interface Base {
+    value: stable () => string | undefined;
+>value : stable () => string | undefined
+}
+interface Derived extends Base {
+    other(): void;
+>other : () => void
+}
+
+declare const derived: Derived;
+>derived : Derived
+
+if (derived.value() !== undefined) {
+>derived.value() !== undefined : boolean
+>derived.value() : string | undefined
+>derived.value : stable () => string | undefined
+>derived : Derived
+>value : stable () => string | undefined
+>undefined : undefined
+
+    derived.value().toUpperCase(); // OK — stable inherited from Base
+>derived.value().toUpperCase() : string
+>derived.value().toUpperCase : () => string
+>derived.value() : string
+>derived.value : stable () => string | undefined
+>derived : Derived
+>value : stable () => string | undefined
+>toUpperCase : () => string
+}
+
+// Section 8: Interface extends — overriding stable with non-stable
+// When a derived interface re-declares a property without stable,
+// the derived declaration takes priority over the base.
+interface BaseStable {
+    value: stable () => string | undefined;
+>value : stable () => string | undefined
+}
+interface DerivedNoStable extends BaseStable {
+    value: () => string | undefined; // overrides base without stable
+>value : () => string | undefined
+}
+
+declare const overridden: DerivedNoStable;
+>overridden : DerivedNoStable
+
+if (overridden.value() !== undefined) {
+>overridden.value() !== undefined : boolean
+>overridden.value() : string | undefined
+>overridden.value : () => string | undefined
+>overridden : DerivedNoStable
+>value : () => string | undefined
+>undefined : undefined
+
+    overridden.value().toUpperCase(); // stable lost — derived type doesn't have it
+>overridden.value().toUpperCase() : string
+>overridden.value().toUpperCase : () => string
+>overridden.value() : string | undefined
+>overridden.value : () => string | undefined
+>overridden : DerivedNoStable
+>value : () => string | undefined
+>toUpperCase : () => string
+}
+
+// Section 9: Interface extends — adding stable to non-stable base
+// When a derived interface adds stable to a property that wasn't stable in base.
+interface BaseNoStable {
+    value: () => string | undefined;
+>value : () => string | undefined
+}
+interface DerivedStable extends BaseNoStable {
+    value: stable () => string | undefined; // adds stable
+>value : stable () => string | undefined
+}
+
+declare const addedStable: DerivedStable;
+>addedStable : DerivedStable
+
+if (addedStable.value() !== undefined) {
+>addedStable.value() !== undefined : boolean
+>addedStable.value() : string | undefined
+>addedStable.value : stable () => string | undefined
+>addedStable : DerivedStable
+>value : stable () => string | undefined
+>undefined : undefined
+
+    addedStable.value().toUpperCase(); // stable added by derived
+>addedStable.value().toUpperCase() : string
+>addedStable.value().toUpperCase : () => string
+>addedStable.value() : string
+>addedStable.value : stable () => string | undefined
+>addedStable : DerivedStable
+>value : stable () => string | undefined
+>toUpperCase : () => string
+}
+
+// Section 10: Merged interfaces with stable method declarations
+// Same behavior for stable/mutator as method modifiers.
+interface MethodMerge {
+    stable getValue(): string | undefined;
+>getValue : stable () => string | undefined
+
+    mutator setValue(v: string | undefined): void;
+>setValue : mutator (v: string | undefined) => void
+>v : string | undefined
+}
+interface MethodMerge {
+    other(): void;
+>other : () => void
+}
+
+declare const methodMerge: MethodMerge;
+>methodMerge : MethodMerge
+
+if (methodMerge.getValue() !== undefined) {
+>methodMerge.getValue() !== undefined : boolean
+>methodMerge.getValue() : string | undefined
+>methodMerge.getValue : stable () => string | undefined
+>methodMerge : MethodMerge
+>getValue : stable () => string | undefined
+>undefined : undefined
+
+    methodMerge.getValue().toUpperCase(); // OK — stable method survives merge
+>methodMerge.getValue().toUpperCase() : string
+>methodMerge.getValue().toUpperCase : () => string
+>methodMerge.getValue() : string
+>methodMerge.getValue : stable () => string | undefined
+>methodMerge : MethodMerge
+>getValue : stable () => string | undefined
+>toUpperCase : () => string
+
+    methodMerge.setValue(undefined); // mutator resets
+>methodMerge.setValue(undefined) : void
+>methodMerge.setValue : mutator (v: string | undefined) => void
+>methodMerge : MethodMerge
+>setValue : mutator (v: string | undefined) => void
+>undefined : undefined
+
+    methodMerge.getValue(); // back to string | undefined
+>methodMerge.getValue() : undefined
+>methodMerge.getValue : stable () => string | undefined
+>methodMerge : MethodMerge
+>getValue : stable () => string | undefined
+}
+

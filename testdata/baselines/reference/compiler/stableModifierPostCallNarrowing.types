@@ -1,0 +1,341 @@
+//// [tests/cases/compiler/stableModifierPostCallNarrowing.ts] ////
+
+=== stableModifierPostCallNarrowing.ts ===
+// P3: Post-call narrowing — mutator sets narrow the stable type
+
+// === Setup: Signal with stable read / mutator set ===
+interface Signal<T> {
+    read: stable () => T;
+>read : stable () => T
+
+    set: mutator (value: T) => void;
+>set : mutator (value: T) => void
+>value : T
+}
+
+// === 1. Basic post-call narrowing: set(42) narrows to number ===
+declare const count: Signal<number | undefined>;
+>count : Signal<number | undefined>
+
+count.set(42);
+>count.set(42) : void
+>count.set : mutator (value: number | undefined) => void
+>count : Signal<number | undefined>
+>set : mutator (value: number | undefined) => void
+>42 : 42
+
+const n1: number = count.read();  // Should narrow to number after set(42)
+>n1 : number
+>count.read() : number
+>count.read : stable () => number | undefined
+>count : Signal<number | undefined>
+>read : stable () => number | undefined
+
+// === 2. Set to string narrows to string ===
+declare const mixed: Signal<string | number | undefined>;
+>mixed : Signal<string | number | undefined>
+
+mixed.set("hello");
+>mixed.set("hello") : void
+>mixed.set : mutator (value: string | number | undefined) => void
+>mixed : Signal<string | number | undefined>
+>set : mutator (value: string | number | undefined) => void
+>"hello" : "hello"
+
+const s1: string = mixed.read();  // Should narrow to string
+>s1 : string
+>mixed.read() : string
+>mixed.read : stable () => string | number | undefined
+>mixed : Signal<string | number | undefined>
+>read : stable () => string | number | undefined
+
+// === 3. Set to undefined doesn't narrow further ===
+declare const opt: Signal<string | undefined>;
+>opt : Signal<string | undefined>
+
+opt.set(undefined);
+>opt.set(undefined) : void
+>opt.set : mutator (value: string | undefined) => void
+>opt : Signal<string | undefined>
+>set : mutator (value: string | undefined) => void
+>undefined : undefined
+
+const u1: string | undefined = opt.read();  // Remains string | undefined
+>u1 : string | undefined
+>opt.read() : undefined
+>opt.read : stable () => string | undefined
+>opt : Signal<string | undefined>
+>read : stable () => string | undefined
+
+// === 4. Sequential sets — each narrows to its argument ===
+declare const seq: Signal<string | number | undefined>;
+>seq : Signal<string | number | undefined>
+
+seq.set(100);
+>seq.set(100) : void
+>seq.set : mutator (value: string | number | undefined) => void
+>seq : Signal<string | number | undefined>
+>set : mutator (value: string | number | undefined) => void
+>100 : 100
+
+const v1: number = seq.read();  // Should narrow to number
+>v1 : number
+>seq.read() : number
+>seq.read : stable () => string | number | undefined
+>seq : Signal<string | number | undefined>
+>read : stable () => string | number | undefined
+
+seq.set("world");
+>seq.set("world") : void
+>seq.set : mutator (value: string | number | undefined) => void
+>seq : Signal<string | number | undefined>
+>set : mutator (value: string | number | undefined) => void
+>"world" : "world"
+
+const v2: string = seq.read();  // Should narrow to string
+>v2 : string
+>seq.read() : string
+>seq.read : stable () => string | number | undefined
+>seq : Signal<string | number | undefined>
+>read : stable () => string | number | undefined
+
+// === 5. Cross-receiver independence ===
+declare const a: Signal<string | undefined>;
+>a : Signal<string | undefined>
+
+declare const b: Signal<string | undefined>;
+>b : Signal<string | undefined>
+
+if (b.read() !== undefined) {
+>b.read() !== undefined : boolean
+>b.read() : string | undefined
+>b.read : stable () => string | undefined
+>b : Signal<string | undefined>
+>read : stable () => string | undefined
+>undefined : undefined
+
+    a.set("changed");
+>a.set("changed") : void
+>a.set : mutator (value: string | undefined) => void
+>a : Signal<string | undefined>
+>set : mutator (value: string | undefined) => void
+>"changed" : "changed"
+
+    const bVal: string = b.read();  // Still narrowed — b not affected by a.set()
+>bVal : string
+>b.read() : string
+>b.read : stable () => string | undefined
+>b : Signal<string | undefined>
+>read : stable () => string | undefined
+}
+
+// === 6. Set with literal type ===
+declare const lit: Signal<"a" | "b" | "c">;
+>lit : Signal<"a" | "b" | "c">
+
+lit.set("a");
+>lit.set("a") : void
+>lit.set : mutator (value: "a" | "b" | "c") => void
+>lit : Signal<"a" | "b" | "c">
+>set : mutator (value: "a" | "b" | "c") => void
+>"a" : "a"
+
+const l1: "a" = lit.read();  // Should narrow to "a"
+>l1 : "a"
+>lit.read() : "a"
+>lit.read : stable () => "a" | "b" | "c"
+>lit : Signal<"a" | "b" | "c">
+>read : stable () => "a" | "b" | "c"
+
+// === 7. Guard then set overwrites narrowing ===
+declare const guarded: Signal<number | null>;
+>guarded : Signal<number | null>
+
+if (guarded.read() !== null) {
+>guarded.read() !== null : boolean
+>guarded.read() : number | null
+>guarded.read : stable () => number | null
+>guarded : Signal<number | null>
+>read : stable () => number | null
+
+    guarded.set(null);
+>guarded.set(null) : void
+>guarded.set : mutator (value: number | null) => void
+>guarded : Signal<number | null>
+>set : mutator (value: number | null) => void
+
+    const g1: number | null = guarded.read();  // Set(null) narrows to null, but null is assignable to number|null
+>g1 : number | null
+>guarded.read() : null
+>guarded.read : stable () => number | null
+>guarded : Signal<number | null>
+>read : stable () => number | null
+}
+
+// === 8. Set with wider variable — no narrowing improvement ===
+declare const dynSig: Signal<string | undefined>;
+>dynSig : Signal<string | undefined>
+
+declare const someVal: string | undefined;
+>someVal : string | undefined
+
+dynSig.set(someVal);
+>dynSig.set(someVal) : void
+>dynSig.set : mutator (value: string | undefined) => void
+>dynSig : Signal<string | undefined>
+>set : mutator (value: string | undefined) => void
+>someVal : string | undefined
+
+const d1: string | undefined = dynSig.read();  // someVal is string|undefined, no improvement
+>d1 : string | undefined
+>dynSig.read() : string | undefined
+>dynSig.read : stable () => string | undefined
+>dynSig : Signal<string | undefined>
+>read : stable () => string | undefined
+
+// === 9. Set with narrowed variable ===
+declare const narrowedSig: Signal<string | number | undefined>;
+>narrowedSig : Signal<string | number | undefined>
+
+const val: string = "hello";
+>val : string
+>"hello" : "hello"
+
+narrowedSig.set(val);
+>narrowedSig.set(val) : void
+>narrowedSig.set : mutator (value: string | number | undefined) => void
+>narrowedSig : Signal<string | number | undefined>
+>set : mutator (value: string | number | undefined) => void
+>val : string
+
+const ns1: string = narrowedSig.read();  // val is string, narrows to string
+>ns1 : string
+>narrowedSig.read() : string
+>narrowedSig.read : stable () => string | number | undefined
+>narrowedSig : Signal<string | number | undefined>
+>read : stable () => string | number | undefined
+
+// === 10. Post-call narrowing with named invalidates targets ===
+declare const store: {
+>store : { user: stable () => string | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (value: string | undefined) => void; setSettings: mutator (value: { theme: string; } | undefined) => void; }
+
+    user: stable () => string | undefined;
+>user : stable () => string | undefined
+
+    settings: stable () => { theme: string } | undefined;
+>settings : stable () => { theme: string; } | undefined
+>theme : string
+
+    setUser: mutator (value: string | undefined) => void invalidates user;
+>setUser : mutator (value: string | undefined) => void
+>value : string | undefined
+
+    setSettings: mutator (value: { theme: string } | undefined) => void invalidates settings;
+>setSettings : mutator (value: { theme: string; } | undefined) => void
+>value : { theme: string; } | undefined
+>theme : string
+
+};
+
+if (store.user() !== undefined && store.settings() !== undefined) {
+>store.user() !== undefined && store.settings() !== undefined : boolean
+>store.user() !== undefined : boolean
+>store.user() : string | undefined
+>store.user : stable () => string | undefined
+>store : { user: stable () => string | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (value: string | undefined) => void; setSettings: mutator (value: { theme: string; } | undefined) => void; }
+>user : stable () => string | undefined
+>undefined : undefined
+>store.settings() !== undefined : boolean
+>store.settings() : { theme: string; } | undefined
+>store.settings : stable () => { theme: string; } | undefined
+>store : { user: stable () => string | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (value: string | undefined) => void; setSettings: mutator (value: { theme: string; } | undefined) => void; }
+>settings : stable () => { theme: string; } | undefined
+>undefined : undefined
+
+    store.setUser("Alice");
+>store.setUser("Alice") : void
+>store.setUser : mutator (value: string | undefined) => void
+>store : { user: stable () => string | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (value: string | undefined) => void; setSettings: mutator (value: { theme: string; } | undefined) => void; }
+>setUser : mutator (value: string | undefined) => void
+>"Alice" : "Alice"
+
+    const u: string = store.user();  // Narrowed to string (typeof "Alice") — post-call narrowing
+>u : string
+>store.user() : string
+>store.user : stable () => string | undefined
+>store : { user: stable () => string | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (value: string | undefined) => void; setSettings: mutator (value: { theme: string; } | undefined) => void; }
+>user : stable () => string | undefined
+
+    const s: { theme: string } = store.settings();  // Still narrowed from guard (not invalidated by setUser)
+>s : { theme: string; }
+>theme : string
+>store.settings() : { theme: string; }
+>store.settings : stable () => { theme: string; } | undefined
+>store : { user: stable () => string | undefined; settings: stable () => { theme: string; } | undefined; setUser: mutator (value: string | undefined) => void; setSettings: mutator (value: { theme: string; } | undefined) => void; }
+>settings : stable () => { theme: string; } | undefined
+}
+
+// === 11. Set(undefined) after guard resets to narrower type ===
+declare const resetSig: Signal<string | number | undefined>;
+>resetSig : Signal<string | number | undefined>
+
+resetSig.set(undefined);
+>resetSig.set(undefined) : void
+>resetSig.set : mutator (value: string | number | undefined) => void
+>resetSig : Signal<string | number | undefined>
+>set : mutator (value: string | number | undefined) => void
+>undefined : undefined
+
+const rs1: string | number | undefined = resetSig.read();  // set(undefined) narrows to undefined, but undefined is in the union
+>rs1 : string | number | undefined
+>resetSig.read() : undefined
+>resetSig.read : stable () => string | number | undefined
+>resetSig : Signal<string | number | undefined>
+>read : stable () => string | number | undefined
+
+// === 12. Multiple sets in sequence ===
+declare const multi: Signal<string | number | undefined>;
+>multi : Signal<string | number | undefined>
+
+multi.set(42);
+>multi.set(42) : void
+>multi.set : mutator (value: string | number | undefined) => void
+>multi : Signal<string | number | undefined>
+>set : mutator (value: string | number | undefined) => void
+>42 : 42
+
+const m1: number = multi.read();  // number
+>m1 : number
+>multi.read() : number
+>multi.read : stable () => string | number | undefined
+>multi : Signal<string | number | undefined>
+>read : stable () => string | number | undefined
+
+multi.set("hello");
+>multi.set("hello") : void
+>multi.set : mutator (value: string | number | undefined) => void
+>multi : Signal<string | number | undefined>
+>set : mutator (value: string | number | undefined) => void
+>"hello" : "hello"
+
+const m2: string = multi.read();  // string
+>m2 : string
+>multi.read() : string
+>multi.read : stable () => string | number | undefined
+>multi : Signal<string | number | undefined>
+>read : stable () => string | number | undefined
+
+multi.set(undefined);
+>multi.set(undefined) : void
+>multi.set : mutator (value: string | number | undefined) => void
+>multi : Signal<string | number | undefined>
+>set : mutator (value: string | number | undefined) => void
+>undefined : undefined
+
+const m3: string | number | undefined = multi.read();  // reset to full type
+>m3 : string | number | undefined
+>multi.read() : undefined
+>multi.read : stable () => string | number | undefined
+>multi : Signal<string | number | undefined>
+>read : stable () => string | number | undefined
+

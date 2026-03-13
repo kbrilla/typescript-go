@@ -1,0 +1,120 @@
+//// [tests/cases/compiler/stableModifierValueTypeBoundary.ts] ////
+
+=== stableModifierValueTypeBoundary.ts ===
+type Signal<T> = stable () => T;
+>Signal : Signal<T>
+
+declare const read: Signal<string | undefined>;
+>read : Signal<string | undefined>
+
+// Ambient void functions that should be transparent
+declare function log(): void;
+>log : () => void
+
+declare function tick(): void;
+>tick : () => void
+
+declare function noop(): void;
+>noop : () => void
+
+// === Ambient no-arg void calls should preserve narrowing ===
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    log();
+>log() : void
+>log : () => void
+
+    const r1: string = read(); // Should preserve - ambient, void, no-args
+>r1 : string
+>read() : string
+>read : Signal<string | undefined>
+}
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    tick();
+>tick() : void
+>tick : () => void
+
+    noop();
+>noop() : void
+>noop : () => void
+
+    const r2: string = read(); // Should preserve - multiple transparent calls
+>r2 : string
+>read() : string
+>read : Signal<string | undefined>
+}
+
+// === NEGATIVE: Non-void return should NOT preserve ===
+declare function getValue(): number;
+>getValue : () => number
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    getValue();
+>getValue() : number
+>getValue : () => number
+
+    const r3: string = read(); // May not preserve (non-void return)
+>r3 : string
+>read() : string
+>read : Signal<string | undefined>
+}
+
+// === NEGATIVE: Has arguments should NOT preserve ===
+declare function logMessage(msg: string): void;
+>logMessage : (msg: string) => void
+>msg : string
+
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    logMessage("hello");
+>logMessage("hello") : void
+>logMessage : (msg: string) => void
+>"hello" : "hello"
+
+    const r4: string = read(); // May not preserve (has args)
+>r4 : string
+>read() : string
+>read : Signal<string | undefined>
+}
+
+// === NEGATIVE: Non-ambient should NOT preserve ===
+function sideEffect(): void {
+>sideEffect : () => void
+
+    // has a body - not ambient
+}
+if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+
+    sideEffect();
+>sideEffect() : void
+>sideEffect : () => void
+
+    const r5: string = read(); // May not preserve (has body)
+>r5 : string
+>read() : string
+>read : Signal<string | undefined>
+}
+

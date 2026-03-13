@@ -1,0 +1,112 @@
+//// [tests/cases/compiler/stableModifierEqualityChain.ts] ////
+
+=== stableModifierEqualityChain.ts ===
+type Signal<T> = stable () => T;
+>Signal : Symbol(Signal, Decl(stableModifierEqualityChain.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierEqualityChain.ts, 0, 12))
+>T : Symbol(T, Decl(stableModifierEqualityChain.ts, 0, 12))
+
+declare const appStatus: Signal<"loading" | "success" | "error" | "idle">;
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+>Signal : Symbol(Signal, Decl(stableModifierEqualityChain.ts, 0, 0))
+
+// === Equality-chain literal-union narrowing ===
+
+// Single equality
+if (appStatus() === "loading") {
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+
+    const s: "loading" = appStatus();
+>s : Symbol(s, Decl(stableModifierEqualityChain.ts, 8, 9))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+}
+
+// Two-branch OR chain
+if (appStatus() === "loading" || appStatus() === "success") {
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+
+    const s: "loading" | "success" = appStatus();
+>s : Symbol(s, Decl(stableModifierEqualityChain.ts, 13, 9))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+}
+
+// Three-branch OR chain
+if (appStatus() === "loading" || appStatus() === "success" || appStatus() === "error") {
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+
+    const s: "loading" | "success" | "error" = appStatus();
+>s : Symbol(s, Decl(stableModifierEqualityChain.ts, 18, 9))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+}
+
+// Exhaustive check (all branches)
+if (appStatus() === "loading" || appStatus() === "success" || appStatus() === "error" || appStatus() === "idle") {
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+
+    const s: "loading" | "success" | "error" | "idle" = appStatus();
+>s : Symbol(s, Decl(stableModifierEqualityChain.ts, 23, 9))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+}
+
+// Negation (not equal)
+if (appStatus() !== "loading") {
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+
+    const s: "success" | "error" | "idle" = appStatus();
+>s : Symbol(s, Decl(stableModifierEqualityChain.ts, 28, 9))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+}
+
+// Double negation intersection
+if (appStatus() !== "loading" && appStatus() !== "idle") {
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+
+    const s: "success" | "error" = appStatus();
+>s : Symbol(s, Decl(stableModifierEqualityChain.ts, 33, 9))
+>appStatus : Symbol(appStatus, Decl(stableModifierEqualityChain.ts, 2, 13))
+}
+
+// === With string | undefined Signal ===
+
+declare const read: Signal<string | undefined>;
+>read : Symbol(read, Decl(stableModifierEqualityChain.ts, 38, 13))
+>Signal : Symbol(Signal, Decl(stableModifierEqualityChain.ts, 0, 0))
+
+// Simple equality narrows to literal
+if (read() === "hello") {
+>read : Symbol(read, Decl(stableModifierEqualityChain.ts, 38, 13))
+
+    const r: "hello" = read();
+>r : Symbol(r, Decl(stableModifierEqualityChain.ts, 42, 9))
+>read : Symbol(read, Decl(stableModifierEqualityChain.ts, 38, 13))
+}
+
+// OR chain with undefined check
+if (read() === "hello" || read() === "world") {
+>read : Symbol(read, Decl(stableModifierEqualityChain.ts, 38, 13))
+>read : Symbol(read, Decl(stableModifierEqualityChain.ts, 38, 13))
+
+    const r: "hello" | "world" = read();
+>r : Symbol(r, Decl(stableModifierEqualityChain.ts, 47, 9))
+>read : Symbol(read, Decl(stableModifierEqualityChain.ts, 38, 13))
+}
+
+// !== undefined combined with equality
+if (read() !== undefined && (read() === "a" || read() === "b")) {
+>read : Symbol(read, Decl(stableModifierEqualityChain.ts, 38, 13))
+>undefined : Symbol(undefined)
+>read : Symbol(read, Decl(stableModifierEqualityChain.ts, 38, 13))
+>read : Symbol(read, Decl(stableModifierEqualityChain.ts, 38, 13))
+
+    const r: "a" | "b" = read();
+>r : Symbol(r, Decl(stableModifierEqualityChain.ts, 52, 9))
+>read : Symbol(read, Decl(stableModifierEqualityChain.ts, 38, 13))
+}
+

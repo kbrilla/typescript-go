@@ -1,0 +1,195 @@
+//// [tests/cases/compiler/stableModifierBareParameter.ts] ////
+
+=== stableModifierBareParameter.ts ===
+// --- Section 1: Basic typeof narrowing through stable parameter ---
+function consumeStableParam(read: stable () => string | number) {
+>consumeStableParam : (read: stable () => string | number) => void
+>read : stable () => string | number
+
+    if (typeof read() === 'string') {
+>typeof read() === 'string' : boolean
+>typeof read() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>read() : string | number
+>read : stable () => string | number
+>'string' : "string"
+
+        const s: string = read();  // narrowed to string
+>s : string
+>read() : string
+>read : stable () => string | number
+    }
+    if (typeof read() === 'number') {
+>typeof read() === 'number' : boolean
+>typeof read() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>read() : string | number
+>read : stable () => string | number
+>'number' : "number"
+
+        const n: number = read();  // narrowed to number
+>n : number
+>read() : number
+>read : stable () => string | number
+    }
+    const full: string | number = read();  // outside guard, full type
+>full : string | number
+>read() : string | number
+>read : stable () => string | number
+}
+
+// --- Section 2: Truthiness narrowing ---
+function consumeTruthy(read: stable () => string | undefined) {
+>consumeTruthy : (read: stable () => string | undefined) => void
+>read : stable () => string | undefined
+
+    if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : stable () => string | undefined
+>undefined : undefined
+
+        const s: string = read();  // narrowed to string
+>s : string
+>read() : string
+>read : stable () => string | undefined
+    }
+    const maybe: string | undefined = read();  // outside guard, full type
+>maybe : string | undefined
+>read() : string | undefined
+>read : stable () => string | undefined
+}
+
+// --- Section 3: Discriminant narrowing ---
+interface Circle { kind: 'circle'; radius: number }
+>kind : "circle"
+>radius : number
+
+interface Square { kind: 'square'; side: number }
+>kind : "square"
+>side : number
+
+type Shape = Circle | Square;
+>Shape : Shape
+
+function consumeDiscriminant(read: stable () => Shape) {
+>consumeDiscriminant : (read: stable () => Shape) => void
+>read : stable () => Shape
+
+    if (read().kind === 'circle') {
+>read().kind === 'circle' : boolean
+>read().kind : "circle" | "square"
+>read() : Shape
+>read : stable () => Shape
+>kind : "circle" | "square"
+>'circle' : "circle"
+
+        const r: number = read().radius;  // narrowed to Circle
+>r : number
+>read().radius : number
+>read() : Circle
+>read : stable () => Shape
+>radius : number
+    }
+    if (read().kind === 'square') {
+>read().kind === 'square' : boolean
+>read().kind : "circle" | "square"
+>read() : Shape
+>read : stable () => Shape
+>kind : "circle" | "square"
+>'square' : "square"
+
+        const s: number = read().side;  // narrowed to Square
+>s : number
+>read().side : number
+>read() : Square
+>read : stable () => Shape
+>side : number
+    }
+}
+
+// --- Section 4: Generic parameter ---
+function consumeGeneric<T>(read: stable () => T | undefined) {
+>consumeGeneric : <T>(read: stable () => T | undefined) => void
+>read : stable () => T | undefined
+
+    if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : T | undefined
+>read : stable () => T | undefined
+>undefined : undefined
+
+        const val: T = read();  // narrowed to T
+>val : T
+>read() : T & ({} | null)
+>read : stable () => T | undefined
+    }
+}
+
+// --- Section 5: Passed as callback ---
+function acceptReader(reader: stable () => string | number) {
+>acceptReader : (reader: stable () => string | number) => void
+>reader : stable () => string | number
+
+    if (typeof reader() === 'string') {
+>typeof reader() === 'string' : boolean
+>typeof reader() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>reader() : string | number
+>reader : stable () => string | number
+>'string' : "string"
+
+        const s: string = reader();  // narrowed
+>s : string
+>reader() : string
+>reader : stable () => string | number
+    }
+}
+
+function passStableParam(read: stable () => string | number) {
+>passStableParam : (read: stable () => string | number) => void
+>read : stable () => string | number
+
+    acceptReader(read);  // stable parameter can be passed to stable-expecting function
+>acceptReader(read) : void
+>acceptReader : (reader: stable () => string | number) => void
+>read : stable () => string | number
+}
+
+// --- Section 6: Non-stable comparison ---
+function consumeNonStable(read: () => string | number) {
+>consumeNonStable : (read: () => string | number) => void
+>read : () => string | number
+
+    if (typeof read() === 'string') {
+>typeof read() === 'string' : boolean
+>typeof read() : "bigint" | "boolean" | "function" | "number" | "object" | "string" | "symbol" | "undefined"
+>read() : string | number
+>read : () => string | number
+>'string' : "string"
+
+        const s: string | number = read();  // NOT narrowed — not stable
+>s : string | number
+>read() : string | number
+>read : () => string | number
+    }
+}
+
+// --- Section 7: Stable in type alias ---
+type StableReader<T> = stable () => T;
+>StableReader : StableReader<T>
+
+function consumeAlias(read: StableReader<string | undefined>) {
+>consumeAlias : (read: StableReader<string | undefined>) => void
+>read : StableReader<string | undefined>
+
+    if (read() !== undefined) {
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : StableReader<string | undefined>
+>undefined : undefined
+
+        const s: string = read();  // narrowed via type alias
+>s : string
+>read() : string
+>read : StableReader<string | undefined>
+    }
+}
+

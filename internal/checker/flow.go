@@ -20,6 +20,46 @@ type FlowType struct {
 	incomplete bool
 }
 
+type stableBoundaryKind int8
+
+type stableBoundaryPreserveRuleID int8
+
+const (
+	stableBoundaryKindNone stableBoundaryKind = iota
+	stableBoundaryKindUnknownCall
+	stableBoundaryKindCallbackCall
+	stableBoundaryKindAwaitBoundary
+	stableBoundaryKindAliasEscape
+	stableBoundaryKindMutatorCall
+	stableBoundaryKindOther
+	stableBoundaryKindCount
+)
+
+const (
+	stableBoundaryPreserveRuleNoopCallback stableBoundaryPreserveRuleID = iota + 1
+	stableBoundaryPreserveRulePromiseResolveAwait
+	stableBoundaryPreserveRuleAmbientNoArgAwait
+	stableBoundaryPreserveRuleAmbientNoArgVoidUnknownCall
+	stableBoundaryPreserveRuleExprStmtTrivialPassthrough
+)
+
+var stableBoundaryPreserveRulesByKind = [stableBoundaryKindCount][]stableBoundaryPreserveRuleID{
+	stableBoundaryKindUnknownCall: {
+		stableBoundaryPreserveRuleAmbientNoArgVoidUnknownCall,
+	},
+	stableBoundaryKindCallbackCall: {
+		stableBoundaryPreserveRuleNoopCallback,
+	},
+	stableBoundaryKindAwaitBoundary: {
+		stableBoundaryPreserveRulePromiseResolveAwait,
+		stableBoundaryPreserveRuleAmbientNoArgAwait,
+	},
+	stableBoundaryKindMutatorCall: {}, // Mutator calls narrow to argument type — no preserve rules
+	stableBoundaryKindOther: {
+		stableBoundaryPreserveRuleExprStmtTrivialPassthrough,
+	},
+}
+
 func (ft *FlowType) isNil() bool {
 	return ft.t == nil
 }
@@ -218,6 +258,12 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 	// Assignments only narrow the computed type if the declared type is a union type. Thus, we
 	// only need to evaluate the assigned type if the declared type is a union type.
 	if c.isMatchingReference(f.reference, node) {
+		if c.shouldInvalidateTier1WriteForm(f.reference, node) {
+			if !c.isReachableFlowNode(flow) {
+				return FlowType{t: c.unreachableNeverType}
+			}
+			return FlowType{t: f.declaredType}
+		}
 		if !c.isReachableFlowNode(flow) {
 			return FlowType{t: c.unreachableNeverType}
 		}
@@ -254,6 +300,44 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 		}
 		return FlowType{t: f.declaredType}
 	}
+
+	boundaryKind := c.classifyStableBoundary(f.reference, node)
+	if boundaryKind == stableBoundaryKindAliasEscape {
+		if !c.isReachableFlowNode(flow) {
+			return FlowType{t: c.unreachableNeverType}
+		}
+		c.reportStableBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
+		return FlowType{t: f.declaredType}
+	}
+
+	if boundaryKind == stableBoundaryKindAwaitBoundary {
+		if !c.isReachableFlowNode(flow) {
+			return FlowType{t: c.unreachableNeverType}
+		}
+		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
+		if flowType.t != f.declaredType {
+			c.reportStableBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
+			return c.newFlowType(f.declaredType, flowType.incomplete)
+		}
+		// Intentional fall-through: when the await boundary doesn't change the type
+		// (flowType matches declared type), we let the normal CFA continue walking
+		// antecedents. This is correct because the await didn't introduce new narrowing.
+		// Unlike stableBoundaryKindAliasEscape which always returns (an alias escape
+		// always resets narrowing), an await that preserves the declared type is transparent.
+	}
+
+	if boundaryKind == stableBoundaryKindOther && !c.shouldPreserveStableBoundaryNarrowing(f.reference, node, boundaryKind) {
+		if !c.isReachableFlowNode(flow) {
+			return FlowType{t: c.unreachableNeverType}
+		}
+		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
+		if flowType.t != f.declaredType {
+			c.reportStableBoundaryInvalidationDiagnostic(f.reference, node, boundaryKind)
+			return c.newFlowType(f.declaredType, flowType.incomplete)
+		}
+		return flowType
+	}
+
 	// for (const _ in ref) acts as a nonnull on ref
 	if ast.IsVariableDeclaration(node) && ast.IsForInStatement(node.Parent.Parent) && (c.isMatchingReference(f.reference, node.Parent.Parent.Expression()) || c.optionalChainContainsReference(node.Parent.Parent.Expression(), f.reference)) {
 		return FlowType{t: c.getNonNullableTypeIfNeeded(c.finalizeEvolvingArrayType(c.getTypeAtFlowNode(f, flow.Antecedent).t))}
@@ -262,11 +346,234 @@ func (c *Checker) getTypeAtFlowAssignment(f *FlowState, flow *ast.FlowNode) Flow
 	return FlowType{}
 }
 
+func (c *Checker) shouldInvalidateTier1WriteForm(reference *ast.Node, assignmentTargetNode *ast.Node) bool {
+	if !(ast.IsPropertyAccessExpression(reference) || ast.IsElementAccessExpression(reference)) {
+		return false
+	}
+
+	if !(ast.IsPropertyAccessExpression(assignmentTargetNode) || ast.IsElementAccessExpression(assignmentTargetNode)) {
+		return false
+	}
+
+	assignmentTarget := ast.GetAssignmentTarget(assignmentTargetNode)
+	if assignmentTarget == nil {
+		return false
+	}
+
+	switch assignmentTarget.Kind {
+	case ast.KindBinaryExpression:
+		operator := assignmentTarget.AsBinaryExpression().OperatorToken.Kind
+		return operator != ast.KindEqualsToken && ast.IsAssignmentOperator(operator)
+	case ast.KindPrefixUnaryExpression:
+		operator := assignmentTarget.AsPrefixUnaryExpression().Operator
+		return operator == ast.KindPlusPlusToken || operator == ast.KindMinusMinusToken
+	case ast.KindPostfixUnaryExpression:
+		operator := assignmentTarget.AsPostfixUnaryExpression().Operator
+		return operator == ast.KindPlusPlusToken || operator == ast.KindMinusMinusToken
+	default:
+		return false
+	}
+}
+
 func (c *Checker) getInitialOrAssignedType(f *FlowState, flow *ast.FlowNode) *Type {
 	if ast.IsVariableDeclaration(flow.Node) || ast.IsBindingElement(flow.Node) {
 		return c.getNarrowableTypeForReference(c.getInitialType(flow.Node), f.reference, CheckModeNormal)
 	}
 	return c.getNarrowableTypeForReference(c.getAssignedType(flow.Node), f.reference, CheckModeNormal)
+}
+
+func (c *Checker) isAliasEscapeAssignmentForCallReference(reference *ast.Node, assignment *ast.Node) bool {
+	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 {
+		return false
+	}
+
+	callee := c.getNormalizedReferenceCandidate(reference.Expression())
+	switch {
+	case ast.IsVariableDeclaration(assignment):
+		initializer := assignment.Initializer()
+		if initializer == nil {
+			return false
+		}
+
+		// A direct local const alias is not itself an uncertainty boundary.
+		if c.isMatchingReference(callee, c.getNormalizedReferenceCandidate(initializer)) {
+			symbol := c.getSymbolOfDeclaration(assignment)
+			if symbol != nil && symbol != c.unknownSymbol && c.isConstantVariable(symbol) {
+				return false
+			}
+		}
+
+		return c.isAliasEscapeInitializerForCallReference(callee, initializer)
+	case ast.IsBinaryExpression(assignment):
+		binary := assignment.AsBinaryExpression()
+		return ast.IsAssignmentOperator(binary.OperatorToken.Kind) && c.isAliasEscapeInitializerForCallReference(callee, binary.Right)
+	}
+
+	return false
+}
+
+func (c *Checker) isAliasEscapeInitializerForCallReference(callee *ast.Node, initializer *ast.Node) bool {
+	if c.isMatchingReference(callee, c.getNormalizedReferenceCandidate(initializer)) {
+		return true
+	}
+
+	if ast.IsCallExpression(initializer) {
+		if c.isInlineTrivialPassthroughCallForCallReference(callee, initializer) {
+			return false
+		}
+
+		for _, argument := range initializer.Arguments() {
+			if c.isMatchingReference(callee, c.getNormalizedReferenceCandidate(argument)) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (c *Checker) isInlineTrivialPassthroughCallForCallReference(callee *ast.Node, initializer *ast.Node) bool {
+	if len(initializer.Arguments()) != 1 {
+		return false
+	}
+
+	argument := initializer.Arguments()[0]
+	if !c.isMatchingReference(callee, c.getNormalizedReferenceCandidate(argument)) {
+		return false
+	}
+
+	invoked := ast.SkipParentheses(initializer.Expression())
+	if ast.IsArrowFunction(invoked) || ast.IsFunctionExpression(invoked) {
+		return c.isTrivialPassthroughFunctionLike(invoked)
+	}
+
+	if ast.IsIdentifier(invoked) {
+		return c.isConstAliasChainTrivialPassthroughHelper(invoked) || c.isAmbientStablePassthroughCallForCallReference(initializer)
+	}
+
+	return false
+}
+
+func (c *Checker) isAmbientStablePassthroughCallForCallReference(call *ast.Node) bool {
+	signature := c.getResolvedSignature(call, nil /*candidatesOutArray*/, CheckModeNormal)
+	if signature == nil || signature == c.resolvingSignature || len(signature.parameters) != 1 || signatureHasRestParameter(signature) {
+		return false
+	}
+
+	declaration := signature.declaration
+	if declaration == nil || !ast.IsFunctionDeclaration(declaration) || declaration.Body() != nil {
+		return false
+	}
+
+	parameterType := c.getTypeOfSymbol(signature.parameters[0])
+	returnType := c.getReturnTypeOfSignature(signature)
+	return c.isTypeIdenticalTo(parameterType, returnType)
+}
+
+func (c *Checker) isConstAliasChainTrivialPassthroughHelper(identifier *ast.Node) bool {
+	const maxAliasChainSteps = 5
+	var seen [maxAliasChainSteps]*ast.Symbol
+	current := identifier
+
+	for i := range maxAliasChainSteps {
+		if !ast.IsIdentifier(current) {
+			return false
+		}
+
+		symbol := c.getResolvedSymbol(current)
+		if symbol == c.unknownSymbol {
+			return false
+		}
+		for j := range i {
+			if seen[j] == symbol {
+				return false
+			}
+		}
+		seen[i] = symbol
+
+		declaration := symbol.ValueDeclaration
+		if declaration == nil {
+			return false
+		}
+
+		if ast.IsFunctionDeclaration(declaration) {
+			return c.isTrivialPassthroughFunctionLike(declaration)
+		}
+
+		if !c.isConstantVariable(symbol) || !ast.IsVariableDeclaration(declaration) {
+			return false
+		}
+
+		helperInitializer := declaration.Initializer()
+		if helperInitializer == nil {
+			return false
+		}
+
+		helper := ast.SkipParentheses(helperInitializer)
+		if ast.IsArrowFunction(helper) || ast.IsFunctionExpression(helper) {
+			return c.isTrivialPassthroughFunctionLike(helper)
+		}
+
+		if ast.IsIdentifier(helper) {
+			current = helper
+			continue
+		}
+
+		return false
+	}
+
+	return false
+}
+
+func (c *Checker) isTrivialPassthroughFunctionLike(fn *ast.Node) bool {
+	if len(fn.Parameters()) != 1 {
+		return false
+	}
+
+	parameter := fn.Parameters()[0].AsParameterDeclaration()
+	if parameter.DotDotDotToken != nil || parameter.Initializer != nil {
+		return false
+	}
+
+	parameterName := parameter.Name()
+	if parameterName == nil || !ast.IsIdentifier(parameterName) {
+		return false
+	}
+
+	body := fn.Body()
+	if body == nil {
+		return false
+	}
+
+	if ast.IsBlock(body) {
+		statements := body.Statements()
+		if len(statements) != 1 || !ast.IsReturnStatement(statements[0]) {
+			return false
+		}
+
+		retExpr := statements[0].AsReturnStatement().Expression
+		return retExpr != nil && c.isMatchingReference(parameterName, c.getNormalizedReferenceCandidate(retExpr))
+	}
+
+	return c.isMatchingReference(parameterName, c.getNormalizedReferenceCandidate(body))
+}
+
+func (c *Checker) isAwaitAssignmentBoundaryForCallReference(reference *ast.Node, assignment *ast.Node) bool {
+	if !ast.IsCallExpression(reference) || len(reference.Arguments()) != 0 {
+		return false
+	}
+
+	var initializer *ast.Node
+	switch {
+	case ast.IsVariableDeclaration(assignment):
+		initializer = assignment.Initializer()
+	case ast.IsBindingElement(assignment):
+		initializer = assignment.Initializer()
+	default:
+		return false
+	}
+
+	return initializer != nil && ast.IsAwaitExpression(initializer)
 }
 
 func (c *Checker) isEmptyArrayAssignment(node *ast.Node) bool {
@@ -299,7 +606,1087 @@ func (c *Checker) getTypeAtFlowCall(f *FlowState, flow *ast.FlowNode) FlowType {
 			return FlowType{t: c.unreachableNeverType}
 		}
 	}
+
+	boundaryKind := c.classifyStableBoundary(f.reference, flow.Node)
+	if boundaryKind == stableBoundaryKindMutatorCall {
+		// Post-call narrowing: narrow the stable reference to the argument type
+		narrowedType := c.getMutatorCallNarrowedType(f, flow.Node)
+		if narrowedType != nil {
+			return c.newFlowType(narrowedType, false)
+		}
+		// Fallback: no arguments or non-union — reset to declared type
+		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
+		if flowType.t != f.declaredType {
+			c.reportStableBoundaryInvalidationDiagnostic(f.reference, flow.Node, boundaryKind)
+			return c.newFlowType(f.declaredType, flowType.incomplete)
+		}
+	}
+	if boundaryKind != stableBoundaryKindNone && boundaryKind != stableBoundaryKindMutatorCall {
+		if c.shouldPreserveStableBoundaryNarrowing(f.reference, flow.Node, boundaryKind) {
+			return FlowType{}
+		}
+		flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
+		if flowType.t != f.declaredType {
+			c.reportStableBoundaryInvalidationDiagnostic(f.reference, flow.Node, boundaryKind)
+			return c.newFlowType(f.declaredType, flowType.incomplete)
+		}
+	}
+
 	return FlowType{}
+}
+
+func isNoArgCallExpression(node *ast.Node) bool {
+	return ast.IsCallExpression(node) && len(node.Arguments()) == 0
+}
+
+func (c *Checker) isNonMatchingCallBoundary(reference *ast.Node, boundary *ast.Node) bool {
+	return ast.IsCallExpression(reference) && !c.isMatchingReference(reference, boundary)
+}
+
+func (c *Checker) isUnknownCallBoundaryForStableReference(reference *ast.Node, boundary *ast.Node) bool {
+	return ast.IsCallExpression(reference) && c.isStableCallReference(reference) && ast.IsCallExpression(boundary) && !c.isMatchingReference(reference, boundary)
+}
+
+// isUnrelatedCallForStableReference returns true when the boundary call
+// cannot affect the stable function's backing state. This matches getter
+// behavior where function calls don't invalidate property narrowing.
+//
+// For standalone stable references (Identifier callee), all calls to
+// different functions and all method calls on any object are unrelated.
+// For member stable references (AccessExpression callee), method calls
+// on unrelated receivers and standalone calls are unrelated, but method
+// calls on the same receiver may be related.
+func (c *Checker) isUnrelatedCallForStableReference(reference *ast.Node, boundary *ast.Node) bool {
+	if !ast.IsCallExpression(boundary) {
+		return false
+	}
+
+	callee := ast.SkipParentheses(boundary.Expression())
+	referenceCallee := ast.SkipParentheses(reference.Expression())
+
+	// Method call (PropertyAccessExpression or ElementAccessExpression callee).
+	// For getter parity: method calls on any receiver (including the same receiver)
+	// don't invalidate narrowing. Only property writes invalidate - matching how
+	// TypeScript treats getter narrowing after method calls.
+	if ast.IsAccessExpression(callee) {
+		return true
+	}
+
+	// Standalone call (Identifier callee)
+	if ast.IsIdentifier(callee) {
+		// If same function as stable reference, it may be related.
+		if ast.IsIdentifier(referenceCallee) && c.isMatchingReference(callee, referenceCallee) {
+			return false
+		}
+		// Otherwise, standalone calls can't affect stable state —
+		// there is no shared receiver to mutate.
+		if ast.IsIdentifier(referenceCallee) || ast.IsAccessExpression(referenceCallee) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *Checker) classifyStableBoundary(reference *ast.Node, boundary *ast.Node) stableBoundaryKind {
+	if !c.isStableCallReference(reference) {
+		return stableBoundaryKindNone
+	}
+
+	// Stable calls are pure reads by contract — they cannot mutate state
+	// that would affect other stable references. This matches how
+	// independent property getters narrow independently.
+	if c.isStableCallReference(boundary) {
+		return stableBoundaryKindNone
+	}
+
+	// Explicit mutator calls invalidate linked (or all) stable endpoints
+	// on the same receiver. This takes priority over unrelated-call transparency.
+	if c.isMutatorCallBoundary(reference, boundary) {
+		return stableBoundaryKindMutatorCall
+	}
+
+	// Cross-binding invalidation: destructured tuple siblings linked via invalidates clause
+	if c.isCrossBindingMutatorBoundary(reference, boundary) {
+		return stableBoundaryKindMutatorCall
+	}
+
+	if c.isAliasEscapeAssignmentForCallReference(reference, boundary) {
+		return stableBoundaryKindAliasEscape
+	}
+
+	if c.isAwaitAssignmentBoundaryForCallReference(reference, boundary) {
+		return stableBoundaryKindAwaitBoundary
+	}
+
+	if c.isStableReceiverWriteBoundaryForCallReference(reference, boundary) {
+		return stableBoundaryKindOther
+	}
+
+	if c.isNonMatchingCallBoundary(reference, boundary) {
+		if ast.IsAwaitExpression(boundary) {
+			return stableBoundaryKindAwaitBoundary
+		}
+
+		// Calls on objects/functions unrelated to the stable reference
+		// cannot affect the stable function's backing state. This matches
+		// getter behavior where function calls don't invalidate narrowing.
+		if c.isUnrelatedCallForStableReference(reference, boundary) {
+			return stableBoundaryKindNone
+		}
+
+		if ast.IsCallExpression(boundary) && c.hasNoopCallbackArgument(boundary) {
+			return stableBoundaryKindCallbackCall
+		}
+
+		if c.isUnknownCallBoundaryForStableReference(reference, boundary) {
+			return stableBoundaryKindUnknownCall
+		}
+
+		// Non-call boundaries (e.g. property assignments on different receivers) that
+		// weren't caught by isStableReceiverWriteBoundaryForCallReference are unrelated.
+		if !ast.IsCallExpression(boundary) {
+			return stableBoundaryKindNone
+		}
+
+		return stableBoundaryKindOther
+	}
+
+	return stableBoundaryKindNone
+}
+
+func (c *Checker) shouldPreserveStableBoundaryNarrowing(reference *ast.Node, boundary *ast.Node, kind stableBoundaryKind) bool {
+	if c.shouldPreserveReadSetCallNarrowing(reference, boundary) {
+		return true
+	}
+
+	for _, preserveRule := range stableBoundaryPreserveRulesByKind[kind] {
+		if c.shouldPreserveStableBoundaryByRule(reference, boundary, preserveRule) {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *Checker) shouldPreserveStableBoundaryByRule(reference *ast.Node, boundary *ast.Node, rule stableBoundaryPreserveRuleID) bool {
+	switch rule {
+	case stableBoundaryPreserveRuleNoopCallback:
+		return c.shouldPreserveNoopCallbackCallNarrowing(reference, boundary)
+	case stableBoundaryPreserveRulePromiseResolveAwait:
+		return c.shouldPreservePromiseResolveAwaitCallNarrowing(reference, boundary)
+	case stableBoundaryPreserveRuleAmbientNoArgAwait:
+		return c.shouldPreserveAmbientNoArgAwaitCallNarrowing(reference, boundary)
+	case stableBoundaryPreserveRuleAmbientNoArgVoidUnknownCall:
+		return c.shouldPreserveAmbientNoArgVoidUnknownCallNarrowing(reference, boundary)
+	case stableBoundaryPreserveRuleExprStmtTrivialPassthrough:
+		return c.shouldPreserveExprStmtTrivialPassthroughNarrowing(reference, boundary)
+	default:
+		return false
+	}
+}
+
+func (c *Checker) shouldPreserveExprStmtTrivialPassthroughNarrowing(reference *ast.Node, boundary *ast.Node) bool {
+	if !isNoArgCallExpression(reference) || !ast.IsCallExpression(boundary) {
+		return false
+	}
+
+	if boundary.Parent == nil || !ast.IsExpressionStatement(boundary.Parent) || len(boundary.Arguments()) != 1 {
+		return false
+	}
+
+	callee := c.getNormalizedReferenceCandidate(reference.Expression())
+	argument := c.getNormalizedReferenceCandidate(boundary.Arguments()[0])
+	if !c.isMatchingReference(callee, argument) {
+		return false
+	}
+
+	invoked := ast.SkipParentheses(boundary.Expression())
+	if ast.IsArrowFunction(invoked) || ast.IsFunctionExpression(invoked) {
+		return c.isTrivialPassthroughFunctionLike(invoked)
+	}
+
+	if ast.IsIdentifier(invoked) {
+		return c.isConstAliasChainTrivialPassthroughHelper(invoked)
+	}
+
+	return false
+}
+
+func (c *Checker) shouldPreserveAmbientNoArgVoidUnknownCallNarrowing(reference *ast.Node, boundary *ast.Node) bool {
+	if !isNoArgCallExpression(reference) || !ast.IsCallExpression(boundary) {
+		return false
+	}
+
+	if boundary.Parent == nil || !ast.IsExpressionStatement(boundary.Parent) || len(boundary.Arguments()) != 0 {
+		return false
+	}
+
+	callee := ast.SkipParentheses(boundary.Expression())
+	if !ast.IsIdentifier(callee) {
+		return false
+	}
+
+	boundarySignature := c.getResolvedSignature(boundary, nil /*candidatesOutArray*/, CheckModeNormal)
+	if boundarySignature == nil || boundarySignature == c.resolvingSignature || len(boundarySignature.parameters) != 0 || signatureHasRestParameter(boundarySignature) {
+		return false
+	}
+
+	declaration := boundarySignature.declaration
+	if declaration == nil || !ast.IsFunctionDeclaration(declaration) || declaration.Body() != nil {
+		return false
+	}
+
+	boundaryReturnType := c.getReturnTypeOfSignature(boundarySignature)
+	if boundaryReturnType.flags != TypeFlagsVoid {
+		return false
+	}
+
+	readSignature := c.getResolvedSignature(reference, nil /*candidatesOutArray*/, CheckModeTypeOnly)
+	if readSignature == nil || readSignature == c.resolvingSignature {
+		return false
+	}
+
+	readReturnType := c.getReturnTypeOfSignature(readSignature)
+	if readReturnType.flags&TypeFlagsUnion == 0 {
+		return false
+	}
+
+	return true
+}
+
+func (c *Checker) isStableCallReference(reference *ast.Node) bool {
+	if !ast.IsCallExpression(reference) {
+		return false
+	}
+	signature := c.getResolvedSignature(reference, nil /*candidatesOutArray*/, CheckModeTypeOnly)
+	if signature == nil || signature == c.resolvingSignature || signature.flags&SignatureFlagsStable == 0 {
+		return false
+	}
+	if len(reference.Arguments()) == 0 {
+		return true // unkeyed stable call
+	}
+	if len(reference.Arguments()) == 1 && c.signatureHasKeyParameter(signature) {
+		return true // keyed stable call with one key argument
+	}
+	return false
+}
+
+func (c *Checker) isStableCallArgCountValid(signature *Signature, node *ast.Node) bool {
+	if len(node.Arguments()) == 0 {
+		return true // unkeyed stable — always valid
+	}
+	if len(node.Arguments()) == 1 && c.signatureHasKeyParameter(signature) {
+		return true // keyed stable with one key argument
+	}
+	return false
+}
+
+func (c *Checker) signatureHasKeyParameter(signature *Signature) bool {
+	if signature.declaration == nil {
+		return false
+	}
+	switch {
+	case ast.IsFunctionTypeNode(signature.declaration):
+		return signature.declaration.AsFunctionTypeNode().KeyParameter != nil
+	case ast.IsMethodDeclaration(signature.declaration):
+		return signature.declaration.AsMethodDeclaration().KeyParameter != nil
+	case ast.IsMethodSignatureDeclaration(signature.declaration):
+		return signature.declaration.AsMethodSignatureDeclaration().KeyParameter != nil
+	}
+	return false
+}
+
+// isMatchingKeyArgument checks if two key arguments (from keyed stable/mutator calls)
+// refer to the same key. Handles both identifier references (variable keys) and
+// string/numeric literal values.
+func (c *Checker) isMatchingKeyArgument(source *ast.Node, target *ast.Node) bool {
+	// Try standard reference matching first (handles identifiers, property accesses, etc.)
+	if c.isMatchingReference(source, target) {
+		return true
+	}
+	// For string literals, compare the text values directly
+	if ast.IsStringLiteral(source) && ast.IsStringLiteral(target) {
+		return source.Text() == target.Text()
+	}
+	// For numeric literals, compare the text values directly
+	if ast.IsNumericLiteral(source) && ast.IsNumericLiteral(target) {
+		return source.Text() == target.Text()
+	}
+	return false
+}
+
+// findParamIndexByName returns the index of the parameter with the given name
+// in the signature's parameter list, or -1 if not found.
+func (c *Checker) findParamIndexByName(signature *Signature, paramName string) int {
+	for i, param := range signature.parameters {
+		if param.Name == paramName {
+			return i
+		}
+	}
+	return -1
+}
+
+// isMutatorCallBoundary checks if the boundary is a mutator call on the same
+// receiver as the stable reference. If the mutator has an invalidates clause, only
+// invalidates if the reference endpoint is among the linked targets.
+func (c *Checker) isMutatorCallBoundary(reference *ast.Node, boundary *ast.Node) bool {
+	if !ast.IsCallExpression(boundary) {
+		return false
+	}
+
+	signature := c.getResolvedSignature(boundary, nil, CheckModeTypeOnly)
+	if signature == nil || signature == c.resolvingSignature || signature.flags&SignatureFlagsMutator == 0 {
+		return false
+	}
+
+	// Both reference and boundary must be property/element accesses for receiver matching
+	referenceCallee := ast.SkipParentheses(reference.Expression())
+	boundaryCallee := ast.SkipParentheses(boundary.Expression())
+
+	refReceiver, refName, refOk := c.getLiteralNamedAccessReceiverAndName(referenceCallee)
+	boundReceiver, _, boundOk := c.getLiteralNamedAccessReceiverAndName(boundaryCallee)
+
+	if !refOk || !boundOk {
+		return false
+	}
+
+	normalizedRef := c.getNormalizedReferenceCandidate(refReceiver)
+	normalizedBound := c.getNormalizedReferenceCandidate(boundReceiver)
+
+	// In class hierarchies, super.mutator() should invalidate this.stable() narrowing
+	// because both super and this refer to the same object instance.
+	superThisMatch := (normalizedRef.Kind == ast.KindThisKeyword && normalizedBound.Kind == ast.KindSuperKeyword) ||
+		(normalizedRef.Kind == ast.KindSuperKeyword && normalizedBound.Kind == ast.KindThisKeyword)
+
+	if !superThisMatch && !c.isMatchingReference(normalizedRef, normalizedBound) {
+		return false
+	}
+
+	// Same receiver, it's a mutator call. Check invalidates clause for selective invalidation.
+	if declaration := signature.declaration; declaration != nil {
+		var linksClause *ast.NodeList
+		var keyParamNames []string
+		if ast.IsFunctionTypeNode(declaration) {
+			linksClause = declaration.AsFunctionTypeNode().LinksClause
+			keyParamNames = declaration.AsFunctionTypeNode().LinksClauseKeyParamNames
+		} else if ast.IsMethodDeclaration(declaration) {
+			linksClause = declaration.AsMethodDeclaration().LinksClause
+			keyParamNames = declaration.AsMethodDeclaration().LinksClauseKeyParamNames
+		} else if ast.IsMethodSignatureDeclaration(declaration) {
+			linksClause = declaration.AsMethodSignatureDeclaration().LinksClause
+			keyParamNames = declaration.AsMethodSignatureDeclaration().LinksClauseKeyParamNames
+		}
+		if linksClause != nil && len(linksClause.Nodes) > 0 {
+			// Invalidates clause exists — only invalidate if reference endpoint is linked
+			for i, link := range linksClause.Nodes {
+				if ast.IsIdentifier(link) && link.Text() == refName {
+					// Check for per-key invalidation
+					if i < len(keyParamNames) && keyParamNames[i] != "" {
+						// Per-key: resolve param name to argument index and compare
+						paramIndex := c.findParamIndexByName(signature, keyParamNames[i])
+						if paramIndex >= 0 && len(reference.Arguments()) > 0 && paramIndex < len(boundary.Arguments()) {
+							return c.isMatchingKeyArgument(reference.Arguments()[0], boundary.Arguments()[paramIndex])
+						}
+						return true // can't resolve — conservatively invalidate
+					}
+					return true // Unkeyed target — always invalidate
+				}
+			}
+			return false // NOT a linked endpoint — preserve narrowing
+		}
+	}
+
+	// No invalidates clause — conservatively invalidate all stable endpoints on same receiver
+	return true
+}
+
+// isCrossBindingMutatorBoundary checks if the boundary is a mutator call on a
+// destructured tuple binding that invalidates a sibling stable binding via the
+// invalidates clause targeting a named tuple label. This enables patterns like:
+//
+//	const [count, setCount] = createSignal<number | undefined>(0);
+//	if (count() !== undefined) {
+//	    setCount(undefined); // invalidates 'read' label → resets count() narrowing
+//	}
+func (c *Checker) isCrossBindingMutatorBoundary(reference *ast.Node, boundary *ast.Node) bool {
+	if !ast.IsCallExpression(boundary) {
+		return false
+	}
+
+	// Both must be calls through identifiers (standalone function bindings)
+	referenceCallee := ast.SkipParentheses(reference.Expression())
+	boundaryCallee := ast.SkipParentheses(boundary.Expression())
+
+	if !ast.IsIdentifier(referenceCallee) || !ast.IsIdentifier(boundaryCallee) {
+		return false
+	}
+
+	// Both callees must resolve to binding elements in the same array binding pattern
+	refSymbol := c.getResolvedSymbol(referenceCallee)
+	boundSymbol := c.getResolvedSymbol(boundaryCallee)
+	if refSymbol == nil || boundSymbol == nil || refSymbol == c.unknownSymbol || boundSymbol == c.unknownSymbol {
+		return false
+	}
+
+	refDecl := refSymbol.ValueDeclaration
+	boundDecl := boundSymbol.ValueDeclaration
+	if refDecl == nil || boundDecl == nil {
+		return false
+	}
+	if refDecl.Kind != ast.KindBindingElement || boundDecl.Kind != ast.KindBindingElement {
+		return false
+	}
+
+	refPattern := refDecl.Parent
+	boundPattern := boundDecl.Parent
+	if refPattern == nil || boundPattern == nil || refPattern != boundPattern {
+		return false
+	}
+	if refPattern.Kind != ast.KindArrayBindingPattern {
+		return false
+	}
+
+	// Get the tuple type from the parent variable declaration
+	varDecl := refPattern.Parent
+	if varDecl == nil || !ast.IsVariableDeclaration(varDecl) {
+		return false
+	}
+
+	var parentType *Type
+	if varDecl.AsVariableDeclaration().Initializer != nil {
+		parentType = c.getTypeOfExpression(varDecl.AsVariableDeclaration().Initializer)
+	}
+	if parentType == nil || !isTupleType(parentType) {
+		return false
+	}
+
+	// Find the index of the reference and boundary elements in the binding pattern
+	elements := refPattern.AsBindingPattern().Elements
+	refIndex := -1
+	boundIndex := -1
+	for i, elem := range elements.Nodes {
+		if elem == refDecl {
+			refIndex = i
+		}
+		if elem == boundDecl {
+			boundIndex = i
+		}
+	}
+	if refIndex < 0 || boundIndex < 0 {
+		return false
+	}
+
+	// Get the tuple target to access element labels and declarations
+	tupleTarget := parentType.TargetTupleType()
+	elementInfos := tupleTarget.ElementInfos()
+	if refIndex >= len(elementInfos) || boundIndex >= len(elementInfos) {
+		return false
+	}
+
+	// Get the label name of the reference element
+	refInfo := elementInfos[refIndex]
+	if refInfo.LabeledDeclaration() == nil {
+		return false
+	}
+	refLabel := refInfo.LabeledDeclaration().Name().Text()
+
+	// Find the LinksClause for the boundary element.
+	// First check the resolved signature's declaration (works for inline mutator function types).
+	// Then check the boundary's tuple element declaration (works for mutator wrapping type references).
+	var linksClause *ast.NodeList
+	signature := c.getResolvedSignature(boundary, nil, CheckModeTypeOnly)
+	if signature != nil && signature != c.resolvingSignature && signature.flags&SignatureFlagsMutator != 0 {
+		if declaration := signature.declaration; declaration != nil && ast.IsFunctionTypeNode(declaration) {
+			fnType := declaration.AsFunctionTypeNode()
+			if fnType.LinksClause != nil && len(fnType.LinksClause.Nodes) > 0 {
+				linksClause = fnType.LinksClause
+			}
+		}
+	}
+	// If no LinksClause from signature, check the tuple element's type annotation
+	if linksClause == nil {
+		boundInfo := elementInfos[boundIndex]
+		if boundInfo.LabeledDeclaration() != nil && ast.IsNamedTupleMember(boundInfo.LabeledDeclaration()) {
+			typeNode := boundInfo.LabeledDeclaration().AsNamedTupleMember().Type
+			if typeNode != nil && ast.IsFunctionTypeNode(typeNode) {
+				fnType := typeNode.AsFunctionTypeNode()
+				if fnType.WrappedType != nil && ast.HasSyntacticModifier(typeNode, ast.ModifierFlagsMutator) {
+					if fnType.LinksClause != nil && len(fnType.LinksClause.Nodes) > 0 {
+						linksClause = fnType.LinksClause
+					}
+				}
+			}
+		}
+	}
+	if linksClause == nil {
+		return false
+	}
+
+	// Check if any target in the invalidates clause matches the reference's label
+	for _, link := range linksClause.Nodes {
+		if ast.IsIdentifier(link) && link.Text() == refLabel {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (c *Checker) shouldPreserveReadSetCallNarrowing(reference *ast.Node, call *ast.Node) bool {
+	if !isNoArgCallExpression(reference) || !ast.IsCallExpression(call) {
+		return false
+	}
+
+	readAccess := ast.SkipParentheses(reference.Expression())
+	setAccess := ast.SkipParentheses(call.Expression())
+	readReceiver, readName, readOk := c.getLiteralNamedAccessReceiverAndName(readAccess)
+	setReceiver, setName, setOk := c.getLiteralNamedAccessReceiverAndName(setAccess)
+	if !readOk || !setOk {
+		return false
+	}
+
+	if readName != "read" || setName != "set" {
+		return false
+	}
+
+	if len(call.Arguments()) != 1 {
+		return false
+	}
+
+	if !c.isMatchingReference(c.getNormalizedReferenceCandidate(readReceiver), c.getNormalizedReferenceCandidate(setReceiver)) {
+		return false
+	}
+
+	argType := c.getTypeOfExpression(call.Arguments()[0])
+	return argType.flags&(TypeFlagsUndefined|TypeFlagsNull) == 0
+}
+
+// getMutatorCallNarrowedType returns the narrowed type for a stable reference
+// after a mutator call. If the mutator has arguments and the declared type is
+// a union, the stable reference's type is narrowed using assignment reduction.
+func (c *Checker) getMutatorCallNarrowedType(f *FlowState, mutatorCall *ast.Node) *Type {
+	if !ast.IsCallExpression(mutatorCall) || len(mutatorCall.Arguments()) == 0 {
+		return nil
+	}
+	if f.declaredType.flags&TypeFlagsUnion == 0 {
+		return nil
+	}
+	argType := c.getTypeOfExpression(mutatorCall.Arguments()[0])
+	reduced := c.getAssignmentReducedType(f.declaredType, argType)
+	if reduced == f.declaredType {
+		return nil
+	}
+	return reduced
+}
+
+func (c *Checker) getLiteralNamedAccessReceiverAndName(access *ast.Node) (*ast.Node, string, bool) {
+	switch {
+	case ast.IsPropertyAccessExpression(access):
+		return access.Expression(), access.Name().Text(), true
+	case ast.IsElementAccessExpression(access):
+		arg := ast.SkipParentheses(access.AsElementAccessExpression().ArgumentExpression)
+		if arg != nil && ast.IsStringLiteralLike(arg) {
+			return access.Expression(), arg.Text(), true
+		}
+	}
+
+	return nil, "", false
+}
+
+func (c *Checker) isStableReceiverWriteBoundaryForCallReference(reference *ast.Node, boundary *ast.Node) bool {
+	if !isNoArgCallExpression(reference) {
+		return false
+	}
+
+	readAccess := c.getNormalizedReferenceCandidate(reference.Expression())
+	if !ast.IsAccessExpression(readAccess) {
+		return false
+	}
+
+	writeAccess := c.getWriteAccessExpressionFromBoundary(boundary)
+	if writeAccess == nil {
+		return false
+	}
+
+	readReceiver := c.getNormalizedReferenceCandidate(readAccess.Expression())
+	writeReceiver := c.getNormalizedReferenceCandidate(writeAccess.Expression())
+	if !c.isMatchingReferenceOrConstAlias(readReceiver, writeReceiver) {
+		return false
+	}
+
+	readName, readNameOk := c.getAccessedPropertyName(readAccess)
+	writeName, writeNameOk := c.getAccessedPropertyName(writeAccess)
+	if !readNameOk || !writeNameOk {
+		// If we can't prove the key names, remain conservative and invalidate.
+		return true
+	}
+
+	if readName == writeName {
+		return true
+	}
+
+	// Any same-receiver write is conservatively treated as potentially mutating
+	// stable-backed state.
+	return true
+}
+
+func (c *Checker) getWriteAccessExpressionFromBoundary(boundary *ast.Node) *ast.Node {
+	assignmentTarget := ast.GetAssignmentTarget(boundary)
+	if assignmentTarget == nil {
+		return nil
+	}
+
+	switch assignmentTarget.Kind {
+	case ast.KindBinaryExpression:
+		binary := assignmentTarget.AsBinaryExpression()
+		if !ast.IsAssignmentOperator(binary.OperatorToken.Kind) {
+			return nil
+		}
+		left := c.getNormalizedReferenceCandidate(binary.Left)
+		if ast.IsAccessExpression(left) {
+			return left
+		}
+	case ast.KindPrefixUnaryExpression:
+		prefix := assignmentTarget.AsPrefixUnaryExpression()
+		if prefix.Operator != ast.KindPlusPlusToken && prefix.Operator != ast.KindMinusMinusToken {
+			return nil
+		}
+		operand := c.getNormalizedReferenceCandidate(prefix.Operand)
+		if ast.IsAccessExpression(operand) {
+			return operand
+		}
+	case ast.KindPostfixUnaryExpression:
+		postfix := assignmentTarget.AsPostfixUnaryExpression()
+		if postfix.Operator != ast.KindPlusPlusToken && postfix.Operator != ast.KindMinusMinusToken {
+			return nil
+		}
+		operand := c.getNormalizedReferenceCandidate(postfix.Operand)
+		if ast.IsAccessExpression(operand) {
+			return operand
+		}
+	}
+
+	return nil
+}
+
+func (c *Checker) isMatchingReferenceOrConstAlias(source *ast.Node, target *ast.Node) bool {
+	sourceRoot := c.resolveConstAliasReference(source)
+	targetRoot := c.resolveConstAliasReference(target)
+	return c.isMatchingReference(sourceRoot, targetRoot)
+}
+
+func (c *Checker) resolveConstAliasReference(reference *ast.Node) *ast.Node {
+	const maxAliasChainSteps = 5
+	var seen [maxAliasChainSteps]*ast.Symbol
+	current := c.getNormalizedReferenceCandidate(reference)
+
+	for i := range maxAliasChainSteps {
+		if !ast.IsIdentifier(current) {
+			return current
+		}
+
+		symbol := c.getResolvedSymbol(current)
+		if symbol == nil || symbol == c.unknownSymbol {
+			return current
+		}
+
+		for j := range i {
+			if seen[j] == symbol {
+				return current
+			}
+		}
+		seen[i] = symbol
+
+		declaration := symbol.ValueDeclaration
+		if declaration == nil || !c.isConstantVariable(symbol) || !ast.IsVariableDeclaration(declaration) {
+			return current
+		}
+
+		initializer := declaration.Initializer()
+		if initializer == nil {
+			return current
+		}
+
+		resolved := c.getNormalizedReferenceCandidate(initializer)
+		if !ast.IsIdentifier(resolved) && !ast.IsAccessExpression(resolved) {
+			return current
+		}
+
+		current = resolved
+	}
+
+	return current
+}
+
+func (c *Checker) shouldPreserveNoopCallbackCallNarrowing(reference *ast.Node, call *ast.Node) bool {
+	if !isNoArgCallExpression(reference) || !ast.IsCallExpression(call) {
+		return false
+	}
+
+	if !c.isNoopCallbackBoundaryCallSite(call) {
+		return false
+	}
+
+	// Find callback arguments recognized by the strict callback detector.
+	// ALL recognized callback arguments must be no-op (zero params, empty body,
+	// const-safe property alias, or strictly trivial forwarding wrappers).
+	foundCallback := false
+	for _, arg := range call.Arguments() {
+		isCallback, isNoop := c.getNoopCallbackArgumentState(arg, 0)
+		if isCallback {
+			foundCallback = true
+			if !isNoop {
+				return false
+			}
+		}
+	}
+	return foundCallback
+}
+
+func (c *Checker) hasNoopCallbackArgument(call *ast.Node) bool {
+	for _, arg := range call.Arguments() {
+		isCallback, _ := c.getNoopCallbackArgumentState(arg, 0)
+		if isCallback {
+			return true
+		}
+	}
+	return false
+}
+
+func (c *Checker) getNoopCallbackArgumentState(arg *ast.Node, depth int) (bool, bool) {
+	if depth >= 5 {
+		return false, false
+	}
+
+	resolved := ast.SkipParentheses(arg)
+	if ast.IsArrowFunction(resolved) || ast.IsFunctionExpression(resolved) || ast.IsIdentifier(resolved) || ast.IsAccessExpression(resolved) {
+		return true, c.isNoopCallbackWithDepth(resolved, depth)
+	}
+
+	if ast.IsCallExpression(resolved) {
+		if !c.isTrivialCallbackForwardingCall(resolved) {
+			return false, false
+		}
+
+		innerIsCallback, innerIsNoop := c.getNoopCallbackArgumentState(resolved.Arguments()[0], depth+1)
+		if !innerIsCallback {
+			return true, false
+		}
+		return true, innerIsNoop
+	}
+
+	return false, false
+}
+
+func (c *Checker) isNoopCallback(callback *ast.Node) bool {
+	return c.isNoopCallbackWithDepth(callback, 0)
+}
+
+func (c *Checker) isNoopCallbackWithDepth(callback *ast.Node, depth int) bool {
+	if depth >= 5 {
+		return false
+	}
+
+	callback = ast.SkipParentheses(callback)
+	if ast.IsArrowFunction(callback) {
+		if len(callback.Parameters()) != 0 {
+			return false
+		}
+		body := callback.Body()
+		return ast.IsBlock(body) && len(body.Statements()) == 0
+	}
+	if ast.IsFunctionExpression(callback) {
+		if len(callback.Parameters()) != 0 {
+			return false
+		}
+		body := callback.Body()
+		return body != nil && len(body.Statements()) == 0
+	}
+	if ast.IsIdentifier(callback) {
+		return c.isConstNoopCallbackAlias(callback)
+	}
+	if ast.IsAccessExpression(callback) {
+		return c.isConstNoopCallbackPropertyAlias(callback, depth)
+	}
+	if ast.IsCallExpression(callback) {
+		if !c.isTrivialCallbackForwardingCall(callback) {
+			return false
+		}
+		return c.isNoopCallbackWithDepth(callback.Arguments()[0], depth+1)
+	}
+	return false
+}
+
+func (c *Checker) isTrivialCallbackForwardingCall(call *ast.Node) bool {
+	if !ast.IsCallExpression(call) || len(call.Arguments()) != 1 {
+		return false
+	}
+
+	invoked := ast.SkipParentheses(call.Expression())
+	if ast.IsArrowFunction(invoked) || ast.IsFunctionExpression(invoked) {
+		return c.isTrivialPassthroughFunctionLike(invoked)
+	}
+
+	if ast.IsIdentifier(invoked) {
+		return c.isConstAliasChainTrivialPassthroughHelper(invoked) || c.isAmbientStablePassthroughCallForCallReference(call)
+	}
+
+	return false
+}
+
+func (c *Checker) isConstNoopCallbackPropertyAlias(access *ast.Node, depth int) bool {
+	if depth >= 5 {
+		return false
+	}
+
+	receiver, name, ok := c.getLiteralNamedAccessReceiverAndName(access)
+	if !ok {
+		return false
+	}
+
+	literal := c.getConstObjectLiteralForPropertyCallbackReceiver(receiver, depth+1)
+	if literal == nil {
+		return false
+	}
+
+	value := c.getObjectLiteralPropertyValueByName(literal, name)
+	if value == nil {
+		return false
+	}
+
+	return c.isNoopCallbackWithDepth(value, depth+1)
+}
+
+func (c *Checker) getConstObjectLiteralForPropertyCallbackReceiver(receiver *ast.Node, depth int) *ast.Node {
+	if depth >= 5 {
+		return nil
+	}
+
+	resolved := ast.SkipParentheses(receiver)
+	if !ast.IsIdentifier(resolved) {
+		return nil
+	}
+
+	symbol := c.getResolvedSymbol(resolved)
+	if symbol == nil || symbol == c.unknownSymbol || !c.isConstantVariable(symbol) {
+		return nil
+	}
+
+	declaration := symbol.ValueDeclaration
+	if declaration == nil || !ast.IsVariableDeclaration(declaration) {
+		return nil
+	}
+
+	initializer := declaration.Initializer()
+	if initializer == nil {
+		return nil
+	}
+
+	resolvedInit := ast.SkipParentheses(initializer)
+	if ast.IsObjectLiteralExpression(resolvedInit) {
+		return resolvedInit
+	}
+
+	if ast.IsIdentifier(resolvedInit) {
+		return c.getConstObjectLiteralForPropertyCallbackReceiver(resolvedInit, depth+1)
+	}
+
+	return nil
+}
+
+func (c *Checker) getObjectLiteralPropertyValueByName(objectLiteral *ast.Node, name string) *ast.Node {
+	if objectLiteral == nil || !ast.IsObjectLiteralExpression(objectLiteral) {
+		return nil
+	}
+
+	for _, property := range objectLiteral.AsObjectLiteralExpression().Properties.Nodes {
+		switch {
+		case ast.IsPropertyAssignment(property):
+			if c.matchesObjectLiteralPropertyName(property.Name(), name) {
+				return property.Initializer()
+			}
+		case ast.IsShorthandPropertyAssignment(property):
+			if property.Name().Text() == name {
+				return property.Name()
+			}
+		}
+	}
+
+	return nil
+}
+
+func (c *Checker) matchesObjectLiteralPropertyName(propertyName *ast.Node, name string) bool {
+	if propertyName == nil {
+		return false
+	}
+
+	resolvedName := ast.SkipParentheses(propertyName)
+	if ast.IsIdentifier(resolvedName) {
+		return resolvedName.Text() == name
+	}
+
+	if ast.IsStringLiteralLike(resolvedName) {
+		return resolvedName.Text() == name
+	}
+
+	if ast.IsNumericLiteral(resolvedName) {
+		return resolvedName.Text() == name
+	}
+
+	if ast.IsComputedPropertyName(resolvedName) {
+		expr := ast.SkipParentheses(resolvedName.Expression())
+		if ast.IsStringLiteralLike(expr) || ast.IsNumericLiteral(expr) {
+			return expr.Text() == name
+		}
+	}
+
+	return false
+}
+
+func (c *Checker) isNoopCallbackBoundaryCallSite(call *ast.Node) bool {
+	if call.Parent == nil {
+		return false
+	}
+
+	if ast.IsExpressionStatement(call.Parent) {
+		return true
+	}
+
+	if ast.IsVariableDeclaration(call.Parent) {
+		return call.Parent.Initializer() == call
+	}
+
+	if ast.IsBinaryExpression(call.Parent) {
+		binary := call.Parent.AsBinaryExpression()
+		return ast.IsAssignmentOperator(binary.OperatorToken.Kind) && binary.Right == call
+	}
+
+	return false
+}
+
+func (c *Checker) isConstNoopCallbackAlias(callback *ast.Node) bool {
+	const maxAliasChainSteps = 5
+	var seen [maxAliasChainSteps]*ast.Symbol
+	current := callback
+
+	for i := range maxAliasChainSteps {
+		if !ast.IsIdentifier(current) {
+			return false
+		}
+
+		symbol := c.getResolvedSymbol(current)
+		if symbol == nil || symbol == c.unknownSymbol {
+			return false
+		}
+		for j := range i {
+			if seen[j] == symbol {
+				return false
+			}
+		}
+		seen[i] = symbol
+
+		declaration := symbol.ValueDeclaration
+		if declaration == nil || !c.isConstantVariable(symbol) || !ast.IsVariableDeclaration(declaration) {
+			return false
+		}
+
+		initializer := declaration.Initializer()
+		if initializer == nil {
+			return false
+		}
+
+		resolved := ast.SkipParentheses(initializer)
+		if ast.IsArrowFunction(resolved) {
+			if len(resolved.Parameters()) != 0 {
+				return false
+			}
+			body := resolved.Body()
+			return ast.IsBlock(body) && len(body.Statements()) == 0
+		}
+
+		if ast.IsFunctionExpression(resolved) {
+			if len(resolved.Parameters()) != 0 {
+				return false
+			}
+			body := resolved.Body()
+			return body != nil && len(body.Statements()) == 0
+		}
+
+		if ast.IsIdentifier(resolved) {
+			current = resolved
+			continue
+		}
+
+		return false
+	}
+
+	return false
+}
+
+func (c *Checker) shouldPreservePromiseResolveAwaitCallNarrowing(reference *ast.Node, boundary *ast.Node) bool {
+	if !isNoArgCallExpression(reference) || !ast.IsAwaitExpression(boundary) {
+		return false
+	}
+
+	if boundary.Parent == nil || !ast.IsExpressionStatement(boundary.Parent) {
+		return false
+	}
+
+	awaitedExpr := ast.SkipParentheses(boundary.AsAwaitExpression().Expression)
+	if !ast.IsCallExpression(awaitedExpr) || len(awaitedExpr.Arguments()) != 0 {
+		return false
+	}
+
+	callee := ast.SkipParentheses(awaitedExpr.Expression())
+	if !ast.IsPropertyAccessExpression(callee) {
+		return false
+	}
+
+	if callee.Name().Text() != "resolve" {
+		return false
+	}
+
+	promiseRef := ast.SkipParentheses(callee.Expression())
+	return ast.IsIdentifier(promiseRef) && promiseRef.Text() == "Promise"
+}
+
+func (c *Checker) shouldPreserveAmbientNoArgAwaitCallNarrowing(reference *ast.Node, boundary *ast.Node) bool {
+	if !isNoArgCallExpression(reference) || !ast.IsAwaitExpression(boundary) {
+		return false
+	}
+
+	readSignature := c.getResolvedSignature(reference, nil /*candidatesOutArray*/, CheckModeTypeOnly)
+	if readSignature == nil || readSignature == c.resolvingSignature {
+		return false
+	}
+
+	readReturnType := c.getReturnTypeOfSignature(readSignature)
+	if readReturnType.flags&TypeFlagsUnion == 0 {
+		return false
+	}
+
+	if boundary.Parent == nil || !ast.IsExpressionStatement(boundary.Parent) {
+		return false
+	}
+
+	awaitedExpr := ast.SkipParentheses(boundary.AsAwaitExpression().Expression)
+	if !ast.IsCallExpression(awaitedExpr) || len(awaitedExpr.Arguments()) != 0 {
+		return false
+	}
+
+	signature := c.getResolvedSignature(awaitedExpr, nil /*candidatesOutArray*/, CheckModeNormal)
+	if signature == nil || signature == c.resolvingSignature || len(signature.parameters) != 0 || signatureHasRestParameter(signature) {
+		return false
+	}
+
+	declaration := signature.declaration
+	if declaration == nil || !ast.IsFunctionDeclaration(declaration) || declaration.Body() != nil {
+		return false
+	}
+
+	awaitedType := c.getAwaitedType(c.getReturnTypeOfSignature(signature))
+	return awaitedType != nil && awaitedType.flags&TypeFlagsVoid != 0
 }
 
 func (c *Checker) narrowTypeByTypePredicate(f *FlowState, t *Type, predicate *TypePredicate, callExpression *ast.Node, assumeTrue bool) *Type {
@@ -388,7 +1775,10 @@ func (c *Checker) narrowType(f *FlowState, t *Type, expr *ast.Node, assumeTrue b
 	case ast.KindThisKeyword, ast.KindSuperKeyword, ast.KindPropertyAccessExpression, ast.KindElementAccessExpression:
 		return c.narrowTypeByTruthiness(f, t, expr, assumeTrue)
 	case ast.KindCallExpression:
-		return c.narrowTypeByCallExpression(f, t, expr, assumeTrue)
+		if narrowed := c.narrowTypeByCallExpression(f, t, expr, assumeTrue); narrowed != t {
+			return narrowed
+		}
+		return c.narrowTypeByTruthiness(f, t, expr, assumeTrue)
 	case ast.KindParenthesizedExpression, ast.KindNonNullExpression, ast.KindSatisfiesExpression:
 		return c.narrowType(f, t, expr.Expression(), assumeTrue)
 	case ast.KindBinaryExpression:
@@ -443,9 +1833,21 @@ func (c *Checker) narrowTypeByCallExpression(f *FlowState, t *Type, callExpressi
 			return c.narrowTypeByTypePredicate(f, t, predicate, callExpression, assumeTrue)
 		}
 	}
+	// Linked method predicates — narrow stable call references based on guard methods
+	if c.isStableCallReference(f.reference) && ast.IsCallExpression(callExpression) {
+		if assumeTrue || !isCallChain(callExpression) {
+			signature := c.getEffectsSignature(callExpression)
+			if signature != nil {
+				predicate := c.getTypePredicateOfSignature(signature)
+				if predicate != nil && predicate.kind == TypePredicateKindLinkedMethod {
+					return c.narrowTypeByLinkedMethodPredicate(f, t, predicate, callExpression, assumeTrue)
+				}
+			}
+		}
+	}
 	if c.containsMissingType(t) && ast.IsAccessExpression(f.reference) && ast.IsPropertyAccessExpression(callExpression.Expression()) {
 		callAccess := callExpression.Expression()
-		if c.isMatchingReference(f.reference.Expression(), c.getReferenceCandidate(callAccess.Expression())) && ast.IsIdentifier(callAccess.Name()) && callAccess.Name().Text() == "hasOwnProperty" && len(callExpression.Arguments()) == 1 {
+		if c.isMatchingReference(f.reference.Expression(), c.getNormalizedReferenceCandidate(callAccess.Expression())) && ast.IsIdentifier(callAccess.Name()) && callAccess.Name().Text() == "hasOwnProperty" && len(callExpression.Arguments()) == 1 {
 			argument := callExpression.Arguments()[0]
 			if accessedName, ok := c.getAccessedPropertyName(f.reference); ok && ast.IsStringLiteralLike(argument) && accessedName == argument.Text() {
 				return c.getTypeWithFacts(t, core.IfElse(assumeTrue, TypeFactsNEUndefined, TypeFactsEQUndefined))
@@ -455,14 +1857,51 @@ func (c *Checker) narrowTypeByCallExpression(f *FlowState, t *Type, callExpressi
 	return t
 }
 
+func (c *Checker) narrowTypeByLinkedMethodPredicate(f *FlowState, t *Type, predicate *TypePredicate, callExpression *ast.Node, assumeTrue bool) *Type {
+	if predicate.t == nil {
+		return t
+	}
+	// f.reference = obj.read() (the stable call being type-checked)
+	// callExpression = obj.hasValue() (the guard call in the condition)
+	// predicate = LinkedMethod{parameterName: "read", t: narrowedType}
+
+	// Get the guard call's receiver: for obj.hasValue(), get obj
+	guardCallee := ast.SkipParentheses(callExpression.Expression())
+	if !ast.IsPropertyAccessExpression(guardCallee) {
+		return t
+	}
+	guardReceiver := guardCallee.Expression()
+
+	// Get the stable call's callee info: for obj.read(), get obj and "read"
+	stableCallee := ast.SkipParentheses(f.reference.Expression())
+	if !ast.IsPropertyAccessExpression(stableCallee) {
+		return t
+	}
+	stableReceiver := stableCallee.Expression()
+	stableMethodName := stableCallee.Name().Text()
+
+	// Check: guard receiver matches stable receiver (same object)
+	if !c.isMatchingReference(guardReceiver, stableReceiver) {
+		return t
+	}
+
+	// Check: linked method name matches the stable call's method name
+	if predicate.parameterName != stableMethodName {
+		return t
+	}
+
+	// Apply narrowing using the same mechanism as existing type predicates
+	return c.getNarrowedType(t, predicate.t, assumeTrue, false /*checkDerived*/)
+}
+
 func (c *Checker) narrowTypeByBinaryExpression(f *FlowState, t *Type, expr *ast.BinaryExpression, assumeTrue bool) *Type {
 	switch expr.OperatorToken.Kind {
 	case ast.KindEqualsToken, ast.KindBarBarEqualsToken, ast.KindAmpersandAmpersandEqualsToken, ast.KindQuestionQuestionEqualsToken:
 		return c.narrowTypeByTruthiness(f, c.narrowType(f, t, expr.Right, assumeTrue), expr.Left, assumeTrue)
 	case ast.KindEqualsEqualsToken, ast.KindExclamationEqualsToken, ast.KindEqualsEqualsEqualsToken, ast.KindExclamationEqualsEqualsToken:
 		operator := expr.OperatorToken.Kind
-		left := c.getReferenceCandidate(expr.Left)
-		right := c.getReferenceCandidate(expr.Right)
+		left := c.getNormalizedReferenceCandidate(expr.Left)
+		right := c.getNormalizedReferenceCandidate(expr.Right)
 		if left.Kind == ast.KindTypeOfExpression && ast.IsStringLiteralLike(right) {
 			return c.narrowTypeByTypeof(f, t, left.AsTypeOfExpression(), operator, right, assumeTrue)
 		}
@@ -508,7 +1947,7 @@ func (c *Checker) narrowTypeByBinaryExpression(f *FlowState, t *Type, expr *ast.
 		if ast.IsPrivateIdentifier(expr.Left) {
 			return c.narrowTypeByPrivateIdentifierInInExpression(f, t, expr, assumeTrue)
 		}
-		target := c.getReferenceCandidate(expr.Right)
+		target := c.getNormalizedReferenceCandidate(expr.Right)
 		if c.containsMissingType(t) && ast.IsAccessExpression(f.reference) && c.isMatchingReference(f.reference.Expression(), target) {
 			leftType := c.getTypeOfExpression(expr.Left)
 			if isTypeUsableAsPropertyName(leftType) {
@@ -1378,7 +2817,7 @@ func (c *Checker) getTypeAtFlowArrayMutation(f *FlowState, flow *ast.FlowNode) F
 		} else {
 			expr = node.AsBinaryExpression().Left.Expression()
 		}
-		if c.isMatchingReference(f.reference, c.getReferenceCandidate(expr)) {
+		if c.isMatchingReference(f.reference, c.getNormalizedReferenceCandidate(expr)) {
 			flowType := c.getTypeAtFlowNode(f, flow.Antecedent)
 			if flowType.t.objectFlags&ObjectFlagsEvolvingArray != 0 {
 				evolvedType := flowType.t
@@ -1612,6 +3051,26 @@ func (c *Checker) isMatchingReference(source *ast.Node, target *ast.Node) bool {
 		}
 	case ast.KindBinaryExpression:
 		return ast.IsBinaryExpression(source) && source.AsBinaryExpression().OperatorToken.Kind == ast.KindCommaToken && c.isMatchingReference(source.AsBinaryExpression().Right, target)
+	case ast.KindCallExpression:
+		// Stable function calls: calls to the same stable function are matching references.
+		// This enables type narrowing across repeated calls to stable functions.
+		if ast.IsCallExpression(target) {
+			// Unkeyed stable: both zero-arg
+			if len(source.Arguments()) == 0 && len(target.Arguments()) == 0 {
+				return c.isMatchingReference(source.Expression(), target.Expression())
+			}
+			// Keyed stable: both single-arg, compare callees AND key arguments
+			if len(source.Arguments()) == 1 && len(target.Arguments()) == 1 {
+				if c.isMatchingReference(source.Expression(), target.Expression()) &&
+					c.isMatchingKeyArgument(source.Arguments()[0], target.Arguments()[0]) {
+					// Verify this is actually a keyed stable call
+					sig := c.getResolvedSignature(source, nil, CheckModeTypeOnly)
+					if sig != nil && sig != c.resolvingSignature && sig.flags&SignatureFlagsStable != 0 && c.signatureHasKeyParameter(sig) {
+						return true
+					}
+				}
+			}
+		}
 	}
 	return false
 }
@@ -1688,6 +3147,30 @@ func (c *Checker) writeFlowCacheKey(b *keyBuilder, node *ast.Node, declaredType 
 		b.writeByte('#')
 		b.writeType(declaredType)
 		return true
+	case ast.KindStringLiteral:
+		b.writeString("\"")
+		b.writeString(node.Text())
+		b.writeString("\"")
+		return true
+	case ast.KindNumericLiteral:
+		b.writeString(node.Text())
+		return true
+	case ast.KindCallExpression:
+		// For stable function calls, generate a cache key based on the callee expression
+		argCount := len(node.Arguments())
+		if argCount == 0 || argCount == 1 {
+			if !c.writeFlowCacheKey(b, node.Expression(), declaredType, initialType, flowContainer) {
+				return false
+			}
+			b.writeByte('(')
+			if argCount == 1 {
+				if !c.writeFlowCacheKey(b, node.Arguments()[0], declaredType, initialType, flowContainer) {
+					return false
+				}
+			}
+			b.writeByte(')')
+			return true
+		}
 	}
 	return false
 }
@@ -1812,7 +3295,7 @@ func (c *Checker) isConstantReference(node *ast.Node) bool {
 }
 
 func (c *Checker) containsMatchingReference(source *ast.Node, target *ast.Node) bool {
-	for ast.IsAccessExpression(source) {
+	for ast.IsAccessExpression(source) || ast.IsCallExpression(source) {
 		source = source.Expression()
 		if c.isMatchingReference(source, target) {
 			return true
@@ -1844,6 +3327,10 @@ func (c *Checker) getReferenceCandidate(node *ast.Node) *ast.Node {
 		}
 	}
 	return node
+}
+
+func (c *Checker) getNormalizedReferenceCandidate(node *ast.Node) *ast.Node {
+	return c.getReferenceCandidate(ast.SkipParentheses(node))
 }
 
 func (c *Checker) getReferenceRoot(node *ast.Node) *ast.Node {

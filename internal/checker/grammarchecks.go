@@ -280,7 +280,7 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				firstDecorator = modifier
 			}
 		} else {
-			if modifier.Kind != ast.KindReadonlyKeyword {
+			if modifier.Kind != ast.KindReadonlyKeyword && modifier.Kind != ast.KindStableKeyword && modifier.Kind != ast.KindMutatorKeyword {
 				if node.Kind == ast.KindPropertySignature || node.Kind == ast.KindMethodSignature {
 					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_cannot_appear_on_a_type_member, scanner.TokenToString(modifier.Kind))
 				}
@@ -515,6 +515,35 @@ func (c *Checker) checkGrammarModifiers(node *ast.Node /*Union[HasModifiers, Has
 				}
 				flags |= ast.ModifierFlagsAsync
 				lastAsync = modifier
+			case ast.KindStableKeyword:
+				if flags&ast.ModifierFlagsStable != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "stable")
+				}
+				if node.Kind != ast.KindFunctionType && node.Kind != ast.KindMethodDeclaration && node.Kind != ast.KindMethodSignature && node.Kind != ast.KindFunctionDeclaration && node.Kind != ast.KindFunctionExpression && node.Kind != ast.KindArrowFunction && node.Kind != ast.KindGetAccessor {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_stable_modifier_can_only_appear_on_a_function_type_with_no_parameters)
+				}
+				// Check that the function type/method has no parameters (unkeyed stable)
+				// or has a KeyParameter (keyed stable[key] allows parameters)
+				if len(node.Parameters()) > 0 && !c.nodeHasKeyParameter(node) {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_stable_modifier_can_only_appear_on_a_function_type_with_no_parameters)
+				}
+				// stable and mutator cannot combine
+				if flags&ast.ModifierFlagsMutator != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_cannot_be_used_with_stable_modifier)
+				}
+				flags |= ast.ModifierFlagsStable
+			case ast.KindMutatorKeyword:
+				if flags&ast.ModifierFlagsMutator != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_0_modifier_already_seen, "mutator")
+				}
+				if node.Kind != ast.KindFunctionType && node.Kind != ast.KindMethodDeclaration && node.Kind != ast.KindMethodSignature && node.Kind != ast.KindFunctionDeclaration && node.Kind != ast.KindFunctionExpression && node.Kind != ast.KindArrowFunction && node.Kind != ast.KindSetAccessor {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_can_only_appear_on_a_function_type)
+				}
+				// mutator and stable cannot combine
+				if flags&ast.ModifierFlagsStable != 0 {
+					return c.grammarErrorOnNode(modifier, diagnostics.X_mutator_modifier_cannot_be_used_with_stable_modifier)
+				}
+				flags |= ast.ModifierFlagsMutator
 			case ast.KindInKeyword,
 				ast.KindOutKeyword:
 				var inOutFlag ast.ModifierFlags
@@ -630,6 +659,12 @@ func (c *Checker) findFirstIllegalModifier(node *ast.Node) *ast.Node {
 		case ast.KindClassDeclaration,
 			ast.KindConstructorType:
 			return c.findFirstModifierExcept(node, ast.KindAbstractKeyword)
+		case ast.KindFunctionType:
+			mod := core.Find(node.ModifierNodes(), ast.IsModifier)
+			if mod != nil && mod.Kind != ast.KindStableKeyword && mod.Kind != ast.KindMutatorKeyword {
+				return mod
+			}
+			return nil
 		case ast.KindClassExpression,
 			ast.KindInterfaceDeclaration,
 			ast.KindTypeAliasDeclaration:
@@ -2213,6 +2248,20 @@ func (c *Checker) checkGrammarImportCallExpression(node *ast.Node) bool {
 	spreadElement := core.Find(argumentNodes, ast.IsSpreadElement)
 	if spreadElement != nil {
 		return c.grammarErrorOnNode(spreadElement, diagnostics.Argument_of_dynamic_import_cannot_be_spread_element)
+	}
+	return false
+}
+
+// nodeHasKeyParameter checks whether a declaration node has a KeyParameter
+// (i.e. uses stable[key] or mutator[key] bracket syntax).
+func (c *Checker) nodeHasKeyParameter(node *ast.Node) bool {
+	switch {
+	case ast.IsFunctionTypeNode(node):
+		return node.AsFunctionTypeNode().KeyParameter != nil
+	case ast.IsMethodDeclaration(node):
+		return node.AsMethodDeclaration().KeyParameter != nil
+	case ast.IsMethodSignatureDeclaration(node):
+		return node.AsMethodSignatureDeclaration().KeyParameter != nil
 	}
 	return false
 }

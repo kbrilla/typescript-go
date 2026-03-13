@@ -110,6 +110,8 @@ func IsModifierKind(token Kind) bool {
 		KindDeclareKeyword,
 		KindDefaultKeyword,
 		KindExportKeyword,
+		KindStableKeyword,
+		KindMutatorKeyword,
 		KindInKeyword,
 		KindPublicKeyword,
 		KindPrivateKeyword,
@@ -1021,6 +1023,10 @@ func ModifierToFlag(token Kind) ModifierFlags {
 		return ModifierFlagsReadonly
 	case KindOverrideKeyword:
 		return ModifierFlagsOverride
+	case KindStableKeyword:
+		return ModifierFlagsStable
+	case KindMutatorKeyword:
+		return ModifierFlagsMutator
 	case KindInKeyword:
 		return ModifierFlagsIn
 	case KindOutKeyword:
@@ -3262,6 +3268,12 @@ func CreateModifiersFromModifierFlags(flags ModifierFlags, createModifier func(k
 	}
 	if flags&ModifierFlagsOut != 0 {
 		result = append(result, createModifier(KindOutKeyword))
+	}
+	if flags&ModifierFlagsStable != 0 {
+		result = append(result, createModifier(KindStableKeyword))
+	}
+	if flags&ModifierFlagsMutator != 0 {
+		result = append(result, createModifier(KindMutatorKeyword))
 	}
 	return result
 }

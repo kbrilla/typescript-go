@@ -1,0 +1,153 @@
+//// [tests/cases/compiler/stableModifierMutatorBasic.ts] ////
+
+=== stableModifierMutatorBasic.ts ===
+// Phase 5: Basic mutator keyword parsing and invalidation
+
+// === Section 1: Basic mutator parsing ===
+declare const store: {
+>store : Symbol(store, Decl(stableModifierMutatorBasic.ts, 3, 13))
+
+    read: stable () => string | undefined;
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 3, 22))
+
+    write: mutator (v: string) => void;
+>write : Symbol(write, Decl(stableModifierMutatorBasic.ts, 4, 42))
+>v : Symbol(v, Decl(stableModifierMutatorBasic.ts, 5, 20))
+
+};
+
+// Basic stable narrowing should still work
+if (store.read() !== undefined) {
+>store.read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 3, 22))
+>store : Symbol(store, Decl(stableModifierMutatorBasic.ts, 3, 13))
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 3, 22))
+>undefined : Symbol(undefined)
+
+    const s: string = store.read(); // OK — narrowed
+>s : Symbol(s, Decl(stableModifierMutatorBasic.ts, 10, 9))
+>store.read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 3, 22))
+>store : Symbol(store, Decl(stableModifierMutatorBasic.ts, 3, 13))
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 3, 22))
+}
+
+// === Section 2: Mutator call invalidates stable narrowing ===
+if (store.read() !== undefined) {
+>store.read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 3, 22))
+>store : Symbol(store, Decl(stableModifierMutatorBasic.ts, 3, 13))
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 3, 22))
+>undefined : Symbol(undefined)
+
+    store.write("new");
+>store.write : Symbol(write, Decl(stableModifierMutatorBasic.ts, 4, 42))
+>store : Symbol(store, Decl(stableModifierMutatorBasic.ts, 3, 13))
+>write : Symbol(write, Decl(stableModifierMutatorBasic.ts, 4, 42))
+
+    const afterWrite: string = store.read(); // should error — mutator invalidated narrowing
+>afterWrite : Symbol(afterWrite, Decl(stableModifierMutatorBasic.ts, 16, 9))
+>store.read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 3, 22))
+>store : Symbol(store, Decl(stableModifierMutatorBasic.ts, 3, 13))
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 3, 22))
+
+    afterWrite;
+>afterWrite : Symbol(afterWrite, Decl(stableModifierMutatorBasic.ts, 16, 9))
+}
+
+// === Section 3: Parameterless mutator works ===
+declare const resetable: {
+>resetable : Symbol(resetable, Decl(stableModifierMutatorBasic.ts, 21, 13))
+
+    value: stable () => string | undefined;
+>value : Symbol(value, Decl(stableModifierMutatorBasic.ts, 21, 26))
+
+    reset: mutator () => void;
+>reset : Symbol(reset, Decl(stableModifierMutatorBasic.ts, 22, 43))
+
+};
+
+if (resetable.value() !== undefined) {
+>resetable.value : Symbol(value, Decl(stableModifierMutatorBasic.ts, 21, 26))
+>resetable : Symbol(resetable, Decl(stableModifierMutatorBasic.ts, 21, 13))
+>value : Symbol(value, Decl(stableModifierMutatorBasic.ts, 21, 26))
+>undefined : Symbol(undefined)
+
+    resetable.reset();
+>resetable.reset : Symbol(reset, Decl(stableModifierMutatorBasic.ts, 22, 43))
+>resetable : Symbol(resetable, Decl(stableModifierMutatorBasic.ts, 21, 13))
+>reset : Symbol(reset, Decl(stableModifierMutatorBasic.ts, 22, 43))
+
+    const afterReset: string = resetable.value(); // should error — mutator invalidated
+>afterReset : Symbol(afterReset, Decl(stableModifierMutatorBasic.ts, 28, 9))
+>resetable.value : Symbol(value, Decl(stableModifierMutatorBasic.ts, 21, 26))
+>resetable : Symbol(resetable, Decl(stableModifierMutatorBasic.ts, 21, 13))
+>value : Symbol(value, Decl(stableModifierMutatorBasic.ts, 21, 26))
+
+    afterReset;
+>afterReset : Symbol(afterReset, Decl(stableModifierMutatorBasic.ts, 28, 9))
+}
+
+// === Section 4: Mutator validation — stable and mutator cannot combine ===
+declare const bad: {
+>bad : Symbol(bad, Decl(stableModifierMutatorBasic.ts, 33, 13))
+
+    conflict: stable mutator (v: string) => void; // should error — can't combine
+>conflict : Symbol(conflict, Decl(stableModifierMutatorBasic.ts, 33, 20))
+>v : Symbol(v, Decl(stableModifierMutatorBasic.ts, 34, 30))
+
+};
+
+// === Section 5: Cross-receiver mutator independence ===
+declare const storeA: {
+>storeA : Symbol(storeA, Decl(stableModifierMutatorBasic.ts, 38, 13))
+
+    read: stable () => string | undefined;
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 38, 23))
+
+    reset: mutator () => void;
+>reset : Symbol(reset, Decl(stableModifierMutatorBasic.ts, 39, 42))
+
+};
+declare const storeB: {
+>storeB : Symbol(storeB, Decl(stableModifierMutatorBasic.ts, 42, 13))
+
+    read: stable () => string | undefined;
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 42, 23))
+
+    reset: mutator () => void;
+>reset : Symbol(reset, Decl(stableModifierMutatorBasic.ts, 43, 42))
+
+};
+
+if (storeA.read() !== undefined && storeB.read() !== undefined) {
+>storeA.read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 38, 23))
+>storeA : Symbol(storeA, Decl(stableModifierMutatorBasic.ts, 38, 13))
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 38, 23))
+>undefined : Symbol(undefined)
+>storeB.read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 42, 23))
+>storeB : Symbol(storeB, Decl(stableModifierMutatorBasic.ts, 42, 13))
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 42, 23))
+>undefined : Symbol(undefined)
+
+    storeA.reset();
+>storeA.reset : Symbol(reset, Decl(stableModifierMutatorBasic.ts, 39, 42))
+>storeA : Symbol(storeA, Decl(stableModifierMutatorBasic.ts, 38, 13))
+>reset : Symbol(reset, Decl(stableModifierMutatorBasic.ts, 39, 42))
+
+    const aAfterReset: string = storeA.read(); // should error — same receiver mutator
+>aAfterReset : Symbol(aAfterReset, Decl(stableModifierMutatorBasic.ts, 49, 9))
+>storeA.read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 38, 23))
+>storeA : Symbol(storeA, Decl(stableModifierMutatorBasic.ts, 38, 13))
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 38, 23))
+
+    const bAfterReset: string = storeB.read(); // OK — different receiver, unaffected
+>bAfterReset : Symbol(bAfterReset, Decl(stableModifierMutatorBasic.ts, 50, 9))
+>storeB.read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 42, 23))
+>storeB : Symbol(storeB, Decl(stableModifierMutatorBasic.ts, 42, 13))
+>read : Symbol(read, Decl(stableModifierMutatorBasic.ts, 42, 23))
+
+    aAfterReset;
+>aAfterReset : Symbol(aAfterReset, Decl(stableModifierMutatorBasic.ts, 49, 9))
+
+    bAfterReset;
+>bAfterReset : Symbol(bAfterReset, Decl(stableModifierMutatorBasic.ts, 50, 9))
+}
+

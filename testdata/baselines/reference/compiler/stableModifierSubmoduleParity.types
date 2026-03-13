@@ -1,0 +1,364 @@
+//// [tests/cases/compiler/stableModifierSubmoduleParity.ts] ////
+
+=== stableModifierSubmoduleParity.ts ===
+// Identity modifier: submodule parity expansion.
+// Tests CFA narrowing patterns from _submodules/TypeScript/tests/ adapted for stable reads.
+// Sources: controlFlowGenericTypes, controlFlowTruthiness, controlFlowOptionalChain,
+//          controlFlowIfStatement, controlFlowWhileStatement, narrowByEquality.
+
+// --- Declarations ---
+
+type Shape =
+>Shape : Shape
+
+    | { kind: "circle"; radius: number }
+>kind : "circle"
+>radius : number
+
+    | { kind: "square"; size: number }
+>kind : "square"
+>size : number
+
+    | { kind: "triangle"; base: number; height: number };
+>kind : "triangle"
+>base : number
+>height : number
+
+declare const readShape: stable () => Shape;
+>readShape : stable () => Shape
+
+declare const readMaybe: stable () => string | undefined;
+>readMaybe : stable () => string | undefined
+
+declare const readNullable: stable () => number | null;
+>readNullable : stable () => number | null
+
+declare const readUnion: stable () => string | number | boolean;
+>readUnion : stable () => string | number | boolean
+
+// --- 1. Switch/case discriminant narrowing ---
+// Source: narrowByDiscriminantInLoop, controlFlowAliasedDiscriminants
+
+switch (readShape().kind) {
+>readShape().kind : "circle" | "square" | "triangle"
+>readShape() : Shape
+>readShape : stable () => Shape
+>kind : "circle" | "square" | "triangle"
+
+    case "circle":
+>"circle" : "circle"
+
+        const r: number = readShape().radius; // should narrow to circle
+>r : number
+>readShape().radius : number
+>readShape() : { kind: "circle"; radius: number; }
+>readShape : stable () => Shape
+>radius : number
+
+        r;
+>r : number
+
+        break;
+    case "square":
+>"square" : "square"
+
+        const s: number = readShape().size; // should narrow to square
+>s : number
+>readShape().size : number
+>readShape() : { kind: "square"; size: number; }
+>readShape : stable () => Shape
+>size : number
+
+        s;
+>s : number
+
+        break;
+    case "triangle":
+>"triangle" : "triangle"
+
+        const b: number = readShape().base; // should narrow to triangle
+>b : number
+>readShape().base : number
+>readShape() : { kind: "triangle"; base: number; height: number; }
+>readShape : stable () => Shape
+>base : number
+
+        b;
+>b : number
+
+        break;
+}
+
+// --- 2. Truthiness narrowing ---
+// Source: controlFlowTruthiness
+
+if (readMaybe()) {
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+
+    const truthyVal: string = readMaybe(); // should narrow to string (truthy excludes undefined)
+>truthyVal : string
+>readMaybe() : string
+>readMaybe : stable () => string | undefined
+
+    truthyVal;
+>truthyVal : string
+}
+
+if (!readMaybe()) {
+>!readMaybe() : boolean
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+
+    // After falsy check, type should still be string | undefined (empty string is falsy)
+    readMaybe();
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+}
+
+// --- 3. Type predicate narrowing ---
+// Source: controlFlowGenericTypes, typeGuardsInProperties
+
+declare function isString(x: unknown): x is string;
+>isString : (x: unknown) => x is string
+>x : unknown
+
+declare function isNumber(x: unknown): x is number;
+>isNumber : (x: unknown) => x is number
+>x : unknown
+
+if (isString(readUnion())) {
+>isString(readUnion()) : boolean
+>isString : (x: unknown) => x is string
+>readUnion() : string | number | boolean
+>readUnion : stable () => string | number | boolean
+
+    const str: string = readUnion(); // should narrow to string
+>str : string
+>readUnion() : string
+>readUnion : stable () => string | number | boolean
+
+    str;
+>str : string
+}
+
+if (isNumber(readUnion())) {
+>isNumber(readUnion()) : boolean
+>isNumber : (x: unknown) => x is number
+>readUnion() : string | number | boolean
+>readUnion : stable () => string | number | boolean
+
+    const num: number = readUnion(); // should narrow to number
+>num : number
+>readUnion() : number
+>readUnion : stable () => string | number | boolean
+
+    num;
+>num : number
+}
+
+// --- 4. Equality narrowing ---
+// Source: narrowByEquality
+
+if (readMaybe() === "hello") {
+>readMaybe() === "hello" : boolean
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+>"hello" : "hello"
+
+    const hello: "hello" = readMaybe(); // should narrow to "hello"
+>hello : "hello"
+>readMaybe() : "hello"
+>readMaybe : stable () => string | undefined
+
+    hello;
+>hello : "hello"
+}
+
+if (readMaybe() !== undefined) {
+>readMaybe() !== undefined : boolean
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+>undefined : undefined
+
+    const definite: string = readMaybe(); // should narrow to string
+>definite : string
+>readMaybe() : string
+>readMaybe : stable () => string | undefined
+
+    definite;
+>definite : string
+}
+
+if (readNullable() !== null) {
+>readNullable() !== null : boolean
+>readNullable() : number | null
+>readNullable : stable () => number | null
+
+    const nonNull: number = readNullable(); // should narrow to number
+>nonNull : number
+>readNullable() : number
+>readNullable : stable () => number | null
+
+    nonNull;
+>nonNull : number
+}
+
+// --- 5. While loop narrowing ---
+// Source: controlFlowWhileStatement
+
+while (readMaybe() !== undefined) {
+>readMaybe() !== undefined : boolean
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+>undefined : undefined
+
+    const loopVal: string = readMaybe(); // should narrow to string inside loop
+>loopVal : string
+>readMaybe() : string
+>readMaybe : stable () => string | undefined
+
+    loopVal;
+>loopVal : string
+
+    break;
+}
+
+// --- 6. Ternary/conditional expression narrowing ---
+// Source: controlFlowTruthiness
+
+const ternaryResult: string = readMaybe() !== undefined ? readMaybe() : "default"; // should narrow in true branch
+>ternaryResult : string
+>readMaybe() !== undefined ? readMaybe() : "default" : string
+>readMaybe() !== undefined : boolean
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+>undefined : undefined
+>readMaybe() : string
+>readMaybe : stable () => string | undefined
+>"default" : "default"
+
+ternaryResult;
+>ternaryResult : string
+
+// --- 7. Logical AND/OR narrowing ---
+// Source: controlFlowTruthiness
+
+const andResult = readMaybe() && readMaybe().length; // should narrow: if truthy, can access .length
+>andResult : number | "" | undefined
+>readMaybe() && readMaybe().length : number | "" | undefined
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+>readMaybe().length : number
+>readMaybe() : string
+>readMaybe : stable () => string | undefined
+>length : number
+
+andResult;
+>andResult : number | "" | undefined
+
+const orResult: string = readMaybe() || "fallback"; // should narrow: if falsy, use fallback
+>orResult : string
+>readMaybe() || "fallback" : string
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+>"fallback" : "fallback"
+
+orResult;
+>orResult : string
+
+// --- 8. Nullish coalescing narrowing ---
+// Source: controlFlowNullishCoalesce
+
+const coalesceResult: string = readMaybe() ?? "fallback"; // should narrow to string
+>coalesceResult : string
+>readMaybe() ?? "fallback" : string
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+>"fallback" : "fallback"
+
+coalesceResult;
+>coalesceResult : string
+
+const coalesceNullResult: number = readNullable() ?? 0; // should narrow to number
+>coalesceNullResult : number
+>readNullable() ?? 0 : number
+>readNullable() : number | null
+>readNullable : stable () => number | null
+>0 : 0
+
+coalesceNullResult;
+>coalesceNullResult : number
+
+// --- 9. Discriminant narrowing with nested member access ---
+// Source: controlFlowAliasedDiscriminants
+
+if (readShape().kind === "circle") {
+>readShape().kind === "circle" : boolean
+>readShape().kind : "circle" | "square" | "triangle"
+>readShape() : Shape
+>readShape : stable () => Shape
+>kind : "circle" | "square" | "triangle"
+>"circle" : "circle"
+
+    const circleRadius: number = readShape().radius; // should narrow to circle
+>circleRadius : number
+>readShape().radius : number
+>readShape() : { kind: "circle"; radius: number; }
+>readShape : stable () => Shape
+>radius : number
+
+    circleRadius;
+>circleRadius : number
+}
+
+if (readShape().kind === "square") {
+>readShape().kind === "square" : boolean
+>readShape().kind : "circle" | "square" | "triangle"
+>readShape() : Shape
+>readShape : stable () => Shape
+>kind : "circle" | "square" | "triangle"
+>"square" : "square"
+
+    const squareSize: number = readShape().size; // should narrow to square
+>squareSize : number
+>readShape().size : number
+>readShape() : { kind: "square"; size: number; }
+>readShape : stable () => Shape
+>size : number
+
+    squareSize;
+>squareSize : number
+}
+
+// --- 10. Negated narrowing ---
+
+if (readMaybe() === undefined) {
+>readMaybe() === undefined : boolean
+>readMaybe() : string | undefined
+>readMaybe : stable () => string | undefined
+>undefined : undefined
+
+    const undef: undefined = readMaybe(); // should narrow to undefined
+>undef : undefined
+>readMaybe() : undefined
+>readMaybe : stable () => string | undefined
+
+    undef;
+>undef : undefined
+}
+
+if (readNullable() === null) {
+>readNullable() === null : boolean
+>readNullable() : number | null
+>readNullable : stable () => number | null
+
+    const nullVal: null = readNullable(); // should narrow to null
+>nullVal : null
+>readNullable() : null
+>readNullable : stable () => number | null
+
+    nullVal;
+>nullVal : null
+}
+

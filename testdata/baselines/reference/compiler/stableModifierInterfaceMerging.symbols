@@ -1,0 +1,366 @@
+//// [tests/cases/compiler/stableModifierInterfaceMerging.ts] ////
+
+=== stableModifierInterfaceMerging.ts ===
+// Section 1: Merged interfaces — both declarations agree on stable
+// When both declarations have stable, the modifier survives.
+interface StableAgreed {
+>StableAgreed : Symbol(StableAgreed, Decl(stableModifierInterfaceMerging.ts, 0, 0), Decl(stableModifierInterfaceMerging.ts, 4, 1))
+
+    value: stable () => string | undefined;
+>value : Symbol(StableAgreed.value, Decl(stableModifierInterfaceMerging.ts, 2, 24))
+}
+interface StableAgreed {
+>StableAgreed : Symbol(StableAgreed, Decl(stableModifierInterfaceMerging.ts, 0, 0), Decl(stableModifierInterfaceMerging.ts, 4, 1))
+
+    other(): void;
+>other : Symbol(StableAgreed.other, Decl(stableModifierInterfaceMerging.ts, 5, 24))
+}
+
+declare const agreed: StableAgreed;
+>agreed : Symbol(agreed, Decl(stableModifierInterfaceMerging.ts, 9, 13))
+>StableAgreed : Symbol(StableAgreed, Decl(stableModifierInterfaceMerging.ts, 0, 0), Decl(stableModifierInterfaceMerging.ts, 4, 1))
+
+if (agreed.value() !== undefined) {
+>agreed.value : Symbol(StableAgreed.value, Decl(stableModifierInterfaceMerging.ts, 2, 24))
+>agreed : Symbol(agreed, Decl(stableModifierInterfaceMerging.ts, 9, 13))
+>value : Symbol(StableAgreed.value, Decl(stableModifierInterfaceMerging.ts, 2, 24))
+>undefined : Symbol(undefined)
+
+    agreed.value().toUpperCase(); // OK — stable survives merging when both agree
+>agreed.value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>agreed.value : Symbol(StableAgreed.value, Decl(stableModifierInterfaceMerging.ts, 2, 24))
+>agreed : Symbol(agreed, Decl(stableModifierInterfaceMerging.ts, 9, 13))
+>value : Symbol(StableAgreed.value, Decl(stableModifierInterfaceMerging.ts, 2, 24))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+
+// Section 2: Merged interfaces — first declaration has stable, second doesn't
+// The first declaration is the ValueDeclaration. Since stable is on the function
+// type (not the symbol), the first declaration's type is used → stable survives.
+interface StableFirstWins {
+>StableFirstWins : Symbol(StableFirstWins, Decl(stableModifierInterfaceMerging.ts, 12, 1), Decl(stableModifierInterfaceMerging.ts, 19, 1))
+
+    value: stable () => string | undefined;
+>value : Symbol(StableFirstWins.value, Decl(stableModifierInterfaceMerging.ts, 17, 27), Decl(stableModifierInterfaceMerging.ts, 20, 27))
+}
+interface StableFirstWins {
+>StableFirstWins : Symbol(StableFirstWins, Decl(stableModifierInterfaceMerging.ts, 12, 1), Decl(stableModifierInterfaceMerging.ts, 19, 1))
+
+    value: () => string | undefined; // different type annotation — no stable
+>value : Symbol(StableFirstWins.value, Decl(stableModifierInterfaceMerging.ts, 17, 27), Decl(stableModifierInterfaceMerging.ts, 20, 27))
+}
+
+declare const firstWins: StableFirstWins;
+>firstWins : Symbol(firstWins, Decl(stableModifierInterfaceMerging.ts, 24, 13))
+>StableFirstWins : Symbol(StableFirstWins, Decl(stableModifierInterfaceMerging.ts, 12, 1), Decl(stableModifierInterfaceMerging.ts, 19, 1))
+
+if (firstWins.value() !== undefined) {
+>firstWins.value : Symbol(StableFirstWins.value, Decl(stableModifierInterfaceMerging.ts, 17, 27), Decl(stableModifierInterfaceMerging.ts, 20, 27))
+>firstWins : Symbol(firstWins, Decl(stableModifierInterfaceMerging.ts, 24, 13))
+>value : Symbol(StableFirstWins.value, Decl(stableModifierInterfaceMerging.ts, 17, 27), Decl(stableModifierInterfaceMerging.ts, 20, 27))
+>undefined : Symbol(undefined)
+
+    firstWins.value().toUpperCase(); // stable from first declaration
+>firstWins.value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>firstWins.value : Symbol(StableFirstWins.value, Decl(stableModifierInterfaceMerging.ts, 17, 27), Decl(stableModifierInterfaceMerging.ts, 20, 27))
+>firstWins : Symbol(firstWins, Decl(stableModifierInterfaceMerging.ts, 24, 13))
+>value : Symbol(StableFirstWins.value, Decl(stableModifierInterfaceMerging.ts, 17, 27), Decl(stableModifierInterfaceMerging.ts, 20, 27))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+
+// Section 3: Merged interfaces — first declaration lacks stable, second has it
+// First declaration wins via ValueDeclaration. Since first lacks stable, it's lost.
+interface StableLost {
+>StableLost : Symbol(StableLost, Decl(stableModifierInterfaceMerging.ts, 27, 1), Decl(stableModifierInterfaceMerging.ts, 33, 1))
+
+    value: () => string | undefined;
+>value : Symbol(StableLost.value, Decl(stableModifierInterfaceMerging.ts, 31, 22), Decl(stableModifierInterfaceMerging.ts, 34, 22))
+}
+interface StableLost {
+>StableLost : Symbol(StableLost, Decl(stableModifierInterfaceMerging.ts, 27, 1), Decl(stableModifierInterfaceMerging.ts, 33, 1))
+
+    value: stable () => string | undefined;
+>value : Symbol(StableLost.value, Decl(stableModifierInterfaceMerging.ts, 31, 22), Decl(stableModifierInterfaceMerging.ts, 34, 22))
+}
+
+declare const lost: StableLost;
+>lost : Symbol(lost, Decl(stableModifierInterfaceMerging.ts, 38, 13))
+>StableLost : Symbol(StableLost, Decl(stableModifierInterfaceMerging.ts, 27, 1), Decl(stableModifierInterfaceMerging.ts, 33, 1))
+
+if (lost.value() !== undefined) {
+>lost.value : Symbol(StableLost.value, Decl(stableModifierInterfaceMerging.ts, 31, 22), Decl(stableModifierInterfaceMerging.ts, 34, 22))
+>lost : Symbol(lost, Decl(stableModifierInterfaceMerging.ts, 38, 13))
+>value : Symbol(StableLost.value, Decl(stableModifierInterfaceMerging.ts, 31, 22), Decl(stableModifierInterfaceMerging.ts, 34, 22))
+>undefined : Symbol(undefined)
+
+    lost.value().toUpperCase(); // stable is lost — first declaration has no stable
+>lost.value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>lost.value : Symbol(StableLost.value, Decl(stableModifierInterfaceMerging.ts, 31, 22), Decl(stableModifierInterfaceMerging.ts, 34, 22))
+>lost : Symbol(lost, Decl(stableModifierInterfaceMerging.ts, 38, 13))
+>value : Symbol(StableLost.value, Decl(stableModifierInterfaceMerging.ts, 31, 22), Decl(stableModifierInterfaceMerging.ts, 34, 22))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+
+// Section 4: Intersection types — both have stable
+// In intersections, each constituent's signatures are independent.
+// If the resolved signature has stable, narrowing applies.
+interface StableA {
+>StableA : Symbol(StableA, Decl(stableModifierInterfaceMerging.ts, 41, 1))
+
+    value: stable () => string | undefined;
+>value : Symbol(StableA.value, Decl(stableModifierInterfaceMerging.ts, 46, 19))
+}
+interface StableB {
+>StableB : Symbol(StableB, Decl(stableModifierInterfaceMerging.ts, 48, 1))
+
+    value: stable () => string | undefined;
+>value : Symbol(StableB.value, Decl(stableModifierInterfaceMerging.ts, 49, 19))
+}
+
+declare const both: StableA & StableB;
+>both : Symbol(both, Decl(stableModifierInterfaceMerging.ts, 53, 13))
+>StableA : Symbol(StableA, Decl(stableModifierInterfaceMerging.ts, 41, 1))
+>StableB : Symbol(StableB, Decl(stableModifierInterfaceMerging.ts, 48, 1))
+
+if (both.value() !== undefined) {
+>both.value : Symbol(value, Decl(stableModifierInterfaceMerging.ts, 46, 19), Decl(stableModifierInterfaceMerging.ts, 49, 19))
+>both : Symbol(both, Decl(stableModifierInterfaceMerging.ts, 53, 13))
+>value : Symbol(value, Decl(stableModifierInterfaceMerging.ts, 46, 19), Decl(stableModifierInterfaceMerging.ts, 49, 19))
+>undefined : Symbol(undefined)
+
+    both.value().toUpperCase(); // OK — stable present in both constituents
+>both.value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>both.value : Symbol(value, Decl(stableModifierInterfaceMerging.ts, 46, 19), Decl(stableModifierInterfaceMerging.ts, 49, 19))
+>both : Symbol(both, Decl(stableModifierInterfaceMerging.ts, 53, 13))
+>value : Symbol(value, Decl(stableModifierInterfaceMerging.ts, 46, 19), Decl(stableModifierInterfaceMerging.ts, 49, 19))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+
+// Section 5: Intersection types — one has stable, one doesn't
+// In intersections, the property type is resolved from the first constituent.
+// Since WithStable has the stable modifier, narrowing survives.
+interface WithStable {
+>WithStable : Symbol(WithStable, Decl(stableModifierInterfaceMerging.ts, 56, 1))
+
+    getValue: stable () => number | undefined;
+>getValue : Symbol(WithStable.getValue, Decl(stableModifierInterfaceMerging.ts, 61, 22))
+}
+interface WithoutStable {
+>WithoutStable : Symbol(WithoutStable, Decl(stableModifierInterfaceMerging.ts, 63, 1))
+
+    getValue: () => number | undefined;
+>getValue : Symbol(WithoutStable.getValue, Decl(stableModifierInterfaceMerging.ts, 64, 25))
+}
+
+declare const mixed: WithStable & WithoutStable;
+>mixed : Symbol(mixed, Decl(stableModifierInterfaceMerging.ts, 68, 13))
+>WithStable : Symbol(WithStable, Decl(stableModifierInterfaceMerging.ts, 56, 1))
+>WithoutStable : Symbol(WithoutStable, Decl(stableModifierInterfaceMerging.ts, 63, 1))
+
+if (mixed.getValue() !== undefined) {
+>mixed.getValue : Symbol(getValue, Decl(stableModifierInterfaceMerging.ts, 61, 22), Decl(stableModifierInterfaceMerging.ts, 64, 25))
+>mixed : Symbol(mixed, Decl(stableModifierInterfaceMerging.ts, 68, 13))
+>getValue : Symbol(getValue, Decl(stableModifierInterfaceMerging.ts, 61, 22), Decl(stableModifierInterfaceMerging.ts, 64, 25))
+>undefined : Symbol(undefined)
+
+    mixed.getValue().toFixed(2); // OK — stable from first constituent survives intersection
+>mixed.getValue().toFixed : Symbol(Number.toFixed, Decl(lib.es5.d.ts, --, --))
+>mixed.getValue : Symbol(getValue, Decl(stableModifierInterfaceMerging.ts, 61, 22), Decl(stableModifierInterfaceMerging.ts, 64, 25))
+>mixed : Symbol(mixed, Decl(stableModifierInterfaceMerging.ts, 68, 13))
+>getValue : Symbol(getValue, Decl(stableModifierInterfaceMerging.ts, 61, 22), Decl(stableModifierInterfaceMerging.ts, 64, 25))
+>toFixed : Symbol(Number.toFixed, Decl(lib.es5.d.ts, --, --))
+}
+
+// Section 6: Merged interfaces with mutator disagreement
+// Same first-declaration-wins behavior applies to mutator.
+interface MutatorAgreed {
+>MutatorAgreed : Symbol(MutatorAgreed, Decl(stableModifierInterfaceMerging.ts, 71, 1), Decl(stableModifierInterfaceMerging.ts, 78, 1))
+
+    value: stable () => string | undefined;
+>value : Symbol(MutatorAgreed.value, Decl(stableModifierInterfaceMerging.ts, 75, 25))
+
+    set: mutator (v: string | undefined) => void;
+>set : Symbol(MutatorAgreed.set, Decl(stableModifierInterfaceMerging.ts, 76, 43), Decl(stableModifierInterfaceMerging.ts, 79, 25))
+>v : Symbol(v, Decl(stableModifierInterfaceMerging.ts, 77, 18))
+}
+interface MutatorAgreed {
+>MutatorAgreed : Symbol(MutatorAgreed, Decl(stableModifierInterfaceMerging.ts, 71, 1), Decl(stableModifierInterfaceMerging.ts, 78, 1))
+
+    set: (v: string | undefined) => void; // no mutator modifier
+>set : Symbol(MutatorAgreed.set, Decl(stableModifierInterfaceMerging.ts, 76, 43), Decl(stableModifierInterfaceMerging.ts, 79, 25))
+>v : Symbol(v, Decl(stableModifierInterfaceMerging.ts, 80, 10))
+}
+
+declare const mutAgreed: MutatorAgreed;
+>mutAgreed : Symbol(mutAgreed, Decl(stableModifierInterfaceMerging.ts, 83, 13))
+>MutatorAgreed : Symbol(MutatorAgreed, Decl(stableModifierInterfaceMerging.ts, 71, 1), Decl(stableModifierInterfaceMerging.ts, 78, 1))
+
+if (mutAgreed.value() !== undefined) {
+>mutAgreed.value : Symbol(MutatorAgreed.value, Decl(stableModifierInterfaceMerging.ts, 75, 25))
+>mutAgreed : Symbol(mutAgreed, Decl(stableModifierInterfaceMerging.ts, 83, 13))
+>value : Symbol(MutatorAgreed.value, Decl(stableModifierInterfaceMerging.ts, 75, 25))
+>undefined : Symbol(undefined)
+
+    mutAgreed.set(undefined); // mutator from first declaration applies
+>mutAgreed.set : Symbol(MutatorAgreed.set, Decl(stableModifierInterfaceMerging.ts, 76, 43), Decl(stableModifierInterfaceMerging.ts, 79, 25))
+>mutAgreed : Symbol(mutAgreed, Decl(stableModifierInterfaceMerging.ts, 83, 13))
+>set : Symbol(MutatorAgreed.set, Decl(stableModifierInterfaceMerging.ts, 76, 43), Decl(stableModifierInterfaceMerging.ts, 79, 25))
+>undefined : Symbol(undefined)
+
+    mutAgreed.value(); // should be reset by mutator
+>mutAgreed.value : Symbol(MutatorAgreed.value, Decl(stableModifierInterfaceMerging.ts, 75, 25))
+>mutAgreed : Symbol(mutAgreed, Decl(stableModifierInterfaceMerging.ts, 83, 13))
+>value : Symbol(MutatorAgreed.value, Decl(stableModifierInterfaceMerging.ts, 75, 25))
+}
+
+// Section 7: Interface extends — stable preserved in extension
+// Extension (not merging) preserves stable through inheritance.
+interface Base {
+>Base : Symbol(Base, Decl(stableModifierInterfaceMerging.ts, 87, 1))
+
+    value: stable () => string | undefined;
+>value : Symbol(Base.value, Decl(stableModifierInterfaceMerging.ts, 91, 16))
+}
+interface Derived extends Base {
+>Derived : Symbol(Derived, Decl(stableModifierInterfaceMerging.ts, 93, 1))
+>Base : Symbol(Base, Decl(stableModifierInterfaceMerging.ts, 87, 1))
+
+    other(): void;
+>other : Symbol(Derived.other, Decl(stableModifierInterfaceMerging.ts, 94, 32))
+}
+
+declare const derived: Derived;
+>derived : Symbol(derived, Decl(stableModifierInterfaceMerging.ts, 98, 13))
+>Derived : Symbol(Derived, Decl(stableModifierInterfaceMerging.ts, 93, 1))
+
+if (derived.value() !== undefined) {
+>derived.value : Symbol(Base.value, Decl(stableModifierInterfaceMerging.ts, 91, 16))
+>derived : Symbol(derived, Decl(stableModifierInterfaceMerging.ts, 98, 13))
+>value : Symbol(Base.value, Decl(stableModifierInterfaceMerging.ts, 91, 16))
+>undefined : Symbol(undefined)
+
+    derived.value().toUpperCase(); // OK — stable inherited from Base
+>derived.value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>derived.value : Symbol(Base.value, Decl(stableModifierInterfaceMerging.ts, 91, 16))
+>derived : Symbol(derived, Decl(stableModifierInterfaceMerging.ts, 98, 13))
+>value : Symbol(Base.value, Decl(stableModifierInterfaceMerging.ts, 91, 16))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+
+// Section 8: Interface extends — overriding stable with non-stable
+// When a derived interface re-declares a property without stable,
+// the derived declaration takes priority over the base.
+interface BaseStable {
+>BaseStable : Symbol(BaseStable, Decl(stableModifierInterfaceMerging.ts, 101, 1))
+
+    value: stable () => string | undefined;
+>value : Symbol(BaseStable.value, Decl(stableModifierInterfaceMerging.ts, 106, 22))
+}
+interface DerivedNoStable extends BaseStable {
+>DerivedNoStable : Symbol(DerivedNoStable, Decl(stableModifierInterfaceMerging.ts, 108, 1))
+>BaseStable : Symbol(BaseStable, Decl(stableModifierInterfaceMerging.ts, 101, 1))
+
+    value: () => string | undefined; // overrides base without stable
+>value : Symbol(DerivedNoStable.value, Decl(stableModifierInterfaceMerging.ts, 109, 46))
+}
+
+declare const overridden: DerivedNoStable;
+>overridden : Symbol(overridden, Decl(stableModifierInterfaceMerging.ts, 113, 13))
+>DerivedNoStable : Symbol(DerivedNoStable, Decl(stableModifierInterfaceMerging.ts, 108, 1))
+
+if (overridden.value() !== undefined) {
+>overridden.value : Symbol(DerivedNoStable.value, Decl(stableModifierInterfaceMerging.ts, 109, 46))
+>overridden : Symbol(overridden, Decl(stableModifierInterfaceMerging.ts, 113, 13))
+>value : Symbol(DerivedNoStable.value, Decl(stableModifierInterfaceMerging.ts, 109, 46))
+>undefined : Symbol(undefined)
+
+    overridden.value().toUpperCase(); // stable lost — derived type doesn't have it
+>overridden.value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>overridden.value : Symbol(DerivedNoStable.value, Decl(stableModifierInterfaceMerging.ts, 109, 46))
+>overridden : Symbol(overridden, Decl(stableModifierInterfaceMerging.ts, 113, 13))
+>value : Symbol(DerivedNoStable.value, Decl(stableModifierInterfaceMerging.ts, 109, 46))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+
+// Section 9: Interface extends — adding stable to non-stable base
+// When a derived interface adds stable to a property that wasn't stable in base.
+interface BaseNoStable {
+>BaseNoStable : Symbol(BaseNoStable, Decl(stableModifierInterfaceMerging.ts, 116, 1))
+
+    value: () => string | undefined;
+>value : Symbol(BaseNoStable.value, Decl(stableModifierInterfaceMerging.ts, 120, 24))
+}
+interface DerivedStable extends BaseNoStable {
+>DerivedStable : Symbol(DerivedStable, Decl(stableModifierInterfaceMerging.ts, 122, 1))
+>BaseNoStable : Symbol(BaseNoStable, Decl(stableModifierInterfaceMerging.ts, 116, 1))
+
+    value: stable () => string | undefined; // adds stable
+>value : Symbol(DerivedStable.value, Decl(stableModifierInterfaceMerging.ts, 123, 46))
+}
+
+declare const addedStable: DerivedStable;
+>addedStable : Symbol(addedStable, Decl(stableModifierInterfaceMerging.ts, 127, 13))
+>DerivedStable : Symbol(DerivedStable, Decl(stableModifierInterfaceMerging.ts, 122, 1))
+
+if (addedStable.value() !== undefined) {
+>addedStable.value : Symbol(DerivedStable.value, Decl(stableModifierInterfaceMerging.ts, 123, 46))
+>addedStable : Symbol(addedStable, Decl(stableModifierInterfaceMerging.ts, 127, 13))
+>value : Symbol(DerivedStable.value, Decl(stableModifierInterfaceMerging.ts, 123, 46))
+>undefined : Symbol(undefined)
+
+    addedStable.value().toUpperCase(); // stable added by derived
+>addedStable.value().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>addedStable.value : Symbol(DerivedStable.value, Decl(stableModifierInterfaceMerging.ts, 123, 46))
+>addedStable : Symbol(addedStable, Decl(stableModifierInterfaceMerging.ts, 127, 13))
+>value : Symbol(DerivedStable.value, Decl(stableModifierInterfaceMerging.ts, 123, 46))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+}
+
+// Section 10: Merged interfaces with stable method declarations
+// Same behavior for stable/mutator as method modifiers.
+interface MethodMerge {
+>MethodMerge : Symbol(MethodMerge, Decl(stableModifierInterfaceMerging.ts, 130, 1), Decl(stableModifierInterfaceMerging.ts, 137, 1))
+
+    stable getValue(): string | undefined;
+>getValue : Symbol(MethodMerge.getValue, Decl(stableModifierInterfaceMerging.ts, 134, 23))
+
+    mutator setValue(v: string | undefined): void;
+>setValue : Symbol(MethodMerge.setValue, Decl(stableModifierInterfaceMerging.ts, 135, 42))
+>v : Symbol(v, Decl(stableModifierInterfaceMerging.ts, 136, 21))
+}
+interface MethodMerge {
+>MethodMerge : Symbol(MethodMerge, Decl(stableModifierInterfaceMerging.ts, 130, 1), Decl(stableModifierInterfaceMerging.ts, 137, 1))
+
+    other(): void;
+>other : Symbol(MethodMerge.other, Decl(stableModifierInterfaceMerging.ts, 138, 23))
+}
+
+declare const methodMerge: MethodMerge;
+>methodMerge : Symbol(methodMerge, Decl(stableModifierInterfaceMerging.ts, 142, 13))
+>MethodMerge : Symbol(MethodMerge, Decl(stableModifierInterfaceMerging.ts, 130, 1), Decl(stableModifierInterfaceMerging.ts, 137, 1))
+
+if (methodMerge.getValue() !== undefined) {
+>methodMerge.getValue : Symbol(MethodMerge.getValue, Decl(stableModifierInterfaceMerging.ts, 134, 23))
+>methodMerge : Symbol(methodMerge, Decl(stableModifierInterfaceMerging.ts, 142, 13))
+>getValue : Symbol(MethodMerge.getValue, Decl(stableModifierInterfaceMerging.ts, 134, 23))
+>undefined : Symbol(undefined)
+
+    methodMerge.getValue().toUpperCase(); // OK — stable method survives merge
+>methodMerge.getValue().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>methodMerge.getValue : Symbol(MethodMerge.getValue, Decl(stableModifierInterfaceMerging.ts, 134, 23))
+>methodMerge : Symbol(methodMerge, Decl(stableModifierInterfaceMerging.ts, 142, 13))
+>getValue : Symbol(MethodMerge.getValue, Decl(stableModifierInterfaceMerging.ts, 134, 23))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+
+    methodMerge.setValue(undefined); // mutator resets
+>methodMerge.setValue : Symbol(MethodMerge.setValue, Decl(stableModifierInterfaceMerging.ts, 135, 42))
+>methodMerge : Symbol(methodMerge, Decl(stableModifierInterfaceMerging.ts, 142, 13))
+>setValue : Symbol(MethodMerge.setValue, Decl(stableModifierInterfaceMerging.ts, 135, 42))
+>undefined : Symbol(undefined)
+
+    methodMerge.getValue(); // back to string | undefined
+>methodMerge.getValue : Symbol(MethodMerge.getValue, Decl(stableModifierInterfaceMerging.ts, 134, 23))
+>methodMerge : Symbol(methodMerge, Decl(stableModifierInterfaceMerging.ts, 142, 13))
+>getValue : Symbol(MethodMerge.getValue, Decl(stableModifierInterfaceMerging.ts, 134, 23))
+}
+

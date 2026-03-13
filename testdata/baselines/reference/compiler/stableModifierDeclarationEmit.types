@@ -1,0 +1,129 @@
+//// [tests/cases/compiler/stableModifierDeclarationEmit.ts] ////
+
+=== stableModifierDeclarationEmit.ts ===
+// Phase: Declaration emit for stable/mutator/invalidates modifiers
+
+// === 1. Basic stable/mutator function types ===
+export type Accessor<T> = stable () => T;
+>Accessor : Accessor<T>
+
+export type SimpleSetter<T> = mutator (v: T) => void;
+>SimpleSetter : SimpleSetter<T>
+>v : T
+
+// === 2. Function type with invalidates clause ===
+export type LinkedSetter<T> = mutator (v: T) => void invalidates get;
+>LinkedSetter : LinkedSetter<T>
+>v : T
+
+// === 3. Signal tuple with cross-binding ===
+export type Signal<T> = [get: Accessor<T>, set: LinkedSetter<T>];
+>Signal : Signal<T>
+
+export declare function createSignal<T>(value: T): Signal<T>;
+>createSignal : <T>(value: T) => Signal<T>
+>value : T
+
+// === 4. Method signatures with invalidates ===
+export interface Store<T> {
+    stable getValue(): T;
+>getValue : stable () => T
+
+    stable getLabel(): string;
+>getLabel : stable () => string
+
+    mutator setValue(v: T): void invalidates getValue;
+>setValue : mutator (v: T) => void
+>v : T
+>getValue : any
+
+    mutator setLabel(l: string): void invalidates getLabel;
+>setLabel : mutator (l: string) => void
+>l : string
+>getLabel : any
+
+    mutator reset(): void invalidates getValue, getLabel;
+>reset : mutator () => void
+>getValue : any
+>getLabel : any
+}
+
+// === 5. Keyed stable/mutator on function types ===
+export type KeyedGetter<K, V> = stable[key] (key: K) => V | undefined;
+>KeyedGetter : KeyedGetter<K, V>
+>key : K
+
+export type KeyedSetter<K, V> = mutator[key] (key: K, value: V) => void invalidates get[key];
+>KeyedSetter : KeyedSetter<K, V>
+>key : K
+>value : V
+
+// === 6. Keyed stable/mutator on methods ===
+export interface TypedMap<K, V> {
+    stable[key] get(key: K): V | undefined;
+>get : stable (key: K) => V | undefined
+>key : K
+>key : any
+
+    mutator[key] set(key: K, value: V): void invalidates get[key];
+>set : mutator (key: K, value: V) => void
+>key : K
+>value : V
+>key : any
+>get : any
+
+    mutator[key] delete(key: K): boolean invalidates get[key];
+>delete : mutator (key: K) => boolean
+>key : K
+>key : any
+>get : any
+
+    mutator clear(): void;
+>clear : mutator () => void
+}
+
+// === 7. Mutator type reference wrapper ===
+export interface Setter<T> {
+    (value: T): void;
+>value : T
+
+    (fn: (prev: T) => T): void;
+>fn : (prev: T) => T
+>prev : T
+}
+
+export type WrappedSignal<T> = [get: Accessor<T>, set: mutator Setter<T> invalidates get];
+>WrappedSignal : WrappedSignal<T>
+
+// === 8. Class with stable/mutator methods ===
+export class Container<T> {
+>Container : Container<T>
+
+    private _value: T;
+>_value : T
+
+    constructor(v: T) { this._value = v; }
+>v : T
+>this._value = v : T
+>this._value : T
+>this : this
+>_value : T
+>v : T
+
+    stable getValue(): T { return this._value; }
+>getValue : stable () => T
+>this._value : T
+>this : this
+>_value : T
+
+    mutator setValue(v: T): void invalidates getValue { this._value = v; }
+>setValue : mutator (v: T) => void
+>v : T
+>getValue : any
+>this._value = v : T
+>this._value : T
+>this : this
+>_value : T
+>v : T
+}
+

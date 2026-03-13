@@ -1,0 +1,80 @@
+//// [tests/cases/compiler/stableModifierMutatorErrors.ts] ////
+
+=== stableModifierMutatorErrors.ts ===
+// Phase 5: Mutator validation diagnostics and error cases
+
+// === Section 1: mutator and stable cannot combine ===
+type BadCombo1 = stable mutator (v: string) => void; // error: can't combine
+>BadCombo1 : BadCombo1
+>v : string
+
+type BadCombo2 = mutator stable () => void; // error: can't combine
+>BadCombo2 : BadCombo2
+
+// === Section 2: Valid mutator declarations ===
+type GoodMutator1 = mutator (v: string) => void;
+>GoodMutator1 : GoodMutator1
+>v : string
+
+type GoodMutator2 = mutator (a: number, b: string) => void;
+>GoodMutator2 : GoodMutator2
+>a : number
+>b : string
+
+type GoodMutator3 = mutator <T>(v: T) => void;
+>GoodMutator3 : GoodMutator3
+>v : T
+
+type GoodMutator4 = mutator () => void; // valid — parameterless mutator like reset()
+>GoodMutator4 : GoodMutator4
+
+// === Section 3: mutator in generic position ===
+interface Container<T> {
+    read: stable () => T;
+>read : stable () => T
+
+    write: mutator (v: T) => void invalidates read;
+>write : mutator (v: T) => void
+>v : T
+}
+
+declare function createContainer<T>(initial: T): Container<T>;
+>createContainer : <T>(initial: T) => Container<T>
+>initial : T
+
+const c = createContainer<string | undefined>("hello");
+>c : Container<string | undefined>
+>createContainer<string | undefined>("hello") : Container<string | undefined>
+>createContainer : <T>(initial: T) => Container<T>
+>"hello" : "hello"
+
+if (c.read() !== undefined) {
+>c.read() !== undefined : boolean
+>c.read() : string | undefined
+>c.read : stable () => string | undefined
+>c : Container<string | undefined>
+>read : stable () => string | undefined
+>undefined : undefined
+
+    const val: string = c.read(); // OK — narrowed
+>val : string
+>c.read() : string
+>c.read : stable () => string | undefined
+>c : Container<string | undefined>
+>read : stable () => string | undefined
+
+    c.write(undefined);
+>c.write(undefined) : void
+>c.write : mutator (v: string | undefined) => void
+>c : Container<string | undefined>
+>write : mutator (v: string | undefined) => void
+>undefined : undefined
+
+    const afterWrite: string = c.read(); // should error — mutator invalidated
+>afterWrite : string
+>c.read() : undefined
+>c.read : stable () => string | undefined
+>c : Container<string | undefined>
+>read : stable () => string | undefined
+}
+

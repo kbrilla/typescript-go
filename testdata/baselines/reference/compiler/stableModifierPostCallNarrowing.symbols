@@ -1,0 +1,308 @@
+//// [tests/cases/compiler/stableModifierPostCallNarrowing.ts] ////
+
+=== stableModifierPostCallNarrowing.ts ===
+// P3: Post-call narrowing — mutator sets narrow the stable type
+
+// === Setup: Signal with stable read / mutator set ===
+interface Signal<T> {
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierPostCallNarrowing.ts, 3, 17))
+
+    read: stable () => T;
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>T : Symbol(T, Decl(stableModifierPostCallNarrowing.ts, 3, 17))
+
+    set: mutator (value: T) => void;
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>value : Symbol(value, Decl(stableModifierPostCallNarrowing.ts, 5, 18))
+>T : Symbol(T, Decl(stableModifierPostCallNarrowing.ts, 3, 17))
+}
+
+// === 1. Basic post-call narrowing: set(42) narrows to number ===
+declare const count: Signal<number | undefined>;
+>count : Symbol(count, Decl(stableModifierPostCallNarrowing.ts, 9, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+count.set(42);
+>count.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>count : Symbol(count, Decl(stableModifierPostCallNarrowing.ts, 9, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+
+const n1: number = count.read();  // Should narrow to number after set(42)
+>n1 : Symbol(n1, Decl(stableModifierPostCallNarrowing.ts, 11, 5))
+>count.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>count : Symbol(count, Decl(stableModifierPostCallNarrowing.ts, 9, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+// === 2. Set to string narrows to string ===
+declare const mixed: Signal<string | number | undefined>;
+>mixed : Symbol(mixed, Decl(stableModifierPostCallNarrowing.ts, 14, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+mixed.set("hello");
+>mixed.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>mixed : Symbol(mixed, Decl(stableModifierPostCallNarrowing.ts, 14, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+
+const s1: string = mixed.read();  // Should narrow to string
+>s1 : Symbol(s1, Decl(stableModifierPostCallNarrowing.ts, 16, 5))
+>mixed.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>mixed : Symbol(mixed, Decl(stableModifierPostCallNarrowing.ts, 14, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+// === 3. Set to undefined doesn't narrow further ===
+declare const opt: Signal<string | undefined>;
+>opt : Symbol(opt, Decl(stableModifierPostCallNarrowing.ts, 19, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+opt.set(undefined);
+>opt.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>opt : Symbol(opt, Decl(stableModifierPostCallNarrowing.ts, 19, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>undefined : Symbol(undefined)
+
+const u1: string | undefined = opt.read();  // Remains string | undefined
+>u1 : Symbol(u1, Decl(stableModifierPostCallNarrowing.ts, 21, 5))
+>opt.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>opt : Symbol(opt, Decl(stableModifierPostCallNarrowing.ts, 19, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+// === 4. Sequential sets — each narrows to its argument ===
+declare const seq: Signal<string | number | undefined>;
+>seq : Symbol(seq, Decl(stableModifierPostCallNarrowing.ts, 24, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+seq.set(100);
+>seq.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>seq : Symbol(seq, Decl(stableModifierPostCallNarrowing.ts, 24, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+
+const v1: number = seq.read();  // Should narrow to number
+>v1 : Symbol(v1, Decl(stableModifierPostCallNarrowing.ts, 26, 5))
+>seq.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>seq : Symbol(seq, Decl(stableModifierPostCallNarrowing.ts, 24, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+seq.set("world");
+>seq.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>seq : Symbol(seq, Decl(stableModifierPostCallNarrowing.ts, 24, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+
+const v2: string = seq.read();  // Should narrow to string
+>v2 : Symbol(v2, Decl(stableModifierPostCallNarrowing.ts, 28, 5))
+>seq.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>seq : Symbol(seq, Decl(stableModifierPostCallNarrowing.ts, 24, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+// === 5. Cross-receiver independence ===
+declare const a: Signal<string | undefined>;
+>a : Symbol(a, Decl(stableModifierPostCallNarrowing.ts, 31, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+declare const b: Signal<string | undefined>;
+>b : Symbol(b, Decl(stableModifierPostCallNarrowing.ts, 32, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+if (b.read() !== undefined) {
+>b.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>b : Symbol(b, Decl(stableModifierPostCallNarrowing.ts, 32, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>undefined : Symbol(undefined)
+
+    a.set("changed");
+>a.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>a : Symbol(a, Decl(stableModifierPostCallNarrowing.ts, 31, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+
+    const bVal: string = b.read();  // Still narrowed — b not affected by a.set()
+>bVal : Symbol(bVal, Decl(stableModifierPostCallNarrowing.ts, 35, 9))
+>b.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>b : Symbol(b, Decl(stableModifierPostCallNarrowing.ts, 32, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+}
+
+// === 6. Set with literal type ===
+declare const lit: Signal<"a" | "b" | "c">;
+>lit : Symbol(lit, Decl(stableModifierPostCallNarrowing.ts, 39, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+lit.set("a");
+>lit.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>lit : Symbol(lit, Decl(stableModifierPostCallNarrowing.ts, 39, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+
+const l1: "a" = lit.read();  // Should narrow to "a"
+>l1 : Symbol(l1, Decl(stableModifierPostCallNarrowing.ts, 41, 5))
+>lit.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>lit : Symbol(lit, Decl(stableModifierPostCallNarrowing.ts, 39, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+// === 7. Guard then set overwrites narrowing ===
+declare const guarded: Signal<number | null>;
+>guarded : Symbol(guarded, Decl(stableModifierPostCallNarrowing.ts, 44, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+if (guarded.read() !== null) {
+>guarded.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>guarded : Symbol(guarded, Decl(stableModifierPostCallNarrowing.ts, 44, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+    guarded.set(null);
+>guarded.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>guarded : Symbol(guarded, Decl(stableModifierPostCallNarrowing.ts, 44, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+
+    const g1: number | null = guarded.read();  // Set(null) narrows to null, but null is assignable to number|null
+>g1 : Symbol(g1, Decl(stableModifierPostCallNarrowing.ts, 47, 9))
+>guarded.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>guarded : Symbol(guarded, Decl(stableModifierPostCallNarrowing.ts, 44, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+}
+
+// === 8. Set with wider variable — no narrowing improvement ===
+declare const dynSig: Signal<string | undefined>;
+>dynSig : Symbol(dynSig, Decl(stableModifierPostCallNarrowing.ts, 51, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+declare const someVal: string | undefined;
+>someVal : Symbol(someVal, Decl(stableModifierPostCallNarrowing.ts, 52, 13))
+
+dynSig.set(someVal);
+>dynSig.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>dynSig : Symbol(dynSig, Decl(stableModifierPostCallNarrowing.ts, 51, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>someVal : Symbol(someVal, Decl(stableModifierPostCallNarrowing.ts, 52, 13))
+
+const d1: string | undefined = dynSig.read();  // someVal is string|undefined, no improvement
+>d1 : Symbol(d1, Decl(stableModifierPostCallNarrowing.ts, 54, 5))
+>dynSig.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>dynSig : Symbol(dynSig, Decl(stableModifierPostCallNarrowing.ts, 51, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+// === 9. Set with narrowed variable ===
+declare const narrowedSig: Signal<string | number | undefined>;
+>narrowedSig : Symbol(narrowedSig, Decl(stableModifierPostCallNarrowing.ts, 57, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+const val: string = "hello";
+>val : Symbol(val, Decl(stableModifierPostCallNarrowing.ts, 58, 5))
+
+narrowedSig.set(val);
+>narrowedSig.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>narrowedSig : Symbol(narrowedSig, Decl(stableModifierPostCallNarrowing.ts, 57, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>val : Symbol(val, Decl(stableModifierPostCallNarrowing.ts, 58, 5))
+
+const ns1: string = narrowedSig.read();  // val is string, narrows to string
+>ns1 : Symbol(ns1, Decl(stableModifierPostCallNarrowing.ts, 60, 5))
+>narrowedSig.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>narrowedSig : Symbol(narrowedSig, Decl(stableModifierPostCallNarrowing.ts, 57, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+// === 10. Post-call narrowing with named invalidates targets ===
+declare const store: {
+>store : Symbol(store, Decl(stableModifierPostCallNarrowing.ts, 63, 13))
+
+    user: stable () => string | undefined;
+>user : Symbol(user, Decl(stableModifierPostCallNarrowing.ts, 63, 22))
+
+    settings: stable () => { theme: string } | undefined;
+>settings : Symbol(settings, Decl(stableModifierPostCallNarrowing.ts, 64, 42))
+>theme : Symbol(theme, Decl(stableModifierPostCallNarrowing.ts, 65, 28))
+
+    setUser: mutator (value: string | undefined) => void invalidates user;
+>setUser : Symbol(setUser, Decl(stableModifierPostCallNarrowing.ts, 65, 57))
+>value : Symbol(value, Decl(stableModifierPostCallNarrowing.ts, 66, 22))
+
+    setSettings: mutator (value: { theme: string } | undefined) => void invalidates settings;
+>setSettings : Symbol(setSettings, Decl(stableModifierPostCallNarrowing.ts, 66, 74))
+>value : Symbol(value, Decl(stableModifierPostCallNarrowing.ts, 67, 26))
+>theme : Symbol(theme, Decl(stableModifierPostCallNarrowing.ts, 67, 34))
+
+};
+
+if (store.user() !== undefined && store.settings() !== undefined) {
+>store.user : Symbol(user, Decl(stableModifierPostCallNarrowing.ts, 63, 22))
+>store : Symbol(store, Decl(stableModifierPostCallNarrowing.ts, 63, 13))
+>user : Symbol(user, Decl(stableModifierPostCallNarrowing.ts, 63, 22))
+>undefined : Symbol(undefined)
+>store.settings : Symbol(settings, Decl(stableModifierPostCallNarrowing.ts, 64, 42))
+>store : Symbol(store, Decl(stableModifierPostCallNarrowing.ts, 63, 13))
+>settings : Symbol(settings, Decl(stableModifierPostCallNarrowing.ts, 64, 42))
+>undefined : Symbol(undefined)
+
+    store.setUser("Alice");
+>store.setUser : Symbol(setUser, Decl(stableModifierPostCallNarrowing.ts, 65, 57))
+>store : Symbol(store, Decl(stableModifierPostCallNarrowing.ts, 63, 13))
+>setUser : Symbol(setUser, Decl(stableModifierPostCallNarrowing.ts, 65, 57))
+
+    const u: string = store.user();  // Narrowed to string (typeof "Alice") — post-call narrowing
+>u : Symbol(u, Decl(stableModifierPostCallNarrowing.ts, 72, 9))
+>store.user : Symbol(user, Decl(stableModifierPostCallNarrowing.ts, 63, 22))
+>store : Symbol(store, Decl(stableModifierPostCallNarrowing.ts, 63, 13))
+>user : Symbol(user, Decl(stableModifierPostCallNarrowing.ts, 63, 22))
+
+    const s: { theme: string } = store.settings();  // Still narrowed from guard (not invalidated by setUser)
+>s : Symbol(s, Decl(stableModifierPostCallNarrowing.ts, 73, 9))
+>theme : Symbol(theme, Decl(stableModifierPostCallNarrowing.ts, 73, 14))
+>store.settings : Symbol(settings, Decl(stableModifierPostCallNarrowing.ts, 64, 42))
+>store : Symbol(store, Decl(stableModifierPostCallNarrowing.ts, 63, 13))
+>settings : Symbol(settings, Decl(stableModifierPostCallNarrowing.ts, 64, 42))
+}
+
+// === 11. Set(undefined) after guard resets to narrower type ===
+declare const resetSig: Signal<string | number | undefined>;
+>resetSig : Symbol(resetSig, Decl(stableModifierPostCallNarrowing.ts, 77, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+resetSig.set(undefined);
+>resetSig.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>resetSig : Symbol(resetSig, Decl(stableModifierPostCallNarrowing.ts, 77, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>undefined : Symbol(undefined)
+
+const rs1: string | number | undefined = resetSig.read();  // set(undefined) narrows to undefined, but undefined is in the union
+>rs1 : Symbol(rs1, Decl(stableModifierPostCallNarrowing.ts, 79, 5))
+>resetSig.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>resetSig : Symbol(resetSig, Decl(stableModifierPostCallNarrowing.ts, 77, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+// === 12. Multiple sets in sequence ===
+declare const multi: Signal<string | number | undefined>;
+>multi : Symbol(multi, Decl(stableModifierPostCallNarrowing.ts, 82, 13))
+>Signal : Symbol(Signal, Decl(stableModifierPostCallNarrowing.ts, 0, 0))
+
+multi.set(42);
+>multi.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>multi : Symbol(multi, Decl(stableModifierPostCallNarrowing.ts, 82, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+
+const m1: number = multi.read();  // number
+>m1 : Symbol(m1, Decl(stableModifierPostCallNarrowing.ts, 84, 5))
+>multi.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>multi : Symbol(multi, Decl(stableModifierPostCallNarrowing.ts, 82, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+multi.set("hello");
+>multi.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>multi : Symbol(multi, Decl(stableModifierPostCallNarrowing.ts, 82, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+
+const m2: string = multi.read();  // string
+>m2 : Symbol(m2, Decl(stableModifierPostCallNarrowing.ts, 86, 5))
+>multi.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>multi : Symbol(multi, Decl(stableModifierPostCallNarrowing.ts, 82, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+
+multi.set(undefined);
+>multi.set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>multi : Symbol(multi, Decl(stableModifierPostCallNarrowing.ts, 82, 13))
+>set : Symbol(Signal.set, Decl(stableModifierPostCallNarrowing.ts, 4, 25))
+>undefined : Symbol(undefined)
+
+const m3: string | number | undefined = multi.read();  // reset to full type
+>m3 : Symbol(m3, Decl(stableModifierPostCallNarrowing.ts, 88, 5))
+>multi.read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+>multi : Symbol(multi, Decl(stableModifierPostCallNarrowing.ts, 82, 13))
+>read : Symbol(Signal.read, Decl(stableModifierPostCallNarrowing.ts, 3, 21))
+

@@ -86,5 +86,21 @@
     "Deduplicate packages with the same name and version.": {
         "category": "Message",
         "code": 100011
+    },
+    "'stable' modifier can only appear on a function type with no parameters.": {
+        "category": "Error",
+        "code": 100012
+    },
+    "'stable' modifier cannot be used with '{0}' modifier.": {
+        "category": "Error",
+        "code": 100013
+    },
+    "Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.": {
+        "category": "Error",
+        "code": 100014
+    },
+    "Stable narrowing was conservatively dropped after an unknown call. Extract the guarded value to a local temporary before the call to preserve precision.": {
+        "category": "Error",
+        "code": 100015
     }
 }

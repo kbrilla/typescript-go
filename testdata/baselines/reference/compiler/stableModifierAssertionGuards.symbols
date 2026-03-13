@@ -1,0 +1,109 @@
+//// [tests/cases/compiler/stableModifierAssertionGuards.ts] ////
+
+=== stableModifierAssertionGuards.ts ===
+type Signal<T> = stable () => T;
+>Signal : Symbol(Signal, Decl(stableModifierAssertionGuards.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierAssertionGuards.ts, 0, 12))
+>T : Symbol(T, Decl(stableModifierAssertionGuards.ts, 0, 12))
+
+// === Section 1: Assertion function narrowing ===
+declare function assertDefined<T>(value: T): asserts value is NonNullable<T>;
+>assertDefined : Symbol(assertDefined, Decl(stableModifierAssertionGuards.ts, 0, 32))
+>T : Symbol(T, Decl(stableModifierAssertionGuards.ts, 3, 31))
+>value : Symbol(value, Decl(stableModifierAssertionGuards.ts, 3, 34))
+>T : Symbol(T, Decl(stableModifierAssertionGuards.ts, 3, 31))
+>value : Symbol(value, Decl(stableModifierAssertionGuards.ts, 3, 34))
+>NonNullable : Symbol(NonNullable, Decl(lib.es5.d.ts, --, --))
+>T : Symbol(T, Decl(stableModifierAssertionGuards.ts, 3, 31))
+
+declare const maybeStr: Signal<string | undefined>;
+>maybeStr : Symbol(maybeStr, Decl(stableModifierAssertionGuards.ts, 5, 13))
+>Signal : Symbol(Signal, Decl(stableModifierAssertionGuards.ts, 0, 0))
+
+if (true) {
+    assertDefined(maybeStr());
+>assertDefined : Symbol(assertDefined, Decl(stableModifierAssertionGuards.ts, 0, 32))
+>maybeStr : Symbol(maybeStr, Decl(stableModifierAssertionGuards.ts, 5, 13))
+
+    const s: string = maybeStr(); // Should be narrowed after assertion
+>s : Symbol(s, Decl(stableModifierAssertionGuards.ts, 9, 9))
+>maybeStr : Symbol(maybeStr, Decl(stableModifierAssertionGuards.ts, 5, 13))
+}
+
+// === Section 2: Type predicate narrowing ===
+declare function isString(value: unknown): value is string;
+>isString : Symbol(isString, Decl(stableModifierAssertionGuards.ts, 10, 1))
+>value : Symbol(value, Decl(stableModifierAssertionGuards.ts, 13, 26))
+>value : Symbol(value, Decl(stableModifierAssertionGuards.ts, 13, 26))
+
+declare const unknown: Signal<string | number>;
+>unknown : Symbol(unknown, Decl(stableModifierAssertionGuards.ts, 15, 13))
+>Signal : Symbol(Signal, Decl(stableModifierAssertionGuards.ts, 0, 0))
+
+if (isString(unknown())) {
+>isString : Symbol(isString, Decl(stableModifierAssertionGuards.ts, 10, 1))
+>unknown : Symbol(unknown, Decl(stableModifierAssertionGuards.ts, 15, 13))
+
+    const s: string = unknown(); // Should be narrowed by type predicate
+>s : Symbol(s, Decl(stableModifierAssertionGuards.ts, 18, 9))
+>unknown : Symbol(unknown, Decl(stableModifierAssertionGuards.ts, 15, 13))
+}
+
+// === Section 3: Custom assertion with stable ===
+declare function assertNotNull<T>(value: T | null): asserts value is T;
+>assertNotNull : Symbol(assertNotNull, Decl(stableModifierAssertionGuards.ts, 19, 1))
+>T : Symbol(T, Decl(stableModifierAssertionGuards.ts, 22, 31))
+>value : Symbol(value, Decl(stableModifierAssertionGuards.ts, 22, 34))
+>T : Symbol(T, Decl(stableModifierAssertionGuards.ts, 22, 31))
+>value : Symbol(value, Decl(stableModifierAssertionGuards.ts, 22, 34))
+>T : Symbol(T, Decl(stableModifierAssertionGuards.ts, 22, 31))
+
+declare const maybeNull: Signal<string | null>;
+>maybeNull : Symbol(maybeNull, Decl(stableModifierAssertionGuards.ts, 24, 13))
+>Signal : Symbol(Signal, Decl(stableModifierAssertionGuards.ts, 0, 0))
+
+if (true) {
+    assertNotNull(maybeNull());
+>assertNotNull : Symbol(assertNotNull, Decl(stableModifierAssertionGuards.ts, 19, 1))
+>maybeNull : Symbol(maybeNull, Decl(stableModifierAssertionGuards.ts, 24, 13))
+
+    const s: string = maybeNull(); // Should be narrowed after assertion
+>s : Symbol(s, Decl(stableModifierAssertionGuards.ts, 28, 9))
+>maybeNull : Symbol(maybeNull, Decl(stableModifierAssertionGuards.ts, 24, 13))
+}
+
+// === Section 4: for-of loop narrowing ===
+declare const items: Signal<readonly string[] | undefined>;
+>items : Symbol(items, Decl(stableModifierAssertionGuards.ts, 32, 13))
+>Signal : Symbol(Signal, Decl(stableModifierAssertionGuards.ts, 0, 0))
+
+if (items() !== undefined) {
+>items : Symbol(items, Decl(stableModifierAssertionGuards.ts, 32, 13))
+>undefined : Symbol(undefined)
+
+    for (const item of items()) {
+>item : Symbol(item, Decl(stableModifierAssertionGuards.ts, 35, 14))
+>items : Symbol(items, Decl(stableModifierAssertionGuards.ts, 32, 13))
+
+        const s: string = item;
+>s : Symbol(s, Decl(stableModifierAssertionGuards.ts, 36, 13))
+>item : Symbol(item, Decl(stableModifierAssertionGuards.ts, 35, 14))
+    }
+}
+
+// === Section 5: Logical AND/OR narrowing ===
+declare const flag: Signal<string | undefined>;
+>flag : Symbol(flag, Decl(stableModifierAssertionGuards.ts, 41, 13))
+>Signal : Symbol(Signal, Decl(stableModifierAssertionGuards.ts, 0, 0))
+
+const result1: string = flag() ?? "default"; // nullish coalescing
+>result1 : Symbol(result1, Decl(stableModifierAssertionGuards.ts, 43, 5))
+>flag : Symbol(flag, Decl(stableModifierAssertionGuards.ts, 41, 13))
+
+const result2: string | undefined = flag() && flag().toUpperCase(); // logical AND
+>result2 : Symbol(result2, Decl(stableModifierAssertionGuards.ts, 44, 5))
+>flag : Symbol(flag, Decl(stableModifierAssertionGuards.ts, 41, 13))
+>flag().toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+>flag : Symbol(flag, Decl(stableModifierAssertionGuards.ts, 41, 13))
+>toUpperCase : Symbol(String.toUpperCase, Decl(lib.es5.d.ts, --, --))
+

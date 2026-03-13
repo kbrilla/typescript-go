@@ -689,6 +689,9 @@ func (b *Binder) bind(node *ast.Node) bool {
 	case ast.KindInterfaceDeclaration:
 		b.bindBlockScopedDeclaration(node, ast.SymbolFlagsInterface, ast.SymbolFlagsInterfaceExcludes)
 	case ast.KindCallExpression:
+		if b.currentFlow != nil && hasNarrowableArgument(node) {
+			setFlowNode(node, b.currentFlow)
+		}
 		switch ast.GetAssignmentDeclarationKind(node) {
 		case ast.JSDeclarationKindObjectDefinePropertyValue:
 			b.bindExpandoPropertyAssignment(node)
@@ -2089,12 +2092,13 @@ func (b *Binder) bindExpressionStatement(node *ast.Node) {
 }
 
 func (b *Binder) maybeBindExpressionFlowIfCall(node *ast.Node) {
-	// A top level or comma expression call expression with a dotted function name and at least one argument
-	// is potentially an assertion and is therefore included in the control flow.
-	if ast.IsCallExpression(node) {
-		if node.Expression().Kind != ast.KindSuperKeyword && ast.IsDottedName(node.Expression()) {
-			b.currentFlow = b.createFlowCall(b.currentFlow, node)
-		}
+	if ast.IsCallExpression(node) && node.Expression().Kind != ast.KindSuperKeyword {
+		b.currentFlow = b.createFlowCall(b.currentFlow, node)
+		return
+	}
+
+	if ast.IsAwaitExpression(node) {
+		b.currentFlow = b.createFlowCall(b.currentFlow, node)
 	}
 }
 
@@ -2191,6 +2195,9 @@ func (b *Binder) bindBinaryExpressionFlow(node *ast.Node) {
 		}
 		b.bind(expr.OperatorToken)
 		b.bind(expr.Right)
+		if ast.IsAssignmentOperator(operator) && operator == ast.KindEqualsToken && isCallbackBoundaryCallExpression(expr.Right) {
+			b.currentFlow = b.createFlowCall(b.currentFlow, ast.SkipParentheses(expr.Right))
+		}
 		if operator == ast.KindCommaToken {
 			b.maybeBindExpressionFlowIfCall(expr.Right)
 		}
@@ -2246,10 +2253,12 @@ func (b *Binder) bindConditionalExpressionFlow(node *ast.Node) {
 	b.currentFlow = b.finishFlowLabel(trueLabel)
 	b.bind(expr.QuestionToken)
 	b.bind(expr.WhenTrue)
+	b.maybeBindExpressionFlowIfCall(expr.WhenTrue)
 	b.addAntecedent(postExpressionLabel, b.currentFlow)
 	b.currentFlow = b.finishFlowLabel(falseLabel)
 	b.bind(expr.ColonToken)
 	b.bind(expr.WhenFalse)
+	b.maybeBindExpressionFlowIfCall(expr.WhenFalse)
 	b.addAntecedent(postExpressionLabel, b.currentFlow)
 	if b.hasFlowEffects {
 		b.currentFlow = b.finishFlowLabel(postExpressionLabel)
@@ -2261,9 +2270,51 @@ func (b *Binder) bindConditionalExpressionFlow(node *ast.Node) {
 
 func (b *Binder) bindVariableDeclarationFlow(node *ast.Node) {
 	b.bindEachChild(node)
+	b.maybeBindInitializerFlowIfCallbackCall(node)
 	if node.Initializer() != nil || ast.IsForInOrOfStatement(node.Parent.Parent) {
 		b.bindInitializedVariableFlow(node)
 	}
+}
+
+func (b *Binder) maybeBindInitializerFlowIfCallbackCall(node *ast.Node) {
+	initializer := node.Initializer()
+	if initializer == nil {
+		return
+	}
+
+	if isCallbackBoundaryCallExpression(initializer) {
+		b.currentFlow = b.createFlowCall(b.currentFlow, initializer)
+		return
+	}
+}
+
+func isCallbackBoundaryCallExpression(node *ast.Node) bool {
+	node = ast.SkipParentheses(node)
+	if !ast.IsCallExpression(node) {
+		return false
+	}
+
+	return slices.ContainsFunc(node.Arguments(), func(arg *ast.Node) bool {
+		return containsCallbackArgumentExpression(arg, 10)
+	})
+}
+
+func containsCallbackArgumentExpression(node *ast.Node, depth int) bool {
+	if depth <= 0 {
+		return false
+	}
+	node = ast.SkipParentheses(node)
+	if ast.IsFunctionExpression(node) || ast.IsArrowFunction(node) {
+		return true
+	}
+
+	if ast.IsCallExpression(node) {
+		return slices.ContainsFunc(node.Arguments(), func(arg *ast.Node) bool {
+			return containsCallbackArgumentExpression(arg, depth-1)
+		})
+	}
+
+	return false
 }
 
 func (b *Binder) bindInitializedVariableFlow(node *ast.Node) {
@@ -2588,6 +2639,8 @@ func isNarrowableReference(node *ast.Node) bool {
 		expr := node.AsElementAccessExpression()
 		return ast.IsStringOrNumericLiteralLike(expr.ArgumentExpression) ||
 			ast.IsEntityNameExpression(expr.ArgumentExpression) && isNarrowableReference(expr.Expression)
+	case ast.KindCallExpression:
+		return hasNarrowableArgument(node)
 	case ast.KindBinaryExpression:
 		expr := node.AsBinaryExpression()
 		return expr.OperatorToken.Kind == ast.KindCommaToken && isNarrowableReference(expr.Right) ||
@@ -2603,6 +2656,11 @@ func hasNarrowableArgument(expr *ast.Node) bool {
 			return true
 		}
 	}
+
+	if len(call.Arguments.Nodes) == 0 && containsNarrowableReference(call.Expression) {
+		return true
+	}
+
 	if ast.IsPropertyAccessExpression(call.Expression) {
 		if containsNarrowableReference(call.Expression.Expression()) {
 			return true

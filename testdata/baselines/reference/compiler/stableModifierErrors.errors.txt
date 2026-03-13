@@ -1,0 +1,19 @@
+stableModifierErrors.ts(2,20): error TS100012: 'stable' modifier can only appear on a function type with no parameters.
+
+
+==== stableModifierErrors.ts (1 errors) ====
+    // Error: stable modifier on function with parameters
+    declare const fn1: stable (x: string) => number; // should error
+                       ~~~~~~
+!!! error TS100012: 'stable' modifier can only appear on a function type with no parameters.
+    
+    // Valid: stable modifier on parameterless function type
+    declare const fn3: stable () => string | undefined; // OK
+    
+    // Identity modifier in a type alias
+    type Getter<T> = stable () => T; // OK
+    
+    // Using 'stable' as a variable name should still work (contextual keyword)
+    const stable = <T>(x: T): T => x; // OK - 'stable' used as identifier
+    const result = stable("hello");
+    

@@ -1,0 +1,103 @@
+// @strict: true
+// @noEmit: true
+
+// Phase 6: invalidates clause on method declarations and method signatures
+
+// === 1. Selective invalidation via method-level invalidates clause ===
+interface Store<T> {
+    stable getValue(): T;
+    stable getLabel(): string;
+    mutator setValue(v: T): void invalidates getValue;
+    mutator setLabel(l: string): void invalidates getLabel;
+    mutator reset(): void invalidates getValue, getLabel;
+}
+
+declare const store: Store<string | undefined>;
+if (store.getValue() !== undefined) {
+    store.setLabel("test");     // does NOT invalidate getValue (different target)
+    store.getValue().toUpperCase();  // ✅ still narrowed to string
+
+    store.setValue("hello");     // invalidates getValue → post-call narrows to string
+    store.getValue().toUpperCase();  // ✅ still narrowed (to string via argument)
+
+    store.reset();              // invalidates both getValue and getLabel
+    store.getValue();           // back to string | undefined
+}
+
+// === 2. Multi-target method invalidation ===
+interface MultiStore {
+    stable getA(): string | undefined;
+    stable getB(): number | undefined;
+    stable getC(): boolean | undefined;
+    mutator setA(v: string | undefined): void invalidates getA;
+    mutator setAll(): void invalidates getA, getB, getC;
+}
+
+declare const ms: MultiStore;
+if (ms.getA() !== undefined && ms.getB() !== undefined && ms.getC() !== undefined) {
+    ms.setA("hi");          // only invalidates getA
+    const b: number = ms.getB();    // ✅ still narrowed
+    const c: boolean = ms.getC();   // ✅ still narrowed
+    ms.getA().toUpperCase();        // ✅ narrowed to string via argument
+
+    ms.setAll();            // invalidates all three
+    ms.getA();              // string | undefined
+    ms.getB();              // number | undefined
+    ms.getC();              // boolean | undefined
+}
+
+// === 3. Class method-level invalidates ===
+class Container<T> {
+    private _value: T;
+    constructor(v: T) { this._value = v; }
+    stable getValue(): T { return this._value; }
+    stable getLabel(): string { return "label"; }
+    mutator setValue(v: T): void invalidates getValue { this._value = v; }
+    mutator clear(): void invalidates getValue, getLabel { this._value = undefined as any; }
+}
+
+declare const container: Container<number | undefined>;
+if (container.getValue() !== undefined) {
+    container.setValue(42);     // invalidates getValue → narrows to number
+    const v: number = container.getValue();  // ✅ narrowed to number
+
+    container.clear();          // invalidates both
+    container.getValue();       // number | undefined
+}
+
+// === 4. Interface method vs function type — both with invalidates ===
+interface DualSyntax<T> {
+    stable getValue(): T;
+    // Method syntax with invalidates
+    mutator setMethod(v: T): void invalidates getValue;
+    // Function type syntax with invalidates (already works)
+    setFunc: mutator (v: T) => void invalidates getValue;
+}
+
+declare const dual: DualSyntax<string | undefined>;
+if (dual.getValue() !== undefined) {
+    dual.setMethod("method");
+    dual.getValue().toUpperCase();  // ✅ narrowed to string
+
+    dual.setFunc("func");
+    dual.getValue().toUpperCase();  // ✅ narrowed to string
+}
+
+// === 5. Mutator method WITHOUT invalidates — invalidates ALL stable ===
+interface MixedAnnotation {
+    stable getA(): string | undefined;
+    stable getB(): number | undefined;
+    mutator targeted(v: string): void invalidates getA;  // selective
+    mutator untargeted(): void;  // no invalidates clause → invalidates ALL
+}
+
+declare const mixed: MixedAnnotation;
+if (mixed.getA() !== undefined && mixed.getB() !== undefined) {
+    mixed.targeted("hi");
+    const b1: number = mixed.getB();     // ✅ still narrowed (not targeted)
+    mixed.getA().toUpperCase();          // ✅ narrowed via argument
+
+    mixed.untargeted();         // no invalidates clause → resets ALL
+    mixed.getA();               // string | undefined
+    mixed.getB();               // number | undefined
+}

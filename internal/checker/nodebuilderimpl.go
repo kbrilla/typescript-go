@@ -1482,7 +1482,12 @@ func (b *NodeBuilderImpl) typePredicateToTypePredicateNode(predicate *TypePredic
 		assertsModifier = b.f.NewToken(ast.KindAssertsKeyword)
 	}
 	var parameterName *ast.Node
-	if predicate.kind == TypePredicateKindIdentifier || predicate.kind == TypePredicateKindAssertsIdentifier {
+	if predicate.kind == TypePredicateKindLinkedMethod {
+		thisType := b.f.NewThisTypeNode()
+		methodName := b.f.NewIdentifier(predicate.parameterName)
+		b.e.AddEmitFlags(methodName, printer.EFNoAsciiEscaping)
+		parameterName = b.f.NewPropertyAccessExpression(thisType, nil, methodName, ast.NodeFlagsNone)
+	} else if predicate.kind == TypePredicateKindIdentifier || predicate.kind == TypePredicateKindAssertsIdentifier {
 		parameterName = b.f.NewIdentifier(predicate.parameterName)
 		b.e.AddEmitFlags(parameterName, printer.EFNoAsciiEscaping)
 	} else {
@@ -1679,7 +1684,12 @@ func (b *NodeBuilderImpl) typePredicateToTypePredicateNodeHelper(typePredicate *
 		assertsModifier = nil
 	}
 	var parameterName *ast.Node
-	if typePredicate.kind == TypePredicateKindIdentifier || typePredicate.kind == TypePredicateKindAssertsIdentifier {
+	if typePredicate.kind == TypePredicateKindLinkedMethod {
+		thisType := b.f.NewThisTypeNode()
+		methodName := b.newIdentifier(typePredicate.parameterName, nil /*symbol*/)
+		b.e.SetEmitFlags(methodName, printer.EFNoAsciiEscaping)
+		parameterName = b.f.NewPropertyAccessExpression(thisType, nil, methodName, ast.NodeFlagsNone)
+	} else if typePredicate.kind == TypePredicateKindIdentifier || typePredicate.kind == TypePredicateKindAssertsIdentifier {
 		parameterName = b.newIdentifier(typePredicate.parameterName, nil /*symbol*/)
 		b.e.SetEmitFlags(parameterName, printer.EFNoAsciiEscaping)
 	} else {
@@ -1745,6 +1755,14 @@ func (b *NodeBuilderImpl) signatureToSignatureDeclarationHelper(signature *Signa
 		flags := ast.ModifiersToFlags(modifiers)
 		modifiers = ast.CreateModifiersFromModifierFlags(flags|ast.ModifierFlagsAbstract, b.f.NewModifier)
 	}
+	if signature.flags&SignatureFlagsStable != 0 {
+		flags := ast.ModifiersToFlags(modifiers)
+		modifiers = ast.CreateModifiersFromModifierFlags(flags|ast.ModifierFlagsStable, b.f.NewModifier)
+	}
+	if signature.flags&SignatureFlagsMutator != 0 {
+		flags := ast.ModifiersToFlags(modifiers)
+		modifiers = ast.CreateModifiersFromModifierFlags(flags|ast.ModifierFlagsMutator, b.f.NewModifier)
+	}
 
 	paramList := b.f.NewNodeList(parameters)
 	var typeParamList *ast.NodeList
@@ -1792,7 +1810,7 @@ func (b *NodeBuilderImpl) signatureToSignatureDeclarationHelper(signature *Signa
 		if returnTypeNode == nil {
 			returnTypeNode = b.f.NewTypeReferenceNode(b.f.NewIdentifier(""), nil)
 		}
-		node = b.f.NewFunctionTypeNode(typeParamList, paramList, returnTypeNode)
+		node = b.f.NewFunctionTypeNode(modifierList, typeParamList, paramList, returnTypeNode)
 	case kind == ast.KindConstructorType:
 		if returnTypeNode == nil {
 			returnTypeNode = b.f.NewTypeReferenceNode(b.f.NewIdentifier(""), nil)

@@ -1,0 +1,121 @@
+//// [tests/cases/compiler/stableModifierConstrainedOverload.ts] ////
+
+=== stableModifierConstrainedOverload.ts ===
+// Phase 5: Constrained-overload post-call narrowing
+// When a mutator has <U extends T> and overload resolution selects it,
+// the linked stable endpoint narrows to U after the call.
+// NOTE: This is a future enhancement. For now, mutator calls invalidate
+// (widen back to declared type), which is correct conservative behavior.
+
+// === Section 1: Mutator with constrained generic ===
+declare const sig: {
+>sig : { read: stable () => string | undefined; update: mutator <U extends string | undefined>(fn: (value: string | undefined) => U) => void; }
+
+    read: stable () => string | undefined;
+>read : stable () => string | undefined
+
+    update: mutator <U extends string | undefined>(fn: (value: string | undefined) => U) => void invalidates read;
+>update : mutator <U extends string | undefined>(fn: (value: string | undefined) => U) => void
+>fn : (value: string | undefined) => U
+>value : string | undefined
+
+};
+
+// After update, narrowing is invalidated (future: could narrow to U)
+sig.update(() => "hello");
+>sig.update(() => "hello") : void
+>sig.update : mutator <U extends string | undefined>(fn: (value: string | undefined) => U) => void
+>sig : { read: stable () => string | undefined; update: mutator <U extends string | undefined>(fn: (value: string | undefined) => U) => void; }
+>update : mutator <U extends string | undefined>(fn: (value: string | undefined) => U) => void
+>() => "hello" : () => "hello"
+>"hello" : "hello"
+
+const afterUpdate = sig.read(); // string | undefined — conservative (future: could narrow to string)
+>afterUpdate : string | undefined
+>sig.read() : string | undefined
+>sig.read : stable () => string | undefined
+>sig : { read: stable () => string | undefined; update: mutator <U extends string | undefined>(fn: (value: string | undefined) => U) => void; }
+>read : stable () => string | undefined
+
+// === Section 2: Reset mutator = no narrowing ===
+declare const sig2: {
+>sig2 : { read: stable () => string | undefined; reset: mutator () => void; }
+
+    read: stable () => string | undefined;
+>read : stable () => string | undefined
+
+    reset: mutator () => void invalidates read;
+>reset : mutator () => void
+
+};
+
+if (sig2.read() !== undefined) {
+>sig2.read() !== undefined : boolean
+>sig2.read() : string | undefined
+>sig2.read : stable () => string | undefined
+>sig2 : { read: stable () => string | undefined; reset: mutator () => void; }
+>read : stable () => string | undefined
+>undefined : undefined
+
+    sig2.reset();
+>sig2.reset() : void
+>sig2.reset : mutator () => void
+>sig2 : { read: stable () => string | undefined; reset: mutator () => void; }
+>reset : mutator () => void
+
+    const afterReset: string = sig2.read(); // should error — reset invalidated
+>afterReset : string
+>sig2.read() : string | undefined
+>sig2.read : stable () => string | undefined
+>sig2 : { read: stable () => string | undefined; reset: mutator () => void; }
+>read : stable () => string | undefined
+}
+
+// === Section 3: WritableSignal pattern ===
+interface WritableSignal<T> {
+    read: stable () => T;
+>read : stable () => T
+
+    set: mutator (value: T) => void invalidates read;
+>set : mutator (value: T) => void
+>value : T
+
+    update: mutator <U extends T>(fn: (value: T) => U) => void invalidates read;
+>update : mutator <U extends T>(fn: (value: T) => U) => void
+>fn : (value: T) => U
+>value : T
+}
+
+declare const ws: WritableSignal<string | undefined>;
+>ws : WritableSignal<string | undefined>
+
+if (ws.read() !== undefined) {
+>ws.read() !== undefined : boolean
+>ws.read() : string | undefined
+>ws.read : stable () => string | undefined
+>ws : WritableSignal<string | undefined>
+>read : stable () => string | undefined
+>undefined : undefined
+
+    const narrowed: string = ws.read(); // OK — narrowed
+>narrowed : string
+>ws.read() : string
+>ws.read : stable () => string | undefined
+>ws : WritableSignal<string | undefined>
+>read : stable () => string | undefined
+
+    ws.set(undefined);
+>ws.set(undefined) : void
+>ws.set : mutator (value: string | undefined) => void
+>ws : WritableSignal<string | undefined>
+>set : mutator (value: string | undefined) => void
+>undefined : undefined
+
+    const afterSet: string = ws.read(); // should error — set invalidated
+>afterSet : string
+>ws.read() : undefined
+>ws.read : stable () => string | undefined
+>ws : WritableSignal<string | undefined>
+>read : stable () => string | undefined
+}
+

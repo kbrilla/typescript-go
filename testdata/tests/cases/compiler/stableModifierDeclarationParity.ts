@@ -1,0 +1,120 @@
+// @strict: true
+
+// === Section 1: stable function declaration ===
+stable function getValue(): string | undefined {
+    return Math.random() > 0.5 ? "hello" : undefined;
+}
+
+if (getValue() !== undefined) {
+    const v: string = getValue(); // should be narrowed to string
+}
+
+// === Section 2: mutator function declaration ===
+let state: string | undefined = "initial";
+mutator function setState(val: string | undefined): void {
+    state = val;
+}
+
+stable function getState(): string | undefined {
+    return state;
+}
+
+if (getState() !== undefined) {
+    const s: string = getState(); // narrowed
+    setState(undefined); // mutator — should invalidate getState() narrowing
+    const s2: string | undefined = getState(); // back to string | undefined
+}
+
+// === Section 3: stable function expression ===
+const getX = stable function(): number | null {
+    return Math.random() > 0.5 ? 42 : null;
+};
+
+if (getX() !== null) {
+    const x: number = getX(); // narrowed
+}
+
+// === Section 4: mutator function expression ===
+const setX = mutator function(val: number | null): void {};
+
+stable function readX(): number | null { return null; }
+
+if (readX() !== null) {
+    const r: number = readX(); // narrowed
+}
+
+// === Section 5: stable arrow function ===
+const getY = stable (): string | undefined => {
+    return Math.random() > 0.5 ? "world" : undefined;
+};
+
+if (getY() !== undefined) {
+    const y: string = getY(); // narrowed
+}
+
+// === Section 6: mutator arrow function ===
+const setY = mutator (val: string | undefined): void => {};
+
+stable function readY(): string | undefined { return undefined; }
+
+if (readY() !== undefined) {
+    const r: string = readY(); // narrowed
+    setY(undefined); // mutator call
+    const r2: string | undefined = readY(); // back to union
+}
+
+// === Section 7: stable async arrow function (combined modifiers) ===
+const getAsync = stable async (): Promise<string | undefined> => {
+    return undefined;
+};
+
+// === Section 8: stable get accessor in class ===
+class Counter {
+    private _count: number | undefined = 0;
+
+    stable get count(): number | undefined {
+        return this._count;
+    }
+
+    mutator set count(value: number | undefined) {
+        this._count = value;
+    }
+}
+
+// === Section 9: stable get/mutator set in interface ===
+interface ReadWrite {
+    stable get value(): string | undefined;
+    mutator set value(v: string | undefined);
+}
+
+// === Section 10: Grammar error cases ===
+
+// Error: stable on setter (setter has parameters)
+interface BadStableSetter {
+    stable set value(v: string); // Error
+}
+
+// Error: mutator on getter (semantically wrong)
+interface BadMutatorGetter {
+    mutator get value(): string; // Error
+}
+
+// Error: stable with parameters (function declaration)
+stable function badStableWithParams(x: number): number { return x; } // Error
+
+// Error: stable on constructor
+class BadConstructor {
+    stable constructor() {} // Error
+}
+
+// === Section 11: stable/mutator in namespace ===
+namespace NS {
+    export stable function getVal(): string | undefined {
+        return "ns";
+    }
+    export mutator function setVal(v: string | undefined): void {}
+}
+
+if (NS.getVal() !== undefined) {
+    const v: string = NS.getVal(); // narrowed
+}

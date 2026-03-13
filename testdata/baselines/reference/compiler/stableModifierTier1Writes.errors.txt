@@ -1,0 +1,194 @@
+stableModifierTier1Writes.ts(9,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+stableModifierTier1Writes.ts(15,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+stableModifierTier1Writes.ts(21,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+stableModifierTier1Writes.ts(27,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+stableModifierTier1Writes.ts(39,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+stableModifierTier1Writes.ts(50,11): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+stableModifierTier1Writes.ts(56,11): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+stableModifierTier1Writes.ts(62,11): error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+  Type 'undefined' is not assignable to type 'number'.
+stableModifierTier1Writes.ts(95,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+stableModifierTier1Writes.ts(101,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+stableModifierTier1Writes.ts(102,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+stableModifierTier1Writes.ts(108,5): error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+stableModifierTier1Writes.ts(109,11): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+
+
+==== stableModifierTier1Writes.ts (13 errors) ====
+    // Tier 1 write-form invalidation: dot and bracket-literal assignment forms.
+    declare const propertyModel: {
+        get value(): string | undefined;
+        set value(v: string | undefined);
+    };
+    
+    if (propertyModel.value !== undefined) {
+        propertyModel.value += "!";
+        const afterPlusEquals: string = propertyModel.value; // should error
+              ~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterPlusEquals;
+    }
+    
+    if (propertyModel.value !== undefined) {
+        propertyModel.value ??= "fallback";
+        const afterQuestionQuestionEquals: string = propertyModel.value; // should error
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterQuestionQuestionEquals;
+    }
+    
+    if (propertyModel.value !== undefined) {
+        propertyModel.value ||= "fallback";
+        const afterBarBarEquals: string = propertyModel.value; // should error
+              ~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterBarBarEquals;
+    }
+    
+    if (propertyModel.value !== undefined) {
+        propertyModel.value &&= "next";
+        const afterAmpAmpEquals: string = propertyModel.value; // should error
+              ~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterAmpAmpEquals;
+    }
+    
+    if (propertyModel.value !== undefined) {
+        propertyModel["value"] = "next";
+        const afterBracketEquals: string = propertyModel.value; // parity with dot '=' behavior (currently preserved)
+        afterBracketEquals;
+    }
+    
+    if (propertyModel.value !== undefined) {
+        propertyModel["value"] ||= "fallback";
+        const afterBracketBarBarEquals: string = propertyModel.value; // should error
+              ~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterBracketBarBarEquals;
+    }
+    
+    declare const numberModel: {
+        get value(): number | undefined;
+        set value(v: number | undefined);
+    };
+    
+    if (numberModel.value !== undefined) {
+        numberModel.value++;
+        const afterPostfixPlusPlus: number = numberModel.value; // should error
+              ~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'number'.
+        afterPostfixPlusPlus;
+    }
+    
+    if (numberModel.value !== undefined) {
+        --numberModel.value;
+        const afterPrefixMinusMinus: number = numberModel.value; // should error
+              ~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'number'.
+        afterPrefixMinusMinus;
+    }
+    
+    if (numberModel.value !== undefined) {
+        numberModel["value"]++;
+        const afterBracketPostfixPlusPlus: number = numberModel.value; // should error
+              ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'number | undefined' is not assignable to type 'number'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'number'.
+        afterBracketPostfixPlusPlus;
+    }
+    
+    // Bracket-literal mutator parity with existing dot-form read/set special-case.
+    declare const store: {
+        read: stable () => string | undefined;
+        set(v: string | undefined): void;
+    };
+    
+    if (store.read() !== undefined) {
+        store.set("next");
+        const afterDotSetCall: string = store.read(); // should stay narrowed
+        afterDotSetCall;
+    }
+    
+    if (store.read() !== undefined) {
+        store["set"]("next");
+        const afterBracketSetCall: string = store.read(); // should stay narrowed
+        afterBracketSetCall;
+    }
+    
+    // Identity call write-matrix breadth: dynamic keys and receiver-alias writes.
+    declare const keyStore: {
+        read: stable () => string | undefined;
+        set(v: string | undefined): void;
+    };
+    
+    declare const readKey: "read";
+    
+    if (keyStore[readKey]() !== undefined) {
+        const sameReadKey = readKey;
+        keyStore[sameReadKey] = (() => undefined) as stable () => string | undefined;
+        const afterProvenDynamicWrite: string = keyStore[readKey](); // should error
+              ~~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterProvenDynamicWrite;
+    }
+    
+    if (keyStore.read() !== undefined) {
+        const alias = keyStore;
+        alias.read = (() => undefined) as stable () => string | undefined;
+        ~~~~~~~~~~
+!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterAliasDotWrite: string = keyStore.read(); // should error
+              ~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterAliasDotWrite;
+    }
+    
+    if (keyStore[readKey]() !== undefined) {
+        const alias = keyStore;
+        alias[readKey] = (() => undefined) as stable () => string | undefined;
+        ~~~~~~~~~~~~~~
+!!! error TS100014: Stable narrowing was conservatively dropped at an uncertainty boundary. Add an explicit guarded temporary or refactor to keep the narrowing scope local.
+        const afterAliasDynamicWrite: string = keyStore[readKey](); // should error
+              ~~~~~~~~~~~~~~~~~~~~~~
+!!! error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+!!! error TS2322:   Type 'undefined' is not assignable to type 'string'.
+        afterAliasDynamicWrite;
+    }
+    
+    if (keyStore.read() !== undefined) {
+        let unknownKey: string = "read";
+        unknownKey = "read";
+        keyStore[unknownKey as "read"] = (() => undefined) as stable () => string | undefined;
+        const afterNonProvenDynamicWrite: string = keyStore.read(); // should error
+        afterNonProvenDynamicWrite;
+    }
+    
+    declare const otherKeyStore: {
+        read: stable () => string | undefined;
+    };
+    
+    if (keyStore.read() !== undefined) {
+        otherKeyStore.read = (() => undefined) as stable () => string | undefined;
+        const afterOtherReceiverWrite: string = keyStore.read(); // should stay narrowed
+        afterOtherReceiverWrite;
+    }
+    

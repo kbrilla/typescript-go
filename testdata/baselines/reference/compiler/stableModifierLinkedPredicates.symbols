@@ -1,0 +1,295 @@
+//// [tests/cases/compiler/stableModifierLinkedPredicates.ts] ////
+
+=== stableModifierLinkedPredicates.ts ===
+// --- Section 1: Basic linked predicate ---
+interface Resource<T> {
+>Resource : Symbol(Resource, Decl(stableModifierLinkedPredicates.ts, 0, 0))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 1, 19))
+
+    value: stable () => T;
+>value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 1, 19))
+
+    hasValue(): this.value() is Exclude<T, undefined>;
+>hasValue : Symbol(Resource.hasValue, Decl(stableModifierLinkedPredicates.ts, 2, 26))
+>Exclude : Symbol(Exclude, Decl(lib.es5.d.ts, --, --))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 1, 19))
+}
+
+declare const r: Resource<string | undefined>;
+>r : Symbol(r, Decl(stableModifierLinkedPredicates.ts, 6, 13))
+>Resource : Symbol(Resource, Decl(stableModifierLinkedPredicates.ts, 0, 0))
+
+if (r.hasValue()) {
+>r.hasValue : Symbol(Resource.hasValue, Decl(stableModifierLinkedPredicates.ts, 2, 26))
+>r : Symbol(r, Decl(stableModifierLinkedPredicates.ts, 6, 13))
+>hasValue : Symbol(Resource.hasValue, Decl(stableModifierLinkedPredicates.ts, 2, 26))
+
+    const s: string = r.value();  // narrowed to string
+>s : Symbol(s, Decl(stableModifierLinkedPredicates.ts, 8, 9))
+>r.value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+>r : Symbol(r, Decl(stableModifierLinkedPredicates.ts, 6, 13))
+>value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+}
+const v: string | undefined = r.value();  // outside guard, full type
+>v : Symbol(v, Decl(stableModifierLinkedPredicates.ts, 10, 5))
+>r.value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+>r : Symbol(r, Decl(stableModifierLinkedPredicates.ts, 6, 13))
+>value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+
+// --- Section 2: Multiple guards on same target ---
+interface TypedReader {
+>TypedReader : Symbol(TypedReader, Decl(stableModifierLinkedPredicates.ts, 10, 40))
+
+    read: stable () => number | string | boolean;
+>read : Symbol(TypedReader.read, Decl(stableModifierLinkedPredicates.ts, 13, 23))
+
+    isNumber(): this.read() is number;
+>isNumber : Symbol(TypedReader.isNumber, Decl(stableModifierLinkedPredicates.ts, 14, 49))
+
+    isString(): this.read() is string;
+>isString : Symbol(TypedReader.isString, Decl(stableModifierLinkedPredicates.ts, 15, 38))
+}
+
+declare const reader: TypedReader;
+>reader : Symbol(reader, Decl(stableModifierLinkedPredicates.ts, 19, 13))
+>TypedReader : Symbol(TypedReader, Decl(stableModifierLinkedPredicates.ts, 10, 40))
+
+if (reader.isNumber()) {
+>reader.isNumber : Symbol(TypedReader.isNumber, Decl(stableModifierLinkedPredicates.ts, 14, 49))
+>reader : Symbol(reader, Decl(stableModifierLinkedPredicates.ts, 19, 13))
+>isNumber : Symbol(TypedReader.isNumber, Decl(stableModifierLinkedPredicates.ts, 14, 49))
+
+    const n: number = reader.read();  // narrowed to number
+>n : Symbol(n, Decl(stableModifierLinkedPredicates.ts, 21, 9))
+>reader.read : Symbol(TypedReader.read, Decl(stableModifierLinkedPredicates.ts, 13, 23))
+>reader : Symbol(reader, Decl(stableModifierLinkedPredicates.ts, 19, 13))
+>read : Symbol(TypedReader.read, Decl(stableModifierLinkedPredicates.ts, 13, 23))
+}
+if (reader.isString()) {
+>reader.isString : Symbol(TypedReader.isString, Decl(stableModifierLinkedPredicates.ts, 15, 38))
+>reader : Symbol(reader, Decl(stableModifierLinkedPredicates.ts, 19, 13))
+>isString : Symbol(TypedReader.isString, Decl(stableModifierLinkedPredicates.ts, 15, 38))
+
+    const s: string = reader.read();  // narrowed to string
+>s : Symbol(s, Decl(stableModifierLinkedPredicates.ts, 24, 9))
+>reader.read : Symbol(TypedReader.read, Decl(stableModifierLinkedPredicates.ts, 13, 23))
+>reader : Symbol(reader, Decl(stableModifierLinkedPredicates.ts, 19, 13))
+>read : Symbol(TypedReader.read, Decl(stableModifierLinkedPredicates.ts, 13, 23))
+}
+
+// --- Section 3: Guard + mutator invalidation ---
+interface WritableOption<T> {
+>WritableOption : Symbol(WritableOption, Decl(stableModifierLinkedPredicates.ts, 25, 1))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 28, 25))
+
+    get: stable () => T | undefined;
+>get : Symbol(WritableOption.get, Decl(stableModifierLinkedPredicates.ts, 28, 29))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 28, 25))
+
+    isDefined(): this.get() is T;
+>isDefined : Symbol(WritableOption.isDefined, Decl(stableModifierLinkedPredicates.ts, 29, 36))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 28, 25))
+
+    set: mutator (v: T | undefined) => void invalidates get;
+>set : Symbol(WritableOption.set, Decl(stableModifierLinkedPredicates.ts, 30, 33))
+>v : Symbol(v, Decl(stableModifierLinkedPredicates.ts, 31, 18))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 28, 25))
+}
+
+declare const opt: WritableOption<number>;
+>opt : Symbol(opt, Decl(stableModifierLinkedPredicates.ts, 34, 13))
+>WritableOption : Symbol(WritableOption, Decl(stableModifierLinkedPredicates.ts, 25, 1))
+
+if (opt.isDefined()) {
+>opt.isDefined : Symbol(WritableOption.isDefined, Decl(stableModifierLinkedPredicates.ts, 29, 36))
+>opt : Symbol(opt, Decl(stableModifierLinkedPredicates.ts, 34, 13))
+>isDefined : Symbol(WritableOption.isDefined, Decl(stableModifierLinkedPredicates.ts, 29, 36))
+
+    const n1: number = opt.get();  // narrowed by linked predicate
+>n1 : Symbol(n1, Decl(stableModifierLinkedPredicates.ts, 36, 9))
+>opt.get : Symbol(WritableOption.get, Decl(stableModifierLinkedPredicates.ts, 28, 29))
+>opt : Symbol(opt, Decl(stableModifierLinkedPredicates.ts, 34, 13))
+>get : Symbol(WritableOption.get, Decl(stableModifierLinkedPredicates.ts, 28, 29))
+
+    opt.set(undefined);
+>opt.set : Symbol(WritableOption.set, Decl(stableModifierLinkedPredicates.ts, 30, 33))
+>opt : Symbol(opt, Decl(stableModifierLinkedPredicates.ts, 34, 13))
+>set : Symbol(WritableOption.set, Decl(stableModifierLinkedPredicates.ts, 30, 33))
+>undefined : Symbol(undefined)
+
+    const n2: number | undefined = opt.get();  // back to full type after mutator
+>n2 : Symbol(n2, Decl(stableModifierLinkedPredicates.ts, 38, 9))
+>opt.get : Symbol(WritableOption.get, Decl(stableModifierLinkedPredicates.ts, 28, 29))
+>opt : Symbol(opt, Decl(stableModifierLinkedPredicates.ts, 34, 13))
+>get : Symbol(WritableOption.get, Decl(stableModifierLinkedPredicates.ts, 28, 29))
+}
+
+// --- Section 4: Different receivers (no cross-narrowing) ---
+declare const r1: Resource<string | undefined>;
+>r1 : Symbol(r1, Decl(stableModifierLinkedPredicates.ts, 42, 13))
+>Resource : Symbol(Resource, Decl(stableModifierLinkedPredicates.ts, 0, 0))
+
+declare const r2: Resource<string | undefined>;
+>r2 : Symbol(r2, Decl(stableModifierLinkedPredicates.ts, 43, 13))
+>Resource : Symbol(Resource, Decl(stableModifierLinkedPredicates.ts, 0, 0))
+
+if (r1.hasValue()) {
+>r1.hasValue : Symbol(Resource.hasValue, Decl(stableModifierLinkedPredicates.ts, 2, 26))
+>r1 : Symbol(r1, Decl(stableModifierLinkedPredicates.ts, 42, 13))
+>hasValue : Symbol(Resource.hasValue, Decl(stableModifierLinkedPredicates.ts, 2, 26))
+
+    const s1: string = r1.value();  // narrowed
+>s1 : Symbol(s1, Decl(stableModifierLinkedPredicates.ts, 45, 9))
+>r1.value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+>r1 : Symbol(r1, Decl(stableModifierLinkedPredicates.ts, 42, 13))
+>value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+
+    const s2: string | undefined = r2.value();  // NOT narrowed - different receiver
+>s2 : Symbol(s2, Decl(stableModifierLinkedPredicates.ts, 46, 9))
+>r2.value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+>r2 : Symbol(r2, Decl(stableModifierLinkedPredicates.ts, 43, 13))
+>value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+}
+
+// --- Section 5: Guard + uncertainty boundary ---
+declare const r3: Resource<string | undefined>;
+>r3 : Symbol(r3, Decl(stableModifierLinkedPredicates.ts, 50, 13))
+>Resource : Symbol(Resource, Decl(stableModifierLinkedPredicates.ts, 0, 0))
+
+declare function unknownCall(): void;
+>unknownCall : Symbol(unknownCall, Decl(stableModifierLinkedPredicates.ts, 50, 47))
+
+if (r3.hasValue()) {
+>r3.hasValue : Symbol(Resource.hasValue, Decl(stableModifierLinkedPredicates.ts, 2, 26))
+>r3 : Symbol(r3, Decl(stableModifierLinkedPredicates.ts, 50, 13))
+>hasValue : Symbol(Resource.hasValue, Decl(stableModifierLinkedPredicates.ts, 2, 26))
+
+    const before: string = r3.value();  // narrowed
+>before : Symbol(before, Decl(stableModifierLinkedPredicates.ts, 53, 9))
+>r3.value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+>r3 : Symbol(r3, Decl(stableModifierLinkedPredicates.ts, 50, 13))
+>value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+
+    unknownCall();
+>unknownCall : Symbol(unknownCall, Decl(stableModifierLinkedPredicates.ts, 50, 47))
+
+    const after: string | undefined = r3.value();  // narrowing lost
+>after : Symbol(after, Decl(stableModifierLinkedPredicates.ts, 55, 9))
+>r3.value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+>r3 : Symbol(r3, Decl(stableModifierLinkedPredicates.ts, 50, 13))
+>value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+}
+
+// --- Section 6: Optional container pattern ---
+interface Maybe<T> {
+>Maybe : Symbol(Maybe, Decl(stableModifierLinkedPredicates.ts, 56, 1))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 59, 16))
+
+    get: stable () => T | undefined;
+>get : Symbol(Maybe.get, Decl(stableModifierLinkedPredicates.ts, 59, 20))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 59, 16))
+
+    isDefined(): this.get() is T;
+>isDefined : Symbol(Maybe.isDefined, Decl(stableModifierLinkedPredicates.ts, 60, 36))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 59, 16))
+
+    isEmpty(): this.get() is undefined;
+>isEmpty : Symbol(Maybe.isEmpty, Decl(stableModifierLinkedPredicates.ts, 61, 33))
+}
+
+declare const maybe: Maybe<number>;
+>maybe : Symbol(maybe, Decl(stableModifierLinkedPredicates.ts, 65, 13))
+>Maybe : Symbol(Maybe, Decl(stableModifierLinkedPredicates.ts, 56, 1))
+
+if (maybe.isDefined()) {
+>maybe.isDefined : Symbol(Maybe.isDefined, Decl(stableModifierLinkedPredicates.ts, 60, 36))
+>maybe : Symbol(maybe, Decl(stableModifierLinkedPredicates.ts, 65, 13))
+>isDefined : Symbol(Maybe.isDefined, Decl(stableModifierLinkedPredicates.ts, 60, 36))
+
+    const n: number = maybe.get();  // narrowed to number
+>n : Symbol(n, Decl(stableModifierLinkedPredicates.ts, 67, 9))
+>maybe.get : Symbol(Maybe.get, Decl(stableModifierLinkedPredicates.ts, 59, 20))
+>maybe : Symbol(maybe, Decl(stableModifierLinkedPredicates.ts, 65, 13))
+>get : Symbol(Maybe.get, Decl(stableModifierLinkedPredicates.ts, 59, 20))
+}
+if (maybe.isEmpty()) {
+>maybe.isEmpty : Symbol(Maybe.isEmpty, Decl(stableModifierLinkedPredicates.ts, 61, 33))
+>maybe : Symbol(maybe, Decl(stableModifierLinkedPredicates.ts, 65, 13))
+>isEmpty : Symbol(Maybe.isEmpty, Decl(stableModifierLinkedPredicates.ts, 61, 33))
+
+    const u: undefined = maybe.get();  // narrowed to undefined
+>u : Symbol(u, Decl(stableModifierLinkedPredicates.ts, 70, 9))
+>maybe.get : Symbol(Maybe.get, Decl(stableModifierLinkedPredicates.ts, 59, 20))
+>maybe : Symbol(maybe, Decl(stableModifierLinkedPredicates.ts, 65, 13))
+>get : Symbol(Maybe.get, Decl(stableModifierLinkedPredicates.ts, 59, 20))
+}
+
+// --- Section 7: Guard is not stable itself (rule 2) ---
+interface Container<T> {
+>Container : Symbol(Container, Decl(stableModifierLinkedPredicates.ts, 71, 1))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 74, 20))
+
+    value: stable () => T | null;
+>value : Symbol(Container.value, Decl(stableModifierLinkedPredicates.ts, 74, 24))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 74, 20))
+
+    hasValue(): this.value() is T;
+>hasValue : Symbol(Container.hasValue, Decl(stableModifierLinkedPredicates.ts, 75, 33))
+>T : Symbol(T, Decl(stableModifierLinkedPredicates.ts, 74, 20))
+}
+
+declare const c: Container<string>;
+>c : Symbol(c, Decl(stableModifierLinkedPredicates.ts, 79, 13))
+>Container : Symbol(Container, Decl(stableModifierLinkedPredicates.ts, 71, 1))
+
+if (c.hasValue()) {
+>c.hasValue : Symbol(Container.hasValue, Decl(stableModifierLinkedPredicates.ts, 75, 33))
+>c : Symbol(c, Decl(stableModifierLinkedPredicates.ts, 79, 13))
+>hasValue : Symbol(Container.hasValue, Decl(stableModifierLinkedPredicates.ts, 75, 33))
+
+    const s: string = c.value();  // narrowed
+>s : Symbol(s, Decl(stableModifierLinkedPredicates.ts, 81, 9))
+>c.value : Symbol(Container.value, Decl(stableModifierLinkedPredicates.ts, 74, 24))
+>c : Symbol(c, Decl(stableModifierLinkedPredicates.ts, 79, 13))
+>value : Symbol(Container.value, Decl(stableModifierLinkedPredicates.ts, 74, 24))
+}
+
+// --- Section 8: Negative - target not stable ---
+interface BadTarget {
+>BadTarget : Symbol(BadTarget, Decl(stableModifierLinkedPredicates.ts, 82, 1))
+
+    value(): string | undefined;  // NOT stable (method signature, not stable function type)
+>value : Symbol(BadTarget.value, Decl(stableModifierLinkedPredicates.ts, 85, 21))
+
+    hasValue(): this.value() is string;  // should error: target must be stable
+>hasValue : Symbol(BadTarget.hasValue, Decl(stableModifierLinkedPredicates.ts, 86, 32))
+}
+
+// --- Section 9: Negative - narrowed type not assignable ---
+interface BadNarrowing {
+>BadNarrowing : Symbol(BadNarrowing, Decl(stableModifierLinkedPredicates.ts, 88, 1))
+
+    get: stable () => number | string;
+>get : Symbol(BadNarrowing.get, Decl(stableModifierLinkedPredicates.ts, 91, 24))
+
+    check(): this.get() is boolean;  // should error: boolean not assignable to number | string
+>check : Symbol(BadNarrowing.check, Decl(stableModifierLinkedPredicates.ts, 92, 38))
+}
+
+// --- Section 10: Guard method called but result not used in condition ---
+declare const r4: Resource<string | undefined>;
+>r4 : Symbol(r4, Decl(stableModifierLinkedPredicates.ts, 97, 13))
+>Resource : Symbol(Resource, Decl(stableModifierLinkedPredicates.ts, 0, 0))
+
+r4.hasValue();  // called but not in a condition - no narrowing effect
+>r4.hasValue : Symbol(Resource.hasValue, Decl(stableModifierLinkedPredicates.ts, 2, 26))
+>r4 : Symbol(r4, Decl(stableModifierLinkedPredicates.ts, 97, 13))
+>hasValue : Symbol(Resource.hasValue, Decl(stableModifierLinkedPredicates.ts, 2, 26))
+
+const v4: string | undefined = r4.value();  // full type, no narrowing
+>v4 : Symbol(v4, Decl(stableModifierLinkedPredicates.ts, 99, 5))
+>r4.value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+>r4 : Symbol(r4, Decl(stableModifierLinkedPredicates.ts, 97, 13))
+>value : Symbol(Resource.value, Decl(stableModifierLinkedPredicates.ts, 1, 23))
+

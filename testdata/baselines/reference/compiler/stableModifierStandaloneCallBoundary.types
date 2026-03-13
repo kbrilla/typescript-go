@@ -1,0 +1,166 @@
+//// [tests/cases/compiler/stableModifierStandaloneCallBoundary.ts] ////
+
+=== stableModifierStandaloneCallBoundary.ts ===
+type Signal<T> = stable () => T;
+>Signal : Signal<T>
+
+declare const value: Signal<string | undefined>;
+>value : Signal<string | undefined>
+
+// === Section 1: Standalone function calls should NOT invalidate ===
+// Matches getter behavior: function calls are transparent to property narrowing.
+declare function someHelper(x: string): void;
+>someHelper : (x: string) => void
+>x : string
+
+declare function unknownFunc(): void;
+>unknownFunc : () => void
+
+declare function anotherFunc(a: number, b: string): void;
+>anotherFunc : (a: number, b: string) => void
+>a : number
+>b : string
+
+if (value() !== undefined) {
+>value() !== undefined : boolean
+>value() : string | undefined
+>value : Signal<string | undefined>
+>undefined : undefined
+
+    someHelper(value());
+>someHelper(value()) : void
+>someHelper : (x: string) => void
+>value() : string
+>value : Signal<string | undefined>
+
+    const s: string = value(); // Should preserve - standalone call is unrelated
+>s : string
+>value() : string
+>value : Signal<string | undefined>
+}
+
+if (value() !== undefined) {
+>value() !== undefined : boolean
+>value() : string | undefined
+>value : Signal<string | undefined>
+>undefined : undefined
+
+    unknownFunc();
+>unknownFunc() : void
+>unknownFunc : () => void
+
+    const s: string = value(); // Should preserve - standalone call is unrelated
+>s : string
+>value() : string
+>value : Signal<string | undefined>
+}
+
+if (value() !== undefined) {
+>value() !== undefined : boolean
+>value() : string | undefined
+>value : Signal<string | undefined>
+>undefined : undefined
+
+    anotherFunc(42, "hello");
+>anotherFunc(42, "hello") : void
+>anotherFunc : (a: number, b: string) => void
+>42 : 42
+>"hello" : "hello"
+
+    const s: string = value(); // Should preserve - standalone call is unrelated
+>s : string
+>value() : string
+>value : Signal<string | undefined>
+}
+
+// === Section 2: Same-receiver method calls are transparent (getter parity) ===
+declare const store: {
+>store : { read: stable () => string | undefined; clear(): void; }
+
+    read: stable () => string | undefined;
+>read : stable () => string | undefined
+
+    clear(): void;
+>clear : () => void
+
+};
+
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
+>undefined : undefined
+
+    store.clear();
+>store.clear() : void
+>store.clear : () => void
+>store : { read: stable () => string | undefined; clear(): void; }
+>clear : () => void
+
+    const s: string = store.read(); // Transparent - getter parity: method calls don't invalidate narrowing
+>s : string
+>store.read() : string
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
+}
+
+// === Section 3: Member stable with standalone call ===
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
+>undefined : undefined
+
+    unknownFunc();
+>unknownFunc() : void
+>unknownFunc : () => void
+
+    const s: string = store.read(); // Should preserve - standalone call is unrelated to store
+>s : string
+>store.read() : string
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
+}
+
+// === Section 4: Mixed patterns ===
+declare const otherStore: { doSomething(): void };
+>otherStore : { doSomething(): void; }
+>doSomething : () => void
+
+if (store.read() !== undefined) {
+>store.read() !== undefined : boolean
+>store.read() : string | undefined
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
+>undefined : undefined
+
+    otherStore.doSomething();
+>otherStore.doSomething() : void
+>otherStore.doSomething : () => void
+>otherStore : { doSomething(): void; }
+>doSomething : () => void
+
+    unknownFunc();
+>unknownFunc() : void
+>unknownFunc : () => void
+
+    someHelper("test");
+>someHelper("test") : void
+>someHelper : (x: string) => void
+>"test" : "test"
+
+    const s: string = store.read(); // Should preserve through all unrelated calls
+>s : string
+>store.read() : string
+>store.read : stable () => string | undefined
+>store : { read: stable () => string | undefined; clear(): void; }
+>read : stable () => string | undefined
+}
+

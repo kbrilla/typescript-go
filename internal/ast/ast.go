@@ -5882,6 +5882,9 @@ type MethodSignatureDeclaration struct {
 	FunctionLikeBase
 	TypeElementBase
 	typeSyntaxBase
+	KeyParameter             *Node     // Optional: identifier from stable[key] or mutator[key] bracket syntax
+	LinksClause              *NodeList // Optional: stable endpoint names for mutator invalidates clause
+	LinksClauseKeyParamNames []string  // Parallel to LinksClause.Nodes: param name for per-key targets, "" for unkeyed
 }
 
 func (f *NodeFactory) NewMethodSignatureDeclaration(modifiers *ModifierList, name *PropertyName, postfixToken *TokenNode, typeParameters *NodeList, parameters *NodeList, returnType *TypeNode) *Node {
@@ -5904,15 +5907,28 @@ func (f *NodeFactory) UpdateMethodSignatureDeclaration(node *MethodSignatureDecl
 
 func (node *MethodSignatureDeclaration) ForEachChild(v Visitor) bool {
 	return visitModifiers(v, node.modifiers) || visit(v, node.name) || visit(v, node.PostfixToken) || visitNodeList(v, node.TypeParameters) ||
-		visitNodeList(v, node.Parameters) || visit(v, node.Type)
+		visitNodeList(v, node.Parameters) || visit(v, node.Type) || visit(v, node.KeyParameter) || visitNodeList(v, node.LinksClause)
 }
 
 func (node *MethodSignatureDeclaration) VisitEachChild(v *NodeVisitor) *Node {
-	return v.Factory.UpdateMethodSignatureDeclaration(node, v.visitModifiers(node.modifiers), v.visitNode(node.name), v.visitToken(node.PostfixToken), v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
+	result := v.Factory.UpdateMethodSignatureDeclaration(node, v.visitModifiers(node.modifiers), v.visitNode(node.name), v.visitToken(node.PostfixToken), v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
+	if result != node.AsNode() {
+		resultNode := result.AsMethodSignatureDeclaration()
+		resultNode.KeyParameter = node.KeyParameter
+		resultNode.LinksClause = node.LinksClause
+		resultNode.LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
+	}
+	return result
 }
 
 func (node *MethodSignatureDeclaration) Clone(f NodeFactoryCoercible) *Node {
-	return cloneNode(f.AsNodeFactory().NewMethodSignatureDeclaration(node.Modifiers(), node.Name(), node.PostfixToken, node.TypeParameters, node.Parameters, node.Type), node.AsNode(), f.AsNodeFactory().hooks)
+	result := f.AsNodeFactory().NewMethodSignatureDeclaration(node.Modifiers(), node.Name(), node.PostfixToken, node.TypeParameters, node.Parameters, node.Type)
+	if node.LinksClause != nil {
+		result.AsMethodSignatureDeclaration().LinksClause = node.LinksClause
+	}
+	result.AsMethodSignatureDeclaration().KeyParameter = node.KeyParameter
+	result.AsMethodSignatureDeclaration().LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
+	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
 func IsMethodSignatureDeclaration(node *Node) bool {
@@ -5929,6 +5945,9 @@ type MethodDeclaration struct {
 	ClassElementBase
 	ObjectLiteralElementBase
 	compositeNodeBase
+	KeyParameter             *Node     // Optional: identifier from stable[key] or mutator[key] bracket syntax
+	LinksClause              *NodeList // Optional: stable endpoint names for mutator invalidates clause
+	LinksClauseKeyParamNames []string  // Parallel to LinksClause.Nodes: param name for per-key targets, "" for unkeyed
 }
 
 func (f *NodeFactory) NewMethodDeclaration(modifiers *ModifierList, asteriskToken *TokenNode, name *PropertyName, postfixToken *TokenNode, typeParameters *NodeList, parameters *NodeList, returnType *TypeNode, fullSignature *TypeNode, body *BlockNode) *Node {
@@ -5954,15 +5973,28 @@ func (f *NodeFactory) UpdateMethodDeclaration(node *MethodDeclaration, modifiers
 
 func (node *MethodDeclaration) ForEachChild(v Visitor) bool {
 	return visitModifiers(v, node.modifiers) || visit(v, node.AsteriskToken) || visit(v, node.name) || visit(v, node.PostfixToken) ||
-		visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type) || visit(v, node.FullSignature) || visit(v, node.Body)
+		visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type) || visit(v, node.KeyParameter) || visitNodeList(v, node.LinksClause) || visit(v, node.FullSignature) || visit(v, node.Body)
 }
 
 func (node *MethodDeclaration) VisitEachChild(v *NodeVisitor) *Node {
-	return v.Factory.UpdateMethodDeclaration(node, v.visitModifiers(node.modifiers), v.visitToken(node.AsteriskToken), v.visitNode(node.name), v.visitToken(node.PostfixToken), v.visitNodes(node.TypeParameters), v.visitParameters(node.Parameters), v.visitNode(node.Type), v.visitNode(node.FullSignature), v.visitFunctionBody(node.Body))
+	result := v.Factory.UpdateMethodDeclaration(node, v.visitModifiers(node.modifiers), v.visitToken(node.AsteriskToken), v.visitNode(node.name), v.visitToken(node.PostfixToken), v.visitNodes(node.TypeParameters), v.visitParameters(node.Parameters), v.visitNode(node.Type), v.visitNode(node.FullSignature), v.visitFunctionBody(node.Body))
+	if result != node.AsNode() {
+		resultNode := result.AsMethodDeclaration()
+		resultNode.KeyParameter = node.KeyParameter
+		resultNode.LinksClause = node.LinksClause
+		resultNode.LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
+	}
+	return result
 }
 
 func (node *MethodDeclaration) Clone(f NodeFactoryCoercible) *Node {
-	return cloneNode(f.AsNodeFactory().NewMethodDeclaration(node.Modifiers(), node.AsteriskToken, node.Name(), node.PostfixToken, node.TypeParameters, node.Parameters, node.Type, node.FullSignature, node.Body), node.AsNode(), f.AsNodeFactory().hooks)
+	result := f.AsNodeFactory().NewMethodDeclaration(node.Modifiers(), node.AsteriskToken, node.Name(), node.PostfixToken, node.TypeParameters, node.Parameters, node.Type, node.FullSignature, node.Body)
+	if node.LinksClause != nil {
+		result.AsMethodDeclaration().LinksClause = node.LinksClause
+	}
+	result.AsMethodDeclaration().KeyParameter = node.KeyParameter
+	result.AsMethodDeclaration().LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
+	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
 func (node *MethodDeclaration) computeSubtreeFacts() SubtreeFacts {
@@ -6938,6 +6970,7 @@ func IsElementAccessExpression(node *Node) bool {
 
 type CallExpression struct {
 	ExpressionBase
+	FlowNodeBase
 	DeclarationBase
 	compositeNodeBase
 	Expression       *Expression // Expression
@@ -8768,39 +8801,66 @@ type FunctionOrConstructorTypeNodeBase struct {
 	DeclarationBase
 	ModifiersBase
 	FunctionLikeBase
+	LinksClause              *NodeList // Optional: stable endpoint names for mutator invalidates clause
+	LinksClauseKeyParamNames []string  // Parallel to LinksClause.Nodes: param name for per-key targets, "" for unkeyed
 }
 
 func (node *FunctionOrConstructorTypeNodeBase) ForEachChild(v Visitor) bool {
-	return visitModifiers(v, node.modifiers) || visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type)
+	return visitModifiers(v, node.modifiers) || visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type) || visitNodeList(v, node.LinksClause)
 }
 
 // FunctionTypeNode
 
 type FunctionTypeNode struct {
 	FunctionOrConstructorTypeNodeBase
+	KeyParameter *Node     // Optional: identifier from stable[key] or mutator[key] bracket syntax
+	WrappedType  *TypeNode // Optional: type reference for `mutator TypeRef invalidates ...` syntax
 }
 
-func (f *NodeFactory) NewFunctionTypeNode(typeParameters *NodeList, parameters *NodeList, returnType *TypeNode) *Node {
+func (f *NodeFactory) NewFunctionTypeNode(modifiers *ModifierList, typeParameters *NodeList, parameters *NodeList, returnType *TypeNode) *Node {
 	data := f.functionTypeNodePool.New()
+	data.modifiers = modifiers
 	data.TypeParameters = typeParameters
 	data.Parameters = parameters
 	data.Type = returnType
 	return f.newNode(KindFunctionType, data)
 }
 
-func (f *NodeFactory) UpdateFunctionTypeNode(node *FunctionTypeNode, typeParameters *TypeParameterList, parameters *ParameterList, returnType *TypeNode) *Node {
-	if typeParameters != node.TypeParameters || parameters != node.Parameters || returnType != node.Type {
-		return updateNode(f.NewFunctionTypeNode(typeParameters, parameters, returnType), node.AsNode(), f.hooks)
+func (f *NodeFactory) UpdateFunctionTypeNode(node *FunctionTypeNode, modifiers *ModifierList, typeParameters *TypeParameterList, parameters *ParameterList, returnType *TypeNode) *Node {
+	if modifiers != node.modifiers || typeParameters != node.TypeParameters || parameters != node.Parameters || returnType != node.Type {
+		return updateNode(f.NewFunctionTypeNode(modifiers, typeParameters, parameters, returnType), node.AsNode(), f.hooks)
 	}
 	return node.AsNode()
 }
 
+func (node *FunctionTypeNode) ForEachChild(v Visitor) bool {
+	return visitModifiers(v, node.modifiers) || visitNodeList(v, node.TypeParameters) || visitNodeList(v, node.Parameters) || visit(v, node.Type) || visit(v, node.KeyParameter) || visit(v, node.WrappedType) || visitNodeList(v, node.LinksClause)
+}
+
 func (node *FunctionTypeNode) VisitEachChild(v *NodeVisitor) *Node {
-	return v.Factory.UpdateFunctionTypeNode(node, v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
+	result := v.Factory.UpdateFunctionTypeNode(node, v.visitModifiers(node.Modifiers()), v.visitNodes(node.TypeParameters), v.visitNodes(node.Parameters), v.visitNode(node.Type))
+	keyParameter := v.visitNode(node.KeyParameter)
+	wrappedType := v.visitNode(node.WrappedType)
+	linksClause := v.visitNodes(node.LinksClause)
+	if result != node.AsNode() {
+		resultFn := result.AsFunctionTypeNode()
+		resultFn.KeyParameter = keyParameter
+		resultFn.WrappedType = wrappedType
+		resultFn.LinksClause = linksClause
+		resultFn.LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
+	}
+	return result
 }
 
 func (node *FunctionTypeNode) Clone(f NodeFactoryCoercible) *Node {
-	return cloneNode(f.AsNodeFactory().NewFunctionTypeNode(node.TypeParameters, node.Parameters, node.Type), node.AsNode(), f.AsNodeFactory().hooks)
+	result := f.AsNodeFactory().NewFunctionTypeNode(node.Modifiers(), node.TypeParameters, node.Parameters, node.Type)
+	if node.LinksClause != nil {
+		result.AsFunctionTypeNode().LinksClause = node.LinksClause
+	}
+	result.AsFunctionTypeNode().KeyParameter = node.KeyParameter
+	result.AsFunctionTypeNode().WrappedType = node.WrappedType
+	result.AsFunctionTypeNode().LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
+	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
 func IsFunctionTypeNode(node *Node) bool {
@@ -8834,7 +8894,12 @@ func (node *ConstructorTypeNode) VisitEachChild(v *NodeVisitor) *Node {
 }
 
 func (node *ConstructorTypeNode) Clone(f NodeFactoryCoercible) *Node {
-	return cloneNode(f.AsNodeFactory().NewConstructorTypeNode(node.Modifiers(), node.TypeParameters, node.Parameters, node.Type), node.AsNode(), f.AsNodeFactory().hooks)
+	result := f.AsNodeFactory().NewConstructorTypeNode(node.Modifiers(), node.TypeParameters, node.Parameters, node.Type)
+	if node.LinksClause != nil {
+		result.AsConstructorTypeNode().LinksClause = node.LinksClause
+	}
+	result.AsConstructorTypeNode().LinksClauseKeyParamNames = node.LinksClauseKeyParamNames
+	return cloneNode(result, node.AsNode(), f.AsNodeFactory().hooks)
 }
 
 func IsConstructorTypeNode(node *Node) bool {

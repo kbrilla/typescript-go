@@ -1,0 +1,108 @@
+//// [tests/cases/compiler/stableModifierP8Conservative.ts] ////
+
+=== stableModifierP8Conservative.ts ===
+// P8/X3 guarded unknown-call boundary:
+// Preserve narrowing only for a very narrow shape and keep broader unknown-call
+// forms conservative.
+
+type Shape =
+>Shape : Shape
+
+    | { kind: "circle"; radius: number }
+>kind : "circle"
+>radius : number
+
+    | { kind: "square"; size: number };
+>kind : "square"
+>size : number
+
+declare function unknownMutate(): void;
+>unknownMutate : () => void
+
+declare function unknownMutateWithArg(v: number): void;
+>unknownMutateWithArg : (v: number) => void
+>v : number
+
+declare const getterModel: {
+>getterModel : { readonly value: Shape; }
+
+    get value(): Shape;
+>value : Shape
+
+};
+
+declare const identityModel: stable () => Shape;
+>identityModel : stable () => Shape
+
+if (getterModel.value.kind === "circle") {
+>getterModel.value.kind === "circle" : boolean
+>getterModel.value.kind : "circle" | "square"
+>getterModel.value : Shape
+>getterModel : { readonly value: Shape; }
+>value : Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const getterAfterUnknown: number = getterModel.value.radius; // getter baseline: remains narrowed in this sweep shape
+>getterAfterUnknown : number
+>getterModel.value.radius : number
+>getterModel.value : { kind: "circle"; radius: number; }
+>getterModel : { readonly value: Shape; }
+>value : { kind: "circle"; radius: number; }
+>radius : number
+
+    getterAfterUnknown;
+>getterAfterUnknown : number
+}
+
+if (identityModel().kind === "circle") {
+>identityModel().kind === "circle" : boolean
+>identityModel().kind : "circle" | "square"
+>identityModel() : Shape
+>identityModel : stable () => Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    unknownMutate();
+>unknownMutate() : void
+>unknownMutate : () => void
+
+    const identityAfterUnknown: number = identityModel().radius; // guarded parity target: OK
+>identityAfterUnknown : number
+>identityModel().radius : number
+>identityModel() : { kind: "circle"; radius: number; }
+>identityModel : stable () => Shape
+>radius : number
+
+    identityAfterUnknown;
+>identityAfterUnknown : number
+}
+
+if (identityModel().kind === "circle") {
+>identityModel().kind === "circle" : boolean
+>identityModel().kind : "circle" | "square"
+>identityModel() : Shape
+>identityModel : stable () => Shape
+>kind : "circle" | "square"
+>"circle" : "circle"
+
+    unknownMutateWithArg(1);
+>unknownMutateWithArg(1) : void
+>unknownMutateWithArg : (v: number) => void
+>1 : 1
+
+    const identityAfterUnknownWithArg: number = identityModel().radius; // expected conservative error (non-target shape)
+>identityAfterUnknownWithArg : number
+>identityModel().radius : number
+>identityModel() : { kind: "circle"; radius: number; }
+>identityModel : stable () => Shape
+>radius : number
+
+    identityAfterUnknownWithArg;
+>identityAfterUnknownWithArg : number
+}
+

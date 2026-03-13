@@ -1,0 +1,184 @@
+//// [tests/cases/compiler/stableModifierEqualityChain.ts] ////
+
+=== stableModifierEqualityChain.ts ===
+type Signal<T> = stable () => T;
+>Signal : Signal<T>
+
+declare const appStatus: Signal<"loading" | "success" | "error" | "idle">;
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+
+// === Equality-chain literal-union narrowing ===
+
+// Single equality
+if (appStatus() === "loading") {
+>appStatus() === "loading" : boolean
+>appStatus() : "error" | "idle" | "loading" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"loading" : "loading"
+
+    const s: "loading" = appStatus();
+>s : "loading"
+>appStatus() : "loading"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+}
+
+// Two-branch OR chain
+if (appStatus() === "loading" || appStatus() === "success") {
+>appStatus() === "loading" || appStatus() === "success" : boolean
+>appStatus() === "loading" : boolean
+>appStatus() : "error" | "idle" | "loading" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"loading" : "loading"
+>appStatus() === "success" : boolean
+>appStatus() : "error" | "idle" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"success" : "success"
+
+    const s: "loading" | "success" = appStatus();
+>s : "loading" | "success"
+>appStatus() : "loading" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+}
+
+// Three-branch OR chain
+if (appStatus() === "loading" || appStatus() === "success" || appStatus() === "error") {
+>appStatus() === "loading" || appStatus() === "success" || appStatus() === "error" : boolean
+>appStatus() === "loading" || appStatus() === "success" : boolean
+>appStatus() === "loading" : boolean
+>appStatus() : "error" | "idle" | "loading" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"loading" : "loading"
+>appStatus() === "success" : boolean
+>appStatus() : "error" | "idle" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"success" : "success"
+>appStatus() === "error" : boolean
+>appStatus() : "error" | "idle"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"error" : "error"
+
+    const s: "loading" | "success" | "error" = appStatus();
+>s : "error" | "loading" | "success"
+>appStatus() : "error" | "loading" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+}
+
+// Exhaustive check (all branches)
+if (appStatus() === "loading" || appStatus() === "success" || appStatus() === "error" || appStatus() === "idle") {
+>appStatus() === "loading" || appStatus() === "success" || appStatus() === "error" || appStatus() === "idle" : boolean
+>appStatus() === "loading" || appStatus() === "success" || appStatus() === "error" : boolean
+>appStatus() === "loading" || appStatus() === "success" : boolean
+>appStatus() === "loading" : boolean
+>appStatus() : "error" | "idle" | "loading" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"loading" : "loading"
+>appStatus() === "success" : boolean
+>appStatus() : "error" | "idle" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"success" : "success"
+>appStatus() === "error" : boolean
+>appStatus() : "error" | "idle"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"error" : "error"
+>appStatus() === "idle" : boolean
+>appStatus() : "idle"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"idle" : "idle"
+
+    const s: "loading" | "success" | "error" | "idle" = appStatus();
+>s : "error" | "idle" | "loading" | "success"
+>appStatus() : "error" | "idle" | "loading" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+}
+
+// Negation (not equal)
+if (appStatus() !== "loading") {
+>appStatus() !== "loading" : boolean
+>appStatus() : "error" | "idle" | "loading" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"loading" : "loading"
+
+    const s: "success" | "error" | "idle" = appStatus();
+>s : "error" | "idle" | "success"
+>appStatus() : "error" | "idle" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+}
+
+// Double negation intersection
+if (appStatus() !== "loading" && appStatus() !== "idle") {
+>appStatus() !== "loading" && appStatus() !== "idle" : boolean
+>appStatus() !== "loading" : boolean
+>appStatus() : "error" | "idle" | "loading" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"loading" : "loading"
+>appStatus() !== "idle" : boolean
+>appStatus() : "error" | "idle" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+>"idle" : "idle"
+
+    const s: "success" | "error" = appStatus();
+>s : "error" | "success"
+>appStatus() : "error" | "success"
+>appStatus : Signal<"error" | "idle" | "loading" | "success">
+}
+
+// === With string | undefined Signal ===
+
+declare const read: Signal<string | undefined>;
+>read : Signal<string | undefined>
+
+// Simple equality narrows to literal
+if (read() === "hello") {
+>read() === "hello" : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>"hello" : "hello"
+
+    const r: "hello" = read();
+>r : "hello"
+>read() : "hello"
+>read : Signal<string | undefined>
+}
+
+// OR chain with undefined check
+if (read() === "hello" || read() === "world") {
+>read() === "hello" || read() === "world" : boolean
+>read() === "hello" : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>"hello" : "hello"
+>read() === "world" : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>"world" : "world"
+
+    const r: "hello" | "world" = read();
+>r : "hello" | "world"
+>read() : "hello" | "world"
+>read : Signal<string | undefined>
+}
+
+// !== undefined combined with equality
+if (read() !== undefined && (read() === "a" || read() === "b")) {
+>read() !== undefined && (read() === "a" || read() === "b") : boolean
+>read() !== undefined : boolean
+>read() : string | undefined
+>read : Signal<string | undefined>
+>undefined : undefined
+>(read() === "a" || read() === "b") : boolean
+>read() === "a" || read() === "b" : boolean
+>read() === "a" : boolean
+>read() : string
+>read : Signal<string | undefined>
+>"a" : "a"
+>read() === "b" : boolean
+>read() : string
+>read : Signal<string | undefined>
+>"b" : "b"
+
+    const r: "a" | "b" = read();
+>r : "a" | "b"
+>read() : "a" | "b"
+>read : Signal<string | undefined>
+}
+

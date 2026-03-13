@@ -878,6 +878,7 @@ type Checker struct {
 	ambientModules                              []*ast.Symbol
 	withinUnreachableCode                       bool
 	reportedUnreachableNodes                    collections.Set[*ast.Node]
+	reportedStableBoundaryDiagnostics           collections.Set[*ast.Node]
 	nonExistentProperties                       collections.Set[NonExistentPropertyKey]
 
 	mu sync.Mutex
@@ -2634,6 +2635,15 @@ func (c *Checker) checkPropertySignature(node *ast.Node) {
 }
 
 func (c *Checker) checkSignatureDeclaration(node *ast.Node) {
+	// Handle mutator wrapping a type reference: mutator Setter<T> invalidates get
+	// For wrapped type nodes, check the wrapped type instead of normal signature parts
+	if ast.IsFunctionTypeNode(node) {
+		fnType := node.AsFunctionTypeNode()
+		if fnType.WrappedType != nil {
+			c.checkSourceElement(fnType.WrappedType)
+			return
+		}
+	}
 	// Grammar checking
 	switch node.Kind {
 	case ast.KindIndexSignature:
@@ -2967,7 +2977,38 @@ func (c *Checker) checkTypePredicate(node *ast.Node) {
 	}
 	c.checkSourceElement(node.Type())
 	parameterName := node.AsTypePredicateNode().ParameterName
-	if typePredicate.kind != TypePredicateKindThis && typePredicate.kind != TypePredicateKindAssertsThis {
+	if typePredicate.kind == TypePredicateKindLinkedMethod {
+		// Validate linked method predicate: target must be stable and narrowed type must be assignable
+		methodDecl := node.Parent
+		if methodDecl != nil {
+			parentNode := methodDecl.Parent
+			if parentNode != nil {
+				parentSymbol := c.getSymbolOfNode(parentNode)
+				if parentSymbol != nil {
+					containerType := c.getDeclaredTypeOfSymbol(parentSymbol)
+					if containerType != nil {
+						targetPropSymbol := c.getPropertyOfType(containerType, typePredicate.parameterName)
+						if targetPropSymbol != nil {
+							targetType := c.getTypeOfSymbol(targetPropSymbol)
+							signatures := c.getSignaturesOfType(targetType, SignatureKindCall)
+							if len(signatures) > 0 {
+								sig := signatures[0]
+								if sig.flags&SignatureFlagsStable == 0 {
+									c.error(parameterName, diagnostics.Linked_predicate_target_0_must_be_a_stable_method, typePredicate.parameterName)
+								}
+								if typePredicate.t != nil {
+									returnType := c.getReturnTypeOfSignature(sig)
+									if !c.isTypeAssignableTo(typePredicate.t, returnType) {
+										c.error(node.Type(), diagnostics.Type_0_in_linked_predicate_is_not_assignable_to_return_type_of_method_1, c.typeToString(typePredicate.t, nil), typePredicate.parameterName)
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	} else if typePredicate.kind != TypePredicateKindThis && typePredicate.kind != TypePredicateKindAssertsThis {
 		if typePredicate.parameterIndex >= 0 {
 			if signatureHasRestParameter(signature) && int(typePredicate.parameterIndex) == len(signature.parameters)-1 {
 				c.error(parameterName, diagnostics.A_type_predicate_cannot_reference_a_rest_parameter)
@@ -7173,6 +7214,10 @@ func (c *Checker) getQuickTypeOfExpression(node *ast.Node) *Type {
 func (c *Checker) getReturnTypeOfSingleNonGenericSignature(funcType *Type, kind SignatureKind) *Type {
 	signature := c.getSingleSignature(funcType, kind, true /*allowMembers*/)
 	if signature != nil && len(signature.typeParameters) == 0 {
+		// Skip stable signatures — they need full CFA narrowing via checkCallExpression
+		if signature.flags&SignatureFlagsStable != 0 {
+			return nil
+		}
 		return c.getReturnTypeOfSignature(signature)
 	}
 	return nil
@@ -8107,6 +8152,16 @@ func (c *Checker) checkCallExpression(node *ast.Node, checkMode CheckMode) *Type
 		return c.resolveExternalModuleTypeByLiteral(node.Arguments()[0])
 	}
 	returnType := c.getReturnTypeOfSignature(signature)
+	// For stable function calls (stable return value), use flow analysis to narrow the return type.
+	// Stable functions guarantee that parameterless calls return a stable value, so we can track
+	// the call expression as a reference through the control flow graph for type narrowing.
+	if signature.flags&SignatureFlagsStable != 0 && ast.IsCallExpression(node) && c.isStableCallArgCountValid(signature, node) {
+		narrowableReturnType := c.getNarrowableTypeForReference(returnType, node, checkMode)
+		flowType := c.getFlowTypeOfReference(node, narrowableReturnType)
+		if flowType != narrowableReturnType {
+			return flowType
+		}
+	}
 	// Treat any call to the global 'Symbol' function that is part of a const variable or readonly property
 	// as a fresh unique symbol literal type.
 	if returnType.flags&TypeFlagsESSymbolLike != 0 && c.isSymbolOrSymbolForCall(node) {
@@ -19250,6 +19305,12 @@ func (c *Checker) getSignatureFromDeclaration(declaration *ast.Node) *Signature 
 	if ast.IsConstructorTypeNode(declaration) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsAbstract) || ast.IsConstructorDeclaration(declaration) && ast.HasSyntacticModifier(declaration.Parent, ast.ModifierFlagsAbstract) {
 		flags |= SignatureFlagsAbstract
 	}
+	if (ast.IsFunctionTypeNode(declaration) || ast.IsMethodDeclaration(declaration) || ast.IsMethodSignatureDeclaration(declaration) || ast.IsFunctionDeclaration(declaration) || ast.IsFunctionExpression(declaration) || ast.IsArrowFunction(declaration) || ast.IsGetAccessorDeclaration(declaration)) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsStable) {
+		flags |= SignatureFlagsStable
+	}
+	if (ast.IsFunctionTypeNode(declaration) || ast.IsMethodDeclaration(declaration) || ast.IsMethodSignatureDeclaration(declaration) || ast.IsFunctionDeclaration(declaration) || ast.IsFunctionExpression(declaration) || ast.IsArrowFunction(declaration) || ast.IsSetAccessorDeclaration(declaration)) && ast.HasSyntacticModifier(declaration, ast.ModifierFlagsMutator) {
+		flags |= SignatureFlagsMutator
+	}
 	links.resolvedSignature = c.newSignature(flags, declaration, typeParameters, thisParameter, parameters, nil /*resolvedReturnType*/, nil /*resolvedTypePredicate*/, minArgumentCount)
 	return links.resolvedSignature
 }
@@ -19837,6 +19898,32 @@ func (c *Checker) shouldReportErrorsFromWideningWithContextualSignature(declarat
 		return nextType != nil && c.isGenericType(nextType)
 	}
 	return false
+}
+
+func (c *Checker) shouldReportStableBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node) bool {
+	if boundary == nil || c.reportedStableBoundaryDiagnostics.Has(boundary) || !c.isStableCallReference(reference) {
+		return false
+	}
+
+	c.reportedStableBoundaryDiagnostics.Add(boundary)
+	return true
+}
+
+func (c *Checker) stableBoundaryInvalidationDiagnosticMessage(kind stableBoundaryKind) *diagnostics.Message {
+	if kind == stableBoundaryKindUnknownCall {
+		return diagnostics.Stable_narrowing_was_conservatively_dropped_after_an_unknown_call_Extract_the_guarded_value_to_a_local_temporary_before_the_call_to_preserve_precision
+	}
+
+	return diagnostics.Stable_narrowing_was_conservatively_dropped_at_an_uncertainty_boundary_Add_an_explicit_guarded_temporary_or_refactor_to_keep_the_narrowing_scope_local
+}
+
+func (c *Checker) reportStableBoundaryInvalidationDiagnostic(reference *ast.Node, boundary *ast.Node, kind stableBoundaryKind) {
+	if !c.shouldReportStableBoundaryInvalidationDiagnostic(reference, boundary) {
+		return
+	}
+
+	message := c.stableBoundaryInvalidationDiagnosticMessage(kind)
+	c.diagnostics.Add(createDiagnosticForNode(boundary, message))
 }
 
 // Reports implicit any errors that occur as a result of widening 'null' and 'undefined'
@@ -22285,6 +22372,14 @@ func (c *Checker) getTypeFromLiteralTypeNode(node *ast.Node) *Type {
 func (c *Checker) getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode(node *ast.Node) *Type {
 	links := c.typeNodeLinks.Get(node)
 	if links.resolvedType == nil {
+		// Handle mutator wrapping a type reference: mutator Setter<T> invalidates get
+		if ast.IsFunctionTypeNode(node) {
+			fnType := node.AsFunctionTypeNode()
+			if fnType.WrappedType != nil {
+				links.resolvedType = c.getTypeFromMutatorWrappedTypeNode(node, fnType)
+				return links.resolvedType
+			}
+		}
 		// Deferred resolution of members is handled by resolveObjectTypeMembers
 		alias := c.getAliasForTypeNode(node)
 		if sym := node.Symbol(); sym == nil || len(c.getMembersOfSymbol(sym)) == 0 && alias == nil {
@@ -22296,6 +22391,13 @@ func (c *Checker) getTypeFromTypeLiteralOrFunctionOrConstructorTypeNode(node *as
 		}
 	}
 	return links.resolvedType
+}
+
+// getTypeFromMutatorWrappedTypeNode resolves a `mutator TypeRef invalidates ...` node.
+// It simply resolves the wrapped type reference and returns it directly.
+// The mutator/invalidates semantics are handled at the CFA level.
+func (c *Checker) getTypeFromMutatorWrappedTypeNode(node *ast.Node, fnType *ast.FunctionTypeNode) *Type {
+	return c.getTypeFromTypeNode(fnType.WrappedType)
 }
 
 func (c *Checker) getTypeFromIndexedAccessTypeNode(node *ast.Node) *Type {
@@ -29453,7 +29555,7 @@ func (c *Checker) newSetterFunctionType(t *Type) *Type {
 
 // Creates a synthetic `Signature` corresponding to a call signature.
 func (c *Checker) newCallSignature(typeParameters []*Type, thisParameter *ast.Symbol, parameters []*ast.Symbol, returnType *Type) *Signature {
-	decl := c.factory.NewFunctionTypeNode(nil, nil, c.factory.NewKeywordTypeNode(ast.KindAnyKeyword))
+	decl := c.factory.NewFunctionTypeNode(nil, nil, nil, c.factory.NewKeywordTypeNode(ast.KindAnyKeyword))
 	return c.newSignature(SignatureFlagsNone, decl, typeParameters, thisParameter, parameters, returnType, nil, len(parameters))
 }
 

@@ -1,0 +1,370 @@
+//// [tests/cases/compiler/stableModifierKeyedLinkedPredicates.ts] ////
+
+=== stableModifierKeyedLinkedPredicates.ts ===
+// Phase 9: Keyed Linked Predicates — per-key stable tracking
+
+// === 1. Basic per-key stable with literal keys ===
+interface TypedMap<K, V> {
+    stable[key] get(key: K): V | undefined;
+>get : stable (key: K) => V | undefined
+>key : K
+>key : any
+
+    mutator set(key: K, value: V): void invalidates get[key];
+>set : mutator (key: K, value: V) => void
+>key : K
+>value : V
+>get : any
+
+    mutator delete(key: K): boolean invalidates get[key];
+>delete : mutator (key: K) => boolean
+>key : K
+>get : any
+
+    mutator clear(): void;  // unkeyed → invalidates ALL
+>clear : mutator () => void
+}
+
+declare const map: TypedMap<string, number>;
+>map : TypedMap<string, number>
+
+// Per-key narrowing with string literals
+if (map.get("x") !== undefined) {
+>map.get("x") !== undefined : boolean
+>map.get("x") : number | undefined
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"x" : "x"
+>undefined : undefined
+
+    const a: number = map.get("x");       // narrowed (same key "x")
+>a : number
+>map.get("x") : number
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"x" : "x"
+
+    const b = map.get("y");               // number | undefined (different key)
+>b : number | undefined
+>map.get("y") : number | undefined
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"y" : "y"
+
+    map.set("y", 42);                     // invalidates only get("y")
+>map.set("y", 42) : void
+>map.set : mutator (key: string, value: number) => void
+>map : TypedMap<string, number>
+>set : mutator (key: string, value: number) => void
+>"y" : "y"
+>42 : 42
+
+    const c: number = map.get("x");       // still narrowed
+>c : number
+>map.get("x") : number
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"x" : "x"
+
+    map.set("x", 99);                     // invalidates get("x")
+>map.set("x", 99) : void
+>map.set : mutator (key: string, value: number) => void
+>map : TypedMap<string, number>
+>set : mutator (key: string, value: number) => void
+>"x" : "x"
+>99 : 99
+
+    const d = map.get("x");               // number | undefined (narrowing dropped)
+>d : number | undefined
+>map.get("x") : number | undefined
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"x" : "x"
+
+    map.clear();                          // invalidates ALL keys
+>map.clear() : void
+>map.clear : mutator () => void
+>map : TypedMap<string, number>
+>clear : mutator () => void
+
+    map.get("x");                         // number | undefined
+>map.get("x") : number | undefined
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"x" : "x"
+}
+
+// === 2. Variable key reference ===
+declare const key: string;
+>key : string
+
+if (map.get(key) !== undefined) {
+>map.get(key) !== undefined : boolean
+>map.get(key) : number | undefined
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>key : string
+>undefined : undefined
+
+    const e: number = map.get(key);       // narrowed (same variable ref)
+>e : number
+>map.get(key) : number
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>key : string
+}
+
+// === 3. Independent keys narrowed simultaneously ===
+if (map.get("a") !== undefined && map.get("b") !== undefined) {
+>map.get("a") !== undefined && map.get("b") !== undefined : boolean
+>map.get("a") !== undefined : boolean
+>map.get("a") : number | undefined
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"a" : "a"
+>undefined : undefined
+>map.get("b") !== undefined : boolean
+>map.get("b") : number | undefined
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"b" : "b"
+>undefined : undefined
+
+    const f: number = map.get("a");       // narrowed
+>f : number
+>map.get("a") : number
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"a" : "a"
+
+    const g: number = map.get("b");       // narrowed
+>g : number
+>map.get("b") : number
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"b" : "b"
+
+    map.set("a", 10);                     // only invalidates get("a")
+>map.set("a", 10) : void
+>map.set : mutator (key: string, value: number) => void
+>map : TypedMap<string, number>
+>set : mutator (key: string, value: number) => void
+>"a" : "a"
+>10 : 10
+
+    const h: number = map.get("b");       // still narrowed
+>h : number
+>map.get("b") : number
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"b" : "b"
+}
+
+// === 4. delete per-key invalidation ===
+if (map.get("x") !== undefined && map.get("y") !== undefined) {
+>map.get("x") !== undefined && map.get("y") !== undefined : boolean
+>map.get("x") !== undefined : boolean
+>map.get("x") : number | undefined
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"x" : "x"
+>undefined : undefined
+>map.get("y") !== undefined : boolean
+>map.get("y") : number | undefined
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"y" : "y"
+>undefined : undefined
+
+    map.delete("y");                      // invalidates get("y") only
+>map.delete("y") : boolean
+>map.delete : mutator (key: string) => boolean
+>map : TypedMap<string, number>
+>delete : mutator (key: string) => boolean
+>"y" : "y"
+
+    const i: number = map.get("x");       // still narrowed
+>i : number
+>map.get("x") : number
+>map.get : stable (key: string) => number | undefined
+>map : TypedMap<string, number>
+>get : stable (key: string) => number | undefined
+>"x" : "x"
+}
+
+// === 5. Function type syntax with keyed stable ===
+interface FuncMap<K, V> {
+    get: stable[key] (key: K) => V | undefined;
+>get : stable (key: K) => V | undefined
+>key : K
+
+    set: mutator (key: K, value: V) => void invalidates get[key];
+>set : mutator (key: K, value: V) => void
+>key : K
+>value : V
+}
+
+declare const fmap: FuncMap<string, number>;
+>fmap : FuncMap<string, number>
+
+if (fmap.get("z") !== undefined) {
+>fmap.get("z") !== undefined : boolean
+>fmap.get("z") : number | undefined
+>fmap.get : stable (key: string) => number | undefined
+>fmap : FuncMap<string, number>
+>get : stable (key: string) => number | undefined
+>"z" : "z"
+>undefined : undefined
+
+    const j: number = fmap.get("z");      // narrowed
+>j : number
+>fmap.get("z") : number
+>fmap.get : stable (key: string) => number | undefined
+>fmap : FuncMap<string, number>
+>get : stable (key: string) => number | undefined
+>"z" : "z"
+
+    fmap.set("w", 5);                     // different key
+>fmap.set("w", 5) : void
+>fmap.set : mutator (key: string, value: number) => void
+>fmap : FuncMap<string, number>
+>set : mutator (key: string, value: number) => void
+>"w" : "w"
+>5 : 5
+
+    const k: number = fmap.get("z");      // still narrowed
+>k : number
+>fmap.get("z") : number
+>fmap.get : stable (key: string) => number | undefined
+>fmap : FuncMap<string, number>
+>get : stable (key: string) => number | undefined
+>"z" : "z"
+}
+
+// === 6. Multi-stable per-key invalidation — explicit control ===
+interface MultiStore {
+    stable[key] getA(key: string): number | undefined;
+>getA : stable (key: string) => number | undefined
+>key : string
+>key : any
+
+    stable[key] getB(key: string): number | undefined;
+>getB : stable (key: string) => number | undefined
+>key : string
+>key : any
+
+    mutator setA(key: string, value: number): void invalidates getA[key];
+>setA : mutator (key: string, value: number) => void
+>key : string
+>value : number
+>getA : any
+
+    mutator setAll(key: string): void invalidates getA[key], getB[key];
+>setAll : mutator (key: string) => void
+>key : string
+>getA : any
+>getB : any
+
+    mutator reset(): void invalidates getA, getB;  // unkeyed → all keys
+>reset : mutator () => void
+>getA : any
+>getB : any
+}
+
+declare const ms: MultiStore;
+>ms : MultiStore
+
+if (ms.getA("x") !== undefined && ms.getB("x") !== undefined && ms.getA("y") !== undefined) {
+>ms.getA("x") !== undefined && ms.getB("x") !== undefined && ms.getA("y") !== undefined : boolean
+>ms.getA("x") !== undefined && ms.getB("x") !== undefined : boolean
+>ms.getA("x") !== undefined : boolean
+>ms.getA("x") : number | undefined
+>ms.getA : stable (key: string) => number | undefined
+>ms : MultiStore
+>getA : stable (key: string) => number | undefined
+>"x" : "x"
+>undefined : undefined
+>ms.getB("x") !== undefined : boolean
+>ms.getB("x") : number | undefined
+>ms.getB : stable (key: string) => number | undefined
+>ms : MultiStore
+>getB : stable (key: string) => number | undefined
+>"x" : "x"
+>undefined : undefined
+>ms.getA("y") !== undefined : boolean
+>ms.getA("y") : number | undefined
+>ms.getA : stable (key: string) => number | undefined
+>ms : MultiStore
+>getA : stable (key: string) => number | undefined
+>"y" : "y"
+>undefined : undefined
+
+    ms.setA("x", 42);          // only invalidates getA("x"), NOT getB("x") or getA("y")
+>ms.setA("x", 42) : void
+>ms.setA : mutator (key: string, value: number) => void
+>ms : MultiStore
+>setA : mutator (key: string, value: number) => void
+>"x" : "x"
+>42 : 42
+
+    const msb: number = ms.getB("x");    // still narrowed
+>msb : number
+>ms.getB("x") : number
+>ms.getB : stable (key: string) => number | undefined
+>ms : MultiStore
+>getB : stable (key: string) => number | undefined
+>"x" : "x"
+
+    const msa: number = ms.getA("y");    // still narrowed (different key)
+>msa : number
+>ms.getA("y") : number
+>ms.getA : stable (key: string) => number | undefined
+>ms : MultiStore
+>getA : stable (key: string) => number | undefined
+>"y" : "y"
+
+    ms.setAll("y");            // invalidates getA("y") AND getB("y")
+>ms.setAll("y") : void
+>ms.setAll : mutator (key: string) => void
+>ms : MultiStore
+>setAll : mutator (key: string) => void
+>"y" : "y"
+
+    const msa2 = ms.getA("x");           // number | undefined — already invalidated by setA("x") above
+>msa2 : number | undefined
+>ms.getA("x") : number | undefined
+>ms.getA : stable (key: string) => number | undefined
+>ms : MultiStore
+>getA : stable (key: string) => number | undefined
+>"x" : "x"
+
+    ms.reset();                // invalidates ALL keys of both getA and getB
+>ms.reset() : void
+>ms.reset : mutator () => void
+>ms : MultiStore
+>reset : mutator () => void
+
+    const msa3 = ms.getA("x");           // number | undefined — should error if assigned to number
+>msa3 : number | undefined
+>ms.getA("x") : number | undefined
+>ms.getA : stable (key: string) => number | undefined
+>ms : MultiStore
+>getA : stable (key: string) => number | undefined
+>"x" : "x"
+}
+

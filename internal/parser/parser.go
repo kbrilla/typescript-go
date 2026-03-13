@@ -1041,7 +1041,7 @@ func (p *Parser) parseStatement() *ast.Statement {
 	case ast.KindAsyncKeyword, ast.KindInterfaceKeyword, ast.KindTypeKeyword, ast.KindModuleKeyword, ast.KindNamespaceKeyword,
 		ast.KindDeclareKeyword, ast.KindConstKeyword, ast.KindEnumKeyword, ast.KindExportKeyword, ast.KindImportKeyword,
 		ast.KindPrivateKeyword, ast.KindProtectedKeyword, ast.KindPublicKeyword, ast.KindAbstractKeyword, ast.KindAccessorKeyword,
-		ast.KindStaticKeyword, ast.KindReadonlyKeyword, ast.KindGlobalKeyword:
+		ast.KindStaticKeyword, ast.KindReadonlyKeyword, ast.KindGlobalKeyword, ast.KindStableKeyword, ast.KindMutatorKeyword:
 		if p.isStartOfDeclaration() {
 			return p.parseDeclaration()
 		}
@@ -1868,24 +1868,42 @@ func (p *Parser) nextTokenIsOpenParen() bool {
 }
 
 func (p *Parser) parsePropertyOrMethodDeclaration(pos int, jsdoc jsdocScannerInfo, modifiers *ast.ModifierList) *ast.Node {
+	// Parse optional [key] bracket syntax after stable or mutator modifier
+	var keyParameter *ast.Node
+	if (p.hasStableModifier(modifiers) || p.hasMutatorModifier(modifiers)) && p.token == ast.KindOpenBracketToken {
+		keyParameter = p.parseKeyParameterBinding()
+	}
 	asteriskToken := p.parseOptionalToken(ast.KindAsteriskToken)
 	name := p.parsePropertyName()
 	// Note: this is not legal as per the grammar.  But we allow it in the parser and
 	// report an error in the grammar checker.
 	questionToken := p.parseOptionalToken(ast.KindQuestionToken)
 	if asteriskToken != nil || p.token == ast.KindOpenParenToken || p.token == ast.KindLessThanToken {
-		return p.parseMethodDeclaration(pos, jsdoc, modifiers, asteriskToken, name, questionToken, diagnostics.X_or_expected)
+		return p.parseMethodDeclaration(pos, jsdoc, modifiers, asteriskToken, name, questionToken, diagnostics.X_or_expected, keyParameter)
 	}
 	return p.parsePropertyDeclaration(pos, jsdoc, modifiers, name, questionToken)
 }
 
-func (p *Parser) parseMethodDeclaration(pos int, jsdoc jsdocScannerInfo, modifiers *ast.ModifierList, asteriskToken *ast.Node, name *ast.Node, questionToken *ast.Node, diagnosticMessage *diagnostics.Message) *ast.Node {
+func (p *Parser) parseMethodDeclaration(pos int, jsdoc jsdocScannerInfo, modifiers *ast.ModifierList, asteriskToken *ast.Node, name *ast.Node, questionToken *ast.Node, diagnosticMessage *diagnostics.Message, keyParameter *ast.Node) *ast.Node {
 	signatureFlags := core.IfElse(asteriskToken != nil, ParseFlagsYield, ParseFlagsNone) | core.IfElse(modifierListHasAsync(modifiers), ParseFlagsAwait, ParseFlagsNone)
 	typeParameters := p.parseTypeParameters()
 	parameters := p.parseParameters(signatureFlags)
 	typeNode := p.parseReturnType(ast.KindColonToken, false /*isType*/)
+	var linksClause *ast.NodeList
+	var linksClauseKeyParamNames []string
+	if p.hasMutatorModifier(modifiers) && p.token == ast.KindInvalidatesKeyword {
+		linksClause, linksClauseKeyParamNames = p.parseInvalidatesClause()
+	}
 	body := p.parseFunctionBlockOrSemicolon(signatureFlags, diagnosticMessage)
-	result := p.finishNode(p.factory.NewMethodDeclaration(modifiers, asteriskToken, name, questionToken, typeParameters, parameters, typeNode, nil /*fullSignature*/, body), pos)
+	node := p.factory.NewMethodDeclaration(modifiers, asteriskToken, name, questionToken, typeParameters, parameters, typeNode, nil /*fullSignature*/, body)
+	if keyParameter != nil {
+		node.AsMethodDeclaration().KeyParameter = keyParameter
+	}
+	if linksClause != nil {
+		node.AsMethodDeclaration().LinksClause = linksClause
+		node.AsMethodDeclaration().LinksClauseKeyParamNames = linksClauseKeyParamNames
+	}
+	result := p.finishNode(node, pos)
 	p.withJSDoc(result, jsdoc)
 	p.checkJSSyntax(result)
 	return result
@@ -2717,9 +2735,29 @@ func (p *Parser) parseNonArrayType() *ast.Node {
 	case ast.KindVoidKeyword:
 		return p.parseKeywordTypeNode()
 	case ast.KindThisKeyword:
+		pos := p.nodePos()
 		thisKeyword := p.parseThisTypeNode()
 		if p.token == ast.KindIsKeyword && !p.hasPrecedingLineBreak() {
 			return p.parseThisTypePredicate(thisKeyword)
+		}
+		if p.token == ast.KindDotToken {
+			state := p.mark()
+			p.nextToken() // consume .
+			if p.isIdentifier() {
+				methodName := p.parseIdentifier()
+				if p.token == ast.KindOpenParenToken {
+					p.nextToken() // consume (
+					if p.token == ast.KindCloseParenToken {
+						p.nextToken() // consume )
+						if p.token == ast.KindIsKeyword && !p.hasPrecedingLineBreak() {
+							p.nextToken() // consume is
+							paramName := p.finishNode(p.factory.NewPropertyAccessExpression(thisKeyword, nil, methodName, ast.NodeFlagsNone), pos)
+							return p.finishNode(p.factory.NewTypePredicateNode(nil, paramName, p.parseType()), pos)
+						}
+					}
+				}
+			}
+			p.rewind(state)
 		}
 		return thisKeyword
 	case ast.KindTypeOfKeyword:
@@ -3126,6 +3164,36 @@ func (p *Parser) nextTokenIsOpenParenOrLessThan() bool {
 	return p.token == ast.KindOpenParenToken || p.token == ast.KindLessThanToken
 }
 
+func (p *Parser) nextTokenStartsStableFunctionOrConstructorType() bool {
+	p.nextToken()
+	for p.token == ast.KindStableKeyword || p.token == ast.KindAbstractKeyword || p.token == ast.KindMutatorKeyword {
+		p.nextToken()
+	}
+	// Skip optional [key] bracket syntax after stable/mutator
+	if p.token == ast.KindOpenBracketToken {
+		p.nextToken() // skip [
+		if tokenIsIdentifierOrKeyword(p.token) {
+			p.nextToken() // skip identifier
+		}
+		if p.token == ast.KindCloseBracketToken {
+			p.nextToken() // skip ]
+		}
+	}
+	if p.token == ast.KindNewKeyword {
+		return true
+	}
+	if p.token == ast.KindOpenParenToken {
+		return p.nextIsUnambiguouslyStartOfFunctionType()
+	}
+	if p.token == ast.KindLessThanToken {
+		if p.parseTypeParameters() == nil || p.token != ast.KindOpenParenToken {
+			return false
+		}
+		return p.nextIsUnambiguouslyStartOfFunctionType()
+	}
+	return false
+}
+
 func (p *Parser) parseSignatureMember(kind ast.Kind) *ast.Node {
 	pos := p.nodePos()
 	jsdoc := p.jsdocScannerInfo()
@@ -3498,6 +3566,11 @@ func (p *Parser) parseIndexSignatureDeclaration(pos int, jsdoc jsdocScannerInfo,
 }
 
 func (p *Parser) parsePropertyOrMethodSignature(pos int, jsdoc jsdocScannerInfo, modifiers *ast.ModifierList) *ast.Node {
+	// Parse optional [key] bracket syntax after stable or mutator modifier
+	var keyParameter *ast.Node
+	if (p.hasStableModifier(modifiers) || p.hasMutatorModifier(modifiers)) && p.token == ast.KindOpenBracketToken {
+		keyParameter = p.parseKeyParameterBinding()
+	}
 	name := p.parsePropertyName()
 	questionToken := p.parseOptionalToken(ast.KindQuestionToken)
 	var result *ast.Node
@@ -3507,7 +3580,19 @@ func (p *Parser) parsePropertyOrMethodSignature(pos int, jsdoc jsdocScannerInfo,
 		typeParameters := p.parseTypeParameters()
 		parameters := p.parseParameters(ParseFlagsType)
 		returnType := p.parseReturnType(ast.KindColonToken /*isType*/, true)
+		var linksClause *ast.NodeList
+		var linksClauseKeyParamNames []string
+		if p.hasMutatorModifier(modifiers) && p.token == ast.KindInvalidatesKeyword {
+			linksClause, linksClauseKeyParamNames = p.parseInvalidatesClause()
+		}
 		result = p.factory.NewMethodSignatureDeclaration(modifiers, name, questionToken, typeParameters, parameters, returnType)
+		if keyParameter != nil {
+			result.AsMethodSignatureDeclaration().KeyParameter = keyParameter
+		}
+		if linksClause != nil {
+			result.AsMethodSignatureDeclaration().LinksClause = linksClause
+			result.AsMethodSignatureDeclaration().LinksClauseKeyParamNames = linksClauseKeyParamNames
+		}
 	} else {
 		typeNode := p.parseTypeAnnotation()
 		// Although type literal properties cannot not have initializers, we attempt
@@ -3699,38 +3784,199 @@ func (p *Parser) isStartOfFunctionTypeOrConstructorType() bool {
 	return p.token == ast.KindLessThanToken ||
 		p.token == ast.KindOpenParenToken && p.lookAhead((*Parser).nextIsUnambiguouslyStartOfFunctionType) ||
 		p.token == ast.KindNewKeyword ||
-		p.token == ast.KindAbstractKeyword && p.lookAhead((*Parser).nextTokenIsNewKeyword)
+		p.token == ast.KindAbstractKeyword && p.lookAhead((*Parser).nextTokenIsNewKeyword) ||
+		p.token == ast.KindStableKeyword && p.lookAhead((*Parser).nextTokenStartsStableFunctionOrConstructorType) ||
+		p.token == ast.KindMutatorKeyword && p.lookAhead((*Parser).nextTokenStartsMutatorFunctionType)
 }
 
 func (p *Parser) parseFunctionOrConstructorType() *ast.TypeNode {
 	pos := p.nodePos()
 	jsdoc := p.jsdocScannerInfo()
-	modifiers := p.parseModifiersForConstructorType()
+	modifiers := p.parseModifiersForFunctionOrConstructorType()
+	// Parse optional [key] bracket syntax after stable or mutator modifier
+	var keyParameter *ast.Node
+	if (p.hasStableModifier(modifiers) || p.hasMutatorModifier(modifiers)) && p.token == ast.KindOpenBracketToken {
+		keyParameter = p.parseKeyParameterBinding()
+	}
+	// Check for mutator wrapping a type reference: mutator Setter<T> invalidates get
+	if p.hasMutatorModifier(modifiers) && p.token != ast.KindOpenParenToken && p.token != ast.KindLessThanToken && p.token != ast.KindNewKeyword {
+		wrappedType := p.parseTypeReference()
+		// Parse optional invalidates clause
+		var linksClause *ast.NodeList
+		var linksClauseKeyParamNames []string
+		if p.token == ast.KindInvalidatesKeyword {
+			linksClause, linksClauseKeyParamNames = p.parseInvalidatesClause()
+		}
+		result := p.factory.NewFunctionTypeNode(modifiers, nil, nil, nil)
+		result.AsFunctionTypeNode().WrappedType = wrappedType
+		if linksClause != nil {
+			result.AsFunctionTypeNode().LinksClause = linksClause
+			result.AsFunctionTypeNode().LinksClauseKeyParamNames = linksClauseKeyParamNames
+		}
+		p.finishNode(result, pos)
+		p.withJSDoc(result, jsdoc)
+		return result
+	}
 	isConstructorType := p.parseOptional(ast.KindNewKeyword)
-	debug.Assert(modifiers == nil || isConstructorType, "Per isStartOfFunctionOrConstructorType, a function type cannot have modifiers.")
+	debug.Assert(modifiers == nil || isConstructorType || p.hasStableModifier(modifiers) || p.hasMutatorModifier(modifiers), "Per isStartOfFunctionOrConstructorType, a function type can only have the stable or mutator modifier.")
 	typeParameters := p.parseTypeParameters()
 	parameters := p.parseParameters(ParseFlagsType)
 	returnType := p.parseReturnType(ast.KindEqualsGreaterThanToken, false /*isType*/)
+	// Parse optional links clause for mutator function types
+	var linksClause *ast.NodeList
+	var linksClauseKeyParamNames []string
+	if p.hasMutatorModifier(modifiers) && p.token == ast.KindInvalidatesKeyword {
+		linksClause, linksClauseKeyParamNames = p.parseInvalidatesClause()
+	}
 	var result *ast.TypeNode
 	if isConstructorType {
 		result = p.factory.NewConstructorTypeNode(modifiers, typeParameters, parameters, returnType)
 	} else {
-		result = p.factory.NewFunctionTypeNode(typeParameters, parameters, returnType)
+		result = p.factory.NewFunctionTypeNode(modifiers, typeParameters, parameters, returnType)
+	}
+	if linksClause != nil {
+		if isConstructorType {
+			result.AsConstructorTypeNode().LinksClause = linksClause
+			result.AsConstructorTypeNode().LinksClauseKeyParamNames = linksClauseKeyParamNames
+		} else {
+			result.AsFunctionTypeNode().LinksClause = linksClause
+			result.AsFunctionTypeNode().LinksClauseKeyParamNames = linksClauseKeyParamNames
+		}
+	}
+	if keyParameter != nil && !isConstructorType {
+		result.AsFunctionTypeNode().KeyParameter = keyParameter
 	}
 	p.finishNode(result, pos)
 	p.withJSDoc(result, jsdoc)
 	return result
 }
 
-func (p *Parser) parseModifiersForConstructorType() *ast.ModifierList {
-	if p.token == ast.KindAbstractKeyword {
-		pos := p.nodePos()
+func (p *Parser) parseModifiersForFunctionOrConstructorType() *ast.ModifierList {
+	if p.token != ast.KindStableKeyword && p.token != ast.KindAbstractKeyword && p.token != ast.KindMutatorKeyword {
+		return nil
+	}
+
+	pos := p.nodePos()
+	list := make([]*ast.Node, 0, 2)
+	for p.token == ast.KindStableKeyword || p.token == ast.KindAbstractKeyword || p.token == ast.KindMutatorKeyword {
+		modifierPos := p.nodePos()
 		modifier := p.factory.NewModifier(p.token)
 		p.nextToken()
-		p.finishNode(modifier, pos)
-		return p.newModifierList(modifier.Loc, p.nodeSlicePool.NewSlice1(modifier))
+		p.finishNode(modifier, modifierPos)
+		list = append(list, modifier)
 	}
-	return nil
+
+	return p.newModifierList(core.NewTextRange(pos, p.nodePos()), p.nodeSlicePool.Clone(list))
+}
+
+func (p *Parser) hasStableModifier(modifiers *ast.ModifierList) bool {
+	if modifiers == nil {
+		return false
+	}
+	return modifiers.ModifierFlags&ast.ModifierFlagsStable != 0
+}
+
+func (p *Parser) hasMutatorModifier(modifiers *ast.ModifierList) bool {
+	if modifiers == nil {
+		return false
+	}
+	return modifiers.ModifierFlags&ast.ModifierFlagsMutator != 0
+}
+
+// parseKeyParameterBinding parses the [key] bracket notation after stable or mutator modifier.
+// Syntax: '[' <identifier> ']'
+func (p *Parser) parseKeyParameterBinding() *ast.Node {
+	p.parseExpected(ast.KindOpenBracketToken)
+	name := p.parseIdentifierName()
+	p.parseExpected(ast.KindCloseBracketToken)
+	return name
+}
+
+func (p *Parser) parseInvalidatesClause() (*ast.NodeList, []string) {
+	// Parse: invalidates <identifier>[<key>] [, <identifier>[<key>]]*
+	// Each target can optionally include a [key] suffix for keyed invalidation.
+	// When inside a tuple type, commas can be ambiguous — they could separate
+	// invalidation targets or tuple elements. Use look-ahead to disambiguate:
+	// if comma is followed by identifier+colon (named tuple member) or by ],
+	// the comma belongs to the enclosing tuple, not the invalidates clause.
+	pos := p.nodePos()
+	p.parseExpected(ast.KindInvalidatesKeyword)
+	list := make([]*ast.Node, 0, 2)
+	keyParamNames := make([]string, 0, 2)
+	for {
+		identPos := p.nodePos()
+		name := p.parseIdentifierName()
+		p.finishNode(name, identPos)
+		list = append(list, name)
+		// Consume optional [key] bracket suffix (keyed invalidation target)
+		var keyParamName string
+		if p.token == ast.KindOpenBracketToken {
+			p.parseExpected(ast.KindOpenBracketToken)
+			keyIdent := p.parseIdentifierName()
+			keyParamName = keyIdent.Text()
+			p.parseExpected(ast.KindCloseBracketToken)
+		}
+		keyParamNames = append(keyParamNames, keyParamName)
+		if p.token != ast.KindCommaToken {
+			break
+		}
+		// Look ahead to check if the comma belongs to the enclosing tuple context
+		if p.lookAhead((*Parser).isInvalidatesClauseCommaTerminator) {
+			break
+		}
+		p.parseExpected(ast.KindCommaToken)
+	}
+	return p.newNodeList(core.NewTextRange(pos, p.nodePos()), p.nodeSlicePool.Clone(list)), keyParamNames
+}
+
+// isInvalidatesClauseCommaTerminator checks if a comma following an invalidates
+// target is a tuple element separator rather than an invalidates list continuation.
+// Returns true if the comma should NOT be consumed by the invalidates clause.
+func (p *Parser) isInvalidatesClauseCommaTerminator() bool {
+	p.nextToken() // skip the comma
+	if p.token == ast.KindCloseBracketToken || p.token == ast.KindSemicolonToken {
+		return true // trailing comma before ] or ; — not an invalidates target
+	}
+	if !p.isIdentifier() {
+		return true // non-identifier follows — can't be an invalidates target
+	}
+	p.nextToken()                        // skip identifier
+	return p.token == ast.KindColonToken // identifier: = named tuple member, not a target
+}
+
+func (p *Parser) nextTokenStartsMutatorFunctionType() bool {
+	p.nextToken()
+	// After mutator, skip any additional modifiers (stable, abstract)
+	for p.token == ast.KindStableKeyword || p.token == ast.KindAbstractKeyword || p.token == ast.KindMutatorKeyword {
+		p.nextToken()
+	}
+	// Skip optional [key] bracket syntax after stable/mutator
+	if p.token == ast.KindOpenBracketToken {
+		p.nextToken() // skip [
+		if tokenIsIdentifierOrKeyword(p.token) {
+			p.nextToken() // skip identifier
+		}
+		if p.token == ast.KindCloseBracketToken {
+			p.nextToken() // skip ]
+		}
+	}
+	if p.token == ast.KindNewKeyword {
+		return true
+	}
+	if p.token == ast.KindOpenParenToken {
+		return p.nextIsUnambiguouslyStartOfFunctionType()
+	}
+	if p.token == ast.KindLessThanToken {
+		if p.parseTypeParameters() == nil || p.token != ast.KindOpenParenToken {
+			return false
+		}
+		return p.nextIsUnambiguouslyStartOfFunctionType()
+	}
+	// After mutator, an identifier starts a wrapped type reference: mutator Setter<T> invalidates get
+	if tokenIsIdentifierOrKeyword(p.token) {
+		return true
+	}
+	return false
 }
 
 func (p *Parser) nextTokenIsNewKeyword() bool {
@@ -3919,7 +4165,7 @@ func (p *Parser) nextTokenCanFollowDefaultKeyword() bool {
 		return true
 	case ast.KindAbstractKeyword:
 		return p.lookAhead((*Parser).nextTokenIsClassKeywordOnSameLine)
-	case ast.KindAsyncKeyword:
+	case ast.KindAsyncKeyword, ast.KindStableKeyword, ast.KindMutatorKeyword:
 		return p.lookAhead((*Parser).nextTokenIsFunctionKeywordOnSameLine)
 	}
 	return false
@@ -4122,7 +4368,7 @@ func (p *Parser) parseYieldExpression() *ast.Node {
 }
 
 func (p *Parser) isParenthesizedArrowFunctionExpression() core.Tristate {
-	if p.token == ast.KindOpenParenToken || p.token == ast.KindLessThanToken || p.token == ast.KindAsyncKeyword {
+	if p.token == ast.KindOpenParenToken || p.token == ast.KindLessThanToken || p.token == ast.KindAsyncKeyword || p.token == ast.KindStableKeyword || p.token == ast.KindMutatorKeyword {
 		state := p.mark()
 		result := p.nextIsParenthesizedArrowFunctionExpression()
 		p.rewind(state)
@@ -4139,12 +4385,12 @@ func (p *Parser) isParenthesizedArrowFunctionExpression() core.Tristate {
 }
 
 func (p *Parser) nextIsParenthesizedArrowFunctionExpression() core.Tristate {
-	if p.token == ast.KindAsyncKeyword {
+	for p.token == ast.KindAsyncKeyword || p.token == ast.KindStableKeyword || p.token == ast.KindMutatorKeyword {
 		p.nextToken()
 		if p.hasPrecedingLineBreak() {
 			return core.TSFalse
 		}
-		if p.token != ast.KindOpenParenToken && p.token != ast.KindLessThanToken {
+		if p.token != ast.KindOpenParenToken && p.token != ast.KindLessThanToken && p.token != ast.KindAsyncKeyword && p.token != ast.KindStableKeyword && p.token != ast.KindMutatorKeyword {
 			return core.TSFalse
 		}
 	}
@@ -4366,13 +4612,19 @@ func (p *Parser) parseParenthesizedArrowFunctionExpression(allowAmbiguity bool, 
 }
 
 func (p *Parser) parseModifiersForArrowFunction() *ast.ModifierList {
-	if p.token == ast.KindAsyncKeyword {
+	var modifiers []*ast.Node
+	listPos := p.nodePos()
+	for p.token == ast.KindAsyncKeyword || p.token == ast.KindStableKeyword || p.token == ast.KindMutatorKeyword {
 		pos := p.nodePos()
+		kind := p.token
 		p.nextToken()
-		modifier := p.finishNode(p.factory.NewModifier(ast.KindAsyncKeyword), pos)
-		return p.newModifierList(modifier.Loc, p.nodeSlicePool.NewSlice1(modifier))
+		modifier := p.finishNode(p.factory.NewModifier(kind), pos)
+		modifiers = append(modifiers, modifier)
 	}
-	return nil
+	if len(modifiers) == 0 {
+		return nil
+	}
+	return p.newModifierList(core.NewTextRange(listPos, p.nodePos()), p.nodeSlicePool.Clone(modifiers))
 }
 
 // If true, we should abort parsing an error function.
@@ -5481,10 +5733,10 @@ func (p *Parser) parsePrimaryExpression() *ast.Expression {
 		return p.parseArrayLiteralExpression()
 	case ast.KindOpenBraceToken:
 		return p.parseObjectLiteralExpression()
-	case ast.KindAsyncKeyword:
-		// Async arrow functions are parsed earlier in parseAssignmentExpressionOrHigher.
-		// If we encounter `async [no LineTerminator here] function` then this is an async
-		// function; otherwise, its an identifier.
+	case ast.KindAsyncKeyword, ast.KindStableKeyword, ast.KindMutatorKeyword:
+		// Async/stable/mutator arrow functions are parsed earlier in parseAssignmentExpressionOrHigher.
+		// If we encounter one of these [no LineTerminator here] function then this is a
+		// function expression with that modifier; otherwise, its an identifier.
 		if !p.lookAhead((*Parser).nextTokenIsFunctionKeywordOnSameLine) {
 			break
 		}
@@ -5566,7 +5818,7 @@ func (p *Parser) parseObjectLiteralElement() *ast.Node {
 		postfixToken = p.parseOptionalToken(ast.KindExclamationToken)
 	}
 	if asteriskToken != nil || p.token == ast.KindOpenParenToken || p.token == ast.KindLessThanToken {
-		return p.parseMethodDeclaration(pos, jsdoc, modifiers, asteriskToken, name, postfixToken, nil /*diagnosticMessage*/)
+		return p.parseMethodDeclaration(pos, jsdoc, modifiers, asteriskToken, name, postfixToken, nil /*diagnosticMessage*/, nil /*keyParameter*/)
 	}
 	// check if it is short-hand property assignment or normal property assignment
 	// NOTE: if token is EqualsToken it is interpreted as CoverInitializedName production
@@ -5849,6 +6101,10 @@ func (p *Parser) scanTypeMemberStart() bool {
 		idToken = true
 		p.nextToken()
 	}
+	// After consuming modifiers, get/set still indicate accessor declarations
+	if p.token == ast.KindGetKeyword || p.token == ast.KindSetKeyword {
+		return true
+	}
 	// Index signatures and computed property names are type members
 	if p.token == ast.KindOpenBracketToken {
 		return true
@@ -6019,7 +6275,7 @@ func (p *Parser) scanStartOfDeclaration() bool {
 		case ast.KindModuleKeyword, ast.KindNamespaceKeyword:
 			return p.nextTokenIsIdentifierOrStringLiteralOnSameLine()
 		case ast.KindAbstractKeyword, ast.KindAccessorKeyword, ast.KindAsyncKeyword, ast.KindDeclareKeyword, ast.KindPrivateKeyword,
-			ast.KindProtectedKeyword, ast.KindPublicKeyword, ast.KindReadonlyKeyword:
+			ast.KindProtectedKeyword, ast.KindPublicKeyword, ast.KindReadonlyKeyword, ast.KindStableKeyword, ast.KindMutatorKeyword:
 			previousToken := p.token
 			p.nextToken()
 			// ASI takes effect for this modifier.

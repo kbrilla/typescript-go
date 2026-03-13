@@ -1,0 +1,77 @@
+//// [tests/cases/compiler/stableModifierGenericDiscriminant.ts] ////
+
+=== stableModifierGenericDiscriminant.ts ===
+// Generic discriminant narrowing parity: getter and stable endpoint forms.
+type Fish = { type: "fish"; hasFins: true };
+>Fish : Fish
+>type : "fish"
+>hasFins : true
+>true : true
+
+type Dog = { type: "dog"; saysWoof: true };
+>Dog : Dog
+>type : "dog"
+>saysWoof : true
+>true : true
+
+type Pet = Fish | Dog;
+>Pet : Pet
+
+function getterGeneric<PetType extends Pet>(pet: { get value(): PetType }) {
+>getterGeneric : <PetType extends Pet>(pet: { readonly value: PetType; }) => void
+>pet : { readonly value: PetType; }
+>value : PetType
+
+    if (pet.value.type === "dog") {
+>pet.value.type === "dog" : boolean
+>pet.value.type : "dog" | "fish"
+>pet.value : Pet
+>pet : { readonly value: PetType; }
+>value : Pet
+>type : "dog" | "fish"
+>"dog" : "dog"
+
+        const getterDog: true = pet.value.saysWoof; // baseline: OK
+>getterDog : true
+>true : true
+>pet.value.saysWoof : true
+>pet.value : Dog
+>pet : { readonly value: PetType; }
+>value : Dog
+>saysWoof : true
+
+        getterDog;
+>getterDog : true
+    }
+}
+
+function identityGeneric<PetType extends Pet>(pet: { value: stable () => PetType }) {
+>identityGeneric : <PetType extends Pet>(pet: { value: stable () => PetType; }) => void
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
+
+    if (pet.value().type === "dog") {
+>pet.value().type === "dog" : boolean
+>pet.value().type : "dog" | "fish"
+>pet.value() : PetType
+>pet.value : stable () => PetType
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
+>type : "dog" | "fish"
+>"dog" : "dog"
+
+        const identityDog: true = pet.value().saysWoof; // parity target: OK
+>identityDog : true
+>true : true
+>pet.value().saysWoof : true
+>pet.value() : Dog
+>pet.value : stable () => PetType
+>pet : { value: stable () => PetType; }
+>value : stable () => PetType
+>saysWoof : true
+
+        identityDog;
+>identityDog : true
+    }
+}
+

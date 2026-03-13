@@ -157,9 +157,11 @@ const (
 	KindImmediateKeyword
 	KindInferKeyword
 	KindIntrinsicKeyword
+	KindInvalidatesKeyword
 	KindIsKeyword
 	KindKeyOfKeyword
 	KindModuleKeyword
+	KindMutatorKeyword
 	KindNamespaceKeyword
 	KindNeverKeyword
 	KindOutKeyword
@@ -169,6 +171,7 @@ const (
 	KindObjectKeyword
 	KindSatisfiesKeyword
 	KindSetKeyword
+	KindStableKeyword
 	KindStringKeyword
 	KindSymbolKeyword
 	KindTypeKeyword

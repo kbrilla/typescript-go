@@ -1,0 +1,251 @@
+//// [tests/cases/compiler/stableModifierDeclarationParity.ts] ////
+
+=== stableModifierDeclarationParity.ts ===
+// === Section 1: stable function declaration ===
+stable function getValue(): string | undefined {
+>getValue : Symbol(getValue, Decl(stableModifierDeclarationParity.ts, 0, 0))
+
+    return Math.random() > 0.5 ? "hello" : undefined;
+>Math.random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>Math : Symbol(Math, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2025.float16.d.ts, --, --))
+>random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>undefined : Symbol(undefined)
+}
+
+if (getValue() !== undefined) {
+>getValue : Symbol(getValue, Decl(stableModifierDeclarationParity.ts, 0, 0))
+>undefined : Symbol(undefined)
+
+    const v: string = getValue(); // should be narrowed to string
+>v : Symbol(v, Decl(stableModifierDeclarationParity.ts, 6, 9))
+>getValue : Symbol(getValue, Decl(stableModifierDeclarationParity.ts, 0, 0))
+}
+
+// === Section 2: mutator function declaration ===
+let state: string | undefined = "initial";
+>state : Symbol(state, Decl(stableModifierDeclarationParity.ts, 10, 3))
+
+mutator function setState(val: string | undefined): void {
+>setState : Symbol(setState, Decl(stableModifierDeclarationParity.ts, 10, 42))
+>val : Symbol(val, Decl(stableModifierDeclarationParity.ts, 11, 26))
+
+    state = val;
+>state : Symbol(state, Decl(stableModifierDeclarationParity.ts, 10, 3))
+>val : Symbol(val, Decl(stableModifierDeclarationParity.ts, 11, 26))
+}
+
+stable function getState(): string | undefined {
+>getState : Symbol(getState, Decl(stableModifierDeclarationParity.ts, 13, 1))
+
+    return state;
+>state : Symbol(state, Decl(stableModifierDeclarationParity.ts, 10, 3))
+}
+
+if (getState() !== undefined) {
+>getState : Symbol(getState, Decl(stableModifierDeclarationParity.ts, 13, 1))
+>undefined : Symbol(undefined)
+
+    const s: string = getState(); // narrowed
+>s : Symbol(s, Decl(stableModifierDeclarationParity.ts, 20, 9))
+>getState : Symbol(getState, Decl(stableModifierDeclarationParity.ts, 13, 1))
+
+    setState(undefined); // mutator — should invalidate getState() narrowing
+>setState : Symbol(setState, Decl(stableModifierDeclarationParity.ts, 10, 42))
+>undefined : Symbol(undefined)
+
+    const s2: string | undefined = getState(); // back to string | undefined
+>s2 : Symbol(s2, Decl(stableModifierDeclarationParity.ts, 22, 9))
+>getState : Symbol(getState, Decl(stableModifierDeclarationParity.ts, 13, 1))
+}
+
+// === Section 3: stable function expression ===
+const getX = stable function(): number | null {
+>getX : Symbol(getX, Decl(stableModifierDeclarationParity.ts, 26, 5))
+
+    return Math.random() > 0.5 ? 42 : null;
+>Math.random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>Math : Symbol(Math, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2025.float16.d.ts, --, --))
+>random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+
+};
+
+if (getX() !== null) {
+>getX : Symbol(getX, Decl(stableModifierDeclarationParity.ts, 26, 5))
+
+    const x: number = getX(); // narrowed
+>x : Symbol(x, Decl(stableModifierDeclarationParity.ts, 31, 9))
+>getX : Symbol(getX, Decl(stableModifierDeclarationParity.ts, 26, 5))
+}
+
+// === Section 4: mutator function expression ===
+const setX = mutator function(val: number | null): void {};
+>setX : Symbol(setX, Decl(stableModifierDeclarationParity.ts, 35, 5))
+>val : Symbol(val, Decl(stableModifierDeclarationParity.ts, 35, 30))
+
+stable function readX(): number | null { return null; }
+>readX : Symbol(readX, Decl(stableModifierDeclarationParity.ts, 35, 59))
+
+if (readX() !== null) {
+>readX : Symbol(readX, Decl(stableModifierDeclarationParity.ts, 35, 59))
+
+    const r: number = readX(); // narrowed
+>r : Symbol(r, Decl(stableModifierDeclarationParity.ts, 40, 9))
+>readX : Symbol(readX, Decl(stableModifierDeclarationParity.ts, 35, 59))
+}
+
+// === Section 5: stable arrow function ===
+const getY = stable (): string | undefined => {
+>getY : Symbol(getY, Decl(stableModifierDeclarationParity.ts, 44, 5))
+
+    return Math.random() > 0.5 ? "world" : undefined;
+>Math.random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>Math : Symbol(Math, Decl(lib.es5.d.ts, --, --), Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.core.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2025.float16.d.ts, --, --))
+>random : Symbol(Math.random, Decl(lib.es5.d.ts, --, --))
+>undefined : Symbol(undefined)
+
+};
+
+if (getY() !== undefined) {
+>getY : Symbol(getY, Decl(stableModifierDeclarationParity.ts, 44, 5))
+>undefined : Symbol(undefined)
+
+    const y: string = getY(); // narrowed
+>y : Symbol(y, Decl(stableModifierDeclarationParity.ts, 49, 9))
+>getY : Symbol(getY, Decl(stableModifierDeclarationParity.ts, 44, 5))
+}
+
+// === Section 6: mutator arrow function ===
+const setY = mutator (val: string | undefined): void => {};
+>setY : Symbol(setY, Decl(stableModifierDeclarationParity.ts, 53, 5))
+>val : Symbol(val, Decl(stableModifierDeclarationParity.ts, 53, 22))
+
+stable function readY(): string | undefined { return undefined; }
+>readY : Symbol(readY, Decl(stableModifierDeclarationParity.ts, 53, 59))
+>undefined : Symbol(undefined)
+
+if (readY() !== undefined) {
+>readY : Symbol(readY, Decl(stableModifierDeclarationParity.ts, 53, 59))
+>undefined : Symbol(undefined)
+
+    const r: string = readY(); // narrowed
+>r : Symbol(r, Decl(stableModifierDeclarationParity.ts, 58, 9))
+>readY : Symbol(readY, Decl(stableModifierDeclarationParity.ts, 53, 59))
+
+    setY(undefined); // mutator call
+>setY : Symbol(setY, Decl(stableModifierDeclarationParity.ts, 53, 5))
+>undefined : Symbol(undefined)
+
+    const r2: string | undefined = readY(); // back to union
+>r2 : Symbol(r2, Decl(stableModifierDeclarationParity.ts, 60, 9))
+>readY : Symbol(readY, Decl(stableModifierDeclarationParity.ts, 53, 59))
+}
+
+// === Section 7: stable async arrow function (combined modifiers) ===
+const getAsync = stable async (): Promise<string | undefined> => {
+>getAsync : Symbol(getAsync, Decl(stableModifierDeclarationParity.ts, 64, 5))
+>Promise : Symbol(Promise, Decl(lib.es5.d.ts, --, --), Decl(lib.es2015.iterable.d.ts, --, --), Decl(lib.es2015.promise.d.ts, --, --), Decl(lib.es2015.symbol.wellknown.d.ts, --, --), Decl(lib.es2018.promise.d.ts, --, --))
+
+    return undefined;
+>undefined : Symbol(undefined)
+
+};
+
+// === Section 8: stable get accessor in class ===
+class Counter {
+>Counter : Symbol(Counter, Decl(stableModifierDeclarationParity.ts, 66, 2))
+
+    private _count: number | undefined = 0;
+>_count : Symbol(Counter._count, Decl(stableModifierDeclarationParity.ts, 69, 15))
+
+    stable get count(): number | undefined {
+>count : Symbol(Counter.count, Decl(stableModifierDeclarationParity.ts, 70, 43), Decl(stableModifierDeclarationParity.ts, 74, 5))
+
+        return this._count;
+>this._count : Symbol(Counter._count, Decl(stableModifierDeclarationParity.ts, 69, 15))
+>this : Symbol(Counter, Decl(stableModifierDeclarationParity.ts, 66, 2))
+>_count : Symbol(Counter._count, Decl(stableModifierDeclarationParity.ts, 69, 15))
+    }
+
+    mutator set count(value: number | undefined) {
+>count : Symbol(Counter.count, Decl(stableModifierDeclarationParity.ts, 70, 43), Decl(stableModifierDeclarationParity.ts, 74, 5))
+>value : Symbol(value, Decl(stableModifierDeclarationParity.ts, 76, 22))
+
+        this._count = value;
+>this._count : Symbol(Counter._count, Decl(stableModifierDeclarationParity.ts, 69, 15))
+>this : Symbol(Counter, Decl(stableModifierDeclarationParity.ts, 66, 2))
+>_count : Symbol(Counter._count, Decl(stableModifierDeclarationParity.ts, 69, 15))
+>value : Symbol(value, Decl(stableModifierDeclarationParity.ts, 76, 22))
+    }
+}
+
+// === Section 9: stable get/mutator set in interface ===
+interface ReadWrite {
+>ReadWrite : Symbol(ReadWrite, Decl(stableModifierDeclarationParity.ts, 79, 1))
+
+    stable get value(): string | undefined;
+>value : Symbol(ReadWrite.value, Decl(stableModifierDeclarationParity.ts, 82, 21), Decl(stableModifierDeclarationParity.ts, 83, 43))
+
+    mutator set value(v: string | undefined);
+>value : Symbol(ReadWrite.value, Decl(stableModifierDeclarationParity.ts, 82, 21), Decl(stableModifierDeclarationParity.ts, 83, 43))
+>v : Symbol(v, Decl(stableModifierDeclarationParity.ts, 84, 22))
+}
+
+// === Section 10: Grammar error cases ===
+
+// Error: stable on setter (setter has parameters)
+interface BadStableSetter {
+>BadStableSetter : Symbol(BadStableSetter, Decl(stableModifierDeclarationParity.ts, 85, 1))
+
+    stable set value(v: string); // Error
+>value : Symbol(BadStableSetter.value, Decl(stableModifierDeclarationParity.ts, 90, 27))
+>v : Symbol(v, Decl(stableModifierDeclarationParity.ts, 91, 21))
+}
+
+// Error: mutator on getter (semantically wrong)
+interface BadMutatorGetter {
+>BadMutatorGetter : Symbol(BadMutatorGetter, Decl(stableModifierDeclarationParity.ts, 92, 1))
+
+    mutator get value(): string; // Error
+>value : Symbol(BadMutatorGetter.value, Decl(stableModifierDeclarationParity.ts, 95, 28))
+}
+
+// Error: stable with parameters (function declaration)
+stable function badStableWithParams(x: number): number { return x; } // Error
+>badStableWithParams : Symbol(badStableWithParams, Decl(stableModifierDeclarationParity.ts, 97, 1))
+>x : Symbol(x, Decl(stableModifierDeclarationParity.ts, 100, 36))
+>x : Symbol(x, Decl(stableModifierDeclarationParity.ts, 100, 36))
+
+// Error: stable on constructor
+class BadConstructor {
+>BadConstructor : Symbol(BadConstructor, Decl(stableModifierDeclarationParity.ts, 100, 68))
+
+    stable constructor() {} // Error
+}
+
+// === Section 11: stable/mutator in namespace ===
+namespace NS {
+>NS : Symbol(NS, Decl(stableModifierDeclarationParity.ts, 105, 1))
+
+    export stable function getVal(): string | undefined {
+>getVal : Symbol(getVal, Decl(stableModifierDeclarationParity.ts, 108, 14))
+
+        return "ns";
+    }
+    export mutator function setVal(v: string | undefined): void {}
+>setVal : Symbol(setVal, Decl(stableModifierDeclarationParity.ts, 111, 5))
+>v : Symbol(v, Decl(stableModifierDeclarationParity.ts, 112, 35))
+}
+
+if (NS.getVal() !== undefined) {
+>NS.getVal : Symbol(NS.getVal, Decl(stableModifierDeclarationParity.ts, 108, 14))
+>NS : Symbol(NS, Decl(stableModifierDeclarationParity.ts, 105, 1))
+>getVal : Symbol(NS.getVal, Decl(stableModifierDeclarationParity.ts, 108, 14))
+>undefined : Symbol(undefined)
+
+    const v: string = NS.getVal(); // narrowed
+>v : Symbol(v, Decl(stableModifierDeclarationParity.ts, 116, 9))
+>NS.getVal : Symbol(NS.getVal, Decl(stableModifierDeclarationParity.ts, 108, 14))
+>NS : Symbol(NS, Decl(stableModifierDeclarationParity.ts, 105, 1))
+>getVal : Symbol(NS.getVal, Decl(stableModifierDeclarationParity.ts, 108, 14))
+}
+
