@@ -326,7 +326,18 @@ func getQuickInfoAndDeclarationAtLocation(c *checker.Checker, symbol *ast.Symbol
 			}
 			b.WriteString(": ")
 			if callNode := getCallOrNewExpression(node); callNode != nil {
-				b.WriteString(c.SignatureToStringEx(c.GetResolvedSignature(callNode), container, typeFormatFlags|checker.TypeFormatFlagsWriteCallStyleSignature|checker.TypeFormatFlagsWriteTypeArgumentsOfSignature|checker.TypeFormatFlagsWriteArrowStyleSignature))
+				sig := c.GetResolvedSignature(callNode)
+				b.WriteString(c.SignatureToStringEx(sig, container, typeFormatFlags|checker.TypeFormatFlagsWriteCallStyleSignature|checker.TypeFormatFlagsWriteTypeArgumentsOfSignature|checker.TypeFormatFlagsWriteArrowStyleSignature))
+				// Show narrowed return type for stable calls
+				if sig.Flags()&checker.SignatureFlagsStable != 0 {
+					declaredReturn := c.GetReturnTypeOfSignature(sig)
+					actualReturn := c.GetTypeAtLocation(callNode)
+					if actualReturn != declaredReturn {
+						writeNewLine()
+						b.WriteString("// narrowed call return: ")
+						b.WriteString(c.TypeToStringEx(actualReturn, container, typeFormatFlags))
+					}
+				}
 			} else {
 				b.WriteString(c.TypeToStringEx(c.GetTypeOfSymbolAtLocation(symbol, node), container, typeFormatFlags))
 			}
@@ -357,6 +368,19 @@ func getQuickInfoAndDeclarationAtLocation(c *checker.Checker, symbol *ast.Symbol
 					}
 				}
 				writeSignatures(signatures, prefix, symbol)
+				// Show narrowed return type for stable function calls
+				if callNode := getCallOrNewExpression(node); callNode != nil {
+					sig := c.GetResolvedSignature(callNode)
+					if sig.Flags()&checker.SignatureFlagsStable != 0 {
+						declaredReturn := c.GetReturnTypeOfSignature(sig)
+						actualReturn := c.GetTypeAtLocation(callNode)
+						if actualReturn != declaredReturn {
+							writeNewLine()
+							b.WriteString("// narrowed call return: ")
+							b.WriteString(c.TypeToStringEx(actualReturn, container, typeFormatFlags))
+						}
+					}
+				}
 			}
 			setDeclaration(symbol.ValueDeclaration)
 		}
